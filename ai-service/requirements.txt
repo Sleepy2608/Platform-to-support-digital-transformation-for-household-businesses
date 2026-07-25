@@ -1,5 +1,5 @@
-fastapi==0.109.2
-uvicorn==0.27.1
-pydantic==2.6.1
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+pydantic==2.7.4
 python-dotenv==1.0.1
-# Thêm thư viện LLM tùy chọn sau (ví dụ: google-generativeai, openai, SpeechRecognition)
+httpx==0.27.0
