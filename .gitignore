@@ -1,29 +1,219 @@
-# Backend (Java/Maven)
-backend/target/
-backend/.mvn/
-*.class
+############################
+# Operating System
+############################
 
-# Frontend (Node)
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+
+############################
+# IDE
+############################
+
+# VS Code
+.vscode/
+!.vscode/extensions.json
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.project
+.classpath
+.settings/
+.factorypath
+
+# NetBeans
+nbproject/
+
+
+############################
+# Environment Variables
+############################
+
+.env
+.env.*
+!.env.example
+
+*.local
+
+
+############################
+# Logs
+############################
+
+logs/
+*.log
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+############################
+# Backend (Java / Spring Boot / Maven)
+############################
+
+backend/target/
+target/
+
+*.class
+*.jar
+*.war
+*.ear
+
+backend/HELP.md
+
+# Local configuration
+backend/src/main/resources/application-local.yml
+backend/src/main/resources/application-secrets.yml
+backend/src/main/resources/application-*.local.yml
+
+# Maven Wrapper
+.mvn/timing.properties
+
+
+############################
+# Frontend (React / Vite)
+############################
+
 frontend/node_modules/
+node_modules/
+
 frontend/dist/
+dist/
+
+frontend/build/
+
+frontend/coverage/
+
+frontend/.vite/
+frontend/.cache/
+
 frontend/.env
 frontend/.env.local
+frontend/.env.*.local
 
-# AI service (Python)
+# Keep default Vite assets
+#!frontend/public/vite.svg
+
+
+############################
+# AI Service (Python)
+############################
+
+__pycache__/
+*.py[cod]
+
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+.venv/
+venv/
+
+ai-service/.venv/
+ai-service/venv/
+
 ai-service/__pycache__/
 ai-service/**/__pycache__/
-ai-service/.venv/
-ai-service/*.pyc
 
-# IDE
-.idea/
-.vscode/
-*.iml
+*.egg-info/
 
-# OS
-.DS_Store
-Thumbs.db
 
-# Env / secrets
-.env
-*.local
+############################
+# AI Runtime Files
+############################
+
+# Temporary audio for Speech-to-Text
+ai-service/tmp/
+
+ai-service/**/*.wav
+ai-service/**/*.mp3
+ai-service/**/*.m4a
+
+# AI model checkpoints
+*.onnx
+*.pt
+*.pth
+*.h5
+*.ckpt
+
+ai-service/checkpoints/
+ai-service/weights/
+
+
+############################
+# Database
+############################
+
+*.db
+*.sqlite
+*.sqlite3
+
+database/*.sql.bak
+database/dump*.sql
+
+mysql-data/
+
+
+############################
+# Uploads / Generated Files
+############################
+
+backend/uploads/
+uploads/
+
+reports/
+
+**/exports/*.pdf
+**/exports/*.xlsx
+**/exports/*.csv
+
+
+############################
+# Docker
+############################
+
+docker-compose.override.yml
+
+docker-data/
+docker-volumes/
+
+
+############################
+# Runtime
+############################
+
+*.pid
+*.seed
+
+*.tmp
+*.bak
+*.swp
+*.swo
+
+
+############################
+# Certificates & Secrets
+############################
+
+*.pem
+*.key
+*.crt
+
+secret/
+secrets/
+
+**/firebase-service-account*.json
+**/*credentials*.json
+**/*service-account*.json
