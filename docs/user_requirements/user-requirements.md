@@ -24,6 +24,10 @@
 <td align="left">User Requirements Document - Platform to Support Digital Transformation for Household Businesses</td>
 </tr>
 <tr>
+<td align="center">Viết tắt</td>
+<td align="left">HBDT</td>
+</tr>
+<tr>
 <td align="center">Mã tài liệu</td>
 <td align="left">URD-HKD-v1.0.0</td>
 </tr>

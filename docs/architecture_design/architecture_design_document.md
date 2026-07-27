@@ -7,6 +7,7 @@
 | **Tên dự án (EN)** | Platform to Support Digital Transformation for Household Businesses |
 | **Tên dự án (VN)** | Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | **Loại tài liệu** | Architecture Design Document |
+| **Viết tắt** | HBDT
 | **Phiên bản tài liệu** | 1.0 |
 | **Ngày tạo** | 26/07/2026 |
 | **Trạng thái** | Bản nháp (Draft) |

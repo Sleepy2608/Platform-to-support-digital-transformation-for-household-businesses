@@ -5,6 +5,7 @@
 |---|---|
 | Tên hệ thống | Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | Tên tiếng Anh | Platform to Support Digital Transformation for Household Businesses |
+| Viết tắt | HBDT
 | Hệ quản trị cơ sở dữ liệu | MySQL 8.x |
 | Storage Engine | InnoDB |
 | Character Set | `utf8mb4` |
