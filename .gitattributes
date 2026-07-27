@@ -1,0 +1,87 @@
+############################
+# Default
+############################
+
+* text=auto
+
+############################
+# Source Code
+############################
+
+*.java      text eol=lf
+*.kt        text eol=lf
+*.kts       text eol=lf
+
+*.js        text eol=lf
+*.jsx       text eol=lf
+*.ts        text eol=lf
+*.tsx       text eol=lf
+
+*.html      text eol=lf
+*.css       text eol=lf
+*.scss      text eol=lf
+
+*.py        text eol=lf
+
+############################
+# Configuration Files
+############################
+
+*.json      text eol=lf
+*.xml       text eol=lf
+
+*.yml       text eol=lf
+*.yaml      text eol=lf
+
+*.properties text eol=lf
+
+*.sql       text eol=lf
+
+############################
+# Documentation
+############################
+
+*.md        text eol=lf
+*.txt       text eol=lf
+
+############################
+# Shell Scripts
+############################
+
+*.sh        text eol=lf
+
+############################
+# Windows Scripts
+############################
+
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+
+############################
+# Binary Files
+############################
+
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.webp      binary
+*.ico       binary
+
+*.pdf       binary
+
+*.zip       binary
+*.rar       binary
+*.7z        binary
+
+*.jar       binary
+*.war       binary
+
+*.onnx      binary
+*.pt        binary
+*.pth       binary
+*.h5        binary
+
+*.mp3       binary
+*.wav       binary
+*.m4a       binary
