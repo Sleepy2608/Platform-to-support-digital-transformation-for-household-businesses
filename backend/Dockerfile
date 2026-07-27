@@ -1,14 +1,20 @@
-# --- Build stage ---
-FROM maven:3.9-eclipse-temurin-17 AS build
-WORKDIR /app
-COPY pom.xml .
-RUN mvn -B dependency:go-offline
-COPY src ./src
-RUN mvn -B clean package -DskipTests
+# syntax=docker/dockerfile:1
 
-# --- Run stage ---
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jdk-alpine AS build
+WORKDIR /workspace
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
+RUN chmod +x mvnw && ./mvnw -q -B dependency:go-offline
+COPY src src
+RUN ./mvnw -q -B -DskipTests package
+
+FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+RUN addgroup -S app && adduser -S app -G app
+COPY --from=build /workspace/target/*.jar app.jar
+USER app
 EXPOSE 8080
+HEALTHCHECK --interval=15s --timeout=5s --retries=5 \
+  CMD wget -qO- http://localhost:8080/api/v1/health || exit 1
 ENTRYPOINT ["java", "-jar", "app.jar"]

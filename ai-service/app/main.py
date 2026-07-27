@@ -1,33 +1,30 @@
-"""
-AI Service - xu ly ngon ngu tu nhien tieng Viet cho tinh nang Draft Order (EPIC-09).
-Trach nhiem chinh:
-  - Nhan cau lenh dat hang bang van ban / giong noi (SCRUM-48, SCRUM-49)
-  - Trich xuat san pham, so luong, don vi, khach hang, yeu cau ghi no (SCRUM-50)
-  - Doi chieu du lieu cua hang va phat hien mo ho (SCRUM-51, SCRUM-52)
-Khung nay moi chi co health check va endpoint stub; logic NLP se duoc
-trien khai chi tiet trong Sprint 5-6.
-"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import parse_order
+from app.routers import health, parse
 
 app = FastAPI(
-    title="AgriTrade AI Service",
-    description="Dich vu AI xu ly don hang bang ngon ngu tu nhien tieng Viet",
-    version="0.1.0",
+    title="AI Order Service",
+    description="Service độc lập: STT, NLP parser, matching → Draft Order (SCRUM-07 skeleton)",
+    version="0.0.1",
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TODO: gioi han origin khi len production
+    allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(parse_order.router, prefix="/api/v1/ai", tags=["ai"])
+app.include_router(health.router, prefix="/v1", tags=["health"])
+app.include_router(parse.router, prefix="/v1/ai", tags=["ai"])
 
 
-@app.get("/api/v1/ai/health")
-def health():
-    return {"status": "UP", "service": "ai-service"}
+@app.get("/")
+def root():
+    return {
+        "service": "ai-order-service",
+        "status": "SKELETON",
+        "docs": "/docs",
+    }
