@@ -10,10 +10,9 @@
 
 **Phiên bản:** 1.0
 
-**Loại tài liệu:** Đặc tả yêu cầu phần mềm (SRS)
+**Loại tài liệu:** Đặc tả yêu cầu phần mềm
 
-
-**Môn học:** Công nghệ phần mềm
+**Môn học:** Lập trình Java
 
 ---
 
