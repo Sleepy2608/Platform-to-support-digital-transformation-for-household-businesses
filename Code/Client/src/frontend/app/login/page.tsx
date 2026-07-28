@@ -1,10 +1,71 @@
 'use client';
 
 import Link from 'next/link';
-import { Store, ArrowLeft, LogIn, Lock, Mail } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { Store, ArrowLeft, LogIn, Lock, User, AlertCircle } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    if (!username.trim() || !password.trim()) {
+      setError('Vui lòng nhập tên đăng nhập và mật khẩu');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:8080/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const resData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(resData.message || 'Đăng nhập không thành công');
+      }
+
+      if (resData.success && resData.data) {
+        const { accessToken, refreshToken, userId, username: resUser, fullName, roles } = resData.data;
+        
+        // Save auth data to localStorage
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('userId', userId.toString());
+        localStorage.setItem('username', resUser);
+        localStorage.setItem('fullName', fullName || '');
+        localStorage.setItem('roles', JSON.stringify(roles || []));
+
+        // Check user role
+        if (roles && roles.includes('ADMIN')) {
+          router.push('/admin');
+        } else {
+          setError('Tài khoản của bạn không có quyền truy cập trang quản trị');
+          localStorage.clear();
+        }
+      } else {
+        throw new Error('Dữ liệu phản hồi không hợp lệ');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Có lỗi xảy ra, vui lòng thử lại sau');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-zinc-950 text-white relative flex items-center justify-center p-4 overflow-hidden">
       {/* Background Image Kho hàng / Quản lý tài sản (Chủ đề liên quan HKD) */}
@@ -28,7 +89,7 @@ export default function LoginPage() {
         <ScrollReveal>
           <div className="bg-zinc-900/90 border border-zinc-700/80 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl">
             {/* Header Form */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
               <div className="inline-flex p-3 bg-white/10 rounded-2xl border border-zinc-600 mb-4 shadow-inner">
                 <Store className="w-8 h-8 text-white" />
               </div>
@@ -38,18 +99,28 @@ export default function LoginPage() {
               </p>
             </div>
 
+            {error && (
+              <div className="mb-5 p-3.5 bg-red-950/60 border border-red-800/80 text-red-200 rounded-xl text-xs sm:text-sm flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
             {/* Form Inputs */}
-            <form onSubmit={(e) => e.preventDefault()} className="space-y-5">
+            <form onSubmit={handleLogin} className="space-y-5">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-2">
-                  Số điện thoại / Email
+                  Tên đăng nhập
                 </label>
                 <div className="relative">
-                  <Mail className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                  <User className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
                   <input 
                     type="text" 
-                    placeholder="0912345678 hoặc email@domain.com"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Nhập tên đăng nhập (ví dụ: admin)"
                     className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                    required
                   />
                 </div>
               </div>
@@ -67,8 +138,11 @@ export default function LoginPage() {
                   <Lock className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
                   <input 
                     type="password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                    required
                   />
                 </div>
               </div>
@@ -88,9 +162,11 @@ export default function LoginPage() {
               {/* Nút Submit */}
               <button 
                 type="submit"
-                className="w-full py-3.5 bg-white text-zinc-950 font-bold rounded-xl hover:bg-zinc-200 active:scale-95 transition-all duration-200 shadow-xl flex items-center justify-center gap-2 cursor-pointer mt-2"
+                disabled={loading}
+                className="w-full py-3.5 bg-white text-zinc-950 font-bold rounded-xl hover:bg-zinc-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none transition-all duration-200 shadow-xl flex items-center justify-center gap-2 cursor-pointer mt-2"
               >
-                <LogIn className="w-4 h-4" /> Đăng nhập hệ thống
+                <LogIn className="w-4 h-4" /> 
+                {loading ? 'Đang xác thực...' : 'Đăng nhập hệ thống'}
               </button>
             </form>
 
