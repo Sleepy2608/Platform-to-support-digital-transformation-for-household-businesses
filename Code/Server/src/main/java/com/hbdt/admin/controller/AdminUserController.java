@@ -2,6 +2,7 @@ package com.hbdt.admin.controller;
 
 import com.hbdt.auth.dto.AdminCreateRequest;
 import com.hbdt.auth.dto.AdminResponse;
+import com.hbdt.auth.dto.AdminUpdateRequest;
 import com.hbdt.common.dto.ApiResponse;
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
@@ -77,6 +78,62 @@ public class AdminUserController {
         User savedAdmin = userRepository.save(admin);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Thêm Admin mới thành công", mapToAdminResponse(savedAdmin)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<AdminResponse>> updateAdmin(
+            @PathVariable Long id,
+            @Valid @RequestBody AdminUpdateRequest request) {
+        User admin = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản Admin với ID: " + id));
+
+        // Check duplicate email
+        if (!admin.getEmail().equalsIgnoreCase(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
+            throw new BadRequestException("Email đã được sử dụng");
+        }
+
+        // Check duplicate phone
+        if (request.getPhone() != null && !request.getPhone().isBlank()) {
+            if (admin.getPhone() == null || !admin.getPhone().equals(request.getPhone())) {
+                if (userRepository.existsByPhone(request.getPhone())) {
+                    throw new BadRequestException("Số điện thoại đã được sử dụng");
+                }
+            }
+        }
+
+        admin.setEmail(request.getEmail());
+        admin.setFullName(request.getFullName());
+        admin.setPhone(request.getPhone());
+        
+        // Prevent disabling default 'admin' account
+        if ("admin".equals(admin.getUsername()) && request.getStatus() != UserStatus.ACTIVE) {
+            throw new BadRequestException("Không thể thay đổi trạng thái hoạt động của Root Admin");
+        }
+        admin.setStatus(request.getStatus());
+
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            if (request.getPassword().length() < 6) {
+                throw new BadRequestException("Mật khẩu phải từ 6 ký tự trở lên");
+            }
+            admin.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
+        User updatedAdmin = userRepository.save(admin);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật tài khoản Admin thành công", mapToAdminResponse(updatedAdmin)));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteAdmin(@PathVariable Long id) {
+        User admin = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản Admin với ID: " + id));
+
+        // Prevent deleting default 'admin' account
+        if ("admin".equals(admin.getUsername())) {
+            throw new BadRequestException("Không thể xóa tài khoản Admin hệ thống mặc định");
+        }
+
+        userRepository.delete(admin);
+        return ResponseEntity.ok(ApiResponse.success("Xóa tài khoản Admin thành công", null));
     }
 
     private AdminResponse mapToAdminResponse(User user) {
