@@ -1,0 +1,13 @@
+target/
+*.class
+*.jar
+*.war
+*.log
+.idea/
+*.iml
+.settings/
+.classpath
+.project
+.DS_Store
+application-local.properties
+application-local.yml
