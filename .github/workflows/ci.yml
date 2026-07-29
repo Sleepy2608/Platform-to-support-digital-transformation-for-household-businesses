@@ -1,9 +1,13 @@
+
 name: Java & Next.js CI
 =======
 name: Frontend CI
 =======
 name: Java & Next.js CI
 
+
+=======
+name: Frontend CI
 
 
 on:
@@ -13,6 +17,7 @@ on:
     branches: [main, develop]
 
 jobs:
+
 
 
   backend:
@@ -54,6 +59,8 @@ jobs:
   # ============================================================
   # FRONTEND: Next.js + React + TypeScript
   # ============================================================
+=======
+
   frontend:
     name: Frontend - Lint & Build
     runs-on: ubuntu-latest
