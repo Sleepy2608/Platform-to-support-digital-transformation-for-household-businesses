@@ -10,7 +10,7 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./Code/Server/database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 5s
@@ -19,7 +19,7 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ./Code/Server
     container_name: agritrade-backend
     restart: unless-stopped
     depends_on:
@@ -38,7 +38,7 @@ services:
 
   ai-service:
     build:
-      context: ./ai-service
+      context: ./Code/AI
     container_name: agritrade-ai-service
     restart: unless-stopped
     ports:
@@ -46,7 +46,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./Code/Client/src/frontend
     container_name: agritrade-frontend
     restart: unless-stopped
     depends_on:
