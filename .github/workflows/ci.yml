@@ -1,4 +1,8 @@
+
+name: Java & Next.js CI
+=======
 name: Frontend CI
+
 
 on:
   push:
@@ -7,6 +11,33 @@ on:
     branches: [main, develop]
 
 jobs:
+
+  backend:
+    name: Backend - Compile
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Code/Server
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+          cache-dependency-path: Code/Server/pom.xml
+
+      - name: Compile
+        run: mvn compile -B
+
+  frontend:
+    name: Frontend - Lint & Build
+    runs-on: ubuntu-latest
+=======
   frontend:
     name: Frontend - Lint & Build
     runs-on: ubuntu-latest
