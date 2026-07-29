@@ -7,7 +7,6 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
 
@@ -16,33 +15,33 @@ public class ApiResponse<T> {
     private T data;
 
     public static <T> ApiResponse<T> success(T data) {
-        return ApiResponse.<T>builder()
-                .success(true)
-                .message("Thành công")
-                .data(data)
-                .build();
+        ApiResponse<T> res = new ApiResponse<>();
+        res.success = true;
+        res.message = "Thành công";
+        res.data = data;
+        return res;
     }
 
     public static <T> ApiResponse<T> success(String message, T data) {
-        return ApiResponse.<T>builder()
-                .success(true)
-                .message(message)
-                .data(data)
-                .build();
+        ApiResponse<T> res = new ApiResponse<>();
+        res.success = true;
+        res.message = message;
+        res.data = data;
+        return res;
     }
 
     public static <T> ApiResponse<T> error(String message) {
-        return ApiResponse.<T>builder()
-                .success(false)
-                .message(message)
-                .build();
+        ApiResponse<T> res = new ApiResponse<>();
+        res.success = false;
+        res.message = message;
+        return res;
     }
 
     public static <T> ApiResponse<T> error(String message, T data) {
-        return ApiResponse.<T>builder()
-                .success(false)
-                .message(message)
-                .data(data)
-                .build();
+        ApiResponse<T> res = new ApiResponse<>();
+        res.success = false;
+        res.message = message;
+        res.data = data;
+        return res;
     }
 }
