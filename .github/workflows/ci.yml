@@ -1,4 +1,10 @@
 name: Java & Next.js CI
+=======
+name: Frontend CI
+=======
+name: Java & Next.js CI
+
+
 
 on:
   push:
@@ -7,6 +13,12 @@ on:
     branches: [main, develop]
 
 jobs:
+
+
+  backend:
+    name: Backend - Compile
+    runs-on: ubuntu-latest
+=======
   # ============================================================
   # BACKEND: Java Spring Boot + JDK 21 + Maven
   # ============================================================
@@ -33,6 +45,12 @@ jobs:
       - name: Compile
         run: mvn compile -B
 
+
+  frontend:
+    name: Frontend - Lint & Build
+    runs-on: ubuntu-latest
+=======
+=======
   # ============================================================
   # FRONTEND: Next.js + React + TypeScript
   # ============================================================
