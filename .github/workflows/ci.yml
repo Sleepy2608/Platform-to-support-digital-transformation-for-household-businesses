@@ -1,7 +1,9 @@
-
 name: Java & Next.js CI
 =======
 name: Frontend CI
+=======
+name: Java & Next.js CI
+
 
 
 on:
@@ -12,9 +14,18 @@ on:
 
 jobs:
 
+
   backend:
     name: Backend - Compile
     runs-on: ubuntu-latest
+=======
+  # ============================================================
+  # BACKEND: Java Spring Boot + JDK 21 + Maven
+  # ============================================================
+  backend:
+    name: Backend - Compile
+    runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: Code/Server
@@ -34,10 +45,15 @@ jobs:
       - name: Compile
         run: mvn compile -B
 
+
   frontend:
     name: Frontend - Lint & Build
     runs-on: ubuntu-latest
 =======
+=======
+  # ============================================================
+  # FRONTEND: Next.js + React + TypeScript
+  # ============================================================
   frontend:
     name: Frontend - Lint & Build
     runs-on: ubuntu-latest
