@@ -1,4 +1,8 @@
+
 name: Java & Next.js CI
+=======
+name: Frontend CI
+
 
 on:
   push:
@@ -7,6 +11,7 @@ on:
     branches: [main, develop]
 
 jobs:
+
   backend:
     name: Backend - Compile
     runs-on: ubuntu-latest
@@ -32,6 +37,11 @@ jobs:
   frontend:
     name: Frontend - Lint & Build
     runs-on: ubuntu-latest
+=======
+  frontend:
+    name: Frontend - Lint & Build
+    runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: Code/Client/src/frontend
