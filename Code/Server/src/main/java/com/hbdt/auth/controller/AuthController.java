@@ -58,9 +58,9 @@ public class AuthController {
      * In a production system, we would add the token to a blacklist.
      */
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout() {
+    public ResponseEntity<ApiResponse<String>> logout() {
         // For stateless JWT, logout is handled client-side by discarding the token.
         // For enhanced security, we could add token to a Redis blacklist here.
-        return ResponseEntity.ok(ApiResponse.success("Đăng xuất thành công"));
+        return ResponseEntity.ok(ApiResponse.success("Đăng xuất thành công", null));
     }
 }
