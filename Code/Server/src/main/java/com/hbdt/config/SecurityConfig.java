@@ -58,15 +58,25 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth ->
                 auth
+                    // Public auth endpoints
                     .requestMatchers(
                             "/api/auth/login",
                             "/api/auth/register",
+                            "/api/auth/verify-otp",
                             "/api/auth/refresh-token",
                             "/api/auth/forgot-password",
-                            "/api/auth/reset-password"
+                            "/api/auth/reset-password",
+                            "/api/auth/logout"
                     ).permitAll()
+                    // Public static files (uploaded avatars)
+                    .requestMatchers("/uploads/**").permitAll()
+                    // Public API
                     .requestMatchers("/api/public/**").permitAll()
+                    // Admin routes
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                    // Owner routes
+                    .requestMatchers("/api/owner/**").hasRole("BUSINESS_OWNER")
+                    // Everything else requires authentication
                     .anyRequest().authenticated()
             );
 

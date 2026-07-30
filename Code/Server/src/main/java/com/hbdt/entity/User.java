@@ -44,8 +44,17 @@ public class User implements UserDetails {
     @Column(name = "status", nullable = false, length = 30)
     private UserStatus status;
 
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
     @Column(name = "business_id")
     private Long businessId;
+
+    @Column(name = "subscription_expires_at")
+    private LocalDateTime subscriptionExpiresAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -88,7 +97,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return status != UserStatus.INACTIVE;
+        return status != UserStatus.LOCKED;
     }
 
     @Override
@@ -98,6 +107,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return status == UserStatus.ACTIVE;
+        // DEACTIVATED = soft-deleted, PENDING_VERIFICATION still allowed to proceed
+        return status == UserStatus.ACTIVE || status == UserStatus.PENDING_VERIFICATION;
     }
 }

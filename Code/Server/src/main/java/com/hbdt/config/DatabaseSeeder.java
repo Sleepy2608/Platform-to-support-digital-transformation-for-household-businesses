@@ -34,6 +34,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     public void run(String... args) {
         seedRoles();
         seedAdminUser();
+        seedOwnerUser();
     }
 
     private void seedRoles() {
@@ -78,4 +79,28 @@ public class DatabaseSeeder implements CommandLineRunner {
             logger.info("Seeded default admin user: admin / admin123");
         }
     }
+
+    private void seedOwnerUser() {
+        if (!userRepository.existsByUsername("owner")) {
+            Role ownerRole = roleRepository.findByName(RoleType.BUSINESS_OWNER)
+                    .orElseThrow(() -> new RuntimeException("Role BUSINESS_OWNER not found"));
+            Set<Role> roles = new HashSet<>();
+            roles.add(ownerRole);
+
+            User owner = User.builder()
+                    .username("owner")
+                    .password(passwordEncoder.encode("owner123"))
+                    .email("owner@hbdt.com")
+                    .fullName("Chủ Hộ Kinh Doanh Mẫu")
+                    .phone("0987654321")
+                    .status(UserStatus.ACTIVE)
+                    .subscriptionExpiresAt(java.time.LocalDateTime.now().plusMonths(12))
+                    .roles(roles)
+                    .build();
+
+            userRepository.save(owner);
+            logger.info("Seeded default owner user: owner / owner123");
+        }
+    }
 }
+

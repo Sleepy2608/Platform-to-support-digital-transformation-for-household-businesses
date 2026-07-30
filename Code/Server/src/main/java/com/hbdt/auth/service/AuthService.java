@@ -3,8 +3,10 @@ package com.hbdt.auth.service;
 import com.hbdt.auth.dto.*;
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.security.JwtTokenProvider;
+import com.hbdt.common.service.OtpService;
 import com.hbdt.entity.Role;
 import com.hbdt.entity.User;
+import com.hbdt.entity.enums.OtpType;
 import com.hbdt.entity.enums.RoleType;
 import com.hbdt.entity.enums.UserStatus;
 import com.hbdt.repository.RoleRepository;
@@ -30,46 +32,43 @@ public class AuthService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final OtpService otpService;
 
     public AuthService(AuthenticationManager authenticationManager,
                        UserRepository userRepository,
                        RoleRepository roleRepository,
                        PasswordEncoder passwordEncoder,
-                       JwtTokenProvider jwtTokenProvider) {
+                       JwtTokenProvider jwtTokenProvider,
+                       OtpService otpService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.otpService = otpService;
     }
 
     /**
      * Register a new Business Owner account.
+     * Sets status to PENDING_VERIFICATION and sends OTP to email.
      */
-    public AuthResponse register(RegisterRequest request) {
-        // Check for existing username
+    public void register(RegisterRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new BadRequestException("Tên đăng nhập đã tồn tại");
         }
-
-        // Check for existing email
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BadRequestException("Email đã được sử dụng");
         }
-
-        // Check for existing phone
         if (userRepository.existsByPhone(request.getPhone())) {
             throw new BadRequestException("Số điện thoại đã được sử dụng");
         }
 
-        // Get BUSINESS_OWNER role
         Role ownerRole = roleRepository.findByName(RoleType.BUSINESS_OWNER)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy vai trò BUSINESS_OWNER"));
 
         Set<Role> roles = new HashSet<>();
         roles.add(ownerRole);
 
-        // Build user entity
         User user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -82,17 +81,26 @@ public class AuthService {
 
         userRepository.save(user);
 
-        // Auto-authenticate after registration
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
-                )
-        );
+        // Send verification OTP to registered email
+        otpService.generateAndSend(user.getId(), OtpType.REGISTER, user.getEmail());
+    }
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+    /**
+     * Verify the registration OTP and activate the account.
+     */
+    public void verifyRegistrationOtp(VerifyOtpRequest request) {
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản"));
 
-        return buildAuthResponse(authentication, user);
+        if (user.getStatus() != UserStatus.PENDING_VERIFICATION) {
+            throw new BadRequestException("Tài khoản đã được kích hoạt hoặc không ở trạng thái chờ xác thực");
+        }
+
+        // OTP was sent to user's email
+        otpService.verify(user.getEmail(), OtpType.REGISTER, request.getOtp());
+
+        user.setStatus(UserStatus.ACTIVE);
+        userRepository.save(user);
     }
 
     /**
@@ -110,15 +118,21 @@ public class AuthService {
 
         User user = (User) authentication.getPrincipal();
 
-        if (user.getStatus() != UserStatus.ACTIVE) {
-            throw new BadRequestException("Tài khoản chưa được kích hoạt hoặc đã bị vô hiệu hóa");
+        if (user.getStatus() == UserStatus.LOCKED) {
+            throw new BadRequestException("Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.");
+        }
+        if (user.getStatus() == UserStatus.DEACTIVATED) {
+            throw new BadRequestException("Tài khoản đã bị hủy kích hoạt.");
+        }
+        if (user.getStatus() == UserStatus.PENDING_VERIFICATION) {
+            throw new BadRequestException("Tài khoản chưa được xác thực. Vui lòng kiểm tra email.");
         }
 
         return buildAuthResponse(authentication, user);
     }
 
     /**
-     * Refresh access token using refresh token.
+     * Refresh access token using a valid refresh token.
      */
     public AuthResponse refreshToken(RefreshTokenRequest request) {
         String refreshToken = request.getRefreshToken();
@@ -131,7 +145,10 @@ public class AuthService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BadRequestException("Không tìm thấy người dùng"));
 
-        // Generate new access token
+        if (user.getStatus() == UserStatus.LOCKED || user.getStatus() == UserStatus.DEACTIVATED) {
+            throw new BadRequestException("Tài khoản không còn hoạt động");
+        }
+
         String newAccessToken = jwtTokenProvider.generateAccessTokenFromUsername(username);
 
         Set<String> roles = user.getRoles().stream()
@@ -149,6 +166,43 @@ public class AuthService {
                 .roles(roles)
                 .businessId(user.getBusinessId())
                 .build();
+    }
+
+    /**
+     * Send a forgot-password OTP to the user's registered email.
+     */
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản với email này"));
+
+        if (user.getStatus() == UserStatus.DEACTIVATED) {
+            throw new BadRequestException("Tài khoản đã bị hủy kích hoạt");
+        }
+
+        otpService.generateAndSend(user.getId(), OtpType.FORGOT_PASSWORD, user.getEmail());
+    }
+
+    /**
+     * Reset password using OTP received via email.
+     */
+    public void resetPassword(ResetPasswordRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new BadRequestException("Mật khẩu mới và xác nhận mật khẩu không khớp");
+        }
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản với email này"));
+
+        // Verify OTP
+        otpService.verify(user.getEmail(), OtpType.FORGOT_PASSWORD, request.getOtp());
+
+        // Update password
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        // Re-activate account if it was locked
+        if (user.getStatus() == UserStatus.LOCKED) {
+            user.setStatus(UserStatus.ACTIVE);
+        }
+        userRepository.save(user);
     }
 
     /**
