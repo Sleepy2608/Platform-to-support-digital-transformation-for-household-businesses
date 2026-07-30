@@ -2,7 +2,7 @@
 
 # Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh
 
-**Tên dự án (EN):** Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh
+**Tên dự án (EN):** Platform to Support Digital Transformation for Household Businesses
 
 **Tên dự án (VN):** Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh
 
@@ -3185,17 +3185,59 @@ Bảng sau tổng hợp các điểm cuối REST API chính của hệ thống.
 
 ## 10.2. Quy ước mã yêu cầu
 
-| Tiền tố | Ý nghĩa | Ví dụ |
-|---------|---------|-------|
-| `HBDT-01` đến `HBDT-12` | Mã module yêu cầu chức năng | HBDT-05.3 = Quản lý hình ảnh sản phẩm |
-| `NFR-01` đến `NFR-14` | Mã yêu cầu phi chức năng | NFR-03 = Thời gian phản hồi |
-| `P0` | Độ ưu tiên — Bắt buộc (bắt buộc) | — |
-| `P1` | Độ ưu tiên — Cao (nên có) | — |
-| `P0` | Độ ưu tiên — Bắt buộc (bắt buộc) | — |
-| `P1` | Độ ưu tiên — Cao (nên có) | — |
+| Tiền tố | Ý nghĩa | Ví dụ | Ghi chú |
+|---------|---------|-------|---------|
+| `HBDT-01` đến `HBDT-12` | Mã module yêu cầu chức năng | HBDT-05.3 = Quản lý hình ảnh sản phẩm | Mã `HBDT` chỉ là để tham khảo, dự án sẽ được phụ thuộc vào việc phân công nhiệm vụ trên [Jira](https://java-project-platform-for-household-business.atlassian.net/jira/software/projects/SCRUM/summary)|
+| `NFR-01` đến `NFR-14` | Mã yêu cầu phi chức năng | NFR-03 = Thời gian phản hồi | Tương tự như các mã `HBDT`, các yêu cầu phi chức năng cũng sẽ phụ thuộc vào việc phân công nhiệm vụ trên [Jira](https://java-project-platform-for-household-business.atlassian.net/jira/software/projects/SCRUM/summary)|
+| `P0` | Độ ưu tiên — Bắt buộc (bắt buộc) | — | — |
+| `P1` | Độ ưu tiên — Cao (nên có) | — | — |
 
-## 10.3. Lịch sử phiên bản tài liệu
+## 10.3. Quy ước về Priority trên Jira
+### 10.3.1. Độ ưu tiên
+
+| Độ ưu tiên | Ý nghĩa | Mô tả | Ghi chú |
+|----------|---------|-------|---------|
+| `Highest` | Khẩn cấp | Chức năng cốt lõi hoặc lỗi nghiêm trọng, phải hoàn thành trước các hạng mục khác | Không thể phát hành nếu chưa hoàn thành |
+| `High` | Cao | Chức năng quan trọng, cần hoàn thành trong Sprint hoặc Milestone hiện tại | Có thể ảnh hưởng đến các chức năng khác |
+| `Medium` | Trung bình | Chức năng cần thiết nhưng không ảnh hưởng đến luồng chính của hệ thống | Có thể thực hiện sau các hạng mục High |
+| `Low` | Thấp | Chức năng bổ sung hoặc cải thiện trải nghiệm người dùng | Có thể chuyển sang Sprint sau |
+| `Lowest` | Rất thấp | Chức năng tùy chọn hoặc cải tiến nhỏ | Có thể loại bỏ nếu không đủ thời gian |
+
+### 10.3.2. Trạng thái hoàn thành công việc
+
+| Trạng thái công việc | Ý nghĩa | Mô tả | Ghi chú |
+|----------------------|---------|-------|---------|
+| `To Do` | Chưa bắt đầu | Công việc đã được tạo nhưng chưa có người thực hiện. | Khi thành viên bắt đầu làm sẽ chuyển sang `In Progress` |
+| `In Progress` | Đang thực hiện | Công việc đang được thành viên phát triển hoặc triển khai. | Có thể cập nhật tiến độ trong quá trình thực hiện |
+| `In Review` | Chờ xem xét | Công việc đã hoàn thành về mặt phát triển và đang chờ người phụ trách (Team Leader/Reviewer) kiểm tra hoặc review. | Nếu cần chỉnh sửa sẽ chuyển lại `In Progress` |
+| `Testing` | Đang kiểm thử | Công việc đã được review và đang được kiểm thử chức năng, tích hợp hoặc nghiệm thu. | Nếu phát hiện lỗi sẽ chuyển về `In Progress`; nếu đạt yêu cầu sẽ chuyển `Done` |
+| `Done` | Hoàn thành | Công việc đã được phát triển, kiểm thử và nghiệm thu thành công. | Không thực hiện chỉnh sửa thêm, trừ khi phát sinh yêu cầu hoặc lỗi mới |
+
+**WORKFLOW**
+```text
+                                          To Do
+                                             │
+                                             ▼
+                                       In Progress
+                                             │
+                                             ▼
+                                       In Review
+                                             │
+                                    ┌───────┴────────┐
+                                    │                │
+                                 Có lỗi/Cần sửa      ▼
+                                    │             Testing
+                                    ▼                │                
+                              In Progress     ┌──────┴───────┐
+                                              │              │
+                                          Test không đạt     ▼
+                                              │             Done
+                                              ▼
+                                           In Progress
+```
+
+## 10.4. Lịch sử phiên bản tài liệu
 
 | Phiên bản | Ngày | Mô tả thay đổi |
 |-----------|------|----------------|
-| 1.0 | 27/07/2026 | Phiên bản đầu tiên — SRS hoàn chỉnh dựa trên URD v1.0 và Yêu cầu đề tài (topic requirements)|
+| 1.1 | 30/07/2026 | Thêm link Jira để phân công việc dựa trên task Jira|
