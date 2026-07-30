@@ -3,20 +3,21 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Store, ArrowLeft, LogIn, Lock, User, AlertCircle } from 'lucide-react';
+import { Store, ArrowLeft, LogIn, Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal';
 
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     if (!username.trim() || !password.trim()) {
       setError('Vui lòng nhập tên đăng nhập và mật khẩu');
       return;
@@ -26,9 +27,7 @@ export default function LoginPage() {
     try {
       const response = await fetch('http://localhost:8080/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
 
@@ -39,28 +38,55 @@ export default function LoginPage() {
       }
 
       if (resData.success && resData.data) {
-        const { accessToken, refreshToken, userId, username: resUser, fullName, roles } = resData.data;
-        
-        // Save auth data to localStorage
+        const {
+          accessToken,
+          refreshToken,
+          userId,
+          username: resUser,
+          fullName,
+          email,
+          roles,
+          businessId,
+          avatarUrl,
+        } = resData.data;
+
+        // Persist to localStorage
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('userId', userId.toString());
+        localStorage.setItem('userId', String(userId));
         localStorage.setItem('username', resUser);
         localStorage.setItem('fullName', fullName || '');
+        localStorage.setItem('email', email || '');
         localStorage.setItem('roles', JSON.stringify(roles || []));
+        localStorage.setItem('businessId', String(businessId ?? ''));
+        localStorage.setItem('avatarUrl', avatarUrl || '');
 
-        // Check user role
+        // Set lightweight cookies for Edge middleware
+        const maxAge = 60 * 60 * 24; // 1 day
+        document.cookie = `auth_token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        const primaryRole = Array.isArray(roles) && roles.includes('ADMIN')
+          ? 'ADMIN'
+          : Array.isArray(roles) && roles.includes('BUSINESS_OWNER')
+          ? 'BUSINESS_OWNER'
+          : '';
+        document.cookie = `auth_role=${primaryRole}; path=/; max-age=${maxAge}; SameSite=Lax`;
+
+        // Route by role
         if (roles && roles.includes('ADMIN')) {
           router.push('/admin');
+        } else if (roles && roles.includes('BUSINESS_OWNER')) {
+          router.push('/owner/account');
         } else {
-          setError('Tài khoản của bạn không có quyền truy cập trang quản trị');
+          setError('Tài khoản không có quyền truy cập hệ thống');
           localStorage.clear();
+          document.cookie = 'auth_token=; max-age=0; path=/';
+          document.cookie = 'auth_role=; max-age=0; path=/';
         }
       } else {
         throw new Error('Dữ liệu phản hồi không hợp lệ');
       }
-    } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra, vui lòng thử lại sau');
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Có lỗi xảy ra, vui lòng thử lại sau');
     } finally {
       setLoading(false);
     }
@@ -68,34 +94,34 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white relative flex items-center justify-center p-4 overflow-hidden">
-      {/* Background Image Kho hàng / Quản lý tài sản (Chủ đề liên quan HKD) */}
-      <div 
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-30 pointer-events-none scale-105 transition-transform duration-1000"
+      {/* Background */}
+      <div
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-30 pointer-events-none scale-105"
         style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2000&auto=format&fit=crop')`
+          backgroundImage: `url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2000&auto=format&fit=crop')`,
         }}
       />
 
-      {/* Nút Trở về trang chủ */}
-      <Link 
-        href="/" 
+      {/* Back button */}
+      <Link
+        href="/"
         className="absolute top-6 left-6 z-20 flex items-center gap-2 text-zinc-400 hover:text-white bg-zinc-900/80 border border-zinc-700/80 px-4 py-2 rounded-xl backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95 text-sm font-medium shadow-lg"
       >
         <ArrowLeft className="w-4 h-4" /> Quay lại trang chủ
       </Link>
 
-      {/* Form Đăng nhập */}
+      {/* Login Form */}
       <div className="relative z-10 w-full max-w-md">
         <ScrollReveal>
           <div className="bg-zinc-900/90 border border-zinc-700/80 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl">
-            {/* Header Form */}
+            {/* Header */}
             <div className="text-center mb-6">
               <div className="inline-flex p-3 bg-white/10 rounded-2xl border border-zinc-600 mb-4 shadow-inner">
                 <Store className="w-8 h-8 text-white" />
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-white">Đăng Nhập</h1>
               <p className="text-zinc-400 text-sm mt-2">
-                Hệ thống Quản lý & AI Kế toán HKD.DIGITAL
+                Hệ thống Quản lý &amp; AI Kế toán HKD.DIGITAL
               </p>
             </div>
 
@@ -106,71 +132,73 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Form Inputs */}
             <form onSubmit={handleLogin} className="space-y-5">
+              {/* Username */}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-2">
                   Tên đăng nhập
                 </label>
                 <div className="relative">
                   <User className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
-                  <input 
-                    type="text" 
+                  <input
+                    id="login-username"
+                    type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Nhập tên đăng nhập (ví dụ: admin)"
+                    placeholder="Nhập tên đăng nhập"
                     className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
                     required
                   />
                 </div>
               </div>
 
+              {/* Password */}
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
                     Mật khẩu
                   </label>
-                  <a href="#" className="text-xs text-zinc-400 hover:text-white transition-colors">
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs text-zinc-400 hover:text-white transition-colors"
+                  >
                     Quên mật khẩu?
-                  </a>
+                  </Link>
                 </div>
                 <div className="relative">
                   <Lock className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
-                  <input 
-                    type="password" 
+                  <input
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                    className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 pl-11 pr-11 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
-              {/* Ghi nhớ đăng nhập */}
-              <div className="flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  id="remember" 
-                  className="w-4 h-4 rounded bg-zinc-800 border-zinc-700 text-white focus:ring-0 cursor-pointer accent-white"
-                />
-                <label htmlFor="remember" className="text-xs text-zinc-300 cursor-pointer select-none">
-                  Ghi nhớ đăng nhập trên thiết bị này
-                </label>
-              </div>
-
-              {/* Nút Submit */}
-              <button 
+              {/* Submit */}
+              <button
+                id="login-submit"
                 type="submit"
                 disabled={loading}
                 className="w-full py-3.5 bg-white text-zinc-950 font-bold rounded-xl hover:bg-zinc-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none transition-all duration-200 shadow-xl flex items-center justify-center gap-2 cursor-pointer mt-2"
               >
-                <LogIn className="w-4 h-4" /> 
+                <LogIn className="w-4 h-4" />
                 {loading ? 'Đang xác thực...' : 'Đăng nhập hệ thống'}
               </button>
             </form>
 
-            {/* Footer Form */}
+            {/* Footer */}
             <div className="text-center mt-6 pt-6 border-t border-zinc-800 text-xs text-zinc-400">
               Chưa có tài khoản?{' '}
               <Link href="/register" className="text-white font-semibold hover:underline">
