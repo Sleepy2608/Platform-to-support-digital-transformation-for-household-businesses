@@ -21,6 +21,7 @@ public class OwnerProfileResponse {
     private UserStatus status;
     private Long businessId;
     private LocalDateTime subscriptionExpiresAt;
+    private String packageType;
     private Set<String> roles;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

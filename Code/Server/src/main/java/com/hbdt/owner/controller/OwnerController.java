@@ -3,6 +3,7 @@ package com.hbdt.owner.controller;
 import com.hbdt.common.dto.ApiResponse;
 import com.hbdt.common.service.RateLimitService;
 import com.hbdt.owner.dto.*;
+import com.hbdt.owner.service.BusinessProfileService;
 import com.hbdt.owner.service.OwnerService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -22,15 +23,19 @@ import java.io.IOException;
  */
 @RestController
 @RequestMapping("/api/owner")
-@PreAuthorize("hasRole('BUSINESS_OWNER')")
+@PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
 public class OwnerController {
 
     private final OwnerService ownerService;
     private final RateLimitService rateLimitService;
+    private final BusinessProfileService businessProfileService;
 
-    public OwnerController(OwnerService ownerService, RateLimitService rateLimitService) {
+    public OwnerController(OwnerService ownerService,
+                           RateLimitService rateLimitService,
+                           BusinessProfileService businessProfileService) {
         this.ownerService = ownerService;
         this.rateLimitService = rateLimitService;
+        this.businessProfileService = businessProfileService;
     }
 
     // =========================================================
@@ -210,6 +215,82 @@ public class OwnerController {
         OwnerProfileResponse profile = ownerService.renewSubscription(userDetails.getUsername(), months);
         return ResponseEntity.ok(ApiResponse.success(
                 "Gia hạn gói thành công đến " + profile.getSubscriptionExpiresAt(), profile));
+    }
+
+    /**
+     * POST /api/owner/subscription/select-package?packageType=STANDARD|VIP
+     * Chọn gói dịch vụ lần đầu hoặc đổi gói.
+     */
+    @PostMapping("/subscription/select-package")
+    public ResponseEntity<ApiResponse<OwnerProfileResponse>> selectPackage(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam String packageType) {
+        OwnerProfileResponse profile = ownerService.selectPackage(userDetails.getUsername(), packageType);
+        return ResponseEntity.ok(ApiResponse.success(
+                "Đã chọn gói " + packageType + " thành công!", profile));
+    }
+
+    // =========================================================
+    // Business Profile
+    // =========================================================
+
+    /**
+     * GET /api/owner/business-profile
+     * Lấy hồ sơ doanh nghiệp của owner hiện tại.
+     */
+    @GetMapping("/business-profile")
+    public ResponseEntity<ApiResponse<BusinessProfileResponse>> getBusinessProfile(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        BusinessProfileResponse response = businessProfileService.getProfile(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.success("Lấy hồ sơ doanh nghiệp thành công", response));
+    }
+
+    /**
+     * POST /api/owner/business-profile
+     * Tạo mới hoặc cập nhật hồ sơ doanh nghiệp (upsert).
+     */
+    @PostMapping("/business-profile")
+    public ResponseEntity<ApiResponse<BusinessProfileResponse>> createBusinessProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody BusinessProfileRequest request) throws IOException {
+        BusinessProfileResponse response = businessProfileService.createOrUpdate(userDetails.getUsername(), request);
+        return ResponseEntity.ok(ApiResponse.success("Hồ sơ doanh nghiệp đã được lưu thành công", response));
+    }
+
+    /**
+     * PUT /api/owner/business-profile
+     * Alias cho POST — cùng upsert logic.
+     */
+    @PutMapping("/business-profile")
+    public ResponseEntity<ApiResponse<BusinessProfileResponse>> updateBusinessProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody BusinessProfileRequest request) throws IOException {
+        BusinessProfileResponse response = businessProfileService.createOrUpdate(userDetails.getUsername(), request);
+        return ResponseEntity.ok(ApiResponse.success("Hồ sơ doanh nghiệp đã được cập nhật thành công", response));
+    }
+
+    /**
+     * POST /api/owner/business-profile/store/logo
+     * Upload logo cửa hàng. Max 5MB, JPG/PNG/WEBP.
+     */
+    @PostMapping(value = "/business-profile/store/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<String>> uploadStoreLogo(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam("file") MultipartFile file) throws IOException {
+        String logoUrl = businessProfileService.uploadStoreLogo(userDetails.getUsername(), file);
+        return ResponseEntity.ok(ApiResponse.success("Upload logo thành công", logoUrl));
+    }
+
+    /**
+     * POST /api/owner/business-profile/store/cover-image
+     * Upload ảnh bìa cửa hàng. Max 5MB, JPG/PNG/WEBP.
+     */
+    @PostMapping(value = "/business-profile/store/cover-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<String>> uploadStoreCoverImage(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam("file") MultipartFile file) throws IOException {
+        String coverUrl = businessProfileService.uploadStoreCoverImage(userDetails.getUsername(), file);
+        return ResponseEntity.ok(ApiResponse.success("Upload ảnh bìa thành công", coverUrl));
     }
 
     // =========================================================

@@ -53,11 +53,11 @@ public class AuthController {
      * Verify the registration OTP to activate the account.
      */
     @PostMapping("/verify-otp")
-    public ResponseEntity<ApiResponse<Void>> verifyOtp(
+    public ResponseEntity<ApiResponse<AuthResponse>> verifyOtp(
             @Valid @RequestBody VerifyOtpRequest request) {
-        authService.verifyRegistrationOtp(request);
+        AuthResponse response = authService.verifyRegistrationOtp(request);
         return ResponseEntity.ok(
-                ApiResponse.success("Tài khoản đã được kích hoạt thành công. Bạn có thể đăng nhập.", null));
+                ApiResponse.success("Tài khoản đã được xác thực thành công.", response));
     }
 
     /**

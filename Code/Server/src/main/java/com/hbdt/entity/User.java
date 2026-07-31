@@ -53,6 +53,9 @@ public class User implements UserDetails {
     @Column(name = "subscription_expires_at")
     private LocalDateTime subscriptionExpiresAt;
 
+    @Column(name = "package_type", length = 20)
+    private String packageType;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 

@@ -245,6 +245,23 @@ public class OwnerService {
         return toProfileResponse(userRepository.save(user));
     }
 
+    public OwnerProfileResponse selectPackage(String username, String packageType) {
+        if (!"STANDARD".equals(packageType) && !"VIP".equals(packageType)) {
+            throw new BadRequestException("Loại gói không hợp lệ. Chỉ chấp nhận STANDARD hoặc VIP.");
+        }
+        User user = findActiveUser(username);
+        user.setPackageType(packageType);
+
+        // Kích hoạt gói 1 tháng từ thời điểm chọn
+        LocalDateTime baseDate = (user.getSubscriptionExpiresAt() != null
+                && user.getSubscriptionExpiresAt().isAfter(LocalDateTime.now()))
+                ? user.getSubscriptionExpiresAt()
+                : LocalDateTime.now();
+        user.setSubscriptionExpiresAt(baseDate.plusMonths(1));
+
+        return toProfileResponse(userRepository.save(user));
+    }
+
     // =========================================================
     // Private helpers
     // =========================================================
@@ -277,6 +294,7 @@ public class OwnerService {
                 .status(user.getStatus())
                 .businessId(user.getBusinessId())
                 .subscriptionExpiresAt(user.getSubscriptionExpiresAt())
+                .packageType(user.getPackageType())
                 .roles(roleNames)
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())

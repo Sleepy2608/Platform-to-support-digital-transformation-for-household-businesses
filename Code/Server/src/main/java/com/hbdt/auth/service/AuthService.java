@@ -86,14 +86,14 @@ public class AuthService {
     }
 
     /**
-     * Verify the registration OTP and activate the account.
+     * Verify the registration OTP, activate account and return JWT tokens for auto-login.
      */
-    public void verifyRegistrationOtp(VerifyOtpRequest request) {
+    public AuthResponse verifyRegistrationOtp(VerifyOtpRequest request) {
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new BadRequestException("Không tìm thấy tài khoản"));
 
-        if (user.getStatus() != UserStatus.PENDING_VERIFICATION) {
-            throw new BadRequestException("Tài khoản đã được kích hoạt hoặc không ở trạng thái chờ xác thực");
+        if (user.getStatus() != UserStatus.PENDING_VERIFICATION && user.getStatus() != UserStatus.ACTIVE) {
+            throw new BadRequestException("Tài khoản không ở trạng thái hợp lệ để xác thực");
         }
 
         // OTP was sent to user's email
@@ -101,6 +101,12 @@ public class AuthService {
 
         user.setStatus(UserStatus.ACTIVE);
         userRepository.save(user);
+
+        // Build Authentication from user (User implements UserDetails) for JWT generation
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                user, null, user.getAuthorities());
+
+        return buildAuthResponse(authentication, user);
     }
 
     /**

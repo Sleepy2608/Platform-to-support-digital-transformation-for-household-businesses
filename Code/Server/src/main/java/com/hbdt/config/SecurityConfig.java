@@ -68,14 +68,16 @@ public class SecurityConfig {
                             "/api/auth/reset-password",
                             "/api/auth/logout"
                     ).permitAll()
-                    // Public static files (uploaded avatars)
+                    // Public static files (uploaded avatars, store images)
                     .requestMatchers("/uploads/**").permitAll()
                     // Public API
                     .requestMatchers("/api/public/**").permitAll()
+                    // Public reference data (Tỉnh/Huyện/Xã — không cần đăng nhập)
+                    .requestMatchers("/api/reference/**").permitAll()
                     // Admin routes
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                    // Owner routes
-                    .requestMatchers("/api/owner/**").hasRole("BUSINESS_OWNER")
+                    // Owner routes (cho phép cả BUSINESS_OWNER và OWNER)
+                    .requestMatchers("/api/owner/**").hasAnyRole("BUSINESS_OWNER", "OWNER")
                     // Everything else requires authentication
                     .anyRequest().authenticated()
             );
