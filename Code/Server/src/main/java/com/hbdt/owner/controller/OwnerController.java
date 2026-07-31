@@ -218,16 +218,26 @@ public class OwnerController {
     }
 
     /**
-     * POST /api/owner/subscription/select-package?packageType=STANDARD|VIP
+     * GET /api/owner/subscription/packages
+     * Lấy danh sách các gói dịch vụ kèm giá và tính năng.
+     */
+    @GetMapping("/subscription/packages")
+    public ResponseEntity<ApiResponse<java.util.List<com.hbdt.owner.dto.PackageDto>>> getAvailablePackages() {
+        return ResponseEntity.ok(ApiResponse.success("Danh sách gói dịch vụ", ownerService.getAvailablePackages()));
+    }
+
+    /**
+     * POST /api/owner/subscription/select-package?packageType=STANDARD|VIP&billingCycle=MONTHLY|YEARLY
      * Chọn gói dịch vụ lần đầu hoặc đổi gói.
      */
     @PostMapping("/subscription/select-package")
     public ResponseEntity<ApiResponse<OwnerProfileResponse>> selectPackage(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam String packageType) {
-        OwnerProfileResponse profile = ownerService.selectPackage(userDetails.getUsername(), packageType);
+            @RequestParam String packageType,
+            @RequestParam(defaultValue = "MONTHLY") String billingCycle) {
+        OwnerProfileResponse profile = ownerService.selectPackage(userDetails.getUsername(), packageType, billingCycle);
         return ResponseEntity.ok(ApiResponse.success(
-                "Đã chọn gói " + packageType + " thành công!", profile));
+                "Đã chọn gói " + packageType + " (" + billingCycle + ") thành công!", profile));
     }
 
     // =========================================================

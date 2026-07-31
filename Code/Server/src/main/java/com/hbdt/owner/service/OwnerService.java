@@ -22,6 +22,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -245,21 +247,62 @@ public class OwnerService {
         return toProfileResponse(userRepository.save(user));
     }
 
-    public OwnerProfileResponse selectPackage(String username, String packageType) {
+    public OwnerProfileResponse selectPackage(String username, String packageType, String billingCycle) {
         if (!"STANDARD".equals(packageType) && !"VIP".equals(packageType)) {
             throw new BadRequestException("Loại gói không hợp lệ. Chỉ chấp nhận STANDARD hoặc VIP.");
+        }
+        if (!"MONTHLY".equals(billingCycle) && !"YEARLY".equals(billingCycle)) {
+            throw new BadRequestException("Chu kỳ thanh toán không hợp lệ. Chỉ chấp nhận MONTHLY hoặc YEARLY.");
         }
         User user = findActiveUser(username);
         user.setPackageType(packageType);
 
-        // Kích hoạt gói 1 tháng từ thời điểm chọn
+        // Tính ngày hết hạn theo chu kỳ
         LocalDateTime baseDate = (user.getSubscriptionExpiresAt() != null
                 && user.getSubscriptionExpiresAt().isAfter(LocalDateTime.now()))
                 ? user.getSubscriptionExpiresAt()
                 : LocalDateTime.now();
-        user.setSubscriptionExpiresAt(baseDate.plusMonths(1));
+        int months = "YEARLY".equals(billingCycle) ? 12 : 1;
+        user.setSubscriptionExpiresAt(baseDate.plusMonths(months));
 
         return toProfileResponse(userRepository.save(user));
+    }
+
+    // =========================================================
+    // Available Packages (static catalog)
+    // =========================================================
+
+    public List<PackageDto> getAvailablePackages() {
+        return Arrays.asList(
+            PackageDto.builder()
+                .id("STANDARD")
+                .name("Gói Standard")
+                .description("Cho cửa hàng bán lẻ có quản lý kho & nợ")
+                .monthlyPrice(199000)
+                .yearlyPrice(1990000)
+                .recommended(false)
+                .features(Arrays.asList(
+                    "Tất cả tính năng gói Basic",
+                    "Quản lý tồn kho & công nợ",
+                    "Lập sổ kế toán TT 88/2021",
+                    "Tối đa 3 tài khoản nhân viên"
+                ))
+                .build(),
+            PackageDto.builder()
+                .id("VIP")
+                .name("Gói VIP (Pro)")
+                .description("Đầy đủ sức mạnh AI & Kế toán tự động")
+                .monthlyPrice(399000)
+                .yearlyPrice(3990000)
+                .recommended(true)
+                .features(Arrays.asList(
+                    "Tất cả tính năng gói Standard",
+                    "Trợ lý AI đọc đơn giọng nói / tin nhắn",
+                    "Tự động hóa báo cáo thuế trọn gói",
+                    "Không giới hạn nhân viên"
+                ))
+                .build()
+        );
     }
 
     // =========================================================
