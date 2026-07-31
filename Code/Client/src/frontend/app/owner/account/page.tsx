@@ -5,11 +5,18 @@ import { useRouter } from 'next/navigation';
 import {
   UserCircle, Lock, Mail, CreditCard, AlertTriangle,
   Camera, Save, CheckCircle2, AlertCircle, Loader2,
-  Eye, EyeOff, Phone, Calendar, Shield,
-  Pencil, X, RefreshCw, Trash2, ChevronRight, Crown,
+  Eye, EyeOff, Phone, Shield, Calendar,
+  Pencil, X, RefreshCw, Trash2, Crown, Building2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient, clearAuth } from '../../lib/apiClient';
+import {
+  type BusinessProfileResponse, type BusinessProfileRequest, type BusinessType,
+  type ProvinceDto, type DistrictDto, type WardDto,
+  fetchProvinces, fetchDistricts, fetchWards,
+  getBusinessProfile, saveBusinessProfile,
+  uploadStoreLogo, uploadStoreCoverImage,
+} from '../../lib/business-profile';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface OwnerProfile {
@@ -28,7 +35,7 @@ interface OwnerProfile {
   updatedAt: string;
 }
 
-type Tab = 'profile' | 'password' | 'contact' | 'subscription' | 'danger';
+type Tab = 'profile' | 'business-profile' | 'password' | 'contact' | 'subscription' | 'danger';
 type OtpTarget = 'email' | 'phone' | null;
 
 // ─── Helper components ────────────────────────────────────────────────────────
@@ -142,7 +149,7 @@ export default function OwnerAccountPage() {
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash.replace('#', '');
-      if (['profile', 'password', 'contact', 'subscription', 'danger'].includes(hash)) {
+      if (['profile', 'business-profile', 'password', 'contact', 'subscription', 'danger'].includes(hash)) {
         setActiveTab(hash as Tab);
       }
     };
@@ -188,6 +195,7 @@ export default function OwnerAccountPage() {
 
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: 'profile', label: 'Hồ sơ cá nhân', icon: UserCircle },
+    { id: 'business-profile', label: 'Hồ sơ kinh doanh', icon: Building2 },
     { id: 'password', label: 'Mật khẩu', icon: Lock },
     { id: 'contact', label: 'Email & SĐT', icon: Mail },
     { id: 'subscription', label: 'Gói dịch vụ', icon: CreditCard },
@@ -254,6 +262,9 @@ export default function OwnerAccountPage() {
           >
             {activeTab === 'profile' && (
               <ProfileTab profile={profile} onUpdated={loadProfile} />
+            )}
+            {activeTab === 'business-profile' && (
+              <BusinessProfileTab />
             )}
             {activeTab === 'password' && <PasswordTab />}
             {activeTab === 'contact' && (
@@ -974,6 +985,432 @@ function DangerTab({ router }: { router: ReturnType<typeof useRouter> }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TAB 6: Business Profile Management (SCRUM-15)
+// ═══════════════════════════════════════════════════════════════════════════════
+const BUSINESS_TYPE_LABELS: Record<BusinessType, string> = {
+  INDIVIDUAL: 'Cá nhân kinh doanh',
+  HOUSEHOLD: 'Hộ kinh doanh',
+  COOPERATIVE: 'Hợp tác xã',
+  SMALL_ENTERPRISE: 'Doanh nghiệp nhỏ',
+};
+
+function BusinessProfileTab() {
+  const router = useRouter();
+  const [bp, setBp] = useState<BusinessProfileResponse | null>(null);
+  const [notFound, setNotFound] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // ── Address cascade data ──────────────────────────────────────────────────
+  const [provinces, setProvinces] = useState<ProvinceDto[]>([]);
+  const [districts, setDistricts] = useState<DistrictDto[]>([]);
+  const [wards, setWards] = useState<WardDto[]>([]);
+
+  // ── Form state ────────────────────────────────────────────────────────────
+  const [businessName, setBusinessName] = useState('');
+  const [taxCode, setTaxCode] = useState('');
+  const [businessType, setBusinessType] = useState<BusinessType>('HOUSEHOLD');
+  const [provinceCode, setProvinceCode] = useState('');
+  const [districtCode, setDistrictCode] = useState('');
+  const [wardCode, setWardCode] = useState('');
+  const [detailAddress, setDetailAddress] = useState('');
+  const [repFullName, setRepFullName] = useState('');
+  const [repPhone, setRepPhone] = useState('');
+  const [repEmail, setRepEmail] = useState('');
+  const [storeName, setStoreName] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
+  const [coverImageUrl, setCoverImageUrl] = useState('');
+
+  // ── Upload state ──────────────────────────────────────────────────────────
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const logoRef = useRef<HTMLInputElement>(null);
+  const coverRef = useRef<HTMLInputElement>(null);
+
+  // ── Load data ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const [data, provData] = await Promise.all([
+          getBusinessProfile(),
+          fetchProvinces(),
+        ]);
+        setProvinces(provData);
+        setBp(data);
+        // Populate form
+        setBusinessName(data.businessName || '');
+        setTaxCode(data.taxCode || '');
+        setBusinessType(data.businessType || 'HOUSEHOLD');
+        setProvinceCode(data.provinceCode || '');
+        setDistrictCode(data.districtCode || '');
+        setWardCode(data.wardCode || '');
+        setDetailAddress(data.detailAddress || '');
+        setRepFullName(data.representative?.fullName || '');
+        setRepPhone(data.representative?.phoneNumber || '');
+        setRepEmail(data.representative?.email || '');
+        setStoreName(data.store?.storeName || '');
+        setLogoUrl(data.store?.logoUrl || '');
+        setCoverImageUrl(data.store?.coverImageUrl || '');
+
+        // Load districts/wards for existing province/district
+        if (data.provinceCode) {
+          const distData = await fetchDistricts(data.provinceCode);
+          setDistricts(distData);
+        }
+        if (data.districtCode) {
+          const wardData = await fetchWards(data.districtCode);
+          setWards(wardData);
+        }
+      } catch {
+        setNotFound(true);
+        // Load provinces anyway for potential creation
+        try {
+          const provData = await fetchProvinces();
+          setProvinces(provData);
+        } catch { /* ignore */ }
+      } finally {
+        setPageLoading(false);
+      }
+    };
+    init();
+  }, []);
+
+  // ── Cascade handlers ──────────────────────────────────────────────────────
+  const handleProvinceChange = async (code: string) => {
+    setProvinceCode(code);
+    setDistrictCode('');
+    setWardCode('');
+    setDistricts([]);
+    setWards([]);
+    if (code) {
+      const data = await fetchDistricts(code);
+      setDistricts(data);
+    }
+  };
+
+  const handleDistrictChange = async (code: string) => {
+    setDistrictCode(code);
+    setWardCode('');
+    setWards([]);
+    if (code) {
+      const data = await fetchWards(code);
+      setWards(data);
+    }
+  };
+
+  // ── Upload handlers ───────────────────────────────────────────────────────
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    try {
+      const url = await uploadStoreLogo(file);
+      setLogoUrl(url);
+      setMsg({ type: 'success', text: 'Upload logo thành công!' });
+    } catch (err: unknown) {
+      setMsg({ type: 'error', text: (err as Error).message });
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingCover(true);
+    try {
+      const url = await uploadStoreCoverImage(file);
+      setCoverImageUrl(url);
+      setMsg({ type: 'success', text: 'Upload ảnh bìa thành công!' });
+    } catch (err: unknown) {
+      setMsg({ type: 'error', text: (err as Error).message });
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  // ── Save ──────────────────────────────────────────────────────────────────
+  const handleSave = async () => {
+    setSaving(true);
+    setMsg(null);
+    const payload: BusinessProfileRequest = {
+      businessInfo: {
+        businessName, taxCode, businessType,
+        provinceCode, districtCode, wardCode, detailAddress,
+      },
+      representative: { fullName: repFullName, phoneNumber: repPhone, email: repEmail },
+      store: { storeName, logoUrl: logoUrl || undefined, coverImageUrl: coverImageUrl || undefined },
+    };
+    try {
+      const updated = await saveBusinessProfile(payload);
+      setBp(updated);
+      setMsg({ type: 'success', text: 'Hồ sơ kinh doanh đã được cập nhật thành công!' });
+    } catch (err: unknown) {
+      setMsg({ type: 'error', text: (err as Error).message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ── Loading ───────────────────────────────────────────────────────────────
+  if (pageLoading) {
+    return (
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-12 flex items-center justify-center shadow-xs">
+        <Loader2 className="w-6 h-6 text-slate-400 animate-spin mr-3" />
+        <span className="text-slate-500 text-sm font-medium">Đang tải hồ sơ kinh doanh...</span>
+      </div>
+    );
+  }
+
+  // ── No profile yet ────────────────────────────────────────────────────────
+  if (notFound) {
+    return (
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-10 shadow-xs text-center space-y-5">
+        <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto">
+          <Building2 className="w-8 h-8 text-slate-400" />
+        </div>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">Chưa có hồ sơ kinh doanh</h3>
+          <p className="text-sm text-slate-500 mt-1.5 max-w-sm mx-auto">
+            Bạn chưa khởi tạo hồ sơ doanh nghiệp. Hãy hoàn tất bước Onboarding để bắt đầu sử dụng nền tảng.
+          </p>
+        </div>
+        <button
+          onClick={() => router.push('/onboarding/business-profile')}
+          className="inline-flex items-center gap-2 px-6 py-3 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-700 active:scale-95 transition-all cursor-pointer shadow-sm"
+        >
+          <Building2 className="w-4 h-4" /> Khởi tạo hồ sơ ngay
+        </button>
+      </div>
+    );
+  }
+
+  // ── Shared select class ───────────────────────────────────────────────────
+  const selectClass = "w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2.5 pl-3.5 pr-9 text-xs sm:text-sm text-gray-900 font-medium focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all appearance-none";
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader
+        icon={Building2}
+        title="Hồ sơ kinh doanh"
+        subtitle="Thông tin hộ kinh doanh / doanh nghiệp — tách biệt với thông tin tài khoản cá nhân"
+      />
+
+      {msg && <Alert type={msg.type} message={msg.text} />}
+
+      {/* ── Section 1: Business Info ── */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-5 shadow-xs">
+        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-slate-900 text-white text-xs flex items-center justify-center font-bold">1</span>
+          Thông tin hộ kinh doanh
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="sm:col-span-2">
+            <InputField
+              label="Tên cửa hàng / Hộ kinh doanh"
+              value={businessName}
+              onChange={setBusinessName}
+              placeholder="Ví dụ: Cửa hàng tạp hoá Minh Tâm"
+              icon={Building2}
+            />
+          </div>
+
+          <InputField
+            label="Mã số thuế"
+            value={taxCode}
+            onChange={setTaxCode}
+            placeholder="10 hoặc 13 chữ số"
+          />
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              Loại hình kinh doanh
+            </label>
+            <select
+              value={businessType}
+              onChange={(e) => setBusinessType(e.target.value as BusinessType)}
+              className={selectClass}
+            >
+              {(Object.keys(BUSINESS_TYPE_LABELS) as BusinessType[]).map((t) => (
+                <option key={t} value={t} className="text-gray-900 bg-white">{BUSINESS_TYPE_LABELS[t]}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Address Cascade */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Tỉnh / Thành phố</label>
+            <select value={provinceCode} onChange={(e) => handleProvinceChange(e.target.value)} className={selectClass}>
+              <option value="">-- Chọn Tỉnh/Thành --</option>
+              {provinces.map((p) => (
+                <option key={p.code} value={p.code} className="text-gray-900 bg-white">{p.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Quận / Huyện</label>
+            <select value={districtCode} onChange={(e) => handleDistrictChange(e.target.value)} disabled={!provinceCode} className={selectClass}>
+              <option value="">-- Chọn Quận/Huyện --</option>
+              {districts.map((d) => (
+                <option key={d.code} value={d.code} className="text-gray-900 bg-white">{d.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Xã / Phường</label>
+            <select value={wardCode} onChange={(e) => setWardCode(e.target.value)} disabled={!districtCode} className={selectClass}>
+              <option value="">-- Chọn Xã/Phường --</option>
+              {wards.map((w) => (
+                <option key={w.code} value={w.code} className="text-gray-900 bg-white">{w.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="sm:col-span-2">
+            <InputField
+              label="Địa chỉ chi tiết"
+              value={detailAddress}
+              onChange={setDetailAddress}
+              placeholder="Số nhà, tên đường, khu vực..."
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Section 2: Representative ── */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-5 shadow-xs">
+        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-slate-900 text-white text-xs flex items-center justify-center font-bold">2</span>
+          Thông tin người đại diện
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="sm:col-span-2">
+            <InputField
+              label="Họ và tên người đại diện"
+              value={repFullName}
+              onChange={setRepFullName}
+              placeholder="Nguyễn Văn A"
+              icon={UserCircle}
+            />
+          </div>
+          <InputField
+            label="Số điện thoại cửa hàng"
+            value={repPhone}
+            onChange={setRepPhone}
+            placeholder="0912345678"
+            icon={Phone}
+            type="tel"
+          />
+          <InputField
+            label="Email cửa hàng"
+            value={repEmail}
+            onChange={setRepEmail}
+            placeholder="cuahang@example.com"
+            icon={Mail}
+            type="email"
+          />
+        </div>
+      </div>
+
+      {/* ── Section 3: Store Info & Images ── */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-5 shadow-xs">
+        <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+          <span className="w-6 h-6 rounded-full bg-slate-900 text-white text-xs flex items-center justify-center font-bold">3</span>
+          Thương hiệu & Hình ảnh cửa hàng
+        </h3>
+
+        <InputField
+          label="Tên cửa hàng (hiển thị)"
+          value={storeName}
+          onChange={setStoreName}
+          placeholder="Tên thương hiệu hiển thị cho khách hàng"
+          icon={Building2}
+        />
+
+        {/* Logo Upload */}
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Logo cửa hàng</label>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl border-2 border-slate-200 bg-slate-50 overflow-hidden flex-shrink-0 flex items-center justify-center">
+              {logoUrl
+                ? <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                : <Building2 className="w-6 h-6 text-slate-300" />
+              }
+            </div>
+            <div>
+              <button
+                type="button"
+                onClick={() => logoRef.current?.click()}
+                disabled={uploadingLogo}
+                className="px-4 py-2 text-xs font-bold bg-slate-100 text-slate-700 rounded-xl border border-slate-200 hover:bg-slate-200 active:scale-95 transition-all cursor-pointer flex items-center gap-2 disabled:opacity-60"
+              >
+                {uploadingLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                {uploadingLogo ? 'Đang upload...' : 'Tải lên Logo'}
+              </button>
+              <p className="text-[10px] text-slate-400 mt-1">JPG, PNG, WEBP · Tối đa 5MB</p>
+            </div>
+          </div>
+          <input ref={logoRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleLogoUpload} className="hidden" />
+        </div>
+
+        {/* Cover Image Upload */}
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Ảnh bìa cửa hàng</label>
+          <div className="relative w-full h-32 rounded-2xl border-2 border-slate-200 bg-slate-50 overflow-hidden group cursor-pointer" onClick={() => coverRef.current?.click()}>
+            {coverImageUrl
+              ? <img src={coverImageUrl} alt="Cover" className="w-full h-full object-cover" />
+              : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 gap-1">
+                  <Camera className="w-8 h-8" />
+                  <span className="text-xs font-medium text-slate-400">Nhấp để tải ảnh bìa</span>
+                </div>
+              )
+            }
+            <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              {uploadingCover
+                ? <Loader2 className="w-6 h-6 text-white animate-spin" />
+                : <Camera className="w-6 h-6 text-white" />
+              }
+            </div>
+          </div>
+          <p className="text-[10px] text-slate-400 mt-1">Kích thước đề nghị: 1200×400px · JPG, PNG, WEBP · Tối đa 5MB</p>
+          <input ref={coverRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleCoverUpload} className="hidden" />
+        </div>
+      </div>
+
+      {/* ── Status Badge ── */}
+      {bp && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl">
+          <Shield className="w-4 h-4 text-slate-500" />
+          <span className="text-xs font-medium text-slate-600">
+            Trạng thái hồ sơ:&nbsp;
+            <span className={`font-bold ${bp.status === 'ACTIVE' ? 'text-emerald-700' : bp.status === 'REJECTED' ? 'text-rose-700' : 'text-amber-700'}`}>
+              {bp.status === 'ACTIVE' ? 'Đã xác minh' : bp.status === 'REJECTED' ? 'Bị từ chối' : bp.status === 'SUSPENDED' ? 'Tạm đình chỉ' : 'Đang chờ xét duyệt'}
+            </span>
+          </span>
+        </div>
+      )}
+
+      {/* ── Save Button ── */}
+      <button
+        id="btn-save-business-profile"
+        onClick={handleSave}
+        disabled={saving}
+        className="w-full sm:w-auto px-8 py-3 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-700 active:scale-95 disabled:opacity-60 transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+      >
+        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+        {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
+      </button>
     </div>
   );
 }
