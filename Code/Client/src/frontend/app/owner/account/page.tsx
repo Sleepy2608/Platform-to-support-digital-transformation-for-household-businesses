@@ -6,7 +6,7 @@ import {
   UserCircle, Lock, Mail, CreditCard, AlertTriangle,
   Camera, Save, CheckCircle2, AlertCircle, Loader2,
   Eye, EyeOff, Phone, Calendar, Shield,
-  Pencil, X, RefreshCw, Trash2, ChevronRight,
+  Pencil, X, RefreshCw, Trash2, ChevronRight, Crown,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient, clearAuth } from '../../lib/apiClient';
@@ -22,6 +22,7 @@ interface OwnerProfile {
   status: string;
   businessId: number | null;
   subscriptionExpiresAt: string | null;
+  packageType: string | null;
   roles: string[];
   createdAt: string;
   updatedAt: string;
@@ -715,12 +716,14 @@ function ContactTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
 // TAB 4: Subscription Package
 // ═══════════════════════════════════════════════════════════════════════════════
 function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUpdated: () => void }) {
+  const router = useRouter();
   const [months, setMonths] = useState(1);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const expiresAt = profile?.subscriptionExpiresAt;
   const isActive = expiresAt && new Date(expiresAt) > new Date();
+  const packageType = profile?.packageType;
 
   const formatExpiry = (dt: string | null) => {
     if (!dt) return 'Chưa kích hoạt gói dịch vụ';
@@ -744,10 +747,44 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
     }
   };
 
+  const packageLabel = packageType === 'VIP' ? 'Gói VIP (Pro)' : packageType === 'STANDARD' ? 'Gói Standard' : null;
+  const packageBadgeClass = packageType === 'VIP'
+    ? 'bg-zinc-900 text-white border-zinc-700'
+    : packageType === 'STANDARD'
+    ? 'bg-blue-50 text-blue-800 border-blue-200'
+    : '';
+
   return (
     <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
-      <SectionHeader icon={CreditCard} title="Gói dịch vụ & Gia hạn" subtitle="Quản lý thời hạn truy cập nền tảng HKD Digital" />
+      <SectionHeader icon={CreditCard} title="Gói dịch vụ &amp; Gia hạn" subtitle="Quản lý thời hạn truy cập nền tảng HKD Digital" />
       {msg && <Alert type={msg.type} message={msg.text} />}
+
+      {/* Package Name Badge */}
+      {packageLabel ? (
+        <div className="flex items-center gap-3">
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${packageBadgeClass}`}>
+            <Crown className="w-3.5 h-3.5" />
+            {packageLabel}
+          </span>
+          <span className="text-xs text-slate-500">Gói dịch vụ hiện tại</span>
+        </div>
+      ) : (
+        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+          <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-bold text-amber-800">Chưa đăng ký gói dịch vụ</p>
+            <p className="text-xs text-amber-700 mt-0.5">Vui lòng chọn gói để sử dụng đầy đủ tính năng nền tảng.</p>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => router.push('/onboarding/package-selection')}
+                className="px-4 py-2 bg-amber-600 text-white text-xs font-bold rounded-xl hover:bg-amber-700 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <Crown className="w-3.5 h-3.5" /> Chọn gói ngay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Subscription Status Card */}
       <div className={`p-6 rounded-2xl border ${isActive ? 'bg-emerald-50/60 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>

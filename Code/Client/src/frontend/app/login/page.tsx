@@ -75,7 +75,11 @@ export default function LoginPage() {
         if (roles && roles.includes('ADMIN')) {
           router.push('/admin');
         } else if (roles && roles.includes('BUSINESS_OWNER')) {
-          router.push('/owner/account');
+          if (!businessId) {
+            router.push('/onboarding/business-profile');
+          } else {
+            router.push('/owner/account');
+          }
         } else {
           setError('Tài khoản không có quyền truy cập hệ thống');
           localStorage.clear();

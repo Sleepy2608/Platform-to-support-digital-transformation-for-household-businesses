@@ -66,8 +66,26 @@ function VerifyEmailContent() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message || 'Xác thực thất bại');
+      
+      if (json.data && json.data.accessToken) {
+        const { accessToken, refreshToken, userId, username: uName, fullName, email, roles, businessId, avatarUrl } = json.data;
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('userId', String(userId));
+        localStorage.setItem('username', uName || username);
+        localStorage.setItem('fullName', fullName || '');
+        localStorage.setItem('email', email || '');
+        localStorage.setItem('roles', JSON.stringify(roles || ['BUSINESS_OWNER']));
+        localStorage.setItem('businessId', String(businessId ?? ''));
+        localStorage.setItem('avatarUrl', avatarUrl || '');
+
+        const maxAge = 60 * 60 * 24;
+        document.cookie = `auth_token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
+        document.cookie = `auth_role=BUSINESS_OWNER; path=/; max-age=${maxAge}; SameSite=Lax`;
+      }
+
       setSuccess(true);
-      setTimeout(() => router.push('/login'), 2500);
+      setTimeout(() => router.push('/onboarding/business-profile'), 1500);
     } catch (err: unknown) {
       setError((err as Error).message || 'Mã OTP không hợp lệ hoặc đã hết hạn');
     } finally {

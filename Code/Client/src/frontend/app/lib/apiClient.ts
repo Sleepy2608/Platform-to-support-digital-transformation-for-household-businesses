@@ -164,6 +164,9 @@ async function request<T = unknown>(
   const json = await response.json();
 
   if (!response.ok) {
+    if (response.status === 403) {
+      throw new Error('Phiên đăng nhập hết hạn hoặc bạn không có quyền thực hiện. Vui lòng đăng nhập lại!');
+    }
     throw new Error(json.message || `HTTP ${response.status}`);
   }
 
