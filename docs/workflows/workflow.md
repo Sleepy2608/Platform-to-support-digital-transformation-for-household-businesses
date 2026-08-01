@@ -14,7 +14,8 @@
 │                                                                            │
 │  ③ KHÁCH HÀNG: Đặt hàng qua 1 trong 2 kênh                                 │
 │     ├── (a) Tại quầy: Employee thao tác trực tiếp trên POS                 │
-│     └── (b) Từ xa: nhắn Zalo hoặc gọi điện ──► Messaging/Voice Channel     │
+│     └── (b) Từ xa: nhắn Zalo hoặc gọi điện thông qua hệ thống              │
+│          └──► Messaging/Voice Channel                                      │
 │                                                                            │
 │  ④ HỆ THỐNG: Nếu kênh (b) — AI Order Service xử lý                         │
 │     └──► Channel Adapter chuẩn hoá input, gắn tenantId                     │
