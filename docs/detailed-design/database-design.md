@@ -193,11 +193,31 @@ Cơ sở dữ liệu gồm **33 bảng**, chia thành 5 phân hệ.
 
 | Bảng | Chức năng |
 |---|---|
-| `businesses` | Thông tin hộ kinh doanh, mã số thuế và phương pháp tính giá xuất kho |
+| `businesses` | Thông tin hộ kinh doanh, mã số thuế, phương pháp tính giá xuất kho và object key của logo/ảnh bìa |
 | `users` | Tài khoản Employee, Owner và Administrator |
 | `roles` | Vai trò và nền tảng triển khai RBAC |
 | `subscription_plans` | Danh mục gói thuê bao |
 | `subscriptions` | Lịch sử đăng ký gói của từng hộ kinh doanh |
+
+#### 5.1.1. Logo và ảnh bìa của hộ kinh doanh
+
+Bảng `businesses` bổ sung hai cột nullable nhưng không làm thay đổi tổng số 33 bảng:
+
+| Cột | Kiểu dữ liệu | Null | Mục đích |
+|---|---|---|---|
+| `logo_object_key` | `VARCHAR(500)` | Có | Object key của logo trong private object storage |
+| `cover_image_object_key` | `VARCHAR(500)` | Có | Object key của ảnh bìa trong private object storage |
+
+MySQL không lưu nội dung nhị phân của ảnh. File ảnh thật được lưu trong private object storage; database chỉ lưu object key độc lập với domain hoặc nhà cung cấp lưu trữ.
+
+Quy ước object key đề xuất:
+
+```text
+businesses/{business_id}/logo/{uuid}.webp
+businesses/{business_id}/cover/{uuid}.webp
+```
+
+Backend tạo signed URL có thời hạn từ object key và trả `logoUrl`, `coverImageUrl` cho frontend. Nếu object key là `NULL`, API trả ảnh mặc định. Khi thay ảnh, backend cập nhật object key mới và xóa object cũ sau khi cập nhật database thành công.
 
 ### 5.2. Product & Inventory Management – 10 bảng
 
@@ -695,6 +715,18 @@ Migration bổ sung phạm vi S1/S2/S4:
 V008__support_S1_S2_S4_UNSIGNED.sql
 ```
 
+Migration bổ sung object key cho logo và ảnh bìa:
+
+```text
+V009__business_branding_object_keys.sql
+```
+
+```sql
+ALTER TABLE businesses
+    ADD COLUMN logo_object_key VARCHAR(500) NULL,
+    ADD COLUMN cover_image_object_key VARCHAR(500) NULL;
+```
+
 Cấu trúc thư mục đề xuất:
 
 ```text
@@ -708,7 +740,8 @@ database/
 │   ├── V005__accounting_and_reporting.sql
 │   ├── V006__platform_administration.sql
 │   ├── V007__triggers.sql
-│   └── V008__support_S1_S2_S4_UNSIGNED.sql
+│   ├── V008__support_S1_S2_S4_UNSIGNED.sql
+│   └── V009__business_branding_object_keys.sql
 ├── seed/
 │   └── reference-data.sql
 └── verification/
@@ -838,6 +871,17 @@ Không cấp `DROP`, `ALTER`, `CREATE USER` hoặc `GRANT` cho tài khoản ứn
 - thời điểm.
 
 API key AI, mật khẩu database và secret không được lưu rõ trong database hoặc commit lên Git.
+
+### 14.7. Bảo mật logo và ảnh bìa
+
+- object storage phải để private, không cấp quyền đọc công khai toàn bucket;
+- frontend chỉ nhận signed URL có thời hạn do backend phát hành;
+- backend xác minh Owner thuộc đúng `business_id` trước khi upload, thay hoặc xóa ảnh;
+- kiểm tra MIME thực, kích thước file và giới hạn định dạng JPEG, PNG hoặc WebP;
+- tên object sử dụng UUID, không dùng nguyên tên file do người dùng cung cấp;
+- credential của object storage chỉ lưu trong biến môi trường và không commit lên Git;
+- không lưu ảnh trong thư mục triển khai tạm thời của backend;
+- khi thay ảnh, chỉ xóa object cũ sau khi object mới đã upload và object key mới đã được lưu thành công.
 
 ---
 
