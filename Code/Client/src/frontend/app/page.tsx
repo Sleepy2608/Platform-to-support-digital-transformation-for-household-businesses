@@ -1,3 +1,5 @@
+'use client';
+
 import Navbar from './components/Navbar';
 import ScrollReveal from './components/ScrollReveal';
 import { CheckCircle, Bot, Receipt, Package, ArrowRight, ShieldCheck, Zap } from 'lucide-react';

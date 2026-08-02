@@ -1,71 +1,33 @@
-# Tài liệu đặc tả yêu cầu người dùng
+# TÀI LIỆU ĐẶC TẢ YÊU CẦU NGƯỜI DÙNG
 
 ## Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh
 
 > **User Requirements Document (URD)**  
 > *Platform to Support Digital Transformation for Household Businesses*
 
+---
+
 ## Thông tin kiểm soát tài liệu
 
-<table align="center">
-<thead>
-<tr>
-<th align="center">Thông tin</th>
-<th align="center">Nội dung</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center">Tên tài liệu</td>
-<td align="left">Tài liệu đặc tả yêu cầu người dùng - Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh</td>
-</tr>
-<tr>
-<td align="center">Tên tiếng Anh</td>
-<td align="left">User Requirements Document - Platform to Support Digital Transformation for Household Businesses</td>
-</tr>
-<tr>
-<td align="center">Viết tắt</td>
-<td align="left">HBDT</td>
-</tr>
-<tr>
-<td align="center">Mã tài liệu</td>
-<td align="left">URD-HKD-v1.0.0</td>
-</tr>
-<tr>
-<td align="center">Phiên bản</td>
-<td align="left">1.0.0</td>
-</tr>
-<tr>
-<td align="center">Người lập</td>
-<td align="left">Nguyễn Ngọc Gia Bảo</td>
-</tr>
-<tr>
-<td align="center">Ngày lập</td>
-<td align="left">25/07/2026</td>
-</tr>
-</tbody>
-</table>
+| Thông tin | Nội dung |
+|---|---|
+| Tên tài liệu | Tài liệu đặc tả yêu cầu người dùng – Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
+| Tên tiếng Anh | User Requirements Document – Platform to Support Digital Transformation for Household Businesses |
+| Mã tài liệu | URD-HKD-v1.1.0 |
+| Phiên bản | 1.1.0 |
+| Người lập | Nguyễn Ngọc Gia Bảo |
+| Ngày lập ban đầu | 25/07/2026 |
+| Ngày cập nhật | 30/07/2026 |
+| Trạng thái | Hoàn thiện để làm đầu vào cho SRS, thiết kế và kiểm thử |
 
 ### Lịch sử cập nhật
 
-<table align="center">
-<thead>
-<tr>
-<th align="center">Phiên bản</th>
-<th align="center">Ngày</th>
-<th align="center">Nội dung cập nhật</th>
-<th align="center">Người thực hiện</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center">1.0.0</td>
-<td align="left">25/07/2026</td>
-<td align="left">Hoàn thiện tài liệu yêu cầu người dùng</td>
-<td align="left">Nguyễn Ngọc Gia Bảo</td>
-</tr>
-</tbody>
-</table>
+| Phiên bản | Ngày | Nội dung cập nhật | Người thực hiện |
+|---|---|---|---|
+| 1.0.0 | 25/07/2026 | Hoàn thiện tài liệu yêu cầu người dùng ban đầu | Nguyễn Ngọc Gia Bảo |
+| 1.1.0 | 30/07/2026 | Làm rõ phạm vi học thuật theo Thông tư 88: triển khai S1-HKD, S2-HKD và S4-HKD; bổ sung yêu cầu về phân loại doanh thu, giá trị nhập–xuất–tồn, nghĩa vụ thuế, nộp thuế và kiểm soát báo cáo | Nguyễn Ngọc Gia Bảo |
+
+---
 
 ## Mục lục
 
@@ -74,17 +36,18 @@
   - [1.2. Phạm vi tài liệu](#12-phạm-vi-tài-liệu)
   - [1.3. Đối tượng sử dụng tài liệu](#13-đối-tượng-sử-dụng-tài-liệu)
   - [1.4. Thuật ngữ và từ viết tắt](#14-thuật-ngữ-và-từ-viết-tắt)
-  - [1.5. Tài liệu tham khảo](#15-tài-liệu-tham-khảo)
+  - [1.5. Tài liệu tham khảo và nguyên tắc áp dụng](#15-tài-liệu-tham-khảo-và-nguyên-tắc-áp-dụng)
 - [2. Tổng quan hệ thống](#2-tổng-quan-hệ-thống)
   - [2.1. Bối cảnh](#21-bối-cảnh)
   - [2.2. Phát biểu bài toán](#22-phát-biểu-bài-toán)
   - [2.3. Mục tiêu hệ thống](#23-mục-tiêu-hệ-thống)
   - [2.4. Phạm vi chức năng](#24-phạm-vi-chức-năng)
-  - [2.5. Người sử dụng hệ thống](#25-người-sử-dụng-hệ-thống)
+  - [2.5. Nội dung ngoài phạm vi](#25-nội-dung-ngoài-phạm-vi)
+  - [2.6. Người sử dụng hệ thống](#26-người-sử-dụng-hệ-thống)
 - [3. Yêu cầu chức năng](#3-yêu-cầu-chức-năng)
   - [3.1. Yêu cầu đối với Employee](#31-yêu-cầu-đối-với-employee)
   - [3.2. Yêu cầu đối với Owner](#32-yêu-cầu-đối-với-owner)
-  - [3.3. Chức năng tự động của hệ thống và trí tuệ nhân tạo](#33-chức-năng-tự-động-của-hệ-thống-và-trí-tuệ-nhân-tạo)
+  - [3.3. Chức năng tự động của hệ thống và AI](#33-chức-năng-tự-động-của-hệ-thống-và-ai)
   - [3.4. Yêu cầu đối với Administrator](#34-yêu-cầu-đối-với-administrator)
 - [4. Yêu cầu phi chức năng](#4-yêu-cầu-phi-chức-năng)
 - [5. Tiêu chí nghiệm thu ở mức người dùng](#5-tiêu-chí-nghiệm-thu-ở-mức-người-dùng)
@@ -95,556 +58,331 @@
 
 ## 1.1. Mục đích tài liệu
 
-Tài liệu đặc tả yêu cầu người dùng này trình bày một cách có hệ thống những nhu cầu mà Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh phải đáp ứng. Nội dung tập trung vào mục tiêu sử dụng, phạm vi nghiệp vụ, yêu cầu chức năng và các yêu cầu về chất lượng của hệ thống dưới góc nhìn của người dùng cuối và người quản trị nền tảng.
+Tài liệu này mô tả các nhu cầu mà **Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh** phải đáp ứng dưới góc nhìn của người sử dụng và người quản trị nền tảng.
 
-Tài liệu là căn cứ thống nhất giữa giảng viên, nhóm phân tích, nhóm thiết kế, nhóm phát triển và nhóm kiểm thử. Các yêu cầu được mô tả đủ rõ để tiếp tục xây dựng Tài liệu đặc tả yêu cầu phần mềm, thiết kế kiến trúc, thiết kế chi tiết, kế hoạch triển khai và tài liệu kiểm thử mà không làm thay đổi phạm vi cố định của đề tài.
+Tài liệu là cơ sở thống nhất giữa giảng viên, nhóm phân tích, nhóm thiết kế, nhóm phát triển và nhóm kiểm thử về:
+
+- mục tiêu của hệ thống;
+- phạm vi nghiệp vụ;
+- nhóm người sử dụng;
+- yêu cầu chức năng;
+- yêu cầu phi chức năng;
+- tiêu chí chấp nhận và nghiệm thu.
+
+Các yêu cầu trong tài liệu được sử dụng làm đầu vào cho SRS, thiết kế kiến trúc, thiết kế cơ sở dữ liệu, thiết kế chi tiết, phát triển phần mềm và kiểm thử. Tài liệu không mô tả chi tiết bảng dữ liệu, API, công nghệ triển khai hoặc cấu hình hạ tầng.
 
 ## 1.2. Phạm vi tài liệu
 
-Tài liệu mô tả yêu cầu của ba nhóm người sử dụng trực tiếp, gồm Employee, Owner và Administrator. Ngoài các chức năng do người dùng thực hiện, tài liệu còn xác định những chức năng tự động của hệ thống và AI, tiêu biểu là tiếp nhận yêu cầu bằng văn bản hoặc giọng nói để tạo Draft Order, ghi nhận dữ liệu phát sinh và hỗ trợ ghi sổ kế toán.
+Tài liệu mô tả yêu cầu của ba nhóm người sử dụng trực tiếp:
+
+- Employee;
+- Owner;
+- Administrator.
+
+Ngoài các thao tác do người dùng thực hiện, tài liệu xác định các chức năng tự động của hệ thống và AI, gồm:
+
+- tiếp nhận yêu cầu bằng văn bản hoặc giọng nói;
+- tạo Draft Order;
+- ghi nhận dữ liệu bán hàng, nhập kho, tồn kho, công nợ và nghĩa vụ thuế;
+- tổng hợp dữ liệu để lập S1-HKD, S2-HKD và S4-HKD;
+- hỗ trợ Owner kiểm tra và xác nhận kết quả trước khi sử dụng.
 
 ## 1.3. Đối tượng sử dụng tài liệu
 
-<table align="center">
-<thead>
-<tr>
-<th align="center"><strong>Đối tượng</strong></th>
-<th align="center"><strong>Mục đích sử dụng</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center">Giảng viên</td>
-<td align="left">Rà soát tính đầy đủ, tính nhất quán và mức độ bám sát yêu cầu của đề tài.</td>
-</tr>
-<tr>
-<td align="center">Nhóm phân tích và thiết kế</td>
-<td align="left">Sử dụng làm đầu vào để xây dựng SRS, mô hình UML, kiến trúc hệ thống và thiết kế dữ liệu.</td>
-</tr>
-<tr>
-<td align="center">Nhóm phát triển</td>
-<td align="left">Hiểu đúng phạm vi chức năng phải triển khai và tránh bổ sung những chức năng không thuộc đề tài.</td>
-</tr>
-<tr>
-<td align="center">Nhóm kiểm thử</td>
-<td align="left">Xây dựng kịch bản kiểm thử và đối chiếu kết quả với tiêu chí chấp nhận của từng yêu cầu.</td>
-</tr>
-</tbody>
-</table>
-
-<p align="center"><em>Bảng 2. Đối tượng sử dụng tài liệu</em></p>
+| Đối tượng | Mục đích sử dụng |
+|---|---|
+| Giảng viên | Rà soát tính đầy đủ, nhất quán và mức độ bám sát phạm vi đề tài |
+| Nhóm phân tích và thiết kế | Xây dựng SRS, mô hình UML, kiến trúc và thiết kế dữ liệu |
+| Nhóm phát triển | Hiểu đúng chức năng phải triển khai và tránh phát triển ngoài phạm vi |
+| Nhóm kiểm thử | Xây dựng kịch bản kiểm thử và tiêu chí chấp nhận |
+| Nhóm triển khai | Hiểu các ràng buộc nghiệp vụ cần bảo toàn khi triển khai hệ thống |
 
 ## 1.4. Thuật ngữ và từ viết tắt
 
-<table align="center">
-<thead>
-<tr>
-<th align="center"><strong>Thuật ngữ</strong></th>
-<th align="center"><strong>Giải thích</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center">URD</td>
-<td align="left">Tài liệu đặc tả yêu cầu người dùng (User Requirements Document).</td>
-</tr>
-<tr>
-<td align="center">Employee</td>
-<td align="left">Người trực tiếp xử lý đơn bán hàng và các nghiệp vụ được Owner giao quyền.</td>
-</tr>
-<tr>
-<td align="center">Owner</td>
-<td align="left">Người sở hữu hoặc quản lý hộ kinh doanh; có toàn bộ chức năng của Employee và các quyền quản lý cửa hàng.</td>
-</tr>
-<tr>
-<td align="center">Administrator</td>
-<td align="left">Người quản lý tài khoản Owner, gói thuê bao, cấu hình và số liệu vận hành của toàn nền tảng.</td>
-</tr>
-<tr>
-<td align="center">Draft Order</td>
-<td align="left">Đơn hàng nháp do hệ thống tạo từ yêu cầu bằng văn bản hoặc giọng nói; đơn hàng này phải được người dùng kiểm tra trước khi xác nhận.</td>
-</tr>
-<tr>
-<td align="center">Trợ lý AI</td>
-<td align="left">Thành phần trí tuệ nhân tạo có nhiệm vụ hiểu yêu cầu ngôn ngữ tự nhiên và hỗ trợ tạo Draft Order.</td>
-</tr>
-<tr>
-<td align="center">POS</td>
-<td align="left">Hệ thống bán hàng tại điểm bán (Point of Sale).</td>
-</tr>
-<tr>
-<td align="center">Gói thuê bao</td>
-<td align="left">Gói dịch vụ mà Owner đăng ký để sử dụng nền tảng.</td>
-</tr>
-<tr>
-<td align="center">Phân quyền theo vai trò</td>
-<td align="left">Cơ chế giới hạn quyền truy cập dựa trên vai trò Employee, Owner hoặc Administrator.</td>
-</tr>
-<tr>
-<td align="center">Audit log</td>
-<td align="left">Nhật ký ghi nhận người thực hiện, thời điểm và nội dung của các thay đổi quan trọng trong hệ thống.</td>
-</tr>
-</tbody>
-</table>
+| Thuật ngữ | Giải thích |
+|---|---|
+| URD | Tài liệu đặc tả yêu cầu người dùng (User Requirements Document) |
+| Employee | Người trực tiếp xử lý đơn bán hàng và các nghiệp vụ được Owner giao quyền |
+| Owner | Chủ hộ hoặc người quản lý hộ kinh doanh; có toàn bộ chức năng của Employee và các quyền quản lý |
+| Administrator | Người quản trị tài khoản Owner, gói thuê bao, cấu hình và hoạt động của toàn nền tảng |
+| Draft Order | Đơn hàng nháp do hệ thống tạo từ yêu cầu bằng văn bản hoặc giọng nói; phải được người dùng kiểm tra trước khi xác nhận |
+| Trợ lý AI | Thành phần phân tích ngôn ngữ tự nhiên và hỗ trợ tạo Draft Order |
+| POS | Hệ thống bán hàng tại điểm bán (Point of Sale) |
+| Gói thuê bao | Gói dịch vụ mà Owner đăng ký để sử dụng nền tảng |
+| RBAC | Phân quyền truy cập dựa trên vai trò |
+| Audit log | Nhật ký ghi nhận người thực hiện, thời điểm và nội dung của thay đổi quan trọng |
+| S1-HKD | Sổ chi tiết doanh thu |
+| S2-HKD | Sổ chi tiết vật liệu, dụng cụ, sản phẩm, hàng hóa |
+| S4-HKD | Sổ chi tiết nghĩa vụ thuế |
+| Tỷ lệ tính thuế | Tỷ lệ phần trăm được cấu hình để hỗ trợ tính số thuế GTGT và TNCN từ doanh thu tính thuế |
+| Nghĩa vụ thuế | Khoản thuế, phí hoặc lệ phí mà hộ kinh doanh cần theo dõi trong một kỳ |
+| Giá trị nhập–xuất–tồn | Thành tiền của hàng hóa nhập kho, xuất kho và còn tồn tại cuối kỳ |
 
-<p align="center"><em>Bảng 3. Thuật ngữ và từ viết tắt</em></p>
+## 1.5. Tài liệu tham khảo và nguyên tắc áp dụng
 
-## 1.5. Tài liệu tham khảo
+| Mã | Tài liệu tham khảo |
+|---|---|
+| TL-01 | Quyết định số 3389/QĐ-BTC năm 2025 của Bộ Tài chính, được dẫn chiếu trong bối cảnh đề tài |
+| TL-02 | Thông tư số 88/2021/TT-BTC của Bộ Tài chính, được dẫn chiếu trong yêu cầu về sổ kế toán |
+| TL-03 | Đề bài và phạm vi chức năng được giảng viên giao cho nhóm |
 
-<table align="center">
-<thead>
-<tr>
-<th align="center"><strong>Mã</strong></th>
-<th align="center"><strong>Tài liệu tham khảo</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center">[TL-01]</td>
-<td align="left">Quyết định số 3389/QĐ-BTC năm 2025 của Bộ Tài chính, được dẫn chiếu trong phần bối cảnh của đề tài.</td>
-</tr>
-<tr>
-<td align="center">[TL-02]</td>
-<td align="left">Thông tư số 88/2021/TT-BTC của Bộ Tài chính, được dẫn chiếu trong yêu cầu về ghi sổ kế toán và lập báo cáo.</td>
-</tr>
-</tbody>
-</table>
+Trong phạm vi học thuật được giảng viên xác nhận, hệ thống triển khai các mẫu **S1-HKD, S2-HKD và S4-HKD theo Thông tư số 88/2021/TT-BTC**.
 
-<p align="center"><em>Bảng 4. Danh mục tài liệu tham khảo</em></p>
+Nội dung này là phạm vi của đồ án, không phải tuyên bố rằng hệ thống đã triển khai đầy đủ mọi quy định pháp luật hoặc có thể thay thế việc kiểm tra chuyên môn của Owner, kế toán hoặc cơ quan có thẩm quyền.
+
+---
 
 # 2. TỔNG QUAN HỆ THỐNG
 
 ## 2.1. Bối cảnh
 
-Tại Việt Nam, hộ kinh doanh là một bộ phận quan trọng của nền kinh tế địa phương và có mặt trong nhiều lĩnh vực kinh doanh truyền thống. Theo nội dung đề tài, phần lớn các hộ kinh doanh thuộc Nhóm 1 hoặc Nhóm 2 theo Quyết định số 3389/QĐ-BTC năm 2025 của Bộ Tài chính.
+Hộ kinh doanh hoạt động trong nhiều lĩnh vực truyền thống như vật liệu xây dựng, vật tư, kim khí và hàng hóa tiêu dùng. Nhiều hộ vẫn ghi chép doanh thu, hàng tồn kho và công nợ bằng sổ tay hoặc tệp Excel đơn giản.
 
-Tuy nhu cầu chuyển đổi số ngày càng tăng, nhiều hộ kinh doanh vẫn xử lý công việc hằng ngày theo phương thức thủ công. Việc ghi nhận doanh thu, theo dõi hàng tồn kho, quản lý công nợ và tiếp nhận đơn hàng qua điện thoại hoặc Zalo thường được thực hiện bằng sổ tay hoặc các tệp Excel đơn giản. Đồng thời, nhiều chủ hộ không có đủ ngân sách để thuê kế toán chuyên trách.
+Đơn hàng có thể phát sinh tại quầy, qua điện thoại hoặc qua các kênh nhắn tin như Zalo. Việc tiếp nhận đơn từ nhiều kênh dễ dẫn đến nhập liệu chậm, bỏ sót thông tin hoặc sai số lượng.
 
-Các giải pháp bán hàng và quản lý kinh doanh hiện có trên thị trường phần lớn được xây dựng cho nhà hàng, cửa hàng thời trang hoặc doanh nghiệp có quy mô lớn. Vì vậy, các giải pháp này chưa đáp ứng đầy đủ đặc thù của hộ kinh doanh, bao gồm việc tiếp nhận đơn hàng từ nhiều kênh, theo dõi công nợ khách hàng trong thời gian dài và phục vụ người dùng có mức độ thành thạo công nghệ còn hạn chế.
+Nhiều hộ chỉ có điện thoại thông minh và không có đầy đủ thiết bị POS. Người sử dụng cũng có trình độ công nghệ khác nhau, vì vậy hệ thống phải đơn giản, dễ thao tác và không phụ thuộc bắt buộc vào phần cứng chuyên dụng.
 
-Bên cạnh đó, điều kiện thiết bị là một rào cản đáng kể. Nhiều hộ kinh doanh chỉ sử dụng một điện thoại thông minh và không có máy tính, máy quét mã vạch, máy in hóa đơn, thiết bị POS hoặc ngăn kéo tiền. Chi phí đầu tư ban đầu cho một hệ thống bán hàng phụ thuộc nhiều thiết bị khiến các giải pháp POS truyền thống khó được áp dụng trong thực tế.
+Các giải pháp hiện có thường được thiết kế cho nhà hàng, thời trang hoặc doanh nghiệp lớn, trong khi hộ kinh doanh cần một giải pháp tập trung vào:
 
-Việc thiếu một nền tảng phù hợp dẫn đến nhiều vấn đề như sai sót khi tính toán, xử lý đơn hàng chậm, khó kiểm soát tồn kho, dữ liệu công nợ thiếu nhất quán và không có thông tin kịp thời để đánh giá hoạt động kinh doanh. Những hạn chế này làm giảm hiệu quả vận hành, gia tăng rủi ro tài chính và cản trở khả năng mở rộng hoặc hiện đại hóa của hộ kinh doanh.
+- bán hàng nhanh;
+- nhiều đơn vị tính;
+- quản lý tồn kho;
+- mua chịu và công nợ;
+- đơn hàng đa kênh;
+- sổ và báo cáo phù hợp với phạm vi được giao;
+- thao tác đơn giản trên thiết bị phổ biến.
 
 ## 2.2. Phát biểu bài toán
 
-Đề tài đặt ra yêu cầu xây dựng một ứng dụng trên thiết bị di động, nền tảng web hoặc kết hợp cả hai nhằm hỗ trợ chuyển đổi số cho hộ kinh doanh. Hệ thống phải hỗ trợ các nghiệp vụ cốt lõi gồm bán hàng, quản lý sản phẩm, tồn kho, khách hàng, công nợ, báo cáo, nhân viên và gói thuê bao. Đồng thời, nền tảng tích hợp AI để tiếp nhận yêu cầu bằng văn bản hoặc giọng nói, phân tích nội dung và tạo Draft Order để người dùng kiểm tra trước khi xác nhận.
+Cần xây dựng một nền tảng web, ứng dụng di động hoặc kết hợp cả hai để hỗ trợ hộ kinh doanh số hóa các nghiệp vụ cốt lõi.
 
-Ngoài việc hỗ trợ vận hành cửa hàng, hệ thống phải tự động ghi nhận dữ liệu phát sinh từ các giao dịch bán hàng, nhập kho và công nợ khách hàng. Từ dữ liệu đã ghi nhận, hệ thống thực hiện tính toán, tổng hợp và điền thông tin vào các sổ kế toán, báo cáo theo Thông tư số 88/2021/TT-BTC của Bộ Tài chính, đúng với yêu cầu của đề tài.
+Hệ thống phải cho phép:
+
+- quản lý sản phẩm, giá, đơn vị tính và tồn kho;
+- lập đơn bán hàng tại quầy;
+- quản lý khách hàng, thanh toán và công nợ;
+- tiếp nhận yêu cầu bằng văn bản hoặc giọng nói;
+- sử dụng AI để tạo Draft Order;
+- tự động ghi nhận dữ liệu nghiệp vụ;
+- tổng hợp dữ liệu để lập S1-HKD, S2-HKD và S4-HKD;
+- cho phép Owner kiểm tra và xác nhận kết quả;
+- hỗ trợ Administrator quản lý nền tảng và phiên bản biểu mẫu.
 
 ## 2.3. Mục tiêu hệ thống
 
-- Hệ thống hỗ trợ số hóa quy trình bán hàng tại quầy và xử lý các đơn hàng được tiếp nhận qua điện thoại hoặc Zalo.
-
-- Hệ thống cho phép tổ chức và quản lý tập trung thông tin sản phẩm, giá bán, danh mục, nhiều đơn vị tính và số lượng tồn kho.
-
-- Hệ thống hỗ trợ quản lý hồ sơ khách hàng, lịch sử mua hàng, số dư công nợ và các lần thanh toán.
-
-- Hệ thống sử dụng AI để chuyển yêu cầu bằng văn bản hoặc giọng nói thành Draft Order, qua đó giảm thao tác nhập liệu thủ công.
-
-- Hệ thống tự động ghi sổ kế toán, tổng hợp số liệu và tạo báo cáo theo các biểu mẫu được quy định trong đề tài.
-
-- Hệ thống cung cấp số liệu về doanh thu, sản phẩm bán chạy, cảnh báo tồn kho thấp và tổng công nợ để Owner theo dõi hoạt động kinh doanh kịp thời.
-
-- Hệ thống hỗ trợ Administrator quản lý tài khoản Owner, giá gói thuê bao, cấu hình hệ thống, biểu mẫu báo cáo và số liệu vận hành của toàn nền tảng.
+- Số hóa quy trình bán hàng tại quầy và đơn hàng từ điện thoại hoặc kênh nhắn tin.
+- Quản lý tập trung sản phẩm, hình ảnh, giá bán, danh mục và nhiều đơn vị tính.
+- Theo dõi số lượng và giá trị hàng nhập, xuất và tồn.
+- Quản lý hồ sơ khách hàng, lịch sử mua hàng, khoản thanh toán và công nợ.
+- Dùng AI để giảm thao tác nhập liệu khi tạo đơn hàng.
+- Tự động tổng hợp doanh thu phục vụ S1-HKD.
+- Tự động tổng hợp số lượng, đơn giá và thành tiền nhập–xuất–tồn phục vụ S2-HKD.
+- Theo dõi nghĩa vụ thuế, số đã nộp và số còn phải nộp phục vụ S4-HKD.
+- Cung cấp Dashboard doanh thu, sản phẩm bán chạy, cảnh báo tồn thấp và tổng công nợ.
+- Hỗ trợ quản lý tài khoản, thuê bao, cấu hình, biểu mẫu và hoạt động toàn nền tảng.
 
 ## 2.4. Phạm vi chức năng
 
-Phạm vi chức năng của hệ thống được xác định trực tiếp từ yêu cầu của đề tài và bao gồm các nhóm nghiệp vụ sau:
+### 2.4.1. Tài khoản và phân quyền
 
-- Hệ thống cung cấp chức năng đăng nhập và kiểm soát quyền truy cập theo ba vai trò: Employee, Owner và Administrator.
+- Đăng nhập.
+- Phân quyền Employee, Owner và Administrator.
+- Owner quản lý tài khoản Employee thuộc hộ kinh doanh của mình.
+- Administrator quản lý tài khoản Owner trên toàn nền tảng.
 
-- Hệ thống hỗ trợ lập, lưu trữ và in đơn bán hàng tại quầy, đồng thời ghi nhận trường hợp khách hàng mua chịu.
+### 2.4.2. Sản phẩm và giá bán
 
-- Hệ thống cho phép quản lý danh mục sản phẩm, hình ảnh, giá bán, danh mục phân loại, nhiều đơn vị tính và quy tắc định giá.
+- Quản lý danh mục sản phẩm.
+- Quản lý hình ảnh và trạng thái sản phẩm.
+- Quản lý nhiều đơn vị tính và tỷ lệ quy đổi.
+- Quản lý quy tắc giá theo đơn vị hoặc số lượng.
+- Thiết lập nhóm hoạt động tính thuế mặc định cho sản phẩm.
 
-- Hệ thống cho phép ghi nhận nhập kho, theo dõi số lượng tồn và tra cứu lịch sử biến động kho.
+### 2.4.3. Bán hàng và công nợ
 
-- Hệ thống hỗ trợ quản lý khách hàng, lịch sử mua hàng, số dư công nợ và lịch sử thanh toán.
+- Lập đơn tại quầy.
+- Tìm kiếm và thêm sản phẩm vào đơn.
+- Ghi nhận số đã thanh toán và số còn nợ.
+- In và tra cứu đơn bán hàng.
+- Quản lý khách hàng và lịch sử mua hàng.
+- Theo dõi phát sinh nợ, trả nợ và điều chỉnh công nợ.
+- Ghi nhận phương thức và mã tham chiếu của giao dịch thanh toán công nợ khi có.
 
-- Hệ thống tiếp nhận yêu cầu ngôn ngữ tự nhiên bằng văn bản hoặc giọng nói để tạo Draft Order.
+### 2.4.4. Kho hàng
 
-- Hệ thống tự động ghi nhận dữ liệu nghiệp vụ, thực hiện ghi sổ kế toán và tạo báo cáo.
+- Ghi nhận phiếu nhập.
+- Theo dõi số lượng tồn.
+- Tự động trừ tồn khi đơn hàng được xác nhận.
+- Lưu lịch sử biến động kho.
+- Tính số lượng, đơn giá và thành tiền nhập–xuất–tồn.
+- Sử dụng phương pháp bình quân gia quyền cả kỳ dự trữ trong phạm vi triển khai hiện tại.
 
-- Owner có thể quản lý tài khoản Employee trong phạm vi hộ kinh doanh của mình.
+### 2.4.5. AI và Draft Order
 
-- Administrator có thể quản lý tài khoản Owner, giá gói thuê bao, số liệu nền tảng, phản hồi, cấu hình hệ thống, cấu hình AI và mẫu báo cáo.
+- Nhận yêu cầu văn bản hoặc giọng nói.
+- Nhận diện sản phẩm, số lượng, khách hàng và yêu cầu ghi nợ.
+- Tạo Draft Order.
+- Gửi thông báo thời gian thực.
+- Cho phép Employee hoặc Owner chỉnh sửa, xác nhận hoặc từ chối.
 
-## 2.5. Người sử dụng hệ thống
+### 2.4.6. Sổ kế toán và nghĩa vụ thuế
 
-<table align="center">
-<thead>
-<tr>
-<th align="center"><strong>Nhóm người sử dụng</strong></th>
-<th align="center"><strong>Vai trò và phạm vi sử dụng</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center">Employee</td>
-<td align="left">Trực tiếp đăng nhập, lập đơn bán hàng tại quầy, ghi nhận công nợ, in đơn, nhận thông báo và kiểm tra Draft Order do AI tạo.</td>
-</tr>
-<tr>
-<td align="center">Owner</td>
-<td align="left">Sử dụng toàn bộ chức năng của Employee và thực hiện các nghiệp vụ quản lý sản phẩm, tồn kho, khách hàng, báo cáo và tài khoản Employee.</td>
-</tr>
-<tr>
-<td align="center">Administrator</td>
-<td align="left">Quản lý tài khoản Owner, giá gói thuê bao, số liệu vận hành, phản hồi, cấu hình hệ thống, cấu hình AI và các mẫu báo cáo.</td>
-</tr>
-</tbody>
-</table>
+- Tổng hợp doanh thu theo nhóm hoạt động tính thuế để lập S1-HKD.
+- Tổng hợp số lượng, đơn giá và thành tiền nhập–xuất–tồn để lập S2-HKD.
+- Ghi nhận nghĩa vụ thuế và từng lần nộp thuế để lập S4-HKD.
+- Tính số đã nộp và số còn phải nộp; chấp nhận số còn phải nộp âm để thể hiện nộp thừa.
+- Quản lý phiên bản biểu mẫu và thời gian hiệu lực.
+- Cho phép Owner kiểm tra, chỉnh sửa dữ liệu được phép chỉnh sửa, xác nhận hoặc từ chối báo cáo trước khi sử dụng.
 
-<p align="center"><em>Bảng 5. Danh sách người sử dụng hệ thống</em></p>
+### 2.4.7. Quản trị nền tảng
+
+- Quản lý gói thuê bao và giá theo tháng/năm.
+- Theo dõi số liệu hoạt động toàn nền tảng.
+- Xem và xử lý phản hồi.
+- Quản lý cấu hình hệ thống và AI.
+- Quản lý nhóm hoạt động và tỷ lệ tính thuế.
+- Quản lý phiên bản biểu mẫu S1-HKD, S2-HKD và S4-HKD.
+- Phát thông báo đến người dùng.
+
+## 2.5. Nội dung ngoài phạm vi
+
+Phiên bản hiện tại không bao gồm:
+
+- S3-HKD, S5-HKD, S6-HKD và S7-HKD;
+- hệ thống quản lý chi phí sản xuất, kinh doanh đầy đủ;
+- chấm công và tính lương;
+- quản lý quỹ tiền mặt hoàn chỉnh;
+- quản lý và đối soát tài khoản ngân hàng;
+- tự động kê khai hoặc nộp thuế đến cơ quan thuế;
+- tự động xác định chính xác mọi nghĩa vụ thuế mà không cần Owner kiểm tra;
+- phân bổ một khoản thanh toán cho nhiều đơn hàng;
+- quy trình hoàn tiền phức tạp;
+- phân bổ một lần nộp thuế cho nhiều nghĩa vụ;
+- tích hợp hóa đơn điện tử với nhà cung cấp bên ngoài;
+- yêu cầu bắt buộc sử dụng Redis hoặc thiết bị POS chuyên dụng.
+
+Trong phạm vi hiện tại, “nhật ký thanh toán” bao gồm:
+
+- số tiền thanh toán trực tiếp được ghi nhận trong đơn hàng;
+- các giao dịch trả nợ được ghi nhận trong lịch sử công nợ.
+
+## 2.6. Người sử dụng hệ thống
+
+| Nhóm người sử dụng | Vai trò và phạm vi sử dụng |
+|---|---|
+| Employee | Đăng nhập, lập đơn, ghi nhận công nợ, in đơn, nhận thông báo và xử lý Draft Order |
+| Owner | Có toàn bộ quyền của Employee; quản lý sản phẩm, kho, khách hàng, công nợ, nghĩa vụ thuế, sổ, báo cáo và tài khoản Employee |
+| Administrator | Quản lý Owner, thuê bao, số liệu nền tảng, phản hồi, cấu hình hệ thống, AI, nhóm hoạt động tính thuế, biểu mẫu và thông báo |
+
+---
 
 # 3. YÊU CẦU CHỨC NĂNG
 
-Các yêu cầu trong chương này được xây dựng trực tiếp từ phần yêu cầu chức năng của đề tài. Mỗi yêu cầu có một mã riêng và đi kèm tiêu chí chấp nhận để thuận tiện cho việc đối chiếu trong quá trình kiểm thử. Nội dung được diễn đạt lại nhằm làm rõ yêu cầu nhưng không bổ sung hoặc loại bỏ chức năng đã được giao.
+Mỗi yêu cầu có mã riêng và tiêu chí chấp nhận để phục vụ truy vết và kiểm thử.
 
 ## 3.1. Yêu cầu đối với Employee
 
-<table align="center">
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="center"><strong>Mã yêu cầu</strong></th>
-<th align="center"><strong>Tên và nội dung yêu cầu</strong></th>
-<th align="center"><strong>Tiêu chí chấp nhận</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="center">FR-NV-01</td>
-<td align="left"><p><strong>Đăng nhập hệ thống</strong></p>
-<p>Hệ thống phải cho phép Employee đăng nhập bằng tài khoản đã được cấp. Sau khi xác thực thành công, Employee được truy cập các chức năng tương ứng với vai trò của mình.</p></td>
-<td align="left">Employee đăng nhập thành công khi cung cấp thông tin hợp lệ. Khi thông tin không hợp lệ, hệ thống từ chối truy cập và hiển thị thông báo phù hợp.</td>
-</tr>
-<tr class="even">
-<td align="center">FR-NV-02</td>
-<td align="left"><p><strong>Lập đơn bán hàng tại quầy</strong></p>
-<p>Hệ thống phải hỗ trợ Employee lập đơn nhanh cho khách mua trực tiếp tại cửa hàng. Trong quá trình tạo đơn, Employee có thể tìm kiếm và lọc sản phẩm ngay khi nhập từ khóa, chọn sản phẩm, nhập số lượng, thêm hàng vào giỏ và gắn khách hàng vào đơn nếu cần. Giao diện phải hỗ trợ các phím tắt phục vụ thao tác nhanh.</p></td>
-<td align="left">Employee tạo được một đơn có đúng sản phẩm, số lượng và khách hàng đã chọn; chức năng tìm kiếm, lọc tức thời, thêm hàng vào giỏ và các phím tắt được mô tả đều hoạt động trên màn hình lập đơn.</td>
-</tr>
-<tr class="odd">
-<td align="center">FR-NV-03</td>
-<td align="left"><p><strong>Ghi nhận bán chịu và công nợ khách hàng</strong></p>
-<p>Khi khách hàng đã đăng ký lựa chọn mua chịu, hệ thống phải cho phép Employee ghi nhận khoản công nợ ngay trong quá trình lập đơn. Sau khi đơn được hoàn tất, số tiền còn phải thanh toán của khách hàng được cập nhật tự động.</p></td>
-<td align="left">Một đơn bán chịu của khách hàng đã đăng ký được lưu thành công và số dư công nợ của khách hàng tăng đúng bằng khoản tiền chưa thanh toán trong đơn.</td>
-</tr>
-<tr class="even">
-<td align="center">FR-NV-04</td>
-<td align="left"><p><strong>In và lưu trữ đơn bán hàng</strong></p>
-<p>Sau khi lập đơn, Employee phải có thể tạo và in đơn bán hàng theo mẫu được thiết kế sẵn. Hệ thống phải lưu thông tin của từng đơn để người dùng có thể tra cứu lại khi cần.</p></td>
-<td align="left">Đơn bán hàng được tạo theo mẫu, có thể gửi đến chức năng in và vẫn được tìm thấy trong lịch sử đơn sau khi hoàn tất.</td>
-</tr>
-<tr class="odd">
-<td align="center">FR-NV-05</td>
-<td align="left"><p><strong>Nhận thông báo về Draft Order do AI/Chatbot tạo</strong></p>
-<p>Khi AI/Chatbot tiếp nhận yêu cầu bằng văn bản hoặc giọng nói và tạo một Draft Order, hệ thống phải gửi thông báo theo thời gian thực đến giao diện làm việc của Employee.</p></td>
-<td align="left">Sau khi một Draft Order được tạo, Employee đang đăng nhập nhận được thông báo mới mà không phải tải lại toàn bộ trang.</td>
-</tr>
-<tr class="even">
-<td align="center">FR-NV-06</td>
-<td align="left"><p><strong>Kiểm tra, chỉnh sửa, xác nhận hoặc từ chối Draft Order</strong></p>
-<p>Hệ thống phải cho phép Employee mở Draft Order do AI/Chatbot tạo, kiểm tra các thông tin đã được nhận diện, chỉnh sửa nội dung chưa chính xác, xác nhận đơn hợp lệ hoặc từ chối đơn khi không thể sử dụng.</p></td>
-<td align="left">Employee mở được Draft Order, xem đầy đủ thông tin, chỉnh sửa dữ liệu cần thiết và thực hiện được thao tác xác nhận hoặc từ chối đơn.</td>
-</tr>
-</tbody>
-</table>
-
-<p align="center"><em>Bảng 6. Yêu cầu chức năng đối với Employee</em></p>
+| Mã | Tên và nội dung yêu cầu | Tiêu chí chấp nhận |
+|---|---|---|
+| FR-NV-01 | **Đăng nhập hệ thống.** Employee đăng nhập bằng tài khoản được cấp và chỉ truy cập chức năng thuộc vai trò. | Thông tin hợp lệ cho phép đăng nhập; thông tin không hợp lệ bị từ chối và có thông báo phù hợp. |
+| FR-NV-02 | **Lập đơn bán hàng tại quầy.** Employee tìm kiếm sản phẩm, chọn đơn vị, nhập số lượng, thêm vào giỏ và gắn khách hàng khi cần. | Đơn lưu đúng sản phẩm, đơn vị, số lượng, giá và khách hàng đã chọn. |
+| FR-NV-03 | **Ghi nhận thanh toán và công nợ.** Employee ghi nhận số tiền khách đã thanh toán; phần còn lại được ghi nhận là công nợ khi khách hàng hợp lệ. | Tổng tiền, số đã thanh toán và số còn nợ được tính đúng; đơn có nợ bắt buộc gắn với khách hàng. |
+| FR-NV-04 | **In và tra cứu đơn bán hàng.** Employee tạo bản in theo mẫu và tra cứu lại đơn đã hoàn tất. | Đơn có thể được gửi đến chức năng in và xuất hiện trong lịch sử. |
+| FR-NV-05 | **Nhận thông báo Draft Order.** Employee nhận thông báo thời gian thực khi AI tạo Draft Order mới. | Thông báo xuất hiện mà không cần tải lại toàn bộ trang. |
+| FR-NV-06 | **Kiểm tra và xử lý Draft Order.** Employee xem, chỉnh sửa, xác nhận hoặc từ chối Draft Order. | Employee thực hiện được đầy đủ các thao tác và trạng thái đơn được cập nhật đúng. |
 
 ## 3.2. Yêu cầu đối với Owner
 
-Owner được sử dụng toàn bộ chức năng đã quy định cho Employee. Ngoài các chức năng đó, hệ thống phải cung cấp thêm các khả năng quản lý sau:
+Owner có toàn bộ chức năng của Employee và các yêu cầu bổ sung sau:
 
-<table align="center">
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="center"><strong>Mã yêu cầu</strong></th>
-<th align="center"><strong>Tên và nội dung yêu cầu</strong></th>
-<th align="center"><strong>Tiêu chí chấp nhận</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="center">FR-CH-01</td>
-<td align="left"><p><strong>Quản lý danh mục sản phẩm</strong></p>
-<p>Hệ thống phải cho phép Owner tạo mới, cập nhật hoặc ngừng sử dụng một sản phẩm. Thông tin có thể quản lý gồm tên sản phẩm, hình ảnh, giá bán, danh mục phân loại và nhiều đơn vị tính. Owner cũng có thể thiết lập các quy tắc định giá phù hợp với hoạt động kinh doanh.</p></td>
-<td align="left">Owner tạo, cập nhật và ngừng sử dụng được sản phẩm; các thuộc tính, đơn vị tính và quy tắc định giá được lưu và hiển thị đúng khi tra cứu.</td>
-</tr>
-<tr class="even">
-<td align="center">FR-CH-02</td>
-<td align="left"><p><strong>Quản lý tồn kho</strong></p>
-<p>Hệ thống phải cho phép Owner ghi nhận các lần nhập hàng, theo dõi số lượng tồn kho theo thời gian thực và xem lịch sử biến động kho. Khi một đơn hàng được xác nhận, số lượng tồn của các sản phẩm liên quan phải được trừ tự động.</p></td>
-<td align="left">Phiếu nhập làm tăng tồn kho; đơn hàng được xác nhận làm giảm tồn kho; Owner xem được số lượng hiện tại và lịch sử thay đổi của từng sản phẩm.</td>
-</tr>
-<tr class="odd">
-<td align="center">FR-CH-03</td>
-<td align="left"><p><strong>Quản lý khách hàng và công nợ</strong></p>
-<p>Hệ thống phải cho phép Owner thêm hoặc cập nhật thông tin khách hàng, xem lịch sử mua hàng, theo dõi số tiền còn nợ và tra cứu các lần thanh toán đã được ghi nhận.</p></td>
-<td align="left">Owner thêm hoặc sửa được hồ sơ khách hàng và xem được lịch sử mua hàng, số dư công nợ cùng nhật ký thanh toán tương ứng.</td>
-</tr>
-<tr class="even">
-<td align="center">FR-CH-04</td>
-<td align="left"><p><strong>Xem báo cáo và phân tích hoạt động kinh doanh</strong></p>
-<p>Hệ thống phải cung cấp Dashboard để Owner theo dõi doanh thu theo ngày, tuần và tháng; các sản phẩm bán chạy; cảnh báo hàng tồn kho thấp; và tổng số công nợ chưa thanh toán. Dữ liệu được trình bày bằng biểu đồ và các ô thông tin tổng hợp để người dùng dễ theo dõi.</p></td>
-<td align="left">Owner lựa chọn được kỳ báo cáo và xem đầy đủ các chỉ số, cảnh báo, biểu đồ và thông tin tổng hợp nêu trong yêu cầu.</td>
-</tr>
-<tr class="odd">
-<td align="center">FR-CH-05</td>
-<td align="left"><p><strong>Quản lý tài khoản Employee</strong></p>
-<p>Hệ thống phải cho phép Owner tạo tài khoản Employee, đặt lại mật khẩu và vô hiệu hóa tài khoản khi cần. Mọi thao tác tạo tài khoản, đặt lại mật khẩu và vô hiệu hóa tài khoản phải được ghi nhận trong Audit log, bao gồm người thực hiện, thời điểm và nội dung thay đổi.</p></td>
-<td align="left">Owner tạo, đặt lại mật khẩu và vô hiệu hóa được tài khoản Employee. Audit log ghi nhận đầy đủ người thực hiện, thời điểm và nội dung của từng thao tác.</td>
-</tr>
-</tbody>
-</table>
+| Mã | Tên và nội dung yêu cầu | Tiêu chí chấp nhận |
+|---|---|---|
+| FR-CH-01 | **Quản lý sản phẩm.** Owner tạo, cập nhật hoặc ngừng sử dụng sản phẩm; quản lý hình ảnh, danh mục, nhiều đơn vị tính, giá và nhóm hoạt động tính thuế mặc định. | Thông tin sản phẩm, đơn vị, giá và nhóm mặc định được lưu và hiển thị đúng. |
+| FR-CH-02 | **Quản lý nhập kho và tồn kho.** Owner ghi nhận nhập hàng, xem tồn hiện tại, lịch sử biến động và giá trị hàng tồn. | Phiếu nhập làm tăng tồn; đơn xác nhận làm giảm tồn; lịch sử và số dư được cập nhật nhất quán. |
+| FR-CH-03 | **Quản lý khách hàng, thanh toán và công nợ.** Owner quản lý hồ sơ, lịch sử mua, số dư nợ và các giao dịch trả nợ. | Owner xem được lịch sử mua hàng, số tiền đã thanh toán, số còn nợ và nhật ký công nợ. |
+| FR-CH-04 | **Xem Dashboard và phân tích.** Owner xem doanh thu ngày/tuần/tháng, sản phẩm bán chạy, tồn thấp và tổng công nợ. | Các chỉ số và biểu đồ phản ánh đúng kỳ được chọn. |
+| FR-CH-05 | **Quản lý tài khoản Employee.** Owner tạo, đặt lại mật khẩu và vô hiệu hóa tài khoản Employee. | Thao tác thành công và được ghi Audit log. |
+| FR-CH-06 | **Xem và kiểm tra S1-HKD.** Owner xem doanh thu được phân loại theo nhóm hoạt động và tỷ lệ tính thuế tại thời điểm giao dịch. | Số liệu S1-HKD khớp với đơn hàng đã xác nhận trong kỳ. |
+| FR-CH-07 | **Xem và kiểm tra S2-HKD.** Owner xem số lượng, đơn giá và thành tiền nhập–xuất–tồn. | Số liệu S2-HKD khớp với phiếu nhập, giao dịch kho và số dư tồn. |
+| FR-CH-08 | **Quản lý nghĩa vụ thuế và S4-HKD.** Owner xem nghĩa vụ phát sinh, từng lần nộp, số đã nộp và số còn phải nộp hoặc nộp thừa. | Số đã nộp bằng tổng các lần nộp; số còn phải nộp được tính đúng và có thể âm khi nộp thừa. |
+| FR-CH-09 | **Kiểm tra và phê duyệt sổ/báo cáo.** Owner xem, chỉnh sửa dữ liệu được phép chỉnh sửa, xác nhận hoặc từ chối kết quả trước khi sử dụng. | Hệ thống lưu trạng thái, người kiểm tra, thời gian và lý do từ chối khi có. |
 
-<p align="center"><em>Bảng 7. Yêu cầu chức năng đối với Owner</em></p>
+## 3.3. Chức năng tự động của hệ thống và AI
 
-## 3.3. Chức năng tự động của hệ thống và trí tuệ nhân tạo
-
-<table align="center">
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="center"><strong>Mã yêu cầu</strong></th>
-<th align="center"><strong>Tên và nội dung yêu cầu</strong></th>
-<th align="center"><strong>Tiêu chí chấp nhận</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="center">FR-HT-01</td>
-<td align="left"><p><strong>Chuyển yêu cầu ngôn ngữ tự nhiên thành Draft Order</strong></p>
-<p>Hệ thống phải tiếp nhận nội dung người dùng nhập bằng văn bản hoặc nói bằng giọng nói, sau đó phân tích các thông tin cần thiết như sản phẩm, số lượng, khách hàng và yêu cầu ghi nợ. Từ kết quả phân tích, hệ thống tự động tạo một Draft Order để Employee hoặc Owner kiểm tra trước khi xác nhận. Ví dụ: “Lấy 5 bao xi măng cho chú Ba, ghi nợ”.</p></td>
-<td align="left">Với một yêu cầu có đủ thông tin bằng văn bản hoặc giọng nói, hệ thống tạo được Draft Order chứa các dữ liệu đã nhận diện và chuyển đơn đó đến người dùng để kiểm tra.</td>
-</tr>
-<tr class="even">
-<td align="center">FR-HT-02</td>
-<td align="left"><p><strong>Tự động ghi sổ kế toán và lập báo cáo</strong></p>
-<p>Hệ thống phải tự động ghi nhận dữ liệu phát sinh từ các giao dịch bán hàng, nhập kho và công nợ khách hàng. Trên cơ sở dữ liệu đã ghi nhận, hệ thống thực hiện tính toán, tổng hợp và tự động điền thông tin vào các sổ kế toán, báo cáo theo Thông tư số 88/2021/TT-BTC. Các đầu ra được nêu trong đề tài gồm Sổ chi tiết doanh thu, Báo cáo công nợ phải thu và Báo cáo hoạt động kinh doanh. Số liệu trên sổ và báo cáo phải được tổng hợp chính xác từ dữ liệu nguồn, đáp ứng yêu cầu tuân thủ phục vụ mục đích thuế theo mẫu đang được cấu hình. Nền tảng phải cho phép Administrator cập nhật và quản lý phiên bản mẫu khi cơ quan có thẩm quyền ban hành quy định mới.</p></td>
-<td align="left">Với cùng một kỳ báo cáo, số liệu tổng hợp phải khớp với các giao dịch nguồn; cấu trúc và trường thông tin phải đúng với phiên bản mẫu đang áp dụng. Administrator cập nhật được mẫu mới và hệ thống sử dụng mẫu đó sau khi cấu hình có hiệu lực.</td>
-</tr>
-</tbody>
-</table>
-
-<p align="center"><em>Bảng 8. Yêu cầu chức năng tự động của hệ thống và AI</em></p>
+| Mã | Tên và nội dung yêu cầu | Tiêu chí chấp nhận |
+|---|---|---|
+| FR-HT-01 | **Chuyển ngôn ngữ tự nhiên thành Draft Order.** Hệ thống phân tích văn bản hoặc giọng nói để nhận diện sản phẩm, số lượng, khách hàng và yêu cầu ghi nợ. | Yêu cầu đủ thông tin tạo được Draft Order và chuyển cho người dùng kiểm tra. |
+| FR-HT-02 | **Tự động ghi nhận dữ liệu nguồn.** Khi đơn hàng, phiếu nhập, giao dịch công nợ, nghĩa vụ thuế hoặc lần nộp thuế được xác nhận, hệ thống ghi nhận dữ liệu phục vụ sổ. | Dữ liệu sổ có thể truy vết về giao dịch nguồn đã xác nhận. |
+| FR-HT-03 | **Tự động tổng hợp S1-HKD.** Hệ thống tổng hợp doanh thu theo nhóm hoạt động tính thuế và tỷ lệ đã lưu tại thời điểm bán. | Số liệu bằng tổng dữ liệu của các đơn đã xác nhận trong kỳ; thay đổi cấu hình mới không làm thay đổi đơn cũ. |
+| FR-HT-04 | **Tự động tổng hợp S2-HKD.** Hệ thống tổng hợp đơn vị, đơn giá, số lượng và thành tiền nhập–xuất–tồn. | Số liệu khớp dữ liệu kho; giá trị chính thức được hoàn thiện khi chốt kỳ. |
+| FR-HT-05 | **Tự động tổng hợp S4-HKD.** Hệ thống tổng hợp số phải nộp, số đã nộp và số còn phải nộp theo từng loại nghĩa vụ. | Số đã nộp bằng tổng các giao dịch nộp thuế; hệ thống phản ánh được nộp thừa. |
+| FR-HT-06 | **Tính số thuế dự kiến.** Hệ thống có thể tính số thuế dự kiến từ doanh thu tính thuế và tỷ lệ được cấu hình. | Công thức sử dụng đúng dữ liệu và tỷ lệ; kết quả được đánh dấu cần Owner kiểm tra. |
+| FR-HT-07 | **Quản lý phiên bản và lịch sử.** Hệ thống sử dụng đúng phiên bản biểu mẫu và cấu hình có hiệu lực tại thời điểm lập sổ/báo cáo. | Báo cáo cũ giữ nguyên phiên bản đã sử dụng; phiên bản mới chỉ áp dụng từ thời điểm có hiệu lực. |
+| FR-HT-08 | **Thông báo kết quả cần xử lý.** Hệ thống thông báo cho Owner khi có Draft Order, sổ hoặc báo cáo cần kiểm tra. | Owner nhận được thông báo phù hợp và mở được đối tượng cần xử lý. |
 
 ## 3.4. Yêu cầu đối với Administrator
 
-<table align="center">
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="center"><strong>Mã yêu cầu</strong></th>
-<th align="center"><strong>Tên và nội dung yêu cầu</strong></th>
-<th align="center"><strong>Tiêu chí chấp nhận</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="center">FR-QT-01</td>
-<td align="left"><p><strong>Quản lý tài khoản Owner</strong></p>
-<p>Hệ thống phải cho phép Administrator xem danh sách, tìm kiếm, lọc và quản lý tất cả tài khoản Owner đã đăng ký trên nền tảng. Administrator có thể xem hồ sơ chi tiết, kích hoạt hoặc vô hiệu hóa từng tài khoản.</p></td>
-<td align="left">Administrator tìm được tài khoản theo điều kiện, mở được hồ sơ chi tiết và thay đổi được trạng thái hoạt động của tài khoản.</td>
-</tr>
-<tr class="even">
-<td align="center">FR-QT-02</td>
-<td align="left"><p><strong>Quản lý giá gói thuê bao</strong></p>
-<p>Hệ thống phải cho phép Administrator định nghĩa và cập nhật mức giá của các gói thuê bao được cung cấp trên nền tảng, bao gồm chi phí theo tháng và theo năm cho các gói như Cơ bản (Basic) và Chuyên nghiệp (Pro).</p></td>
-<td align="left">Administrator cập nhật được giá theo tháng và theo năm của từng gói; mức giá mới được lưu và hiển thị đúng trong thông tin gói thuê bao.</td>
-</tr>
-<tr class="odd">
-<td align="center">FR-QT-03</td>
-<td align="left"><p><strong>Theo dõi số liệu nền tảng và phản hồi</strong></p>
-<p>Hệ thống phải cung cấp cho Administrator một Dashboard để theo dõi tình trạng hoạt động, mức tăng trưởng và doanh thu của toàn nền tảng. Các số liệu tối thiểu gồm tổng số người dùng đang hoạt động và số lượng thuê bao mới. Administrator cũng phải có khả năng xem các báo cáo, số liệu phân tích và phản hồi của người dùng.</p></td>
-<td align="left">Administrator truy cập được bảng điều khiển, xem được các chỉ số được yêu cầu và mở được nội dung phản hồi của người dùng.</td>
-</tr>
-<tr class="even">
-<td align="center">FR-QT-04</td>
-<td align="left"><p><strong>Quản lý cấu hình hệ thống, AI và biểu mẫu báo cáo</strong></p>
-<p>Hệ thống phải cho phép Administrator quản lý các thiết lập chung của toàn nền tảng và các cấu hình liên quan đến AI. Administrator có thể cập nhật mẫu chuẩn của các sổ kế toán, báo cáo tài chính theo Thông tư số 88/2021/TT-BTC và phát thông báo đến toàn bộ người dùng trên hệ thống.</p></td>
-<td align="left">Administrator lưu được cấu hình hệ thống và cấu hình AI, cập nhật được mẫu báo cáo, đồng thời gửi được thông báo đến người dùng trên toàn nền tảng.</td>
-</tr>
-</tbody>
-</table>
+| Mã | Tên và nội dung yêu cầu | Tiêu chí chấp nhận |
+|---|---|---|
+| FR-QT-01 | **Quản lý tài khoản Owner.** Administrator xem, tìm kiếm, kích hoạt hoặc vô hiệu hóa tài khoản Owner. | Trạng thái tài khoản được cập nhật đúng và có thể tra cứu. |
+| FR-QT-02 | **Quản lý gói thuê bao.** Administrator định nghĩa và cập nhật giá theo tháng/năm. | Mức giá mới được lưu và hiển thị đúng. |
+| FR-QT-03 | **Theo dõi nền tảng và phản hồi.** Administrator xem số người dùng hoạt động, thuê bao mới, doanh thu nền tảng và phản hồi. | Dashboard và nội dung phản hồi hiển thị đúng dữ liệu. |
+| FR-QT-04 | **Quản lý cấu hình hệ thống và AI.** Administrator cập nhật cấu hình chung và các thiết lập AI. | Cấu hình được lưu, áp dụng và ghi nhận người thay đổi. |
+| FR-QT-05 | **Quản lý nhóm hoạt động và tỷ lệ tính thuế.** Administrator tạo phiên bản mới, thiết lập thời gian hiệu lực và ngừng sử dụng phiên bản cũ. | Không có hai phiên bản đang hoạt động bị chồng thời gian; giao dịch cũ không bị thay đổi. |
+| FR-QT-06 | **Quản lý biểu mẫu S1-HKD, S2-HKD và S4-HKD.** Administrator quản lý cấu trúc, phiên bản và thời gian áp dụng. | Hệ thống sử dụng đúng phiên bản có hiệu lực và giữ được lịch sử phiên bản cũ. |
+| FR-QT-07 | **Phát thông báo hệ thống.** Administrator gửi thông báo toàn nền tảng hoặc theo nhóm người dùng. | Thông báo đến đúng đối tượng và đúng khoảng thời gian cấu hình. |
 
-<p align="center"><em>Bảng 9. Yêu cầu chức năng đối với Administrator</em></p>
+---
 
 # 4. YÊU CẦU PHI CHỨC NĂNG
 
-Các yêu cầu phi chức năng xác định mức chất lượng mà hệ thống phải đạt được trong quá trình vận hành. Nội dung dưới đây được giữ đầy đủ theo năm nhóm yêu cầu của đề tài và được tách thành từng mã riêng để thuận tiện cho việc kiểm chứng.
+| Mã | Tên và nội dung yêu cầu | Tiêu chí chấp nhận |
+|---|---|---|
+| NFR-BM-01 | **Bảo vệ dữ liệu hộ kinh doanh.** Đơn hàng, sản phẩm, khách hàng, kho, công nợ, thuế và báo cáo của từng hộ phải được tách biệt. | Người dùng không truy cập được dữ liệu của hộ khác. |
+| NFR-BM-02 | **Phân quyền theo vai trò.** Employee, Owner và Administrator chỉ được thực hiện chức năng thuộc quyền. | Yêu cầu ngoài quyền hạn bị từ chối ở backend. |
+| NFR-BM-03 | **Bảo vệ thông tin xác thực.** Mật khẩu không được lưu ở dạng rõ; thông tin kết nối và khóa bí mật không xuất hiện trong mã nguồn công khai. | Kiểm tra hệ thống không phát hiện mật khẩu rõ hoặc secret bị commit. |
+| NFR-BM-04 | **Truy vết thay đổi.** Thao tác quan trọng phải ghi người thực hiện, thời điểm và nội dung thay đổi. | Audit log có đủ thông tin để truy vết. |
+| NFR-HN-01 | **Thời gian phản hồi.** Các thao tác cốt lõi phải phản hồi dưới 2.000 ms trong môi trường kiểm thử được xác định. | Kết quả đo đạt giới hạn yêu cầu. |
+| NFR-HN-02 | **Danh mục lớn.** Tìm kiếm, lọc và phân trang phải hoạt động khi dữ liệu sản phẩm tăng. | Chức năng vẫn đúng và không tải toàn bộ dữ liệu không cần thiết. |
+| NFR-HN-03 | **Nhiều người dùng đồng thời.** Hệ thống không làm sai lệch tồn kho, công nợ hoặc nghĩa vụ thuế khi có giao dịch đồng thời. | Dữ liệu sau kiểm thử vẫn nhất quán. |
+| NFR-TC-01 | **Transaction cho nghiệp vụ quan trọng.** Xác nhận đơn, nhập kho, chốt giá vốn và nộp thuế phải hoàn tất toàn bộ hoặc hoàn tác toàn bộ. | Khi một bước thất bại, không tồn tại trạng thái cập nhật dở dang. |
+| NFR-TC-02 | **Kiểm soát AI.** AI không được tự xác nhận Draft Order hoặc kết quả thuế thay người dùng. | Mọi kết quả AI cần người có quyền kiểm tra. |
+| NFR-TC-03 | **Vận hành khi AI không khả dụng.** Người dùng vẫn lập đơn thủ công. | Tắt AI không làm gián đoạn bán hàng tại quầy. |
+| NFR-KD-01 | **Giao diện đơn giản và thích ứng.** Giao diện phù hợp người ít kinh nghiệm công nghệ và nền tảng được chọn. | Màn hình chính sử dụng được trên máy tính và điện thoại nếu triển khai web responsive. |
+| NFR-KD-02 | **Tiếng Việt và Unicode.** Nội dung hiển thị bằng tiếng Việt và bảo toàn ký tự có dấu. | Dữ liệu được nhập, lưu, tìm kiếm và hiển thị đúng. |
+| NFR-KD-03 | **Thông báo thời gian thực.** Draft Order và đối tượng cần duyệt phải được thông báo mà không cần tải lại toàn bộ trang. | Thông báo xuất hiện trong phiên đăng nhập đang hoạt động. |
+| NFR-TT-01 | **Tính chính xác của S1-HKD.** Doanh thu phải khớp với đơn hàng đã xác nhận và nhóm hoạt động tại thời điểm bán. | Đối chiếu tổng doanh thu không phát sinh chênh lệch ngoài quy tắc làm tròn. |
+| NFR-TT-02 | **Tính chính xác của S2-HKD.** Số lượng và thành tiền nhập–xuất–tồn phải đối chiếu được với dữ liệu kho. | Tồn cuối kỳ khớp dữ liệu nguồn và phương pháp được lựa chọn. |
+| NFR-TT-03 | **Tính chính xác của S4-HKD.** Số đã nộp phải bằng tổng các lần nộp và số còn phải nộp được tính đúng. | Đối chiếu không có chênh lệch; trường hợp nộp thừa được phản ánh. |
+| NFR-TT-04 | **Quản lý phiên bản.** Biểu mẫu và nhóm hoạt động tính thuế phải có thời gian hiệu lực và không chồng phiên bản đang hoạt động. | Phiên bản mới áp dụng đúng thời điểm; dữ liệu cũ được bảo toàn. |
+| NFR-TT-05 | **Kiểm soát kết quả.** Owner phải có thể xác nhận hoặc từ chối sổ/báo cáo; lý do từ chối phải được lưu. | Lịch sử duyệt thể hiện đầy đủ trạng thái, người và thời gian. |
+| NFR-TT-06 | **Giới hạn tuyên bố.** Kết quả thuế được mô tả là số liệu dự kiến dựa trên dữ liệu và cấu hình, cần Owner kiểm tra. | Giao diện và tài liệu không tuyên bố hệ thống thay thế hoàn toàn kiểm tra chuyên môn. |
 
-<table align="center">
-<colgroup>
-<col style="width: 33%" />
-<col style="width: 33%" />
-<col style="width: 33%" />
-</colgroup>
-<thead>
-<tr class="header">
-<th align="center"><strong>Mã yêu cầu</strong></th>
-<th align="center"><strong>Tên và nội dung yêu cầu</strong></th>
-<th align="center"><strong>Tiêu chí chấp nhận</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="center">NFR-BM-01</td>
-<td align="left"><p><strong>Bảo vệ thông tin kinh doanh</strong></p>
-<p>Hệ thống phải bảo vệ thông tin bán hàng của từng hộ kinh doanh, bao gồm dữ liệu đơn hàng, sản phẩm, khách hàng, công nợ và báo cáo.</p></td>
-<td align="left">Người dùng không được phép truy cập dữ liệu kinh doanh không thuộc phạm vi được cấp quyền; các thử nghiệm truy cập trái phép phải bị hệ thống từ chối.</td>
-</tr>
-<tr class="even">
-<td align="center">NFR-BM-02</td>
-<td align="left"><p><strong>Phân quyền truy cập theo vai trò</strong></p>
-<p>Hệ thống phải áp dụng cơ chế phân quyền chặt chẽ cho ba vai trò Employee, Owner và Administrator.</p></td>
-<td align="left">Mỗi vai trò chỉ nhìn thấy và thực hiện được các chức năng đã quy định; các chức năng ngoài quyền hạn không thể truy cập hoặc thực thi.</td>
-</tr>
-<tr class="odd">
-<td align="center">NFR-HN-01</td>
-<td align="left"><p><strong>Thời gian phản hồi của thao tác cốt lõi</strong></p>
-<p>Các thao tác cốt lõi của ứng dụng phải có thời gian phản hồi dưới 2.000 mili giây.</p></td>
-<td align="left">Kết quả đo trong môi trường kiểm thử cho thấy các thao tác cốt lõi hoàn tất trong thời gian dưới 2.000 mili giây.</td>
-</tr>
-<tr class="even">
-<td align="center">NFR-HN-02</td>
-<td align="left"><p><strong>Hỗ trợ danh mục sản phẩm lớn</strong></p>
-<p>Hệ thống phải duy trì khả năng tìm kiếm và xử lý khi hộ kinh doanh có danh mục sản phẩm lớn.</p></td>
-<td align="left">Trong bộ dữ liệu có quy mô được xác định tại Tài liệu kiểm thử, các chức năng tìm kiếm, lọc và lập đơn vẫn hoạt động đúng và không phát sinh lỗi chức năng.</td>
-</tr>
-<tr class="odd">
-<td align="center">NFR-HN-03</td>
-<td align="left"><p><strong>Hỗ trợ nhiều người dùng đồng thời</strong></p>
-<p>Hệ thống phải cho phép nhiều người dùng hoạt động đồng thời mà không làm sai lệch dữ liệu nghiệp vụ.</p></td>
-<td align="left">Với số phiên đồng thời được xác định tại Tài liệu kiểm thử, người dùng vẫn thực hiện được thao tác và dữ liệu sau cùng vẫn nhất quán.</td>
-</tr>
-<tr class="even">
-<td align="center">NFR-TC-01</td>
-<td align="left"><p><strong>Kiểm soát kết quả do AI tạo</strong></p>
-<p>Employee hoặc Owner phải có thể xem lại, chỉnh sửa hoặc từ chối Draft Order do AI tạo trước khi đơn được xác nhận.</p></td>
-<td align="left">Người dùng thực hiện được đầy đủ ba thao tác xem lại, chỉnh sửa và từ chối trên một Draft Order.</td>
-</tr>
-<tr class="odd">
-<td align="center">NFR-TC-02</td>
-<td align="left"><p><strong>Duy trì vận hành khi AI không khả dụng</strong></p>
-<p>Khi chức năng AI tạm thời không hoạt động, hệ thống phải tiếp tục cho phép người dùng lập và xử lý đơn hàng theo phương thức thủ công.</p></td>
-<td align="left">Khi dịch vụ AI bị tắt hoặc không phản hồi, người dùng vẫn đăng nhập và lập đơn tại quầy bằng thao tác thủ công.</td>
-</tr>
-<tr class="even">
-<td align="center">NFR-KD-01</td>
-<td align="left"><p><strong>Giao diện đơn giản và tương thích thiết bị</strong></p>
-<p>Giao diện của ứng dụng trên nền tảng web, thiết bị di động hoặc cả hai phải đơn giản, dễ hiểu, phù hợp với người dùng có mức độ thành thạo công nghệ thấp và thích ứng với kích thước màn hình của nền tảng được triển khai.</p></td>
-<td align="left">Các màn hình chính hiển thị và sử dụng được trên nền tảng mà nhóm lựa chọn triển khai. Nếu triển khai ứng dụng web, giao diện tự điều chỉnh phù hợp với màn hình máy tính và điện thoại.</td>
-</tr>
-<tr class="odd">
-<td align="center">NFR-KD-02</td>
-<td align="left"><p><strong>Giao diện tiếng Việt</strong></p>
-<p>Toàn bộ nội dung giao diện dành cho người dùng phải được trình bày bằng tiếng Việt.</p></td>
-<td align="left">Các màn hình chính, nhãn chức năng và thông báo được hiển thị bằng tiếng Việt.</td>
-</tr>
-<tr class="even">
-<td align="center">NFR-KD-03</td>
-<td align="left"><p><strong>Bảo toàn ký tự Unicode</strong></p>
-<p>Hệ thống phải lưu trữ và hiển thị chính xác các ký tự tiếng Việt có dấu và dữ liệu Unicode.</p></td>
-<td align="left">Dữ liệu tiếng Việt được nhập, lưu, tìm kiếm và hiển thị lại mà không bị mất dấu hoặc sai ký tự.</td>
-</tr>
-<tr class="odd">
-<td align="center">NFR-KD-04</td>
-<td align="left"><p><strong>Thông báo theo thời gian thực</strong></p>
-<p>Hệ thống phải cung cấp thông báo theo thời gian thực cho các sự kiện được quy định, đặc biệt khi có Draft Order mới do AI tạo.</p></td>
-<td align="left">Thông báo mới xuất hiện trên giao diện của người dùng đang đăng nhập mà không cần tải lại toàn bộ trang.</td>
-</tr>
-<tr class="even">
-<td align="center">NFR-TT-01</td>
-<td align="left"><p><strong>Tạo báo cáo chính xác theo quy định kế toán</strong></p>
-<p>Hệ thống phải tự động tạo các sổ kế toán và báo cáo theo Thông tư số 88/2021/TT-BTC như yêu cầu của đề tài. Số liệu phải được tổng hợp chính xác từ các giao dịch đã ghi nhận và sử dụng phiên bản biểu mẫu đang có hiệu lực trong hệ thống.</p></td>
-<td align="left">Số liệu trên báo cáo khớp với dữ liệu giao dịch nguồn của kỳ báo cáo; cấu trúc và các trường thông tin phù hợp với phiên bản mẫu đang áp dụng.</td>
-</tr>
-<tr class="odd">
-<td align="center">NFR-TT-02</td>
-<td align="left"><p><strong>Kiểm soát báo cáo do AI tạo</strong></p>
-<p>Owner phải có thể xem xét, chỉnh sửa hoặc từ chối các báo cáo do AI tạo trước khi sử dụng.</p></td>
-<td align="left">Owner thực hiện được các thao tác xem, chỉnh sửa và từ chối trên báo cáo do AI tạo.</td>
-</tr>
-<tr class="even">
-<td align="center">NFR-TT-03</td>
-<td align="left"><p><strong>Cập nhật biểu mẫu khi quy định thay đổi</strong></p>
-<p>Nền tảng phải hỗ trợ cập nhật và quản lý phiên bản các mẫu sổ kế toán, báo cáo để phù hợp với những thay đổi trong biểu mẫu chính thức do cơ quan có thẩm quyền ban hành.</p></td>
-<td align="left">Administrator cập nhật được một phiên bản mẫu mới, xác định thời điểm áp dụng và hệ thống sử dụng đúng phiên bản sau khi cấu hình có hiệu lực.</td>
-</tr>
-</tbody>
-</table>
-
-<p align="center"><em>Bảng 10. Danh sách yêu cầu phi chức năng</em></p>
+---
 
 # 5. TIÊU CHÍ NGHIỆM THU Ở MỨC NGƯỜI DÙNG
 
-Hệ thống được xem là đáp ứng tài liệu URD khi từng yêu cầu chức năng và phi chức năng đã được kiểm chứng theo tiêu chí chấp nhận tương ứng. Ở mức tổng quát, việc nghiệm thu cần xác nhận các kết quả sau:
+| Mã | Tiêu chí nghiệm thu tổng quát |
+|---|---|
+| NT-01 | Employee đăng nhập, lập đơn, ghi nhận thanh toán/công nợ, in đơn và xử lý Draft Order. |
+| NT-02 | Owner quản lý được sản phẩm, nhiều đơn vị, giá, nhóm hoạt động tính thuế mặc định, kho, khách hàng, công nợ và tài khoản Employee. |
+| NT-03 | Hệ thống tiếp nhận văn bản hoặc giọng nói, tạo Draft Order và gửi đến người dùng kiểm tra. |
+| NT-04 | S1-HKD tổng hợp đúng doanh thu từ đơn hàng đã xác nhận và giữ đúng nhóm, tỷ lệ tại thời điểm bán. |
+| NT-05 | S2-HKD thể hiện đúng đơn vị, đơn giá, số lượng và thành tiền nhập–xuất–tồn; số liệu khớp dữ liệu kho. |
+| NT-06 | S4-HKD thể hiện đúng nghĩa vụ, số đã nộp, số còn phải nộp hoặc nộp thừa theo từng loại thuế. |
+| NT-07 | Owner xem, kiểm tra, xác nhận hoặc từ chối sổ/báo cáo; lịch sử duyệt được lưu. |
+| NT-08 | Administrator quản lý được Owner, thuê bao, cấu hình, nhóm hoạt động tính thuế, biểu mẫu S1/S2/S4, phản hồi và thông báo. |
+| NT-09 | Phân quyền và tách biệt dữ liệu bảo đảm người dùng chỉ truy cập đúng hộ kinh doanh và chức năng được cấp. |
+| NT-10 | Các thao tác cốt lõi đáp ứng thời gian phản hồi dưới 2.000 ms trong môi trường kiểm thử. |
+| NT-11 | Giao diện hiển thị tiếng Việt, bảo toàn Unicode và cung cấp thông báo thời gian thực. |
+| NT-12 | Khi AI không khả dụng, người dùng vẫn lập và xử lý đơn thủ công. |
+| NT-13 | Hệ thống không triển khai hoặc tuyên bố hỗ trợ S3-HKD, S5-HKD, S6-HKD và S7-HKD trong phiên bản hiện tại. |
+| NT-14 | Các kết quả thuế được trình bày là số liệu dự kiến dựa trên dữ liệu và cấu hình, cần Owner kiểm tra trước khi sử dụng. |
 
-<table align="center">
-<thead>
-<tr>
-<th align="center"><strong>Mã</strong></th>
-<th align="center"><strong>Tiêu chí nghiệm thu tổng quát</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center">NT-01</td>
-<td align="left">Employee đăng nhập, lập đơn bán hàng tại quầy, ghi nhận công nợ, in đơn; đồng thời nhận thông báo, kiểm tra, chỉnh sửa, xác nhận hoặc từ chối Draft Order theo đúng phạm vi được giao.</td>
-</tr>
-<tr>
-<td align="center">NT-02</td>
-<td align="left">Owner sử dụng được toàn bộ chức năng của Employee và quản lý được sản phẩm, tồn kho, khách hàng, báo cáo cùng tài khoản Employee.</td>
-</tr>
-<tr>
-<td align="center">NT-03</td>
-<td align="left">Hệ thống tiếp nhận được yêu cầu bằng văn bản hoặc giọng nói, tạo Draft Order và chuyển đơn đó đến người dùng để kiểm tra.</td>
-</tr>
-<tr>
-<td align="center">NT-04</td>
-<td align="left">Hệ thống tự động ghi nhận, tính toán và tổng hợp dữ liệu bán hàng, nhập kho và công nợ vào các sổ kế toán hoặc báo cáo; số liệu khớp với dữ liệu nguồn và sử dụng đúng phiên bản biểu mẫu đang áp dụng. Owner có thể xem xét, chỉnh sửa hoặc từ chối báo cáo do AI tạo.</td>
-</tr>
-<tr>
-<td align="center">NT-05</td>
-<td align="left">Administrator quản lý được tài khoản Owner, giá gói thuê bao, số liệu nền tảng, phản hồi, cấu hình và mẫu báo cáo.</td>
-</tr>
-<tr>
-<td align="center">NT-06</td>
-<td align="left">Cơ chế phân quyền bảo đảm mỗi vai trò chỉ truy cập được chức năng và dữ liệu thuộc phạm vi cho phép.</td>
-</tr>
-<tr>
-<td align="center">NT-07</td>
-<td align="left">Các thao tác cốt lõi đáp ứng yêu cầu thời gian phản hồi dưới 2.000 mili giây trong môi trường kiểm thử.</td>
-</tr>
-<tr>
-<td align="center">NT-08</td>
-<td align="left">Giao diện hiển thị đúng tiếng Việt, bảo toàn ký tự Unicode, sử dụng được trên nền tảng web, thiết bị di động hoặc cả hai theo phương án triển khai, đồng thời cung cấp thông báo theo thời gian thực.</td>
-</tr>
-<tr>
-<td align="center">NT-09</td>
-<td align="left">Người dùng vẫn có thể lập đơn thủ công khi chức năng AI không khả dụng.</td>
-</tr>
-</tbody>
-</table>
+---
 
-<p align="center"><em>Bảng 11. Tiêu chí nghiệm thu ở mức người dùng</em></p>
+## Kết luận
+
+Tài liệu xác định rõ phạm vi người dùng của Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh và làm rõ phạm vi học thuật gồm **S1-HKD, S2-HKD và S4-HKD**.
+
+Các yêu cầu được giới hạn ở mức người dùng và nghiệp vụ. Chi tiết kỹ thuật như cấu trúc bảng, khóa ngoại, trigger, API, Railway hoặc công nghệ cache được trình bày trong các tài liệu thiết kế và triển khai tương ứng.
