@@ -28,7 +28,13 @@ public class JwtTokenProvider {
             @Value("${jwt.secret}") String jwtSecret,
             @Value("${jwt.access-expiration-ms}") long jwtAccessExpirationMs,
             @Value("${jwt.refresh-expiration-ms}") long jwtRefreshExpirationMs) {
-        this.jwtSecretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(jwtSecret);
+        } catch (Exception e) {
+            keyBytes = jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        }
+        this.jwtSecretKey = Keys.hmacShaKeyFor(keyBytes);
         this.jwtAccessExpirationMs = jwtAccessExpirationMs;
         this.jwtRefreshExpirationMs = jwtRefreshExpirationMs;
     }

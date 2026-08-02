@@ -19,7 +19,7 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ./Code/Server
     container_name: agritrade-backend
     restart: unless-stopped
     depends_on:
@@ -46,7 +46,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./Code/Client/src/frontend
     container_name: agritrade-frontend
     restart: unless-stopped
     depends_on:

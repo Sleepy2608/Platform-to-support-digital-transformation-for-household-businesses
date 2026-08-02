@@ -9,6 +9,7 @@ import com.hbdt.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Component
+@Order(1)
 public class DatabaseSeeder implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseSeeder.class);
@@ -34,6 +36,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     public void run(String... args) {
         seedRoles();
         seedAdminUser();
+        seedOwnerUser();
     }
 
     private void seedRoles() {
@@ -78,4 +81,28 @@ public class DatabaseSeeder implements CommandLineRunner {
             logger.info("Seeded default admin user: admin / admin123");
         }
     }
+
+    private void seedOwnerUser() {
+        if (!userRepository.existsByUsername("owner")) {
+            Role ownerRole = roleRepository.findByName(RoleType.BUSINESS_OWNER)
+                    .orElseThrow(() -> new RuntimeException("Role BUSINESS_OWNER not found"));
+            Set<Role> roles = new HashSet<>();
+            roles.add(ownerRole);
+
+            User owner = User.builder()
+                    .username("owner")
+                    .password(passwordEncoder.encode("owner123"))
+                    .email("owner@hbdt.com")
+                    .fullName("Chủ Hộ Kinh Doanh Mẫu")
+                    .phone("0987654321")
+                    .status(UserStatus.ACTIVE)
+                    .subscriptionExpiresAt(java.time.LocalDateTime.now().plusMonths(12))
+                    .roles(roles)
+                    .build();
+
+            userRepository.save(owner);
+            logger.info("Seeded default owner user: owner / owner123");
+        }
+    }
 }
+
