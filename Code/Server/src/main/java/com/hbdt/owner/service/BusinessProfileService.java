@@ -1,12 +1,21 @@
 package com.hbdt.owner.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
-import com.hbdt.entity.*;
+import com.hbdt.common.service.GeoReferenceStore;
+import com.hbdt.entity.BusinessProfile;
+import com.hbdt.entity.District;
+import com.hbdt.entity.Province;
+import com.hbdt.entity.User;
+import com.hbdt.entity.Ward;
+import com.hbdt.entity.enums.BusinessType;
 import com.hbdt.entity.enums.UserStatus;
 import com.hbdt.owner.dto.BusinessProfileRequest;
 import com.hbdt.owner.dto.BusinessProfileResponse;
-import com.hbdt.repository.*;
+import com.hbdt.repository.BusinessProfileRepository;
+import com.hbdt.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,18 +37,13 @@ import java.util.UUID;
 public class BusinessProfileService {
 
     private static final Logger logger = LoggerFactory.getLogger(BusinessProfileService.class);
-
-    // Max 5MB cho logo/cover (khác avatar 2MB)
     private static final long MAX_IMAGE_SIZE = 5L * 1024 * 1024;
     private static final Set<String> ALLOWED_MIME = Set.of("image/jpeg", "image/png", "image/webp");
 
     private final UserRepository userRepository;
     private final BusinessProfileRepository businessProfileRepository;
-    private final RepresentativeRepository representativeRepository;
-    private final StoreRepository storeRepository;
-    private final ProvinceRepository provinceRepository;
-    private final DistrictRepository districtRepository;
-    private final WardRepository wardRepository;
+    private final GeoReferenceStore referenceStore;
+    private final ObjectMapper objectMapper;
 
     @Value("${app.upload.dir:./uploads}")
     private String uploadDir;
@@ -48,148 +52,127 @@ public class BusinessProfileService {
     private String serverPort;
 
     public BusinessProfileService(UserRepository userRepository,
-                                   BusinessProfileRepository businessProfileRepository,
-                                   RepresentativeRepository representativeRepository,
-                                   StoreRepository storeRepository,
-                                   ProvinceRepository provinceRepository,
-                                   DistrictRepository districtRepository,
-                                   WardRepository wardRepository) {
+                                  BusinessProfileRepository businessProfileRepository,
+                                  GeoReferenceStore referenceStore,
+                                  ObjectMapper objectMapper) {
         this.userRepository = userRepository;
         this.businessProfileRepository = businessProfileRepository;
-        this.representativeRepository = representativeRepository;
-        this.storeRepository = storeRepository;
-        this.provinceRepository = provinceRepository;
-        this.districtRepository = districtRepository;
-        this.wardRepository = wardRepository;
+        this.referenceStore = referenceStore;
+        this.objectMapper = objectMapper;
     }
-
-    // =========================================================
-    // GET
-    // =========================================================
 
     @Transactional(readOnly = true)
     public BusinessProfileResponse getProfile(String username) {
         User user = findActiveUser(username);
-        BusinessProfile profile = businessProfileRepository.findByOwnerId(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Hồ sơ doanh nghiệp chưa được tạo. Vui lòng hoàn thành onboarding."));
-
-        return toResponse(profile);
+        BusinessProfile profile = findBusinessForUser(user);
+        return toResponse(profile, user);
     }
-
-    // =========================================================
-    // POST — Create (upsert: nếu đã có thì update)
-    // =========================================================
 
     public BusinessProfileResponse createOrUpdate(String username, BusinessProfileRequest request) {
         User user = findActiveUser(username);
+        BusinessProfileRequest.BusinessInfoDto businessInfo = request.getBusinessInfo();
+        BusinessProfileRequest.RepresentativeDto representative = request.getRepresentative();
+        BusinessProfileRequest.StoreDto store = request.getStore();
 
-        BusinessProfileRequest.BusinessInfoDto bizInfo = request.getBusinessInfo();
-        BusinessProfileRequest.RepresentativeDto repDto = request.getRepresentative();
-        BusinessProfileRequest.StoreDto storeDto = request.getStore();
-
-        // ── Validate tax code uniqueness ──────────────────────────────────────
-        Optional<BusinessProfile> existing = businessProfileRepository.findByOwnerId(user.getId());
+        Optional<BusinessProfile> existing = user.getBusinessId() == null
+                ? Optional.empty()
+                : businessProfileRepository.findById(user.getBusinessId());
 
         if (existing.isEmpty()) {
-            // Create: taxCode phải chưa tồn tại trong hệ thống
-            if (businessProfileRepository.existsByTaxCode(bizInfo.getTaxCode())) {
-                throw new BadRequestException("Mã số thuế '" + bizInfo.getTaxCode() + "' đã được đăng ký bởi tài khoản khác");
+            if (businessProfileRepository.existsByTaxCode(businessInfo.getTaxCode())) {
+                throw new BadRequestException("Mã số thuế đã được đăng ký bởi tài khoản khác");
             }
-        } else {
-            // Update: taxCode không được trùng với profile khác
-            if (businessProfileRepository.existsByTaxCodeAndIdNot(bizInfo.getTaxCode(), existing.get().getId())) {
-                throw new BadRequestException("Mã số thuế '" + bizInfo.getTaxCode() + "' đã được đăng ký bởi tài khoản khác");
-            }
+        } else if (businessProfileRepository.existsByTaxCodeAndIdNot(
+                businessInfo.getTaxCode(), existing.get().getId())) {
+            throw new BadRequestException("Mã số thuế đã được đăng ký bởi tài khoản khác");
         }
 
-        // ── Persist BusinessProfile ───────────────────────────────────────────
         BusinessProfile profile = existing.orElseGet(BusinessProfile::new);
-        profile.setOwner(user);
-        profile.setBusinessName(bizInfo.getBusinessName());
-        profile.setTaxCode(bizInfo.getTaxCode());
-        profile.setBusinessType(bizInfo.getBusinessType());
-        profile.setProvinceCode(bizInfo.getProvinceCode());
-        profile.setDistrictCode(bizInfo.getDistrictCode());
-        profile.setWardCode(bizInfo.getWardCode());
-        profile.setDetailAddress(bizInfo.getDetailAddress());
+        if (profile.getBusinessCode() == null) {
+            profile.setBusinessCode(newBusinessCode());
+        }
+        profile.setBusinessName(businessInfo.getBusinessName());
+        profile.setTaxCode(businessInfo.getTaxCode());
+        profile.setOwnerName(representative.getFullName());
+        profile.setPhone(representative.getPhoneNumber());
+        profile.setAddress(encodeAddress(new AddressPayload(
+                businessInfo.getBusinessType(),
+                businessInfo.getProvinceCode(),
+                businessInfo.getDistrictCode(),
+                businessInfo.getWardCode(),
+                businessInfo.getDetailAddress(),
+                representative.getEmail(),
+                store.getStoreName())));
+
+        if (store.getLogoUrl() != null && !store.getLogoUrl().isBlank()) {
+            profile.setLogoObjectKey(normalizeObjectKey(store.getLogoUrl()));
+        }
+        if (store.getCoverImageUrl() != null && !store.getCoverImageUrl().isBlank()) {
+            profile.setCoverImageObjectKey(normalizeObjectKey(store.getCoverImageUrl()));
+        }
+
         profile = businessProfileRepository.save(profile);
+        if (!profile.getId().equals(user.getBusinessId())) {
+            user.setBusinessId(profile.getId());
+            userRepository.save(user);
+        }
 
-        // Update businessId on User entity for quick FK reference
-        user.setBusinessId(profile.getId());
-        userRepository.save(user);
-
-        // ── Persist Representative (upsert) ───────────────────────────────────
-        Representative rep = representativeRepository
-                .findByBusinessProfileId(profile.getId())
-                .orElseGet(Representative::new);
-        rep.setBusinessProfile(profile);
-        rep.setFullName(repDto.getFullName());
-        rep.setPhoneNumber(repDto.getPhoneNumber());
-        rep.setEmail(repDto.getEmail());
-        representativeRepository.save(rep);
-
-        // ── Persist Store (upsert) ────────────────────────────────────────────
-        Store store = storeRepository
-                .findByBusinessProfileId(profile.getId())
-                .orElseGet(Store::new);
-        store.setBusinessProfile(profile);
-        store.setStoreName(storeDto.getStoreName());
-        if (storeDto.getLogoUrl() != null) store.setLogoUrl(storeDto.getLogoUrl());
-        if (storeDto.getCoverImageUrl() != null) store.setCoverImageUrl(storeDto.getCoverImageUrl());
-        storeRepository.save(store);
-
-        logger.info("Business profile saved for user={}, profileId={}", username, profile.getId());
-        return toResponse(profile);
+        logger.info("Canonical business profile saved for user={}, businessId={}", username, profile.getId());
+        return toResponse(profile, user);
     }
-
-    // =========================================================
-    // Image Upload — Logo
-    // =========================================================
 
     public String uploadStoreLogo(String username, MultipartFile file) throws IOException {
-        return saveStoreImage(username, file, "logos");
+        return saveBusinessImage(username, file, "logo");
     }
-
-    // =========================================================
-    // Image Upload — Cover Image
-    // =========================================================
 
     public String uploadStoreCoverImage(String username, MultipartFile file) throws IOException {
-        return saveStoreImage(username, file, "covers");
+        return saveBusinessImage(username, file, "cover");
     }
 
-    // =========================================================
-    // Private helpers
-    // =========================================================
+    private String saveBusinessImage(String username, MultipartFile file, String imageType) throws IOException {
+        validateImage(file);
+        User user = findActiveUser(username);
+        BusinessProfile profile = findBusinessForUser(user);
 
-    private String saveStoreImage(String username, MultipartFile file, String subDir) throws IOException {
+        String extension = extensionOf(file.getOriginalFilename());
+        String fileName = UUID.randomUUID() + extension;
+        String objectKey = "businesses/" + profile.getId() + "/" + imageType + "/" + fileName;
+        Path target = Paths.get(uploadDir).resolve(objectKey).normalize();
+        Path uploadRoot = Paths.get(uploadDir).toAbsolutePath().normalize();
+        Path absoluteTarget = target.toAbsolutePath().normalize();
+        if (!absoluteTarget.startsWith(uploadRoot)) {
+            throw new BadRequestException("Đường dẫn upload không hợp lệ");
+        }
+        Files.createDirectories(absoluteTarget.getParent());
+        Files.copy(file.getInputStream(), absoluteTarget, StandardCopyOption.REPLACE_EXISTING);
+
+        if ("logo".equals(imageType)) {
+            profile.setLogoObjectKey(objectKey);
+        } else {
+            profile.setCoverImageObjectKey(objectKey);
+        }
+        businessProfileRepository.save(profile);
+        return toPublicUrl(objectKey);
+    }
+
+    private void validateImage(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new BadRequestException("File không được để trống");
         }
         if (file.getSize() > MAX_IMAGE_SIZE) {
             throw new BadRequestException("Kích thước file vượt quá 5MB");
         }
-        String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_MIME.contains(contentType)) {
-            throw new BadRequestException("Chỉ chấp nhận ảnh JPG, PNG, WEBP");
+        if (file.getContentType() == null || !ALLOWED_MIME.contains(file.getContentType())) {
+            throw new BadRequestException("Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP");
         }
+    }
 
-        String originalFilename = file.getOriginalFilename();
-        String ext = ".jpg";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            ext = originalFilename.substring(originalFilename.lastIndexOf('.'));
+    private String extensionOf(String originalFilename) {
+        if (originalFilename == null || !originalFilename.contains(".")) {
+            return ".jpg";
         }
-
-        String fileName = UUID.randomUUID() + ext;
-        Path dir = Paths.get(uploadDir, "stores", subDir);
-        Files.createDirectories(dir);
-        Path target = dir.resolve(fileName);
-        Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
-
-        String url = "http://localhost:" + serverPort + "/uploads/stores/" + subDir + "/" + fileName;
-        logger.info("Store image uploaded for user={}: {}", username, url);
-        return url;
+        String extension = originalFilename.substring(originalFilename.lastIndexOf('.')).toLowerCase();
+        return Set.of(".jpg", ".jpeg", ".png", ".webp").contains(extension) ? extension : ".jpg";
     }
 
     private User findActiveUser(String username) {
@@ -201,56 +184,117 @@ public class BusinessProfileService {
         return user;
     }
 
-    private BusinessProfileResponse toResponse(BusinessProfile profile) {
-        // Lấy tên tỉnh/huyện/xã để embed vào response
-        String provinceName = provinceRepository.findById(profile.getProvinceCode())
-                .map(Province::getNameWithType).orElse(profile.getProvinceCode());
-        String districtName = districtRepository.findById(profile.getDistrictCode())
-                .map(District::getNameWithType).orElse(profile.getDistrictCode());
-        String wardName = wardRepository.findById(profile.getWardCode())
-                .map(Ward::getNameWithType).orElse(profile.getWardCode());
+    private BusinessProfile findBusinessForUser(User user) {
+        if (user.getBusinessId() == null) {
+            throw new ResourceNotFoundException("Hồ sơ doanh nghiệp chưa được tạo");
+        }
+        return businessProfileRepository.findById(user.getBusinessId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hộ kinh doanh"));
+    }
 
-        // Representative
-        BusinessProfileResponse.RepresentativeInfo repInfo = representativeRepository
-                .findByBusinessProfileId(profile.getId())
-                .map(r -> BusinessProfileResponse.RepresentativeInfo.builder()
-                        .id(r.getId())
-                        .fullName(r.getFullName())
-                        .phoneNumber(r.getPhoneNumber())
-                        .email(r.getEmail())
-                        .build())
-                .orElse(null);
-
-        // Store
-        BusinessProfileResponse.StoreInfo storeInfo = storeRepository
-                .findByBusinessProfileId(profile.getId())
-                .map(s -> BusinessProfileResponse.StoreInfo.builder()
-                        .id(s.getId())
-                        .storeName(s.getStoreName())
-                        .logoUrl(s.getLogoUrl())
-                        .coverImageUrl(s.getCoverImageUrl())
-                        .build())
-                .orElse(null);
+    private BusinessProfileResponse toResponse(BusinessProfile profile, User owner) {
+        AddressPayload payload = decodeAddress(profile.getAddress());
+        String provinceName = nameOf(referenceStore.findProvince(payload.provinceCode()), payload.provinceCode());
+        String districtName = nameOf(referenceStore.findDistrict(payload.districtCode()), payload.districtCode());
+        String wardName = nameOf(referenceStore.findWard(payload.wardCode()), payload.wardCode());
 
         return BusinessProfileResponse.builder()
                 .id(profile.getId())
-                .ownerId(profile.getOwner().getId())
+                .ownerId(owner.getId())
                 .businessName(profile.getBusinessName())
                 .taxCode(profile.getTaxCode())
-                .businessType(profile.getBusinessType())
-                .provinceCode(profile.getProvinceCode())
+                .businessType(payload.businessType())
+                .provinceCode(payload.provinceCode())
                 .provinceName(provinceName)
-                .districtCode(profile.getDistrictCode())
+                .districtCode(payload.districtCode())
                 .districtName(districtName)
-                .wardCode(profile.getWardCode())
+                .wardCode(payload.wardCode())
                 .wardName(wardName)
-                .detailAddress(profile.getDetailAddress())
+                .detailAddress(payload.detailAddress())
                 .status(profile.getStatus())
-                .representative(repInfo)
-                .store(storeInfo)
+                .representative(BusinessProfileResponse.RepresentativeInfo.builder()
+                        .id(profile.getId())
+                        .fullName(profile.getOwnerName())
+                        .phoneNumber(profile.getPhone())
+                        .email(payload.representativeEmail() == null
+                                ? owner.getEmail() : payload.representativeEmail())
+                        .build())
+                .store(BusinessProfileResponse.StoreInfo.builder()
+                        .id(profile.getId())
+                        .storeName(payload.storeName() == null
+                                ? profile.getBusinessName() : payload.storeName())
+                        .logoUrl(toPublicUrl(profile.getLogoObjectKey()))
+                        .coverImageUrl(toPublicUrl(profile.getCoverImageObjectKey()))
+                        .build())
                 .createdAt(profile.getCreatedAt())
                 .updatedAt(profile.getUpdatedAt())
                 .nextStep("PACKAGE_SELECTION")
                 .build();
+    }
+
+    private String nameOf(Object value, String fallback) {
+        if (value instanceof Province province) {
+            return province.getNameWithType();
+        }
+        if (value instanceof District district) {
+            return district.getNameWithType();
+        }
+        if (value instanceof Ward ward) {
+            return ward.getNameWithType();
+        }
+        return fallback;
+    }
+
+    private String encodeAddress(AddressPayload payload) {
+        try {
+            String json = objectMapper.writeValueAsString(payload);
+            if (json.length() > 500) {
+                throw new BadRequestException("Thông tin địa chỉ vượt quá 500 ký tự");
+            }
+            return json;
+        } catch (JsonProcessingException exception) {
+            throw new BadRequestException("Không thể lưu thông tin địa chỉ");
+        }
+    }
+
+    private AddressPayload decodeAddress(String address) {
+        if (address == null || address.isBlank()) {
+            return AddressPayload.empty();
+        }
+        try {
+            return objectMapper.readValue(address, AddressPayload.class);
+        } catch (JsonProcessingException exception) {
+            return new AddressPayload(null, null, null, null, address, null, null);
+        }
+    }
+
+    private String normalizeObjectKey(String value) {
+        int uploadsIndex = value.indexOf("/uploads/");
+        return uploadsIndex >= 0 ? value.substring(uploadsIndex + "/uploads/".length()) : value;
+    }
+
+    private String toPublicUrl(String objectKey) {
+        if (objectKey == null || objectKey.isBlank() || objectKey.startsWith("http://")
+                || objectKey.startsWith("https://")) {
+            return objectKey;
+        }
+        return "http://localhost:" + serverPort + "/uploads/" + objectKey.replace('\\', '/');
+    }
+
+    private String newBusinessCode() {
+        return "HB-" + UUID.randomUUID().toString().replace("-", "").substring(0, 26).toUpperCase();
+    }
+
+    private record AddressPayload(
+            BusinessType businessType,
+            String provinceCode,
+            String districtCode,
+            String wardCode,
+            String detailAddress,
+            String representativeEmail,
+            String storeName) {
+        private static AddressPayload empty() {
+            return new AddressPayload(null, null, null, null, null, null, null);
+        }
     }
 }

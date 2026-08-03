@@ -8,13 +8,11 @@ import com.hbdt.repository.RoleRepository;
 import com.hbdt.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @Component
 @Order(1)
@@ -26,6 +24,12 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Value("${app.seed.roles-enabled:true}")
+    private boolean rolesEnabled;
+
+    @Value("${app.seed.demo-users-enabled:false}")
+    private boolean demoUsersEnabled;
+
     public DatabaseSeeder(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -34,9 +38,13 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        seedRoles();
-        seedAdminUser();
-        seedOwnerUser();
+        if (rolesEnabled) {
+            seedRoles();
+        }
+        if (demoUsersEnabled) {
+            seedAdminUser();
+            seedOwnerUser();
+        }
     }
 
     private void seedRoles() {
@@ -44,12 +52,21 @@ public class DatabaseSeeder implements CommandLineRunner {
             if (roleRepository.findByName(roleType).isEmpty()) {
                 Role role = Role.builder()
                         .name(roleType)
+                        .roleName(getRoleDisplayName(roleType))
                         .description(getRoleDescription(roleType))
                         .build();
                 roleRepository.save(role);
                 logger.info("Seeded role: {}", roleType.name());
             }
         }
+    }
+
+    private String getRoleDisplayName(RoleType roleType) {
+        return switch (roleType) {
+            case ADMIN -> "Quản trị viên";
+            case BUSINESS_OWNER -> "Chủ hộ kinh doanh";
+            case EMPLOYEE -> "Nhân viên";
+        };
     }
 
     private String getRoleDescription(RoleType roleType) {
@@ -64,9 +81,6 @@ public class DatabaseSeeder implements CommandLineRunner {
         if (!userRepository.existsByUsername("admin")) {
             Role adminRole = roleRepository.findByName(RoleType.ADMIN)
                     .orElseThrow(() -> new RuntimeException("Role ADMIN not found"));
-            Set<Role> roles = new HashSet<>();
-            roles.add(adminRole);
-
             User admin = User.builder()
                     .username("admin")
                     .password(passwordEncoder.encode("admin123"))
@@ -74,7 +88,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .fullName("System Administrator")
                     .phone("0123456789")
                     .status(UserStatus.ACTIVE)
-                    .roles(roles)
+                    .role(adminRole)
                     .build();
 
             userRepository.save(admin);
@@ -86,9 +100,6 @@ public class DatabaseSeeder implements CommandLineRunner {
         if (!userRepository.existsByUsername("owner")) {
             Role ownerRole = roleRepository.findByName(RoleType.BUSINESS_OWNER)
                     .orElseThrow(() -> new RuntimeException("Role BUSINESS_OWNER not found"));
-            Set<Role> roles = new HashSet<>();
-            roles.add(ownerRole);
-
             User owner = User.builder()
                     .username("owner")
                     .password(passwordEncoder.encode("owner123"))
@@ -97,7 +108,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .phone("0987654321")
                     .status(UserStatus.ACTIVE)
                     .subscriptionExpiresAt(java.time.LocalDateTime.now().plusMonths(12))
-                    .roles(roles)
+                    .role(ownerRole)
                     .build();
 
             userRepository.save(owner);
@@ -105,4 +116,3 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
     }
 }
-

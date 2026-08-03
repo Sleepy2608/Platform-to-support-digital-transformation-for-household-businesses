@@ -3,10 +3,14 @@ package com.hbdt.owner.service;
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
 import com.hbdt.common.service.OtpService;
+import com.hbdt.entity.Subscription;
+import com.hbdt.entity.SubscriptionPlan;
 import com.hbdt.entity.User;
 import com.hbdt.entity.enums.OtpType;
 import com.hbdt.entity.enums.UserStatus;
 import com.hbdt.owner.dto.*;
+import com.hbdt.repository.SubscriptionPlanRepository;
+import com.hbdt.repository.SubscriptionRepository;
 import com.hbdt.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,10 +21,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -38,6 +44,8 @@ public class OwnerService {
     private static final Set<String> ALLOWED_MIME = Set.of("image/jpeg", "image/png", "image/webp", "image/gif");
 
     private final UserRepository userRepository;
+    private final SubscriptionRepository subscriptionRepository;
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
 
@@ -48,9 +56,13 @@ public class OwnerService {
     private String serverPort;
 
     public OwnerService(UserRepository userRepository,
+                        SubscriptionRepository subscriptionRepository,
+                        SubscriptionPlanRepository subscriptionPlanRepository,
                         PasswordEncoder passwordEncoder,
                         OtpService otpService) {
         this.userRepository = userRepository;
+        this.subscriptionRepository = subscriptionRepository;
+        this.subscriptionPlanRepository = subscriptionPlanRepository;
         this.passwordEncoder = passwordEncoder;
         this.otpService = otpService;
     }
@@ -237,14 +249,16 @@ public class OwnerService {
             throw new BadRequestException("Số tháng gia hạn phải từ 1-24");
         }
         User user = findActiveUser(username);
+        Subscription subscription = findActiveSubscription(user);
+        LocalDate today = LocalDate.now();
+        LocalDate baseDate = subscription.getEndDate() != null
+                && subscription.getEndDate().isAfter(today)
+                ? subscription.getEndDate()
+                : today;
 
-        LocalDateTime baseDate = (user.getSubscriptionExpiresAt() != null
-                && user.getSubscriptionExpiresAt().isAfter(LocalDateTime.now()))
-                ? user.getSubscriptionExpiresAt()
-                : LocalDateTime.now();
-
-        user.setSubscriptionExpiresAt(baseDate.plusMonths(months));
-        return toProfileResponse(userRepository.save(user));
+        subscription.setEndDate(baseDate.plusMonths(months));
+        subscriptionRepository.save(subscription);
+        return toProfileResponse(user);
     }
 
     public OwnerProfileResponse selectPackage(String username, String packageType, String billingCycle) {
@@ -255,17 +269,30 @@ public class OwnerService {
             throw new BadRequestException("Chu kỳ thanh toán không hợp lệ. Chỉ chấp nhận MONTHLY hoặc YEARLY.");
         }
         User user = findActiveUser(username);
-        user.setPackageType(packageType);
+        if (user.getBusinessId() == null) {
+            throw new BadRequestException("Tài khoản chưa có hồ sơ hộ kinh doanh");
+        }
 
-        // Tính ngày hết hạn theo chu kỳ
-        LocalDateTime baseDate = (user.getSubscriptionExpiresAt() != null
-                && user.getSubscriptionExpiresAt().isAfter(LocalDateTime.now()))
-                ? user.getSubscriptionExpiresAt()
-                : LocalDateTime.now();
-        int months = "YEARLY".equals(billingCycle) ? 12 : 1;
-        user.setSubscriptionExpiresAt(baseDate.plusMonths(months));
+        SubscriptionPlan plan = findOrCreatePlan(packageType);
+        LocalDate today = LocalDate.now();
+        Subscription subscription = subscriptionRepository
+                .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(user.getBusinessId(), "ACTIVE")
+                .orElseGet(() -> Subscription.builder()
+                        .businessId(user.getBusinessId())
+                        .startDate(today)
+                        .status("ACTIVE")
+                        .build());
 
-        return toProfileResponse(userRepository.save(user));
+        LocalDate baseDate = subscription.getEndDate() != null
+                && subscription.getEndDate().isAfter(today)
+                ? subscription.getEndDate()
+                : today;
+        subscription.setPlan(plan);
+        subscription.setBillingCycle(billingCycle);
+        subscription.setEndDate(baseDate.plusMonths("YEARLY".equals(billingCycle) ? 12 : 1));
+        subscriptionRepository.save(subscription);
+
+        return toProfileResponse(user);
     }
 
     // =========================================================
@@ -322,10 +349,45 @@ public class OwnerService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản: " + username));
     }
 
+    private Subscription findActiveSubscription(User user) {
+        if (user.getBusinessId() == null) {
+            throw new BadRequestException("Tài khoản chưa có hồ sơ hộ kinh doanh");
+        }
+        return subscriptionRepository
+                .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(user.getBusinessId(), "ACTIVE")
+                .orElseThrow(() -> new BadRequestException("Chưa có gói dịch vụ đang hoạt động"));
+    }
+
+    private SubscriptionPlan findOrCreatePlan(String packageType) {
+        return subscriptionPlanRepository.findByPlanCodeAndStatus(packageType, "ACTIVE")
+                .orElseGet(() -> {
+                    boolean vip = "VIP".equals(packageType);
+                    return subscriptionPlanRepository.save(SubscriptionPlan.builder()
+                            .planCode(packageType)
+                            .planName(vip ? "Gói VIP (Pro)" : "Gói Standard")
+                            .monthlyPrice(BigDecimal.valueOf(vip ? 399000 : 199000))
+                            .annualPrice(BigDecimal.valueOf(vip ? 3990000 : 1990000))
+                            .description(vip
+                                    ? "Đầy đủ sức mạnh AI và kế toán tự động"
+                                    : "Quản lý kho, công nợ và sổ kế toán")
+                            .status("ACTIVE")
+                            .build());
+                });
+    }
+
     private OwnerProfileResponse toProfileResponse(User user) {
         Set<String> roleNames = user.getRoles().stream()
                 .map(r -> r.getName().name())
                 .collect(Collectors.toSet());
+        Subscription subscription = user.getBusinessId() == null
+                ? null
+                : subscriptionRepository
+                        .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(user.getBusinessId(), "ACTIVE")
+                        .orElse(null);
+        LocalDateTime subscriptionExpiresAt = subscription == null || subscription.getEndDate() == null
+                ? null
+                : subscription.getEndDate().atTime(23, 59, 59);
+        String packageType = subscription == null ? null : subscription.getPlan().getPlanCode();
 
         return OwnerProfileResponse.builder()
                 .id(user.getId())
@@ -336,8 +398,8 @@ public class OwnerService {
                 .avatarUrl(user.getAvatarUrl())
                 .status(user.getStatus())
                 .businessId(user.getBusinessId())
-                .subscriptionExpiresAt(user.getSubscriptionExpiresAt())
-                .packageType(user.getPackageType())
+                .subscriptionExpiresAt(subscriptionExpiresAt)
+                .packageType(packageType)
                 .roles(roleNames)
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())

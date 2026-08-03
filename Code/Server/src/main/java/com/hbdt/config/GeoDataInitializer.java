@@ -5,13 +5,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hbdt.entity.District;
 import com.hbdt.entity.Province;
 import com.hbdt.entity.Ward;
-import com.hbdt.repository.DistrictRepository;
-import com.hbdt.repository.ProvinceRepository;
-import com.hbdt.repository.WardRepository;
+import com.hbdt.common.service.GeoReferenceStore;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -28,18 +27,17 @@ import java.util.List;
 @Component
 @Order(2)
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "app.reference-data.enabled", havingValue = "true", matchIfMissing = true)
 public class GeoDataInitializer implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(GeoDataInitializer.class);
     private static final String API_URL = "https://provinces.open-api.vn/api/?depth=3";
 
-    private final ProvinceRepository provinceRepository;
-    private final DistrictRepository districtRepository;
-    private final WardRepository wardRepository;
+    private final GeoReferenceStore referenceStore;
 
     @Override
     public void run(String... args) {
-        if (provinceRepository.count() > 0) {
+        if (!referenceStore.isEmpty()) {
             logger.info("GeoDataInitializer: Bảng provinces đã có dữ liệu, bỏ qua import.");
             return;
         }
@@ -91,9 +89,7 @@ public class GeoDataInitializer implements CommandLineRunner {
                 }
             }
 
-            provinceRepository.saveAll(provinces);
-            districtRepository.saveAll(districts);
-            wardRepository.saveAll(wards);
+            referenceStore.replaceAll(provinces, districts, wards);
 
             logger.info("GeoDataInitializer: Import thành công — {} tỉnh, {} huyện, {} xã.",
                     provinces.size(), districts.size(), wards.size());
