@@ -50,6 +50,10 @@
 
 *.sh        text eol=lf
 
+# Maven wrapper (no extension) must stay LF to run on Linux/Docker
+mvnw        text eol=lf
+gradlew     text eol=lf
+
 ############################
 # Windows Scripts
 ############################

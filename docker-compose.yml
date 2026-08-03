@@ -1,18 +1,19 @@
 services:
   mysql:
     image: mysql:8.0
-    container_name: agritrade-mysql
+    container_name: hbdt-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: agritrade
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-hbdt_platform}
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./Code/Server/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      test:
+        ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD:-root}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -20,7 +21,7 @@ services:
   backend:
     build:
       context: ./Code/Server
-    container_name: agritrade-backend
+    container_name: hbdt-backend
     restart: unless-stopped
     depends_on:
       mysql:
@@ -29,17 +30,18 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_NAME: agritrade
-      DB_USERNAME: root
-      DB_PASSWORD: root
-      JWT_SECRET: dev-only-secret-change-in-production
+      DB_NAME: ${DB_NAME:-hbdt_platform}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-key-hbdt-platform-256-bits-long-change-me}
+      OTP_DEV_MODE: "true"
     ports:
       - "8080:8080"
 
   ai-service:
     build:
-      context: ./ai-service
-    container_name: agritrade-ai-service
+      context: ./Code/AI
+    container_name: hbdt-ai-service
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -47,12 +49,14 @@ services:
   frontend:
     build:
       context: ./Code/Client/src/frontend
-    container_name: agritrade-frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8080
+    container_name: hbdt-frontend
     restart: unless-stopped
     depends_on:
       - backend
     ports:
-      - "5173:80"
+      - "3000:3000"
 
 volumes:
   mysql_data:
