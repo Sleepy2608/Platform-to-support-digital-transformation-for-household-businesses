@@ -8,6 +8,14 @@ import {
   CheckCircle2, AlertCircle, Eye, EyeOff,
 } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal';
+import ConsentSection from '../components/legal/ConsentSection';
+import {
+  EMPTY_CONSENT,
+  isAllConsented,
+  PRIVACY_VERSION,
+  TERMS_VERSION,
+  type ConsentState,
+} from '../lib/legal-content';
 
 type Step = 'form' | 'success';
 
@@ -25,6 +33,9 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  // Xác nhận Điều khoản sử dụng & Chính sách bảo mật (6 mục)
+  const [consent, setConsent] = useState<ConsentState>({ ...EMPTY_CONSENT });
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -40,13 +51,24 @@ export default function RegisterPage() {
       setError('Mật khẩu phải có ít nhất 6 ký tự');
       return;
     }
+    if (!isAllConsented(consent)) {
+      setError('Vui lòng xác nhận đầy đủ Điều khoản sử dụng và Chính sách bảo mật để tiếp tục.');
+      return;
+    }
 
     setLoading(true);
     try {
       const res = await fetch('http://localhost:8080/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName, username, email, phone, password }),
+        body: JSON.stringify({
+          fullName, username, email, phone, password,
+          consent: {
+            ...consent,
+            termsVersion: TERMS_VERSION,
+            privacyVersion: PRIVACY_VERSION,
+          },
+        }),
       });
 
       const json = await res.json();
@@ -273,10 +295,13 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
+                  {/* Xác nhận Điều khoản sử dụng & Chính sách bảo mật */}
+                  <ConsentSection value={consent} onChange={setConsent} />
+
                   <button
                     id="reg-submit"
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || !isAllConsented(consent)}
                     className="w-full py-3.5 bg-white text-zinc-950 font-bold rounded-xl hover:bg-zinc-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none transition-all duration-200 shadow-xl flex items-center justify-center gap-2 cursor-pointer mt-2"
                   >
                     <UserPlus className="w-4 h-4" />
