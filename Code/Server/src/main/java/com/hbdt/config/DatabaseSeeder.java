@@ -6,10 +6,9 @@ import com.hbdt.entity.User;
 import com.hbdt.entity.enums.UserStatus;
 import com.hbdt.repository.RoleRepository;
 import com.hbdt.repository.UserRepository;
+import com.hbdt.seed.DataSeeder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -17,8 +16,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Component
-@Order(1)
-public class DatabaseSeeder implements CommandLineRunner {
+public class DatabaseSeeder implements DataSeeder {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseSeeder.class);
 
@@ -33,7 +31,12 @@ public class DatabaseSeeder implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) {
+    public int order() {
+        return 1;
+    }
+
+    @Override
+    public void seed() {
         seedRoles();
         seedAdminUser();
         seedOwnerUser();
@@ -61,15 +64,15 @@ public class DatabaseSeeder implements CommandLineRunner {
     }
 
     private void seedAdminUser() {
-        if (!userRepository.existsByUsername("admin")) {
+        if (!userRepository.existsByUsername("Admin")) {
             Role adminRole = roleRepository.findByName(RoleType.ADMIN)
                     .orElseThrow(() -> new RuntimeException("Role ADMIN not found"));
             Set<Role> roles = new HashSet<>();
             roles.add(adminRole);
 
             User admin = User.builder()
-                    .username("admin")
-                    .password(passwordEncoder.encode("admin123"))
+                    .username("Admin")
+                    .password(passwordEncoder.encode("Admin"))
                     .email("admin@hbdt.com")
                     .fullName("System Administrator")
                     .phone("0123456789")
@@ -78,7 +81,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .build();
 
             userRepository.save(admin);
-            logger.info("Seeded default admin user: admin / admin123");
+            logger.info("Seeded default admin user: Admin / Admin");
         }
     }
 
@@ -105,4 +108,3 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
     }
 }
-

@@ -43,6 +43,7 @@ public class AdminUserController {
     public ResponseEntity<ApiResponse<List<AdminResponse>>> getAllAdmins() {
         List<User> admins = userRepository.findByRoleType(RoleType.ADMIN);
         List<AdminResponse> response = admins.stream()
+                .filter(u -> !"Admin".equals(u.getUsername()))
                 .map(this::mapToAdminResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách Admin thành công", response));

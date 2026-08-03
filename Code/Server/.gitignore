@@ -1,6 +1,7 @@
 target/
 *.class
 *.jar
+!.mvn/wrapper/maven-wrapper.jar
 *.war
 *.log
 .idea/

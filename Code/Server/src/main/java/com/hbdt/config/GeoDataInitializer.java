@@ -8,11 +8,10 @@ import com.hbdt.entity.Ward;
 import com.hbdt.repository.DistrictRepository;
 import com.hbdt.repository.ProvinceRepository;
 import com.hbdt.repository.WardRepository;
+import com.hbdt.seed.DataSeeder;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -23,12 +22,11 @@ import java.util.List;
  * Tải toàn bộ dữ liệu địa giới hành chính Việt Nam (Tỉnh/Huyện/Xã)
  * từ provinces.open-api.vn khi khởi động nếu bảng provinces còn trống.
  *
- * Chạy SAU DatabaseSeeder (Order = 2).
+ * Chạy SAU DatabaseSeeder (order = 2).
  */
 @Component
-@Order(2)
 @RequiredArgsConstructor
-public class GeoDataInitializer implements CommandLineRunner {
+public class GeoDataInitializer implements DataSeeder {
 
     private static final Logger logger = LoggerFactory.getLogger(GeoDataInitializer.class);
     private static final String API_URL = "https://provinces.open-api.vn/api/?depth=3";
@@ -38,7 +36,12 @@ public class GeoDataInitializer implements CommandLineRunner {
     private final WardRepository wardRepository;
 
     @Override
-    public void run(String... args) {
+    public int order() {
+        return 2;
+    }
+
+    @Override
+    public void seed() {
         if (provinceRepository.count() > 0) {
             logger.info("GeoDataInitializer: Bảng provinces đã có dữ liệu, bỏ qua import.");
             return;
