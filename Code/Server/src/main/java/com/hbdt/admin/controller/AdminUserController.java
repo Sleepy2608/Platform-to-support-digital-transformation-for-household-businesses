@@ -58,7 +58,7 @@ public class AdminUserController {
             throw new BadRequestException("Số điện thoại đã được sử dụng");
         }
 
-        Role adminRole = roleRepository.findByName(RoleType.ADMIN)
+        Role adminRole = roleRepository.findFirstByName(RoleType.ADMIN)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy vai trò ADMIN"));
         User admin = User.builder()
                 .username(request.getUsername())

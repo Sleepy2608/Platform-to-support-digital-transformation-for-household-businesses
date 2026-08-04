@@ -62,7 +62,7 @@ public class AuthService {
             throw new BadRequestException("Số điện thoại đã được sử dụng");
         }
 
-        Role ownerRole = roleRepository.findByName(RoleType.BUSINESS_OWNER)
+        Role ownerRole = roleRepository.findFirstByName(RoleType.BUSINESS_OWNER)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy vai trò BUSINESS_OWNER"));
 
         User user = User.builder()

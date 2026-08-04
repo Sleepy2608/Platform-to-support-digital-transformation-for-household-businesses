@@ -49,7 +49,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     private void seedRoles() {
         for (RoleType roleType : RoleType.values()) {
-            if (roleRepository.findByName(roleType).isEmpty()) {
+            if (roleRepository.findFirstByName(roleType).isEmpty()) {
                 Role role = Role.builder()
                         .name(roleType)
                         .roleName(getRoleDisplayName(roleType))
@@ -79,7 +79,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     private void seedAdminUser() {
         if (!userRepository.existsByUsername("admin")) {
-            Role adminRole = roleRepository.findByName(RoleType.ADMIN)
+            Role adminRole = roleRepository.findFirstByName(RoleType.ADMIN)
                     .orElseThrow(() -> new RuntimeException("Role ADMIN not found"));
             User admin = User.builder()
                     .username("admin")
@@ -98,7 +98,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     private void seedOwnerUser() {
         if (!userRepository.existsByUsername("owner")) {
-            Role ownerRole = roleRepository.findByName(RoleType.BUSINESS_OWNER)
+            Role ownerRole = roleRepository.findFirstByName(RoleType.BUSINESS_OWNER)
                     .orElseThrow(() -> new RuntimeException("Role BUSINESS_OWNER not found"));
             User owner = User.builder()
                     .username("owner")
