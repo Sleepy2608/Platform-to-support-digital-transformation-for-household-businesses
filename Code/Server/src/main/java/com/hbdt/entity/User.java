@@ -3,14 +3,16 @@ package com.hbdt.entity;
 import com.hbdt.entity.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "users")
@@ -23,49 +25,50 @@ public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(columnDefinition = "BIGINT UNSIGNED")
     private Long id;
+
+    @Column(name = "business_id", columnDefinition = "BIGINT UNSIGNED")
+    private Long businessId;
+
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "role_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    private Role role;
 
     @Column(name = "username", unique = true, nullable = false, length = 100)
     private String username;
 
-    @Column(name = "password", nullable = false, length = 255)
+    @Column(name = "password_hash", nullable = false, length = 255)
     private String password;
 
-    @Column(name = "email", unique = true, nullable = false, length = 255)
+    @Column(name = "email", length = 150)
     private String email;
 
-    @Column(name = "full_name", length = 255)
+    @Column(name = "full_name", nullable = false, length = 150)
     private String fullName;
 
     @Column(name = "phone", length = 20)
     private String phone;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 30)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "status", nullable = false, length = 20)
     private UserStatus status;
 
-    @Column(name = "avatar_url", length = 500)
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+
+    @Transient
     private String avatarUrl;
 
-    @Column(name = "business_id")
-    private Long businessId;
-
-    @Column(name = "subscription_expires_at")
+    @Transient
     private LocalDateTime subscriptionExpiresAt;
 
-    @Column(name = "package_type", length = 20)
+    @Transient
     private String packageType;
 
-    @Column(name = "deleted_at")
+    @Transient
     private LocalDateTime deletedAt;
-
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "user_roles",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -75,6 +78,9 @@ public class User implements UserDetails {
 
     @PrePersist
     protected void onCreate() {
+        if (status == null) {
+            status = UserStatus.ACTIVE;
+        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
@@ -88,9 +94,18 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return roles.stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName().name()))
-                .collect(Collectors.toSet());
+        if (role == null) {
+            return Collections.emptySet();
+        }
+        return Set.of(new SimpleGrantedAuthority("ROLE_" + role.getName().name()));
+    }
+
+    /**
+     * Compatibility view for API responses that expose roles as an array.
+     * The canonical schema stores exactly one role through users.role_id.
+     */
+    public Set<Role> getRoles() {
+        return role == null ? Collections.emptySet() : Set.of(role);
     }
 
     @Override

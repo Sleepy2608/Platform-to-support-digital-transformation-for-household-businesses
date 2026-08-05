@@ -18,9 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -60,11 +58,8 @@ public class AdminUserController {
             throw new BadRequestException("Số điện thoại đã được sử dụng");
         }
 
-        Role adminRole = roleRepository.findByName(RoleType.ADMIN)
+        Role adminRole = roleRepository.findFirstByName(RoleType.ADMIN)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy vai trò ADMIN"));
-        Set<Role> roles = new HashSet<>();
-        roles.add(adminRole);
-
         User admin = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -72,7 +67,7 @@ public class AdminUserController {
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
                 .status(UserStatus.ACTIVE)
-                .roles(roles)
+                .role(adminRole)
                 .build();
 
         User savedAdmin = userRepository.save(admin);

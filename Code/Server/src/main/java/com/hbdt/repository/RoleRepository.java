@@ -10,5 +10,9 @@ import java.util.Optional;
 @Repository
 public interface RoleRepository extends JpaRepository<Role, Long> {
 
-    Optional<Role> findByName(RoleType name);
+    /**
+     * Tìm role theo tên. Dùng findFirst để an toàn nếu bảng roles còn dữ liệu trùng
+     * (findByName sẽ ném NonUniqueResultException khi có nhiều dòng cùng tên).
+     */
+    Optional<Role> findFirstByName(RoleType name);
 }

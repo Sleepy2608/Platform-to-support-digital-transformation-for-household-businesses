@@ -3,34 +3,22 @@ package com.hbdt.common.service;
 import com.hbdt.common.dto.DistrictDto;
 import com.hbdt.common.dto.ProvinceDto;
 import com.hbdt.common.dto.WardDto;
-import com.hbdt.repository.DistrictRepository;
-import com.hbdt.repository.ProvinceRepository;
-import com.hbdt.repository.WardRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional(readOnly = true)
 public class ReferenceService {
 
-    private final ProvinceRepository provinceRepository;
-    private final DistrictRepository districtRepository;
-    private final WardRepository wardRepository;
+    private final GeoReferenceStore referenceStore;
 
-    public ReferenceService(ProvinceRepository provinceRepository,
-                             DistrictRepository districtRepository,
-                             WardRepository wardRepository) {
-        this.provinceRepository = provinceRepository;
-        this.districtRepository = districtRepository;
-        this.wardRepository = wardRepository;
+    public ReferenceService(GeoReferenceStore referenceStore) {
+        this.referenceStore = referenceStore;
     }
 
     public List<ProvinceDto> getProvinces() {
-        return provinceRepository.findAll().stream()
-                .sorted((a, b) -> a.getName().compareToIgnoreCase(b.getName()))
+        return referenceStore.getProvinces().stream()
                 .map(p -> ProvinceDto.builder()
                         .code(p.getCode())
                         .name(p.getName())
@@ -41,7 +29,7 @@ public class ReferenceService {
     }
 
     public List<DistrictDto> getDistricts(String provinceCode) {
-        return districtRepository.findByProvinceCodeOrderByNameAsc(provinceCode).stream()
+        return referenceStore.getDistricts(provinceCode).stream()
                 .map(d -> DistrictDto.builder()
                         .code(d.getCode())
                         .name(d.getName())
@@ -53,7 +41,7 @@ public class ReferenceService {
     }
 
     public List<WardDto> getWards(String districtCode) {
-        return wardRepository.findByDistrictCodeOrderByNameAsc(districtCode).stream()
+        return referenceStore.getWards(districtCode).stream()
                 .map(w -> WardDto.builder()
                         .code(w.getCode())
                         .name(w.getName())
