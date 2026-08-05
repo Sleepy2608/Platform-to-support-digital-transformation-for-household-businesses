@@ -21,7 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -68,11 +67,8 @@ public class AuthService {
             throw new BadRequestException("Số điện thoại đã được sử dụng");
         }
 
-        Role ownerRole = roleRepository.findByName(RoleType.BUSINESS_OWNER)
+        Role ownerRole = roleRepository.findFirstByName(RoleType.BUSINESS_OWNER)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy vai trò BUSINESS_OWNER"));
-
-        Set<Role> roles = new HashSet<>();
-        roles.add(ownerRole);
 
         User user = User.builder()
                 .username(request.getUsername())
@@ -81,7 +77,7 @@ public class AuthService {
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
                 .status(UserStatus.PENDING_VERIFICATION)
-                .roles(roles)
+                .role(ownerRole)
                 .build();
 
         userRepository.save(user);
