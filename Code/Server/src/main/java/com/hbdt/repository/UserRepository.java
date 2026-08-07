@@ -2,6 +2,8 @@ package com.hbdt.repository;
 
 import com.hbdt.entity.User;
 import com.hbdt.entity.enums.UserStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -31,4 +33,33 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.role.name = :roleType")
     List<User> findByRoleType(@Param("roleType") RoleType roleType);
+
+    // ===== Employee Management queries (HBDT-14) =====
+
+    /** Danh sách nhân viên thuộc cửa hàng, có tìm kiếm theo tên/username */
+    @Query("""
+        SELECT u FROM User u
+        WHERE u.businessId = :businessId
+          AND u.role.name = :roleType
+          AND (:keyword IS NULL OR :keyword = ''
+               OR LOWER(u.fullName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')))
+          AND (:status IS NULL OR u.status = :status)
+        ORDER BY u.createdAt DESC
+        """)
+    Page<User> findEmployeesByBusiness(
+            @Param("businessId") Long businessId,
+            @Param("roleType") RoleType roleType,
+            @Param("keyword") String keyword,
+            @Param("status") UserStatus status,
+            Pageable pageable);
+
+    /** Tìm nhân viên theo id và businessId để validate quyền */
+    Optional<User> findByIdAndBusinessIdAndRole_Name(Long id, Long businessId, RoleType roleType);
+
+    /** Kiểm tra username đã tồn tại trong cùng business chưa */
+    boolean existsByUsernameAndBusinessId(String username, Long businessId);
+
+    /** Đếm nhân viên đang ACTIVE của một business */
+    long countByBusinessIdAndRole_NameAndStatus(Long businessId, RoleType roleType, UserStatus status);
 }

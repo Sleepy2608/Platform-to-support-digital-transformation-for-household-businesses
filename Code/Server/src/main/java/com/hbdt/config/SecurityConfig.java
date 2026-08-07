@@ -78,6 +78,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
                     // Owner routes (cho phép cả BUSINESS_OWNER và OWNER)
                     .requestMatchers("/api/owner/**").hasAnyRole("BUSINESS_OWNER", "OWNER")
+                    // Employee routes
+                    .requestMatchers("/api/employee/**").hasRole("EMPLOYEE")
                     // Everything else requires authentication
                     .anyRequest().authenticated()
             );

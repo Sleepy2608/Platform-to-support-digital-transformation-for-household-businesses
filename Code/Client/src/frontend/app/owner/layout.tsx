@@ -6,16 +6,20 @@ import Link from 'next/link';
 import {
   Store, UserCircle, Lock, Mail, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
-  Shield,
+  Shield, Users,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const NAV_ITEMS = [
+const ACCOUNT_NAV_ITEMS = [
   { label: 'Hồ sơ cá nhân', href: '/owner/account#profile', icon: UserCircle, hash: '#profile' },
   { label: 'Đổi mật khẩu', href: '/owner/account#password', icon: Lock, hash: '#password' },
   { label: 'Email & Số điện thoại', href: '/owner/account#contact', icon: Mail, hash: '#contact' },
   { label: 'Gói đăng ký', href: '/owner/account#subscription', icon: CreditCard, hash: '#subscription' },
   { label: 'Vùng nguy hiểm', href: '/owner/account#danger', icon: AlertTriangle, hash: '#danger' },
+];
+
+const MANAGE_NAV_ITEMS = [
+  { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, hash: '/owner/employees' },
 ];
 
 export default function OwnerLayout({ children }: { children: React.ReactNode }) {
@@ -157,38 +161,72 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
               </div>
 
               {/* Navigation Menu */}
-              <nav className="flex flex-col gap-1">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-2">
-                  CÀI ĐẶT TÀI KHOẢN
-                </p>
-                {NAV_ITEMS.map((item) => {
-                  const Icon = item.icon;
-                  const isDanger = item.hash === '#danger';
-                  const isActive = currentHash === item.hash;
+              <nav className="flex flex-col gap-3">
+                {/* Quản lý cửa hàng */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1.5">
+                    QUẢN LÝ CỬA HÀNG
+                  </p>
+                  {MANAGE_NAV_ITEMS.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = typeof window !== 'undefined'
+                      ? window.location.pathname.startsWith(item.hash)
+                      : false;
+                    return (
+                      <Link
+                        key={item.hash}
+                        href={item.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
+                          ${isActive
+                            ? 'bg-slate-900 text-white shadow-sm'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                          }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                          <span>{item.label}</span>
+                        </div>
+                        <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
+                      </Link>
+                    );
+                  })}
+                </div>
 
-                  return (
-                    <Link
-                      key={item.hash}
-                      href={item.href}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
-                        ${isActive
-                          ? isDanger
-                            ? 'bg-red-50 text-red-700 border border-red-200/80 shadow-2xs'
-                            : 'bg-slate-900 text-white shadow-sm'
-                          : isDanger
-                          ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                        }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? (isDanger ? 'text-red-600' : 'text-white') : 'text-slate-400 group-hover:text-slate-600'}`} />
-                        <span>{item.label}</span>
-                      </div>
-                      <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
-                    </Link>
-                  );
-                })}
+                {/* Cài đặt tài khoản */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1.5">
+                    CÀI ĐẶT TÀI KHOẢN
+                  </p>
+                  {ACCOUNT_NAV_ITEMS.map((item) => {
+                    const Icon = item.icon;
+                    const isDanger = item.hash === '#danger';
+                    const isActive = currentHash === item.hash;
+
+                    return (
+                      <Link
+                        key={item.hash}
+                        href={item.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
+                          ${isActive
+                            ? isDanger
+                              ? 'bg-red-50 text-red-700 border border-red-200/80 shadow-2xs'
+                              : 'bg-slate-900 text-white shadow-sm'
+                            : isDanger
+                            ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                          }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? (isDanger ? 'text-red-600' : 'text-white') : 'text-slate-400 group-hover:text-slate-600'}`} />
+                          <span>{item.label}</span>
+                        </div>
+                        <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
+                      </Link>
+                    );
+                  })}
+                </div>
               </nav>
             </div>
 
