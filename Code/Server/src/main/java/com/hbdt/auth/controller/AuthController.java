@@ -38,11 +38,13 @@ public class AuthController {
     /**
      * POST /api/auth/register
      * Register a new Business Owner account (sends verification OTP to email).
+     * Requires the user to have accepted Terms of Use and Privacy Policy (consent).
      */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<Void>> register(
-            @Valid @RequestBody RegisterRequest request) {
-        authService.register(request);
+            @Valid @RequestBody RegisterRequest request,
+            HttpServletRequest httpRequest) {
+        authService.register(request, httpRequest);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         "Đăng ký thành công. Vui lòng kiểm tra email để lấy mã xác thực.", null));
