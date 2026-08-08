@@ -49,6 +49,16 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Versioned database migrations -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
+
         <!-- JJWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
