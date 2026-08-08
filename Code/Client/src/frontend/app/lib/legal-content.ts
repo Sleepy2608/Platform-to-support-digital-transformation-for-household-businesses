@@ -4,11 +4,11 @@
  * Dùng chung cho màn hình Đăng ký (xác nhận điều khoản) và các màn hình liên quan.
  */
 
-// ─── Phiên bản văn bản ────────────────────────────────────────────────────────
+//Phiên bản văn bản
 export const TERMS_VERSION = '1.0';
 export const PRIVACY_VERSION = '1.0';
 
-// ─── Kiểu dữ liệu ─────────────────────────────────────────────────────────────
+//Kiểu dữ liệu
 export type LegalDocKey = 'terms' | 'privacy' | 'circular88';
 
 export interface LegalSubSection {
@@ -118,7 +118,7 @@ export const CONSENT_ITEMS: ConsentItem[] = [
   },
 ];
 
-// ─── Văn bản: ĐIỀU KHOẢN SỬ DỤNG ──────────────────────────────────────────────
+//Văn bản: ĐIỀU KHOẢN SỬ DỤNG
 export const TERMS_OF_USE: LegalDoc = {
   title: 'ĐIỀU KHOẢN SỬ DỤNG',
   version: TERMS_VERSION,
@@ -233,7 +233,7 @@ export const TERMS_OF_USE: LegalDoc = {
   ],
 };
 
-// ─── Văn bản: CHÍNH SÁCH BẢO MẬT ──────────────────────────────────────────────
+// Văn bản: CHÍNH SÁCH BẢO MẬT
 export const PRIVACY_POLICY: LegalDoc = {
   title: 'CHÍNH SÁCH BẢO MẬT',
   version: PRIVACY_VERSION,
@@ -340,7 +340,7 @@ export const PRIVACY_POLICY: LegalDoc = {
   ],
 };
 
-// ─── Văn bản: THÔNG BÁO VỀ THÔNG TƯ 88/2021/TT-BTC ────────────────────────────
+// Văn bản: THÔNG BÁO VỀ THÔNG TƯ 88/2021/TT-BTC
 export const CIRCULAR_88_NOTICE: LegalDoc = {
   title: 'THÔNG BÁO VỀ THÔNG TƯ 88/2021/TT-BTC',
   intro:
