@@ -4,6 +4,7 @@ import com.hbdt.auth.dto.*;
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.security.JwtTokenProvider;
 import com.hbdt.common.service.OtpService;
+import com.hbdt.consent.service.TermsConsentService;
 import com.hbdt.entity.Role;
 import com.hbdt.entity.User;
 import com.hbdt.entity.enums.OtpType;
@@ -11,6 +12,7 @@ import com.hbdt.entity.enums.RoleType;
 import com.hbdt.entity.enums.UserStatus;
 import com.hbdt.repository.RoleRepository;
 import com.hbdt.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -32,26 +34,29 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final OtpService otpService;
+    private final TermsConsentService termsConsentService;
 
     public AuthService(AuthenticationManager authenticationManager,
                        UserRepository userRepository,
                        RoleRepository roleRepository,
                        PasswordEncoder passwordEncoder,
                        JwtTokenProvider jwtTokenProvider,
-                       OtpService otpService) {
+                       OtpService otpService,
+                       TermsConsentService termsConsentService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
         this.otpService = otpService;
+        this.termsConsentService = termsConsentService;
     }
 
     /**
      * Register a new Business Owner account.
-     * Sets status to PENDING_VERIFICATION and sends OTP to email.
+     * Sets status to PENDING_VERIFICATION, records consent and sends OTP to email.
      */
-    public void register(RegisterRequest request) {
+    public void register(RegisterRequest request, HttpServletRequest httpRequest) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new BadRequestException("Tên đăng nhập đã tồn tại");
         }
@@ -76,6 +81,9 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+
+        // Lưu vết chấp thuận Điều khoản sử dụng & Chính sách bảo mật (audit)
+        termsConsentService.recordConsent(user, request.getConsent(), httpRequest);
 
         // Send verification OTP to registered email
         otpService.generateAndSend(user.getId(), OtpType.REGISTER, user.getEmail());

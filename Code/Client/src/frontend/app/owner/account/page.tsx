@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   UserCircle, Lock, Mail, CreditCard, AlertTriangle,
   Camera, Save, CheckCircle2, AlertCircle, Loader2,
-  Eye, EyeOff, Phone, Shield, Calendar,
+  Eye, EyeOff, Phone, Shield, Calendar, ShieldCheck,
   Pencil, X, RefreshCw, Trash2, Crown, Building2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,7 +35,7 @@ interface OwnerProfile {
   updatedAt: string;
 }
 
-type Tab = 'profile' | 'business-profile' | 'password' | 'contact' | 'subscription' | 'danger';
+type Tab = 'profile' | 'business-profile' | 'password' | 'contact' | 'subscription' | 'consent' | 'danger';
 type OtpTarget = 'email' | 'phone' | null;
 
 // ─── Helper components ────────────────────────────────────────────────────────
@@ -149,7 +149,7 @@ export default function OwnerAccountPage() {
   useEffect(() => {
     const handleHash = () => {
       const hash = window.location.hash.replace('#', '');
-      if (['profile', 'business-profile', 'password', 'contact', 'subscription', 'danger'].includes(hash)) {
+      if (['profile', 'business-profile', 'password', 'contact', 'subscription', 'consent', 'danger'].includes(hash)) {
         setActiveTab(hash as Tab);
       }
     };
@@ -199,6 +199,7 @@ export default function OwnerAccountPage() {
     { id: 'password', label: 'Mật khẩu', icon: Lock },
     { id: 'contact', label: 'Email & SĐT', icon: Mail },
     { id: 'subscription', label: 'Gói dịch vụ', icon: CreditCard },
+    { id: 'consent', label: 'Điều khoản & Bảo mật', icon: ShieldCheck },
     { id: 'danger', label: 'Vùng nguy hiểm', icon: AlertTriangle },
   ];
 
@@ -273,6 +274,7 @@ export default function OwnerAccountPage() {
             {activeTab === 'subscription' && (
               <SubscriptionTab profile={profile} onUpdated={loadProfile} />
             )}
+            {activeTab === 'consent' && <ConsentTab />}
             {activeTab === 'danger' && (
               <DangerTab router={router} />
             )}
@@ -845,6 +847,123 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
           {loading ? 'Đang gia hạn...' : `Xác nhận gia hạn ${months} tháng`}
         </button>
       </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TAB: Điều khoản & Bảo mật — Lịch sử chấp thuận (SCRUM-21)
+// ═══════════════════════════════════════════════════════════════════════════════
+interface ConsentRecord {
+  id: number;
+  termsVersion: string;
+  privacyVersion: string;
+  termsAccepted: boolean;
+  privacyAccepted: boolean;
+  dataProcessingAccepted: boolean;
+  circular88Accepted: boolean;
+  infoAccurateConfirmed: boolean;
+  inaccuracyUnderstood: boolean;
+  ipAddress: string | null;
+  userAgent: string | null;
+  acceptedAt: string;
+}
+
+function ConsentTab() {
+  const [records, setRecords] = useState<ConsentRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await apiClient.get<ConsentRecord[]>('/api/owner/consent/history');
+      setRecords(data || []);
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Không thể tải lịch sử chấp thuận');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const items: { key: keyof ConsentRecord; label: string }[] = [
+    { key: 'termsAccepted', label: 'Điều khoản sử dụng' },
+    { key: 'privacyAccepted', label: 'Chính sách bảo mật' },
+    { key: 'dataProcessingAccepted', label: 'Xử lý dữ liệu kinh doanh' },
+    { key: 'circular88Accepted', label: 'Thông tư 88 (S1, S2, S4)' },
+    { key: 'infoAccurateConfirmed', label: 'Thông tin chính xác & đầy đủ' },
+    { key: 'inaccuracyUnderstood', label: 'Hiểu rủi ro sổ kế toán sai' },
+  ];
+
+  const formatDate = (s: string) => {
+    if (!s) return '—';
+    const d = new Date(s);
+    return isNaN(d.getTime())
+      ? s
+      : d.toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-10 flex flex-col items-center justify-center gap-3">
+        <Loader2 className="w-6 h-6 text-slate-900 animate-spin" />
+        <span className="text-slate-500 text-xs font-semibold">Đang tải lịch sử chấp thuận...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6">
+      <SectionHeader
+        icon={ShieldCheck}
+        title="Điều khoản & Bảo mật"
+        subtitle="Lịch sử các lần bạn chấp thuận Điều khoản sử dụng và Chính sách bảo mật"
+      />
+
+      {error && <Alert type="error" message={error} />}
+
+      {records.length === 0 ? (
+        <div className="py-10 text-center">
+          <ShieldCheck className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+          <p className="text-sm text-slate-500 font-medium">Chưa có bản ghi chấp thuận nào.</p>
+          <p className="text-xs text-slate-400 mt-1">
+            Bản ghi sẽ được lưu lại khi bạn đăng ký tài khoản và xác nhận điều khoản.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {records.map((r) => (
+            <div key={r.id} className="border border-slate-200 rounded-xl p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <span className="text-sm font-bold text-slate-900">{formatDate(r.acceptedAt)}</span>
+                <span className="text-[11px] text-slate-500 font-medium bg-slate-100 border border-slate-200 rounded-full px-2.5 py-0.5">
+                  Điều khoản v{r.termsVersion} · Bảo mật v{r.privacyVersion}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {items.map((it) => (
+                  <div key={it.key} className="flex items-center gap-2 text-xs text-slate-600">
+                    {r[it.key] ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                    )}
+                    <span className="font-medium">{it.label}</span>
+                  </div>
+                ))}
+              </div>
+              {r.ipAddress && (
+                <p className="text-[11px] text-slate-400 mt-3 border-t border-slate-100 pt-2">
+                  IP: {r.ipAddress}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
