@@ -40,6 +40,16 @@ export interface ConsentState {
   inaccuracyUnderstood: boolean;
 }
 
+/** Danh sách key của 6 mục xác nhận, dùng cho mục "Đồng ý tất cả". */
+export const ALL_CONSENT_KEYS: (keyof ConsentState)[] = [
+  'termsAccepted',
+  'privacyAccepted',
+  'dataProcessingAccepted',
+  'circular88Accepted',
+  'infoAccurateConfirmed',
+  'inaccuracyUnderstood',
+];
+
 export const EMPTY_CONSENT: ConsentState = {
   termsAccepted: false,
   privacyAccepted: false,
@@ -50,14 +60,7 @@ export const EMPTY_CONSENT: ConsentState = {
 };
 
 export function isAllConsented(c: ConsentState): boolean {
-  return (
-    c.termsAccepted &&
-    c.privacyAccepted &&
-    c.dataProcessingAccepted &&
-    c.circular88Accepted &&
-    c.infoAccurateConfirmed &&
-    c.inaccuracyUnderstood
-  );
+  return ALL_CONSENT_KEYS.every((key) => c[key]);
 }
 
 export interface ConsentSegment {

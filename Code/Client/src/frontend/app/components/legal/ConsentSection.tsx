@@ -45,6 +45,15 @@ export default function ConsentSection({ value, onChange }: ConsentSectionProps)
   const allConsented = isAllConsented(value);
   const checkedCount = CONSENT_ITEMS.filter((item) => value[item.key]).length;
 
+  // Mục "Đồng ý tất cả": nếu chưa đồng ý hết → tick hết; nếu đã đồng ý hết → bỏ tick hết.
+  const toggleAll = () => {
+    const next = { ...value };
+    for (const item of CONSENT_ITEMS) {
+      next[item.key] = !allConsented;
+    }
+    onChange(next);
+  };
+
   return (
     <div
       className={`p-4 rounded-2xl border transition-colors ${
@@ -109,6 +118,32 @@ export default function ConsentSection({ value, onChange }: ConsentSectionProps)
             </div>
           );
         })}
+
+        {/* Mục "Đồng ý tất cả" – cuối danh sách */}
+        <div className="pt-2.5 mt-2.5 border-t border-zinc-700/70">
+          <div className="flex items-start gap-2.5">
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={allConsented}
+              onClick={toggleAll}
+              className={`mt-0.5 w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all cursor-pointer ${
+                allConsented
+                  ? 'bg-emerald-500 border-emerald-500'
+                  : 'bg-zinc-800/80 border-zinc-600 hover:border-zinc-400'
+              }`}
+              aria-label="Đồng ý tất cả"
+            >
+              {allConsented && <Check className="w-3.5 h-3.5 text-white" />}
+            </button>
+            <label
+              onClick={toggleAll}
+              className="text-xs sm:text-[13px] text-zinc-200 leading-relaxed select-none cursor-pointer flex-1 font-medium"
+            >
+              Tôi đồng ý với tất cả các điều khoản và chính sách ở trên
+            </label>
+          </div>
+        </div>
       </div>
 
       {/* Helper khi chưa xác nhận đủ */}
