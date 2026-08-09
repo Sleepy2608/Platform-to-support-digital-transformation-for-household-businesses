@@ -1,3 +1,5 @@
-# File seek la JSON co version. KHONG dung merge=union (se noi 2 file lam hong JSON).
-# De git xu ly nhu file thuong: khi pull se ghi de bang ban moi, khong gop bay.
+# File seek JSON: khi merge dung driver "seedmerge" de gop 2 ban theo id
+# (giu tat ca dong, trung id lay version cao hon). Khong dung union (hong JSON),
+# khong ghi de (mat data). Xem cach cai driver o cuoi file nay.
+*.json merge=seedmerge
 *.json -diff
