@@ -80,7 +80,7 @@ public class User implements UserDetails {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
-    @Transient
+    @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
 
     @Transient

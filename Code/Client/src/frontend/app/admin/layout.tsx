@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, Loader2, UserCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminLayout({
@@ -72,8 +72,9 @@ export default function AdminLayout({
   const navItems = [
     { name: 'Tổng quan', href: '/admin', icon: LayoutDashboard },
     { name: 'Tài khoản Admin', href: '/admin/accounts', icon: Users },
+    { name: 'Hồ sơ của tôi', href: '/admin/profile', icon: UserCircle },
     ...(username === 'Admin'
-      ? [{ name: 'Seek Data', href: '/admin/seed', icon: Database }]
+      ? [{ name: 'Seed Data', href: '/admin/seed', icon: Database }]
       : []),
   ];
 
