@@ -1,0 +1,65 @@
+{
+  "table" : "seed_config",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "checksum" : "4405e76b53aa8d98f09fb933c5817633466fc0b840d4efe35e300223d4e6aea9",
+    "enabled" : true,
+    "file_path" : "seed/subscription_plans.json",
+    "last_seeded_checksum" : "4405e76b53aa8d98f09fb933c5817633466fc0b840d4efe35e300223d4e6aea9",
+    "last_seeded_version" : 1,
+    "row_count" : 3,
+    "seed_order" : 10,
+    "table_name" : "subscription_plans",
+    "updated_at" : "2026-08-09T11:11:52.550232",
+    "version" : 1
+  }, {
+    "id" : 2,
+    "checksum" : "19eaca8f018d7b0eb24a25cff0df03d4a4d41aede08de4e99540495a2105db9d",
+    "enabled" : true,
+    "file_path" : "seed/test_huy.json",
+    "last_seeded_checksum" : "9fba3e9ecf2a62dd83d937bd203b3d9552d9e39204503837e590df6f1d59ada2",
+    "last_seeded_version" : 2,
+    "row_count" : 4,
+    "seed_order" : 20,
+    "table_name" : "test_huy",
+    "updated_at" : "2026-08-09T11:44:07.467911",
+    "version" : 2
+  }, {
+    "id" : 3,
+    "checksum" : "71def77e650d393c5962f11b4aaa2435f6c9c93e1505396afde3d5d94f37e6ad",
+    "enabled" : true,
+    "file_path" : "seed/test_huy3.json",
+    "last_seeded_checksum" : "71def77e650d393c5962f11b4aaa2435f6c9c93e1505396afde3d5d94f37e6ad",
+    "last_seeded_version" : 4,
+    "row_count" : 10,
+    "seed_order" : 30,
+    "table_name" : "test_huy3",
+    "updated_at" : "2026-08-09T11:11:52.552242",
+    "version" : 4
+  }, {
+    "id" : 4,
+    "checksum" : "e8a901ec1d3a4cd5e5e31301011593db437bba2006380d8410986327940bd301",
+    "enabled" : true,
+    "file_path" : "seed/debt_transactions.json",
+    "last_seeded_checksum" : "e55208fa50aa1f80e10841716409c00195101bfdcbf086b500ca11b369269884",
+    "last_seeded_version" : 1,
+    "row_count" : 0,
+    "seed_order" : 40,
+    "table_name" : "debt_transactions",
+    "updated_at" : "2026-08-09T11:44:07.465869",
+    "version" : 1
+  }, {
+    "id" : 5,
+    "checksum" : "a12b6dcfe5299636cc7ae4e51a39d61f2b18cf1c75e46769cae0d59e2a8c57cb",
+    "enabled" : true,
+    "file_path" : "seed/roles.json",
+    "last_seeded_checksum" : null,
+    "last_seeded_version" : null,
+    "row_count" : 3,
+    "seed_order" : 50,
+    "table_name" : "roles",
+    "updated_at" : "2026-08-09T11:45:28.437017",
+    "version" : 1
+  } ]
+}

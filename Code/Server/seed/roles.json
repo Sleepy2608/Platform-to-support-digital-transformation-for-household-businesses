@@ -1,0 +1,20 @@
+{
+  "table" : "roles",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "description" : "Quản trị viên hệ thống",
+    "role_code" : "ADMIN",
+    "role_name" : "Quản trị viên"
+  }, {
+    "id" : 2,
+    "description" : "Chủ hộ kinh doanh",
+    "role_code" : "BUSINESS_OWNER",
+    "role_name" : "Chủ hộ kinh doanh"
+  }, {
+    "id" : 3,
+    "description" : "Nhân viên cửa hàng",
+    "role_code" : "EMPLOYEE",
+    "role_name" : "Nhân viên"
+  } ]
+}
