@@ -36,18 +36,24 @@ export default function AdminLayout({
   }, []);
 
   useEffect(() => {
+    // Trang dang nhap admin khong can token -> bo qua kiem tra
+    if (pathname === '/admin/login') {
+      setLoading(false);
+      return;
+    }
+
     const token = localStorage.getItem('accessToken');
     const rolesStr = localStorage.getItem('roles');
 
     if (!token || !rolesStr) {
-      router.push('/login');
+      router.push('/admin/login');
       return;
     }
 
     try {
       const roles = JSON.parse(rolesStr);
       if (!roles.includes('ADMIN')) {
-        router.push('/login');
+        router.push('/admin/login');
         return;
       }
 
@@ -60,9 +66,9 @@ export default function AdminLayout({
         setLoading(false);
       }
     } catch (e) {
-      router.push('/login');
+      router.push('/admin/login');
     }
-  }, [router, checkKey]);
+  }, [router, checkKey, pathname]);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -83,6 +89,11 @@ export default function AdminLayout({
       setKeyBusy(false);
     }
   };
+
+  // Trang dang nhap admin: render thang, khong bọc sidebar/kiem tra quyen
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (
