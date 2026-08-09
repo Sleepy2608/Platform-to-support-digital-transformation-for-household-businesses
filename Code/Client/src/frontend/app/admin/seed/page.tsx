@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/app/lib/apiClient';
-import { Database, Camera, RefreshCw, Trash2, Loader2, Layers, KeyRound, Lock } from 'lucide-react';
+import { Database, Camera, RefreshCw, Trash2, Loader2, Layers } from 'lucide-react';
 
 interface SeedConfig {
   id: number;
@@ -15,11 +15,6 @@ interface SeedConfig {
   updatedAt: string | null;
 }
 
-interface KeyStatus {
-  initialized: boolean;
-  unlocked: boolean;
-}
-
 export default function SeedPage() {
   const router = useRouter();
   const [allowed, setAllowed] = useState(false);
@@ -29,10 +24,6 @@ export default function SeedPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
-  const [unlocked, setUnlocked] = useState(false);
-  const [keyInitialized, setKeyInitialized] = useState(true);
-  const [keyInput, setKeyInput] = useState('');
-  const [keyError, setKeyError] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -47,16 +38,10 @@ export default function SeedPage() {
     }
   }, []);
 
-  const checkKey = useCallback(async () => {
+  const loadSeed = useCallback(async () => {
+    // Da bo co che key: vao thang, tai danh sach seek luon.
     try {
-      const status = await apiClient.get<KeyStatus>('/api/seed/key-status');
-      setKeyInitialized(status.initialized);
-      setUnlocked(status.unlocked);
-      if (status.unlocked) {
-        await load();
-      }
-    } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Lỗi kiểm tra key');
+      await load();
     } finally {
       setLoading(false);
     }
@@ -68,29 +53,12 @@ export default function SeedPage() {
       return;
     }
     setAllowed(true);
-    checkKey();
-  }, [router, checkKey]);
+    loadSeed();
+  }, [router, loadSeed]);
 
   const notify = (msg: string) => {
     setMessage(msg);
     setTimeout(() => setMessage(''), 4000);
-  };
-
-  const handleUnlock = async () => {
-    if (!keyInput.trim()) return;
-    setBusy(true);
-    setKeyError('');
-    try {
-      const restored = await apiClient.post<number>('/api/seed/unlock', { key: keyInput });
-      setUnlocked(true);
-      setKeyInput('');
-      notify(`Đã mở khóa, seek ${restored} cấu hình`);
-      await load();
-    } catch (e) {
-      setKeyError(e instanceof Error ? e.message : 'Key không đúng');
-    } finally {
-      setBusy(false);
-    }
   };
 
   const handleSnapshot = async () => {
@@ -157,50 +125,6 @@ export default function SeedPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-8 h-8 animate-spin text-zinc-500" />
-      </div>
-    );
-  }
-
-  if (!unlocked) {
-    return (
-      <div className="max-w-md mx-auto mt-16">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-white/10 rounded-xl border border-zinc-700">
-              <Lock className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-xl font-bold">Nhập Key Seek Data</h1>
-          </div>
-          <p className="text-zinc-400 text-sm mb-6">
-            {keyInitialized
-              ? 'Nhập key để mở khóa và nạp dữ liệu. Dữ liệu được mã hóa, không có key sẽ không dùng được.'
-              : 'Chưa có key. Nhập key mới để thiết lập lần đầu (hãy nhớ kỹ key này).'}
-          </p>
-          <div className="relative mb-4">
-            <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-            <input
-              type="password"
-              value={keyInput}
-              onChange={(e) => setKeyInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
-              placeholder="Nhập key..."
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white outline-none focus:border-zinc-500"
-            />
-          </div>
-          {keyError && (
-            <div className="mb-4 px-4 py-2.5 rounded-xl bg-red-950/30 border border-red-900/40 text-sm text-red-400">
-              {keyError}
-            </div>
-          )}
-          <button
-            onClick={handleUnlock}
-            disabled={!keyInput.trim() || busy}
-            className="w-full flex items-center justify-center gap-2 bg-white text-zinc-950 font-semibold px-5 py-3 rounded-xl text-sm disabled:opacity-40 hover:bg-zinc-200 transition-colors"
-          >
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
-            {keyInitialized ? 'Mở khóa' : 'Thiết lập key'}
-          </button>
-        </div>
       </div>
     );
   }
