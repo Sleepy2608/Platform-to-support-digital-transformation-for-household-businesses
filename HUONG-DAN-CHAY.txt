@@ -1,0 +1,421 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║   HƯỚNG DẪN CHẠY PROJECT TRÊN VISUAL STUDIO CODE                            ║
+║   (chạy trực tiếp trên máy - KHÔNG cần Docker)                              ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+Làm lần lượt từ trên xuống, đừng bỏ bước nào. Toàn bộ đã được test chạy thật
+nên cứ yên tâm làm theo.
+
+
+MỤC LỤC
+-------
+   0. LƯU Ý QUAN TRỌNG NHẤT (đọc trước khi làm bất cứ gì)
+   A. CÀI ĐẶT PHẦN MỀM (làm 1 lần cho mỗi máy)
+        A1. JDK 21
+        A2. MySQL 8
+        A3. Node.js (cho frontend)
+        A4. Visual Studio Code + Extension
+   B. LẤY CODE VỀ MÁY
+   C. MỞ PROJECT TRONG VS CODE
+   D. CẤU HÌNH KẾT NỐI DATABASE (.env)
+   E. CHẠY BACKEND (Java)
+   F. CHẠY FRONTEND (giao diện web)
+   G. CƠ CHẾ SEEK DATA (dữ liệu mẫu dùng chung cả nhóm)
+   H. QUY TRÌNH LÀM VIỆC NHÓM VỚI GIT
+   I. GẶP LỖI THƯỜNG GẶP
+   J. CHECKLIST NHANH
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  0. LƯU Ý QUAN TRỌNG NHẤT - ĐỌC TRƯỚC                                       ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+TUYỆT ĐỐI KHÔNG để project trong thư mục có tên TIẾNG VIỆT CÓ DẤU.
+   Ví dụ SAI:   D:\Dự án cá nhân\...      (có dấu -> Java lỗi)
+                D:\Bài tập\java\...       (có dấu -> Java lỗi)
+   Ví dụ ĐÚNG:  D:\Projects\hbdt-platform (không dấu, không khoảng trắng)
+
+Lý do: Java trên Windows không đọc được file nằm trong đường dẫn tiếng Việt
+có dấu, sẽ báo lỗi kiểu "Could not find or load main class" dù code đúng.
+
+=> Nếu bạn đang để project ở chỗ có dấu, hãy CẮT (Cut) cả thư mục project
+   ra một chỗ không dấu (ví dụ D:\Projects\) rồi mới làm các bước tiếp theo.
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  A. CÀI ĐẶT PHẦN MỀM (chỉ làm 1 lần cho mỗi máy)                            ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+Mở PowerShell để gõ lệnh: bấm nút Start, gõ "powershell", Enter.
+Nếu lệnh cần quyền Admin, thì chuột phải vào PowerShell > "Run as administrator".
+
+
+────────────────────────────────────────────────────────────────────
+A1. Cài JDK 21 (bộ chạy ngôn ngữ Java)
+────────────────────────────────────────────────────────────────────
+
+Cách nhanh (khuyên dùng) - gõ trong PowerShell:
+
+   winget install EclipseAdoptium.Temurin.21.JDK
+
+Hoặc cài tay: vào  https://adoptium.net  , tải "Temurin 21 (LTS)" bản Windows
+.msi, cài để mặc định (Next -> Next -> Install).
+
+KIỂM TRA: đóng hết cửa sổ PowerShell, mở CÁI MỚI, gõ:
+
+   java -version
+
+   Kết quả đúng: hiện ra dòng có "21.x.x" (ví dụ: openjdk version "21.0.12").
+   Nếu báo "không tìm thấy": đóng hết terminal, mở lại cái mới rồi gõ lại.
+   (Máy cần "nạp lại" biến môi trường sau khi cài, nên phải mở terminal mới.)
+
+
+────────────────────────────────────────────────────────────────────
+A2. Cài MySQL 8 (database)
+────────────────────────────────────────────────────────────────────
+
+Bước 1 - cài, gõ trong PowerShell:
+
+   winget install Oracle.MySQL
+
+Bước 2 - khởi tạo và đặt mật khẩu.
+   MỞ POWERSHELL BẰNG QUYỀN ADMIN (chuột phải > Run as administrator),
+   gõ LẦN LƯỢT từng dòng (đợi dòng trước xong mới gõ dòng sau):
+
+   & "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysqld.exe" --initialize-insecure --datadir="C:\ProgramData\MySQL\MySQL Server 8.4\Data"
+
+   & "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysqld.exe" --install MySQL84
+
+   Start-Service MySQL84
+
+   & "C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe" -u root --execute="ALTER USER 'root'@'localhost' IDENTIFIED BY 'root'; FLUSH PRIVILEGES;"
+
+   Sau 4 dòng trên:  user = root ,  mật khẩu = root ,  cổng = 3306.
+
+   (Lưu ý: nếu máy bạn cài MySQL bản khác 8.4, thì sửa chữ "8.4" trong đường
+    dẫn cho khớp phiên bản thật. Vào C:\Program Files\MySQL\ xem tên thư mục.)
+
+KIỂM TRA MySQL đã chạy - gõ:
+
+   Get-Service MySQL84
+
+   Thấy  Status = Running  là ok.
+
+   (Ai quen dùng XAMPP thì bật MySQL trong XAMPP thay cũng được. Chỉ cần nhớ
+    user/mật khẩu/cổng để điền vào file .env ở bước D. Nếu dùng XAMPP thì
+    mật khẩu root thường để TRỐNG - lúc đó DB_PASSWORD trong .env để trống.)
+
+
+────────────────────────────────────────────────────────────────────
+A3. Cài Node.js (chỉ cần nếu bạn chạy phần giao diện web - frontend)
+────────────────────────────────────────────────────────────────────
+
+   winget install OpenJS.NodeJS.LTS
+
+   Hoặc tải tay ở  https://nodejs.org  (bản LTS).
+
+KIỂM TRA: mở terminal mới, gõ:
+
+   node -v      (thấy v20 hoặc v22... là được)
+   npm -v
+
+   (Nếu bạn chỉ làm/test phần backend Java thì có thể bỏ qua bước A3 này.)
+
+
+────────────────────────────────────────────────────────────────────
+A4. Cài Visual Studio Code + Extension
+────────────────────────────────────────────────────────────────────
+
+1. Tải VS Code ở  https://code.visualstudio.com  , cài đặt.
+
+2. Mở VS Code, bấm icon Extensions bên trái (hình 4 ô vuông xếp), tìm và cài
+   2 bộ này:
+       - "Extension Pack for Java"    (tác giả: Microsoft)
+       - "Spring Boot Extension Pack" (tác giả: VMware)
+
+3. Cài xong ĐÓNG VÀ MỞ LẠI VS Code cho chắc ăn.
+
+   KHÔNG cần cài Maven riêng. Project đã có sẵn "Maven wrapper" (2 file mvnw
+   và mvnw.cmd trong thư mục Code\Server), nó tự tải và lo phần Maven.
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  B. LẤY CODE VỀ MÁY                                                         ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+Nếu chưa có code, mở terminal ở một thư mục KHÔNG DẤU (ví dụ D:\Projects) rồi:
+
+   git clone <link-repo-github> hbdt-platform
+   cd hbdt-platform
+
+Nếu đã có code rồi thì đảm bảo nó nằm ở thư mục không dấu (xem mục 0).
+
+Chuyển sang nhánh làm việc (nếu nhóm quy định nhánh riêng):
+
+   git checkout creep       (hoặc nhánh nhóm đang dùng)
+   git pull                 (kéo code mới nhất về)
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  C. MỞ PROJECT TRONG VS CODE                                               ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+1. VS Code > menu File > Open Folder.
+
+2. Chọn thư mục con:   Code\Server
+   (đây là thư mục có file pom.xml - gốc của phần backend Java.
+    NHỚ mở đúng thư mục Server này, đừng mở thư mục ngoài cùng của project.)
+
+3. Lần đầu mở, VS Code tự nhận diện project Java + Maven và bắt đầu tải thư
+   viện. Nhìn góc DƯỚI BÊN PHẢI màn hình thấy nó đang chạy (kiểu "Importing
+   Maven projects..." hoặc thanh loading). ĐỢI cho tới khi chạy xong hẳn
+   (thanh đó biến mất). Lần đầu hơi lâu (vài phút), kiên nhẫn đừng bấm Run vội.
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  D. CẤU HÌNH KẾT NỐI DATABASE (thường KHÔNG cần làm gì)                    ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+TIN VUI: project đã có sẵn file cấu hình kết nối database, tên là  .env
+nằm trong thư mục  Code\Server\  , với thông tin mặc định:
+
+       DB_HOST=localhost
+       DB_PORT=3306
+       DB_NAME=hbdt_db
+       DB_USERNAME=root
+       DB_PASSWORD=root
+
+=> NẾU bạn cài MySQL theo đúng mục A2 (mật khẩu root = "root") thì KHÔNG cần
+   làm gì ở bước D này cả. Nhảy thẳng xuống mục E để chạy.
+
+KHI NÀO CẦN SỬA FILE .env ?
+   Chỉ khi mật khẩu MySQL trên máy bạn KHÁC "root", hoặc bạn đăng nhập root
+   không được. Lúc đó:
+
+   1. Mở file  Code\Server\.env  trong VS Code.
+   2. Sửa dòng  DB_PASSWORD=root  thành mật khẩu MySQL thật của máy bạn.
+      Ví dụ mật khẩu của bạn là 123456 thì sửa thành:  DB_PASSWORD=123456
+   3. Nếu dùng XAMPP và mật khẩu để trống, thì để:  DB_PASSWORD=
+      (không có gì sau dấu bằng)
+   4. Lưu file (Ctrl+S), rồi chạy lại backend.
+
+GHI CHÚ:
+   - KHÔNG cần tự tạo database "hbdt_db" bằng tay - lần đầu chạy backend nó
+     tự tạo.
+   - Đây là bài tập nên file .env để mật khẩu root cho tiện. Với dự án thật
+     ngoài đời thì KHÔNG bao giờ đưa mật khẩu lên git như vậy.
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  E. CHẠY BACKEND (phần Java)                                               ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+Bảo đảm MySQL đang chạy (mục A2) trước khi chạy backend.
+
+CÁCH 1 - bấm nút (dễ nhất):
+   - Mở file:  Code\Server\src\main\java\com\hbdt\HbdtApplication.java
+   - Ngay phía trên dòng "public static void main", VS Code hiện chữ nhỏ
+     màu xám  "Run | Debug".  Bấm  "Run".
+
+CÁCH 2 - bằng dòng lệnh:
+   - Terminal > New Terminal (mở terminal ngay tại thư mục Code\Server).
+   - Gõ:   .\mvnw.cmd spring-boot:run
+     (Mac/Linux thì gõ:  ./mvnw spring-boot:run )
+
+CHẠY THÀNH CÔNG khi thấy trong log dòng kiểu:
+
+       Started HbdtApplication in 8.xxx seconds
+
+Backend lúc này chạy ở địa chỉ:  http://localhost:8080
+
+Lần đầu chạy, hệ thống TỰ ĐỘNG (không cần gõ SQL gì):
+   - Tạo database
+   - Tạo toàn bộ bảng
+   - Tạo tài khoản quản trị mặc định (mật khẩu được mã hóa an toàn)
+   - Nạp danh sách Tỉnh / Huyện / Xã của Việt Nam
+   - Nạp lại dữ liệu mẫu từ các file seek (nếu có - xem mục G)
+
+TÀI KHOẢN để đăng nhập thử:
+       owner / owner123    -> tài khoản chủ hộ kinh doanh mẫu
+   Tài khoản quản trị: liên hệ TRƯỞNG NHÓM để nhận (không ghi ở đây).
+
+Muốn TẮT backend: bấm vào Terminal đang chạy, nhấn  Ctrl + C.
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  F. CHẠY FRONTEND (giao diện web - nếu cần)                                ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+1. Mở một Terminal MỚI, chuyển vào thư mục frontend:
+
+       cd Code\Client\src\frontend
+
+2. Cài thư viện (chỉ cần làm LẦN ĐẦU, hoặc khi có thư viện mới):
+
+       npm install
+
+3. Chạy:
+
+       npm run dev
+
+4. Thấy dòng  "Local: http://localhost:3000"  thì mở trình duyệt vào địa chỉ
+   đó. Trang web sẽ hiện lên.
+
+   Lưu ý: muốn dùng đầy đủ chức năng thì BACKEND (mục E) phải đang chạy song
+   song, vì frontend gọi dữ liệu từ backend ở cổng 8080.
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  G. CƠ CHẾ SEEK DATA (dữ liệu mẫu dùng chung cho cả nhóm)                  ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+VẤN ĐỀ nó giải quyết:
+   Mỗi người code trên máy mình, database mỗi máy một khác. Nếu bạn A làm
+   xong phần "đơn hàng" và nhập vài đơn mẫu để test, thì bạn B kéo code về
+   database vẫn TRỐNG. Cơ chế Seek Data giúp gói dữ liệu mẫu đi theo code,
+   để ai kéo về cũng có đủ dữ liệu mà chạy, KHÔNG phải gửi file database
+   qua lại cho nhau.
+
+CÁCH HOẠT ĐỘNG (tóm tắt):
+   - Có 1 màn "Seek Data" trong trang admin của web.
+   - Bạn chọn 1 bảng (hoặc bấm "Snapshot tất cả") -> hệ thống đọc dữ liệu
+     đang có trong bảng đó, lưu thành 1 file .json trong thư mục
+     Code\Server\seed\ , đồng thời ghi 1 dòng cấu hình vào database.
+   - Các file .json trong thư mục seed\ được commit + push lên git bình thường.
+   - Người khác kéo code về, chạy backend -> hệ thống TỰ ĐỘNG đọc các file
+     .json đó và nạp dữ liệu vào database máy họ.
+
+CÁCH VÀO MÀN SEEK DATA (cần 2 lớp: đúng tài khoản + đúng key):
+   1. Chạy backend (mục E) và frontend (mục F).
+   2. Vào  http://localhost:3000/login  , đăng nhập bằng TÀI KHOẢN QUẢN TRỊ
+      (do trưởng nhóm cung cấp riêng, không ghi trong tài liệu này).
+      (CHỈ tài khoản quản trị này mới vào được khu này. Người khác không thấy.)
+   3. Ngay sau khi đăng nhập, hệ thống BẮT NHẬP KEY DATABASE.
+      - Nhập đúng key (key do TRƯỞNG NHÓM cung cấp riêng, KHÔNG ghi trong
+        tài liệu này) rồi bấm "Mở khóa".
+      - Nhập sai key thì KHÔNG vào được gì cả.
+      - Lần đầu tiên (database mới, chưa có key): màn hình ghi "Thiết lập key",
+        người thiết lập gõ key mới và nhớ kỹ - đó là key chung của cả nhóm.
+   4. Vào được rồi, menu bên trái bấm  "Seek Data".
+
+   Vì sao cần key: toàn bộ file dữ liệu mẫu (.json) được MÃ HÓA. Không có
+   key thì file chỉ là một chuỗi ký tự vô nghĩa, không ai đọc hay dùng được,
+   kể cả người xem được source trên GitHub.
+
+CÁCH DÙNG MÀN SEEK DATA:
+   - Ô "Chọn bảng": chọn tên bảng bạn muốn lưu dữ liệu mẫu, rồi bấm "Snapshot".
+   - Nút "Snapshot tất cả": lưu dữ liệu mẫu của TẤT CẢ các bảng đang có dữ
+     liệu cùng lúc (tự bỏ qua bảng rỗng).
+   - Bảng "Danh sách seek": liệt kê các bảng đã được lưu, kèm số dòng và file.
+       + Nút "Bật/Tắt": bật thì bảng đó sẽ được nạp khi khởi động, tắt thì bỏ.
+       + Nút thùng rác: xóa cấu hình seek của bảng đó.
+   - Nút "Seek lại": nạp lại dữ liệu từ các file ngay lập tức (không cần khởi
+     động lại backend).
+
+NHỮNG ĐIỂM AN TOÀN / TIỆN LỢI ĐÃ LÀM SẴN:
+   - MÃ HÓA: mọi file .json dữ liệu mẫu đều được mã hóa bằng key. Không có
+     key thì không đọc / không giải mã / không dùng được.
+   - Dữ liệu chỉ ĐẦY DẦN LÊN: snapshot lại nhiều lần thì dữ liệu mẫu được GỘP
+     thêm (theo id), KHÔNG mất dữ liệu cũ, KHÔNG bị nhân đôi.
+   - Khi nạp lúc khởi động: dòng nào đã có thì cập nhật, chưa có thì thêm mới,
+     nên chạy đi chạy lại nhiều lần cũng không sinh dữ liệu rác.
+   - Nếu file không đổi so với lần nạp trước thì bỏ qua, không nạp lại vô ích.
+   - Các bảng nhạy cảm (users, otp, key...) bị chặn, KHÔNG cho snapshot.
+   - CHỐNG CONFLICT KHI MERGE: nhiều người snapshot ở nhiều máy rồi merge lên
+     main sẽ KHÔNG bị conflict code. Hai lý do: (1) cùng dữ liệu thì file mã
+     hóa ra giống hệt nhau nên git coi như không đổi; (2) nếu dữ liệu khác
+     nhau, git được cấu hình tự gộp cả hai (merge=union), không báo lỗi, rồi
+     lúc chạy hệ thống tự gộp lại theo id nên dữ liệu vẫn đúng.
+
+LƯU Ý:
+   - Đừng snapshot bảng khi nó đang rỗng (snapshot bảng rỗng thì vô nghĩa).
+   - Sau khi snapshot xong, nhớ commit + push thư mục Code\Server\seed\ lên
+     git để dữ liệu mẫu đi theo code cho người khác (xem mục H).
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  H. QUY TRÌNH LÀM VIỆC NHÓM VỚI GIT                                        ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+MỖI KHI BẮT ĐẦU LÀM (kéo code mới nhất về):
+
+   git checkout creep        (về nhánh làm việc của nhóm)
+   git pull                  (kéo code + dữ liệu seek mới nhất)
+
+   -> Sau đó chạy lại backend, dữ liệu mẫu mới của mọi người tự được nạp vào.
+
+KHI LÀM XONG PHẦN CỦA MÌNH (đẩy code + dữ liệu mẫu lên):
+
+   1. (Nếu có dữ liệu mẫu mới) Vào màn Seek Data, snapshot bảng của mình.
+   2. git add .
+   3. git commit -m "mo ta ngan gon viec vua lam"
+   4. git pull                (kéo về đề phòng người khác vừa đẩy, tránh xung đột)
+   5. git push
+
+FILE KHÔNG ĐẨY LÊN GIT (đã cấu hình bỏ qua sẵn):
+   - thư mục  target\   (file build tạm của Java)
+   - thư mục  node_modules\  (thư viện frontend, tự cài bằng npm install)
+
+FILE PHẢI ĐẨY LÊN:
+   - thư mục  Code\Server\seed\   (các file .json dữ liệu mẫu, để người khác
+     kéo về có sẵn dữ liệu)
+   - file  Code\Server\.env  (đã có sẵn pass=root cho cả nhóm dùng chung;
+     mỗi người nếu cần sửa pass riêng thì sửa trên máy mình, ĐỪNG commit đè
+     lên nếu pass của bạn khác cả nhóm)
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  I. GẶP LỖI THƯỜNG GẶP                                                     ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+LỖI: "Could not find or load main class" / Java báo lỗi lung tung khi chạy.
+   -> Gần như chắc chắn do thư mục project nằm trong đường dẫn TIẾNG VIỆT
+      CÓ DẤU. Cắt project ra đường dẫn không dấu (xem mục 0), mở lại VS Code.
+
+LỖI: "Access denied for user 'root'@'localhost'".
+   -> Sai mật khẩu MySQL trong file .env. Sửa lại dòng DB_PASSWORD cho khớp.
+
+LỖI: "Communications link failure" / không kết nối được database.
+   -> MySQL chưa chạy. Mở PowerShell gõ:  Start-Service MySQL84
+      (hoặc bật MySQL trong XAMPP nếu bạn dùng XAMPP.)
+
+LỖI: backend chạy được nhưng danh sách Tỉnh/Huyện/Xã trống.
+   -> Lúc chạy máy không có mạng (hệ thống tải danh sách địa giới qua
+      internet lần đầu). Bật mạng, chạy lại backend là có.
+
+LỖI: "Port 8080 already in use" / cổng 8080 bị chiếm.
+   -> Có tiến trình khác đang giữ cổng 8080. Cách 1: tắt tiến trình đó.
+      Cách 2: thêm dòng  SERVER_PORT=8081  vào file .env rồi chạy lại.
+
+LỖI: bấm Run mà KHÔNG thấy chữ "Run | Debug" phía trên hàm main.
+   -> VS Code chưa load xong Java. Đợi thanh dưới góc phải chạy xong. Nếu vẫn
+      không có: bấm F1, gõ "Java: Clean Java Language Server Workspace",
+      chọn "Restart and delete", đợi VS Code nạp lại.
+
+LỖI: frontend báo lỗi khi "npm run dev" hoặc "npm install".
+   -> Chắc chưa cài Node.js (mục A3), hoặc chưa "npm install" trước.
+      Cài Node, mở terminal mới, chạy lại  npm install  rồi  npm run dev.
+
+LỖI: vào web nhưng bấm gì cũng báo lỗi / không có dữ liệu.
+   -> Backend chưa chạy. Frontend cần backend chạy song song ở cổng 8080.
+
+LỖI: đăng nhập tài khoản quản trị không được.
+   -> Hỏi lại trưởng nhóm để lấy đúng tài khoản/mật khẩu (phân biệt chữ hoa).
+      Nếu vẫn lỗi, có thể database cũ còn tài khoản cũ - xem lại log backend
+      lúc khởi động có dòng "Seeded default admin user" không.
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  J. CHECKLIST NHANH                                                        ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+   [ ] Project nằm ở đường dẫn KHÔNG DẤU
+   [ ] Đã cài JDK 21     (java -version ra 21)
+   [ ] Đã cài MySQL 8    (Get-Service MySQL84 = Running)
+   [ ] Đã cài Node.js    (node -v ra vxx)   <- chỉ cần cho frontend
+   [ ] Đã cài 2 Extension Java trong VS Code
+   [ ] Đã mở đúng thư mục Code\Server trong VS Code
+   [ ] File .env đã có sẵn (chỉ sửa DB_PASSWORD nếu pass MySQL khác root)
+   [ ] Backend chạy: thấy "Started HbdtApplication"
+   [ ] Frontend chạy: mở được http://localhost:3000
+   [ ] Đăng nhập được tài khoản quản trị (do trưởng nhóm cấp)

@@ -64,17 +64,23 @@ export default function LoginPage() {
         // Set lightweight cookies for Edge middleware
         const maxAge = 60 * 60 * 24; // 1 day
         document.cookie = `auth_token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
-        const primaryRole = Array.isArray(roles) && roles.includes('ADMIN')
-          ? 'ADMIN'
-          : Array.isArray(roles) && roles.includes('BUSINESS_OWNER')
+        // Admin phai dang nhap o cua rieng /admin/login
+        if (Array.isArray(roles) && roles.includes('ADMIN')) {
+          setError('Tài khoản quản trị vui lòng đăng nhập tại trang quản trị');
+          localStorage.clear();
+          document.cookie = 'auth_token=; max-age=0; path=/';
+          document.cookie = 'auth_role=; max-age=0; path=/';
+          setLoading(false);
+          return;
+        }
+
+        const primaryRole = Array.isArray(roles) && roles.includes('BUSINESS_OWNER')
           ? 'BUSINESS_OWNER'
           : '';
         document.cookie = `auth_role=${primaryRole}; path=/; max-age=${maxAge}; SameSite=Lax`;
 
         // Route by role
-        if (roles && roles.includes('ADMIN')) {
-          router.push('/admin');
-        } else if (roles && roles.includes('BUSINESS_OWNER')) {
+        if (roles && roles.includes('BUSINESS_OWNER')) {
           if (!businessId) {
             router.push('/onboarding/business-profile');
           } else {

@@ -1,0 +1,17 @@
+{
+  "table" : "seed_config",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "checksum" : "a12b6dcfe5299636cc7ae4e51a39d61f2b18cf1c75e46769cae0d59e2a8c57cb",
+    "enabled" : true,
+    "file_path" : "seed/roles.json",
+    "last_seeded_checksum" : null,
+    "last_seeded_version" : null,
+    "row_count" : 3,
+    "seed_order" : 10,
+    "table_name" : "roles",
+    "updated_at" : "2026-08-09T10:33:49.654366",
+    "version" : 1
+  } ]
+}

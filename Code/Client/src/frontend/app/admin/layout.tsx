@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, LogOut, Store, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminLayout({
@@ -19,33 +19,44 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
+    // Trang dang nhap admin khong can token -> bo qua kiem tra
+    if (pathname === '/admin/login') {
+      setLoading(false);
+      return;
+    }
+
     const token = localStorage.getItem('accessToken');
     const rolesStr = localStorage.getItem('roles');
-    
+
     if (!token || !rolesStr) {
-      router.push('/login');
+      router.push('/admin/login');
       return;
     }
 
     try {
       const roles = JSON.parse(rolesStr);
       if (!roles.includes('ADMIN')) {
-        router.push('/login');
+        router.push('/admin/login');
         return;
       }
-      
+
       setFullName(localStorage.getItem('fullName') || 'Administrator');
       setUsername(localStorage.getItem('username') || 'admin');
       setLoading(false);
     } catch (e) {
-      router.push('/login');
+      router.push('/admin/login');
     }
-  }, [router]);
+  }, [router, pathname]);
 
   const handleLogout = () => {
     localStorage.clear();
     router.push('/login');
   };
+
+  // Trang dang nhap admin: render thang, khong bọc sidebar/kiem tra quyen
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (
@@ -61,6 +72,9 @@ export default function AdminLayout({
   const navItems = [
     { name: 'Tổng quan', href: '/admin', icon: LayoutDashboard },
     { name: 'Tài khoản Admin', href: '/admin/accounts', icon: Users },
+    ...(username === 'Admin'
+      ? [{ name: 'Seek Data', href: '/admin/seed', icon: Database }]
+      : []),
   ];
 
   return (

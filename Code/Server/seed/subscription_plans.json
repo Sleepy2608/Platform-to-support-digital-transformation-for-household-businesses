@@ -1,0 +1,35 @@
+{
+  "table" : "subscription_plans",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "annual_price" : 0.00,
+    "created_at" : "2026-08-09T14:41:19",
+    "description" : "Dùng th? c? b?n",
+    "monthly_price" : 0.00,
+    "plan_code" : "FREE",
+    "plan_name" : "Gói Mi?n Phí",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-09T14:41:19"
+  }, {
+    "id" : 2,
+    "annual_price" : 990000.00,
+    "created_at" : "2026-08-09T14:41:19",
+    "description" : "Cho h? kinh doanh nh?",
+    "monthly_price" : 99000.00,
+    "plan_code" : "BASIC",
+    "plan_name" : "Gói C? B?n",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-09T14:41:19"
+  }, {
+    "id" : 3,
+    "annual_price" : 2990000.00,
+    "created_at" : "2026-08-09T14:41:19",
+    "description" : "??y ?? tính n?ng + AI",
+    "monthly_price" : 299000.00,
+    "plan_code" : "PREMIUM",
+    "plan_name" : "Gói Cao C?p",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-09T14:41:19"
+  } ]
+}

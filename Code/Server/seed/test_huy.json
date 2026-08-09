@@ -1,0 +1,21 @@
+{
+  "table" : "test_huy",
+  "version" : 2,
+  "rows" : [ {
+    "id" : 1,
+    "ghi_chu" : "dong test 1",
+    "ten" : "Huy 1"
+  }, {
+    "id" : 2,
+    "ghi_chu" : "dong test 2",
+    "ten" : "Huy 2"
+  }, {
+    "id" : 3,
+    "ghi_chu" : "dong test 3",
+    "ten" : "Huy 3"
+  }, {
+    "id" : 4,
+    "ghi_chu" : "4",
+    "ten" : "4"
+  } ]
+}

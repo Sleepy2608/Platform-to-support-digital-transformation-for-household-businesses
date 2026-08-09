@@ -1,0 +1,21 @@
+CACH CAI GIT MERGE DRIVER CHO FILE SEEK (moi may chay 1 lan)
+=============================================================
+
+File seek (seed/*.json) khi 2 nguoi cung sua se duoc GOP theo id thay vi
+ghi de hay noi bay. De git biet goi script gop, moi may phai khai bao 1 lan
+(git config khong di theo repo nen khong tu dong).
+
+Mo terminal tai thu muc goc project, chay 2 lenh sau (chi 1 lan cho moi may):
+
+  git config merge.seedmerge.name "Gop file seek theo id"
+  git config merge.seedmerge.driver "node Code/Server/seed/merge-seed.js %O %A %B"
+
+Xong. Tu gio khi pull/merge ma dung file seed/*.json, git tu gop theo id:
+giu tat ca dong, trung id lay ban version cao hon. Khong mat data, khong hong JSON.
+
+Kiem tra da cai chua:
+  git config --get merge.seedmerge.driver
+(hien ra dong "node Code/Server/seed/merge-seed.js ..." la da cai)
+
+LUU Y: can cai Node.js (frontend da yeu cau Node roi nen thuong da co).
+Kiem tra: go  node -v  ra so phien ban la duoc.
