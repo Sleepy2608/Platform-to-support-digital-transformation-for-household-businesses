@@ -9,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,6 +50,27 @@ public class User implements UserDetails {
 
     @Column(name = "phone", length = 20)
     private String phone;
+
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    @Column(name = "gender", length = 10)
+    private String gender;
+
+    @Column(name = "address", length = 500)
+    private String address;
+
+    @Column(name = "national_id", length = 20)
+    private String nationalId;
+
+    @Column(name = "join_date")
+    private LocalDate joinDate;
+
+    @Column(name = "position", length = 100)
+    private String position;
+
+    @Column(name = "termination_date")
+    private LocalDate terminationDate;
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)

@@ -44,13 +44,14 @@ public class SeedService {
                        DataSource dataSource,
                        ObjectMapper objectMapper,
                        SeedCrypto seedCrypto,
-                       @Value("${app.seed.dir:./seed}") String seedDirPath) {
+                       @Value("${app.seed.dir:}") String seedDirPath) {
         this.configRepository = configRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.dataSource = dataSource;
         this.objectMapper = objectMapper;
         this.seedCrypto = seedCrypto;
-        this.seedDir = Path.of(seedDirPath);
+        this.seedDir = resolveSeedDirectory(seedDirPath);
+        logger.info("Thu muc seed dang su dung: {}", this.seedDir);
     }
 
     public List<String> listTables() {
@@ -402,6 +403,46 @@ public class SeedService {
     private String readSeedFile(Path file) throws IOException {
         String content = Files.readString(file, StandardCharsets.UTF_8);
         return seedCrypto.decrypt(content);
+    }
+
+    /**
+     * Seed files are project data, not process-working-directory data. When no
+     * explicit SEED_DIR is configured, locate the backend directory from the
+     * running class and use its seed folder. This works from Maven, an IDE, and
+     * a packaged JAR placed next to an external seed directory.
+     */
+    private Path resolveSeedDirectory(String configuredPath) {
+        if (configuredPath != null && !configuredPath.isBlank()) {
+            return Path.of(configuredPath).toAbsolutePath().normalize();
+        }
+
+        try {
+            Path codeLocation = Path.of(SeedService.class.getProtectionDomain()
+                    .getCodeSource().getLocation().toURI()).toAbsolutePath().normalize();
+            Path start = Files.isDirectory(codeLocation) ? codeLocation : codeLocation.getParent();
+            Path backendDirectory = findBackendDirectory(start);
+            if (backendDirectory != null) {
+                return backendDirectory.resolve("seed");
+            }
+            if (start != null) {
+                return start.resolve("seed");
+            }
+        } catch (Exception e) {
+            logger.warn("Khong xac dinh duoc thu muc backend, dung thu muc chay: {}", e.getMessage());
+        }
+
+        return Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize().resolve("seed");
+    }
+
+    private Path findBackendDirectory(Path start) {
+        Path current = start;
+        while (current != null) {
+            if (Files.isRegularFile(current.resolve("pom.xml"))) {
+                return current;
+            }
+            current = current.getParent();
+        }
+        return null;
     }
 
     private int nextOrder() {
