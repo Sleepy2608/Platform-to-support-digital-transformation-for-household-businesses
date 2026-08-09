@@ -78,12 +78,12 @@ public class DatabaseSeeder implements CommandLineRunner {
     }
 
     private void seedAdminUser() {
-        if (!userRepository.existsByUsername("admin")) {
+        if (!userRepository.existsByUsername("Admin")) {
             Role adminRole = roleRepository.findFirstByName(RoleType.ADMIN)
                     .orElseThrow(() -> new RuntimeException("Role ADMIN not found"));
             User admin = User.builder()
-                    .username("admin")
-                    .password(passwordEncoder.encode("admin123"))
+                    .username("Admin")
+                    .password(passwordEncoder.encode("Admin"))
                     .email("admin@hbdt.com")
                     .fullName("System Administrator")
                     .phone("0123456789")
@@ -92,7 +92,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .build();
 
             userRepository.save(admin);
-            logger.info("Seeded default admin user: admin / admin123");
+            logger.info("Seeded default admin user: Admin / Admin");
         }
     }
 

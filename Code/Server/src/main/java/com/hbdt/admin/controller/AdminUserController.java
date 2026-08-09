@@ -102,7 +102,7 @@ public class AdminUserController {
         admin.setPhone(request.getPhone());
         
         // Prevent disabling default 'admin' account
-        if ("admin".equals(admin.getUsername()) && request.getStatus() != UserStatus.ACTIVE) {
+        if ("Admin".equals(admin.getUsername()) && request.getStatus() != UserStatus.ACTIVE) {
             throw new BadRequestException("Không thể thay đổi trạng thái hoạt động của Root Admin");
         }
         admin.setStatus(request.getStatus());
@@ -124,7 +124,7 @@ public class AdminUserController {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản Admin với ID: " + id));
 
         // Prevent deleting default 'admin' account
-        if ("admin".equals(admin.getUsername())) {
+        if ("Admin".equals(admin.getUsername())) {
             throw new BadRequestException("Không thể xóa tài khoản Admin hệ thống mặc định");
         }
 
