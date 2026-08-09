@@ -30,9 +30,7 @@ public class SeedService {
 
     private static final Logger logger = LoggerFactory.getLogger(SeedService.class);
 
-    private static final Set<String> PROTECTED_TABLES = Set.of(
-            "users", "otp_codes", "seed_config", "seed_key", "user_roles"
-    );
+    private static final Set<String> PROTECTED_TABLES = Set.of();
 
     private final SeedConfigRepository configRepository;
     private final JdbcTemplate jdbcTemplate;
