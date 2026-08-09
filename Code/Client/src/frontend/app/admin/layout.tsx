@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, LogOut, Store, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, KeyRound, Lock, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { apiClient } from '@/app/lib/apiClient';
 
 export default function AdminLayout({
   children,
@@ -18,10 +19,26 @@ export default function AdminLayout({
   const [username, setUsername] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const [needKey, setNeedKey] = useState(false);
+  const [keyInitialized, setKeyInitialized] = useState(true);
+  const [keyInput, setKeyInput] = useState('');
+  const [keyError, setKeyError] = useState('');
+  const [keyBusy, setKeyBusy] = useState(false);
+
+  const checkKey = useCallback(async () => {
+    try {
+      const status = await apiClient.get<{ initialized: boolean; unlocked: boolean }>('/api/seed/key-status');
+      setKeyInitialized(status.initialized);
+      setNeedKey(!status.unlocked);
+    } catch {
+      setNeedKey(true);
+    }
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     const rolesStr = localStorage.getItem('roles');
-    
+
     if (!token || !rolesStr) {
       router.push('/login');
       return;
@@ -33,18 +50,38 @@ export default function AdminLayout({
         router.push('/login');
         return;
       }
-      
+
+      const uname = localStorage.getItem('username') || 'admin';
       setFullName(localStorage.getItem('fullName') || 'Administrator');
-      setUsername(localStorage.getItem('username') || 'admin');
-      setLoading(false);
+      setUsername(uname);
+      if (uname === 'Admin') {
+        checkKey().finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
     } catch (e) {
       router.push('/login');
     }
-  }, [router]);
+  }, [router, checkKey]);
 
   const handleLogout = () => {
     localStorage.clear();
     router.push('/login');
+  };
+
+  const handleUnlock = async () => {
+    if (!keyInput.trim()) return;
+    setKeyBusy(true);
+    setKeyError('');
+    try {
+      await apiClient.post('/api/seed/unlock', { key: keyInput });
+      setNeedKey(false);
+      setKeyInput('');
+    } catch (e) {
+      setKeyError(e instanceof Error ? e.message : 'Key không đúng');
+    } finally {
+      setKeyBusy(false);
+    }
   };
 
   if (loading) {
@@ -58,9 +95,63 @@ export default function AdminLayout({
     );
   }
 
+  if (needKey) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center px-4">
+        <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl p-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-white/10 rounded-xl border border-zinc-700">
+              <Lock className="w-5 h-5 text-white" />
+            </div>
+            <h1 className="text-xl font-bold">Nhập Key Database</h1>
+          </div>
+          <p className="text-zinc-400 text-sm mb-6">
+            {keyInitialized
+              ? 'Nhập key để mở khóa dữ liệu. Không có key sẽ không truy cập được.'
+              : 'Chưa có key. Nhập key mới để thiết lập lần đầu (hãy nhớ kỹ key này).'}
+          </p>
+          <div className="relative mb-4">
+            <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <input
+              type="password"
+              value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleUnlock()}
+              placeholder="Nhập key database..."
+              autoFocus
+              className="w-full bg-zinc-800 border border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white outline-none focus:border-zinc-500"
+            />
+          </div>
+          {keyError && (
+            <div className="mb-4 px-4 py-2.5 rounded-xl bg-red-950/30 border border-red-900/40 text-sm text-red-400">
+              {keyError}
+            </div>
+          )}
+          <button
+            onClick={handleUnlock}
+            disabled={!keyInput.trim() || keyBusy}
+            className="w-full flex items-center justify-center gap-2 bg-white text-zinc-950 font-semibold px-5 py-3 rounded-xl text-sm disabled:opacity-40 hover:bg-zinc-200 transition-colors mb-3"
+          >
+            {keyBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+            {keyInitialized ? 'Mở khóa' : 'Thiết lập key'}
+          </button>
+          <button
+            onClick={handleLogout}
+            className="w-full text-zinc-500 hover:text-zinc-300 text-sm py-2 transition-colors"
+          >
+            Đăng xuất
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const navItems = [
     { name: 'Tổng quan', href: '/admin', icon: LayoutDashboard },
     { name: 'Tài khoản Admin', href: '/admin/accounts', icon: Users },
+    ...(username === 'Admin'
+      ? [{ name: 'Seek Data', href: '/admin/seed', icon: Database }]
+      : []),
   ];
 
   return (
