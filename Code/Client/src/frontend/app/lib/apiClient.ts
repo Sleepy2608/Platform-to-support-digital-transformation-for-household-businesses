@@ -125,8 +125,8 @@ async function request<T = unknown>(
   // First attempt
   let response = await doFetch(skipAuth ? null : getAccessToken());
 
-  // Handle 401 — try to refresh token once
-  if (response.status === 401 && !skipAuth) {
+  // Handle 401/403 — token het han (Spring Security tra 403), thu refresh 1 lan
+  if ((response.status === 401 || response.status === 403) && !skipAuth && getRefreshToken()) {
     if (isRefreshing) {
       // Queue this request until refresh is done
       const newToken = await new Promise<string>((resolve, reject) => {
