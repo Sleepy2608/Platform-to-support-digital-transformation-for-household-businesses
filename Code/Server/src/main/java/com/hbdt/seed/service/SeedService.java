@@ -82,8 +82,11 @@ public class SeedService {
         List<Map<String, Object>> current = jdbcTemplate.queryForList("SELECT * FROM " + quote(tableName));
         List<Map<String, Object>> rows = mergeWithExisting(tableName, current);
 
+        // Version moi = version cao nhat hien co (trong DB hoac file) + 1
+        long newVersion = Math.max(existingVersionInDb(tableName), versionInFile(tableName)) + 1;
+
         String filePath = "seed/" + tableName + ".json";
-        String json = writeJson(tableName, rows);
+        String json = writeJson(tableName, rows, newVersion);
         writeFile(tableName, json);
         String checksum = sha256(json);
 
@@ -97,6 +100,7 @@ public class SeedService {
         config.setFilePath(filePath);
         config.setRowCount(rows.size());
         config.setChecksum(checksum);
+        config.setVersion(newVersion);
         if (config.getEnabled() == null) {
             config.setEnabled(true);
         }
@@ -120,10 +124,6 @@ public class SeedService {
 
     @Transactional
     public int restoreAll() {
-        if (!seedCrypto.isUnlocked()) {
-            logger.info("SeedService: chua nhap key, bo qua seek.");
-            return 0;
-        }
         syncConfigsFromFiles();
         List<SeedConfig> configs = configRepository.findAllByEnabledTrueOrderBySeedOrderAsc();
         int restored = 0;
@@ -134,12 +134,6 @@ public class SeedService {
                     logger.warn("Bo qua [{}]: ten bang khong hop le hoac bi chan.", config.getTableName());
                     continue;
                 }
-                if (config.getChecksum() != null
-                        && config.getChecksum().equals(config.getLastSeededChecksum())
-                        && rowCount(config.getTableName()) > 0) {
-                    logger.info("Bo qua [{}]: khong thay doi va bang da co du lieu.", config.getTableName());
-                    continue;
-                }
 
                 Path file = seedDir.resolve(config.getTableName() + ".json");
                 if (!Files.exists(file)) {
@@ -148,13 +142,26 @@ public class SeedService {
                 }
 
                 String json = readSeedFile(file);
+                long fileVersion = readVersion(json);
+                long seededVersion = config.getLastSeededVersion() == null ? 0 : config.getLastSeededVersion();
+
+                // Chi bo qua khi da nap dung version nay VA bang van con du lieu.
+                if (fileVersion <= seededVersion && rowCount(config.getTableName()) > 0) {
+                    logger.info("Bo qua [{}]: da la version moi nhat (v{}).", config.getTableName(), fileVersion);
+                    continue;
+                }
+
                 List<Map<String, Object>> rows = readJson(json);
                 int n = upsertRows(config.getTableName(), rows);
 
                 config.setLastSeededChecksum(sha256(json));
+                config.setLastSeededVersion(fileVersion);
+                if (config.getVersion() == null || fileVersion > config.getVersion()) {
+                    config.setVersion(fileVersion);
+                }
                 configRepository.save(config);
                 restored++;
-                logger.info("Seek [{}]: da nap/cap nhat {} dong.", config.getTableName(), n);
+                logger.info("Seek [{}]: da nap/cap nhat {} dong (version {}).", config.getTableName(), n, fileVersion);
             } catch (Exception e) {
                 logger.error("Seek [{}] loi, bo qua: {}", config.getTableName(), e.getMessage(), e);
             }
@@ -187,6 +194,7 @@ public class SeedService {
                                     .enabled(true)
                                     .seedOrder(nextOrder())
                                     .checksum(sha256(json))
+                                    .version(readVersion(json))
                                     .build();
                             configRepository.save(config);
                             logger.info("Tu dang ky seek [{}] tu file ({} dong).", table, rowCount);
@@ -326,14 +334,43 @@ public class SeedService {
                 && listTables().contains(tableName);
     }
 
-    private String writeJson(String tableName, List<Map<String, Object>> rows) {
+    private String writeJson(String tableName, List<Map<String, Object>> rows, long version) {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("table", tableName);
+        payload.put("version", version);
         payload.put("rows", rows);
         try {
             return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(payload);
         } catch (IOException e) {
             throw new RuntimeException("Loi ghi JSON cho bang " + tableName, e);
+        }
+    }
+
+    private long readVersion(String json) {
+        try {
+            Map<?, ?> payload = objectMapper.readValue(json, Map.class);
+            Object v = payload.get("version");
+            return v instanceof Number ? ((Number) v).longValue() : 0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private long existingVersionInDb(String tableName) {
+        return configRepository.findByTableName(tableName)
+                .map(c -> c.getVersion() == null ? 0L : c.getVersion())
+                .orElse(0L);
+    }
+
+    private long versionInFile(String tableName) {
+        Path file = seedDir.resolve(tableName + ".json");
+        if (!Files.exists(file)) {
+            return 0;
+        }
+        try {
+            return readVersion(readSeedFile(file));
+        } catch (Exception e) {
+            return 0;
         }
     }
 

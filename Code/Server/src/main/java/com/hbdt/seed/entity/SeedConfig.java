@@ -41,6 +41,13 @@ public class SeedConfig {
     @Column(name = "last_seeded_checksum", length = 64)
     private String lastSeededChecksum;
 
+    // Version tang dan moi lan snapshot. Restore chi nap khi file moi hon.
+    @Column(name = "version")
+    private Long version;
+
+    @Column(name = "last_seeded_version")
+    private Long lastSeededVersion;
+
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 

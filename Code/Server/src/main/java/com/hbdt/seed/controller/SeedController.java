@@ -34,32 +34,23 @@ public class SeedController {
         }
     }
 
-    private void requireUnlocked() {
-        if (!seedCrypto.isUnlocked()) {
-            throw new IllegalStateException("Chưa nhập key để mở khóa seek data");
-        }
-    }
-
+    // Da bo co che key. Giu 2 endpoint duoi de frontend cu khong vo:
+    // key-status luon bao da mo khoa, unlock chi seek lai.
     @GetMapping("/key-status")
     public ResponseEntity<ApiResponse<Map<String, Boolean>>> keyStatus() {
         requireSeedUser();
         Map<String, Boolean> status = Map.of(
-                "initialized", seedCrypto.isKeyInitialized(),
-                "unlocked", seedCrypto.isUnlocked()
+                "initialized", true,
+                "unlocked", true
         );
         return ResponseEntity.ok(ApiResponse.success("Trạng thái key", status));
     }
 
     @PostMapping("/unlock")
-    public ResponseEntity<ApiResponse<Integer>> unlock(@RequestBody Map<String, String> body) {
+    public ResponseEntity<ApiResponse<Integer>> unlock(@RequestBody(required = false) Map<String, String> body) {
         requireSeedUser();
-        String key = body.get("key");
-        if (key == null || key.isBlank()) {
-            throw new IllegalArgumentException("Key không được để trống");
-        }
-        seedCrypto.unlock(key);
         int restored = seedService.restoreAll();
-        return ResponseEntity.ok(ApiResponse.success("Đã mở khóa và seek", restored));
+        return ResponseEntity.ok(ApiResponse.success("Đã seek", restored));
     }
 
     @GetMapping("/tables")
@@ -77,21 +68,18 @@ public class SeedController {
     @PostMapping("/snapshot")
     public ResponseEntity<ApiResponse<SeedConfig>> snapshot(@RequestParam String table) {
         requireSeedUser();
-        requireUnlocked();
         return ResponseEntity.ok(ApiResponse.success("Đã snapshot", seedService.snapshot(table)));
     }
 
     @PostMapping("/snapshot-all")
     public ResponseEntity<ApiResponse<List<SeedConfig>>> snapshotAll() {
         requireSeedUser();
-        requireUnlocked();
         return ResponseEntity.ok(ApiResponse.success("Đã snapshot tất cả", seedService.snapshotAll()));
     }
 
     @PostMapping("/restore")
     public ResponseEntity<ApiResponse<Integer>> restore() {
         requireSeedUser();
-        requireUnlocked();
         return ResponseEntity.ok(ApiResponse.success("Đã seek", seedService.restoreAll()));
     }
 

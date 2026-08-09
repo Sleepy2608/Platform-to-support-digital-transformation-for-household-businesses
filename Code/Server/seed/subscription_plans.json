@@ -1,1 +1,35 @@
-RGWcwg1+qhyevkeq+yHl73X64EEDUhdKF+FRrJAClETgph9+QzXebAV50jXtM5AKba8rvGvH4v4qs9q7B4Nr+zxs/6Y5CN3YybtMKHJjZkawNy8QeeS5B7/b9N43m3l3V5X/1S245sgg1MP9Qsr7OCyP1BVLoq0ni1bhxG2ivcKVnMNhiNpQ+3bnpKvDwmfyKoGXrQ7E74nX4ARaISSGUibCmJxquM40el6R7qKuJ8yGfuROdXjjWHJRTCmibs8w+TfjhLw1ICJVxqwoI4D4Q87TBYmdRnZEYdsY2c7PfhcuAHrrERW5Y8wrza2T6L6/mD8ua1VN3tqNlUWumFTVe2JFA3ujX19OWn9CnH/wa6vrpxxVIYe71aBucy5FX3UFdkJMpTZ9fJLOBBUJsmfKUgNCSXYcOJrnpcnUesQC94b2KGzxCX71p70SlQrtEnJyj6279a1j4+J/4PsmGuAJ0rU+e7af+F5bGg462vwlepIA7Kax8RHBXjNLUR+QN8CdlO+797oJjyJfahI7vhOkcTXsfCRDmGxeyMsnRBvyCZHQPprv30W/0p9XgcIzJYAkzOZ5cVPNXq03Rv3I5ew7TFj4iSuuuJmwaC7F0UJY7VeeoSe1lOCCrsxBlEaL65tA+KoboQVs86X6ePfeV/9tTHsOL7ws85llj3+zZrIYSF4y1ztFvxDX/9sER4LfJGKFyKmt6pHTTA24lyDT0Im3TifYdZXeD9fj9wBJRBIYQ1lfoGy+G6SupyJvlZK2psIQRakAwPNg1FKnOJjeeH/YxEB9egOoRAZviiJlJTvKBRGWU7KyEqDIQz/lGvP9Up3Zyn3l8zLbVnbf9LBq4MkIShkHm7dlYSwzdnalagzRL5sQaa6SgfR9C80d95giMHGnlINptIO9Xo/l7CL0z2oju/wfQm+djvHxR3KY00JOIJSBWVluT3fkQIHj/c/og6dIHRaFqGW1YrNbYDNe4EMOaZi3pav3ITwlYwq2aZ1jTN4uX2Dt6iDbisbX13cBBKKZyF6OvfWQQUhKC2WjKBzkM4sJ1WJbG32ISbakFZrvtOoscjKZmvCpP780uA8XHsxgaq77I67Mb5aMBD6HMGF/oQo0PtVnKUCUzL04vDiOXsZ3gcCqcgCf0furgz4UVXR53HEHdhgEsK/BUVVsx2VFvuQ0IIO0I8M6XGV5D7HfmZLiTYJetbqtcAvXzXP9kkhCORLHsnMNtMi5LI1S2OB8xJn7YEAVZ7XuXZihQUIJZkZ+hBaWDjbwebQRHO5zrLET8qVvCeAfyjQc9MBl+YFoSRqi35k7e/MO9Fd1zCdh0OM1Nf9o8yl1XQ==
+{
+  "table" : "subscription_plans",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "annual_price" : 0.00,
+    "created_at" : "2026-08-09T14:41:19",
+    "description" : "Dùng th? c? b?n",
+    "monthly_price" : 0.00,
+    "plan_code" : "FREE",
+    "plan_name" : "Gói Mi?n Phí",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-09T14:41:19"
+  }, {
+    "id" : 2,
+    "annual_price" : 990000.00,
+    "created_at" : "2026-08-09T14:41:19",
+    "description" : "Cho h? kinh doanh nh?",
+    "monthly_price" : 99000.00,
+    "plan_code" : "BASIC",
+    "plan_name" : "Gói C? B?n",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-09T14:41:19"
+  }, {
+    "id" : 3,
+    "annual_price" : 2990000.00,
+    "created_at" : "2026-08-09T14:41:19",
+    "description" : "??y ?? tính n?ng + AI",
+    "monthly_price" : 299000.00,
+    "plan_code" : "PREMIUM",
+    "plan_name" : "Gói Cao C?p",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-09T14:41:19"
+  } ]
+}
