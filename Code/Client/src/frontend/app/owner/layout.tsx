@@ -51,6 +51,29 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     }
   }, [router]);
 
+  useEffect(() => {
+    const syncOwnerSummary = (event?: Event) => {
+      const detail = event instanceof CustomEvent
+        ? event.detail as { fullName?: string; avatarUrl?: string }
+        : undefined;
+      setFullName(detail?.fullName ?? localStorage.getItem('fullName') ?? 'Chủ hộ kinh doanh');
+      setAvatarUrl(detail?.avatarUrl ?? localStorage.getItem('avatarUrl') ?? '');
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'fullName' || event.key === 'avatarUrl') {
+        syncOwnerSummary();
+      }
+    };
+
+    window.addEventListener('owner-profile-updated', syncOwnerSummary);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener('owner-profile-updated', syncOwnerSummary);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
+
   // Keep track of current URL hash to highlight active nav item
   useEffect(() => {
     const syncHash = () => {

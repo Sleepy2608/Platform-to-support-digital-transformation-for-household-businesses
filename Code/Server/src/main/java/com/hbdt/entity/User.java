@@ -80,8 +80,17 @@ public class User implements UserDetails {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
-    @Transient
-    private String avatarUrl;
+    @Column(name = "avatar_object_key", length = 500)
+    private String avatarObjectKey;
+
+    @Column(name = "avatar_sha256", length = 64)
+    private String avatarSha256;
+
+    @Column(name = "avatar_content_type", length = 50)
+    private String avatarContentType;
+
+    @Column(name = "avatar_size", columnDefinition = "BIGINT UNSIGNED")
+    private Long avatarSize;
 
     @Transient
     private LocalDateTime subscriptionExpiresAt;

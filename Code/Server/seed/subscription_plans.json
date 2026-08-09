@@ -1,35 +1,45 @@
 {
   "table" : "subscription_plans",
-  "version" : 1,
+  "version" : 4,
   "rows" : [ {
     "id" : 1,
     "annual_price" : 0.00,
     "created_at" : "2026-08-09T14:41:19",
-    "description" : "Dùng th? c? b?n",
+    "description" : "Dùng thử cơ bản",
     "monthly_price" : 0.00,
     "plan_code" : "FREE",
-    "plan_name" : "Gói Mi?n Phí",
+    "plan_name" : "Gói Miễn Phí",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-09T14:41:19"
   }, {
     "id" : 2,
     "annual_price" : 990000.00,
     "created_at" : "2026-08-09T14:41:19",
-    "description" : "Cho h? kinh doanh nh?",
+    "description" : "Cho hộ kinh doanh nhỏ",
     "monthly_price" : 99000.00,
     "plan_code" : "BASIC",
-    "plan_name" : "Gói C? B?n",
+    "plan_name" : "Gói Cơ Bản",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-09T14:41:19"
   }, {
     "id" : 3,
     "annual_price" : 2990000.00,
     "created_at" : "2026-08-09T14:41:19",
-    "description" : "??y ?? tính n?ng + AI",
+    "description" : "Đầy đủ tính năng + AI",
     "monthly_price" : 299000.00,
     "plan_code" : "PREMIUM",
-    "plan_name" : "Gói Cao C?p",
+    "plan_name" : "Gói Cao Cấp",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-09T14:41:19"
+  }, {
+    "id" : 4,
+    "annual_price" : 1990000.00,
+    "created_at" : "2026-08-09T17:44:16.270805",
+    "description" : "Quản lý kho, công nợ và sổ kế toán",
+    "monthly_price" : 199000.00,
+    "plan_code" : "STANDARD",
+    "plan_name" : "Gói Standard",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-09T17:44:16.270805"
   } ]
 }

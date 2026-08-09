@@ -2,6 +2,7 @@ package com.hbdt.owner.service;
 
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
+import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.common.service.OtpService;
 import com.hbdt.entity.Subscription;
 import com.hbdt.entity.SubscriptionPlan;
@@ -14,7 +15,6 @@ import com.hbdt.repository.SubscriptionRepository;
 import com.hbdt.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,16 +22,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,23 +43,20 @@ public class OwnerService {
     private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
-
-    @Value("${app.upload.dir:./uploads}")
-    private String uploadDir;
-
-    @Value("${server.port:8080}")
-    private String serverPort;
+    private final ImageStorageService imageStorageService;
 
     public OwnerService(UserRepository userRepository,
                         SubscriptionRepository subscriptionRepository,
                         SubscriptionPlanRepository subscriptionPlanRepository,
                         PasswordEncoder passwordEncoder,
-                        OtpService otpService) {
+                        OtpService otpService,
+                        ImageStorageService imageStorageService) {
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.subscriptionPlanRepository = subscriptionPlanRepository;
         this.passwordEncoder = passwordEncoder;
         this.otpService = otpService;
+        this.imageStorageService = imageStorageService;
     }
 
     // =========================================================
@@ -99,29 +91,17 @@ public class OwnerService {
             throw new BadRequestException("Chỉ chấp nhận ảnh JPG, PNG, WEBP, GIF");
         }
 
-        // Determine extension
-        String originalFilename = file.getOriginalFilename();
-        String ext = ".jpg";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            ext = originalFilename.substring(originalFilename.lastIndexOf('.'));
-        }
-
-        // Save file
-        String fileName = UUID.randomUUID() + ext;
-        Path avatarDir = Paths.get(uploadDir, "avatars");
-        Files.createDirectories(avatarDir);
-        Path targetPath = avatarDir.resolve(fileName);
-        Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-
-        // Build accessible URL
-        String avatarUrl = "http://localhost:" + serverPort + "/uploads/avatars/" + fileName;
-
         User user = findActiveUser(username);
-        user.setAvatarUrl(avatarUrl);
+        ImageStorageService.StoredImage storedImage = imageStorageService.store(
+                file, "avatars/" + user.getId(), MAX_AVATAR_SIZE, ALLOWED_MIME);
+        user.setAvatarObjectKey(storedImage.objectKey());
+        user.setAvatarSha256(storedImage.sha256());
+        user.setAvatarContentType(storedImage.contentType());
+        user.setAvatarSize(storedImage.size());
         userRepository.save(user);
 
-        logger.info("Avatar uploaded for user={}: {}", username, avatarUrl);
-        return avatarUrl;
+        logger.info("Avatar uploaded for user={}, sha256={}", username, storedImage.sha256());
+        return imageStorageService.toPublicUrl(storedImage.objectKey());
     }
 
     // =========================================================
@@ -395,7 +375,7 @@ public class OwnerService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phone(user.getPhone())
-                .avatarUrl(user.getAvatarUrl())
+                .avatarUrl(imageStorageService.toPublicUrl(user.getAvatarObjectKey()))
                 .status(user.getStatus())
                 .businessId(user.getBusinessId())
                 .subscriptionExpiresAt(subscriptionExpiresAt)

@@ -1,5 +1,6 @@
 package com.hbdt.config;
 
+import com.hbdt.common.security.AuditLoggingFilter;
 import com.hbdt.common.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,11 +25,14 @@ public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AuditLoggingFilter auditLoggingFilter;
 
     public SecurityConfig(UserDetailsService userDetailsService,
-                          JwtAuthenticationFilter jwtAuthenticationFilter) {
+                          JwtAuthenticationFilter jwtAuthenticationFilter,
+                          AuditLoggingFilter auditLoggingFilter) {
         this.userDetailsService = userDetailsService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.auditLoggingFilter = auditLoggingFilter;
     }
 
     @Bean
@@ -86,6 +90,7 @@ public class SecurityConfig {
 
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(auditLoggingFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
