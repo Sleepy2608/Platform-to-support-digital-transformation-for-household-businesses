@@ -135,8 +135,9 @@ public class SeedService {
                     continue;
                 }
                 if (config.getChecksum() != null
-                        && config.getChecksum().equals(config.getLastSeededChecksum())) {
-                    logger.info("Bo qua [{}]: khong thay doi ke tu lan seek truoc.", config.getTableName());
+                        && config.getChecksum().equals(config.getLastSeededChecksum())
+                        && rowCount(config.getTableName()) > 0) {
+                    logger.info("Bo qua [{}]: khong thay doi va bang da co du lieu.", config.getTableName());
                     continue;
                 }
 
@@ -238,6 +239,15 @@ public class SeedService {
             count += jdbcTemplate.update(sql, values);
         }
         return count;
+    }
+
+    private int rowCount(String tableName) {
+        try {
+            Integer count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM " + quote(tableName), Integer.class);
+            return count == null ? 0 : count;
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private Set<String> actualColumns(String tableName) {
