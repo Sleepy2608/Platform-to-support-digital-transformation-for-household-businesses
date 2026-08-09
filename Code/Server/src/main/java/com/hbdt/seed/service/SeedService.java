@@ -163,7 +163,7 @@ public class SeedService {
                 restored++;
                 logger.info("Seek [{}]: da nap/cap nhat {} dong (version {}).", config.getTableName(), n, fileVersion);
             } catch (Exception e) {
-                logger.error("Seek [{}] loi, bo qua: {}", config.getTableName(), e.getMessage(), e);
+                logger.warn("Bo qua seek [{}] (file loi hoac cu): {}", config.getTableName(), e.getMessage());
             }
         }
         return restored;
@@ -199,7 +199,8 @@ public class SeedService {
                             configRepository.save(config);
                             logger.info("Tu dang ky seek [{}] tu file ({} dong).", table, rowCount);
                         } catch (Exception e) {
-                            logger.error("Khong dang ky duoc file {}: {}", p, e.getMessage());
+                            logger.warn("Bo qua file {} (khong doc duoc, co the la file seek cu): {}",
+                                    p.getFileName(), e.getMessage());
                         }
                     });
         } catch (Exception e) {

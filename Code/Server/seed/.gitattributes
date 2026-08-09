@@ -1,2 +1,3 @@
-*.json merge=union
+# File seek la JSON co version. KHONG dung merge=union (se noi 2 file lam hong JSON).
+# De git xu ly nhu file thuong: khi pull se ghi de bang ban moi, khong gop bay.
 *.json -diff
