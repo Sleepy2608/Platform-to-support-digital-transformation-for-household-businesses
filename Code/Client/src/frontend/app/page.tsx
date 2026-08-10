@@ -2,6 +2,7 @@
 
 import Navbar from './components/Navbar';
 import ScrollReveal from './components/ScrollReveal';
+import PricingPlans from './components/PricingPlans';
 import { CheckCircle, Bot, Receipt, Package, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 
 export default function Home() {
@@ -100,7 +101,9 @@ export default function Home() {
             <p className="text-center text-zinc-300 text-sm sm:text-base mb-12 sm:mb-16">Chọn gói tính năng phù hợp nhất với cửa hàng của bạn</p>
           </ScrollReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
+          <PricingPlans />
+
+          <div className="hidden">
             {/* Gói BASIC */}
             <ScrollReveal delay={0.1}>
               <div className="border border-zinc-700 bg-zinc-900/90 backdrop-blur-md rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 hover:border-zinc-500 hover:-translate-y-2 hover:shadow-xl h-full">
