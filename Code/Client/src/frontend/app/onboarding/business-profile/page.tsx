@@ -339,14 +339,14 @@ export default function BusinessProfilePage() {
   // ── Input class helpers ─────────────────────────────────────────────────────
 
   const inputCls = (hasError: boolean) =>
-    `w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium text-gray-900 placeholder:text-slate-400 bg-white transition-all outline-none
+    `w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium text-gray-900 placeholder:text-slate-400 bg-white transition-all outline-none cursor-text select-text
     ${hasError
       ? 'border-red-400 bg-red-50/50 focus:ring-2 focus:ring-red-200 focus:border-red-500 text-gray-900'
       : 'border-slate-200 bg-white focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 text-gray-900'
     }`;
 
   const selectCls = (hasError: boolean) =>
-    `${inputCls(hasError)} appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 bg-white`;
+    `${inputCls(hasError)} appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 bg-white select-none`;
 
   // ── Render ──────────────────────────────────────────────────────────────────
 

@@ -49,7 +49,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-slate-100/70 text-slate-900 font-sans antialiased">
+    <div className="min-h-screen bg-slate-100/70 text-slate-900 font-sans antialiased select-none" style={{ cursor: 'default' }}>
       {/* ── Header ── */}
       <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200/60 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
@@ -58,13 +58,13 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
               <Store className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-slate-800 text-sm hidden sm:block">HBDT Platform</span>
+            <span className="font-bold text-slate-800 text-sm hidden sm:block select-none" style={{ userSelect: 'none' }}>HBDT Platform</span>
           </Link>
 
           {/* User greeting */}
           {username && (
-            <span className="text-xs text-slate-500 hidden sm:block">
-              Xin chào, <span className="font-semibold text-slate-700">{username}</span>
+            <span className="text-xs text-slate-500 hidden sm:block select-none" style={{ userSelect: 'none' }}>
+              Xin chào, <span className="font-semibold text-slate-700 select-none" style={{ userSelect: 'none' }}>{username}</span>
             </span>
           )}
         </div>
@@ -103,9 +103,10 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
                       }
                     </motion.div>
                     <span
-                      className={`text-xs font-medium whitespace-nowrap transition-colors ${
+                      className={`text-xs font-medium whitespace-nowrap transition-colors select-none ${
                         isActive ? 'text-emerald-600' : isDone ? 'text-emerald-500' : 'text-slate-400'
                       }`}
+                      style={{ userSelect: 'none', cursor: 'default' }}
                     >
                       {step.label}
                     </span>
@@ -128,7 +129,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
       </header>
 
       {/* ── Main Content ── */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12" style={{ cursor: 'default' }}>
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}

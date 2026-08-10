@@ -86,7 +86,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white relative flex items-center justify-center p-4 overflow-hidden">
+    <main className="min-h-screen bg-zinc-950 text-white relative flex items-center justify-center p-4 overflow-hidden select-none" style={{ cursor: 'default' }}>
       {/* Background */}
       <div
         className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-30 pointer-events-none scale-105"
@@ -104,8 +104,8 @@ export default function AdminLoginPage() {
               <div className="inline-flex p-3 bg-white/10 rounded-2xl border border-zinc-600 mb-4 shadow-inner">
                 <ShieldCheck className="w-8 h-8 text-white" />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">Đăng Nhập Quản Trị</h1>
-              <p className="text-zinc-400 text-sm mt-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white select-none" style={{ userSelect: 'none' }}>Đăng Nhập Quản Trị</h1>
+              <p className="text-zinc-400 text-sm mt-2 select-none" style={{ userSelect: 'none' }}>
                 Khu vực dành riêng cho quản trị viên hệ thống
               </p>
             </div>
@@ -120,7 +120,7 @@ export default function AdminLoginPage() {
             <form onSubmit={handleLogin} className="space-y-5">
               {/* Username */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-2 select-none" style={{ userSelect: 'none', cursor: 'default' }}>
                   Tên đăng nhập
                 </label>
                 <div className="relative">
@@ -131,7 +131,7 @@ export default function AdminLoginPage() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Nhập tên đăng nhập"
-                    className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                    className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all cursor-text select-text"
                     required
                   />
                 </div>
@@ -139,7 +139,7 @@ export default function AdminLoginPage() {
 
               {/* Password */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-2 select-none" style={{ userSelect: 'none', cursor: 'default' }}>
                   Mật khẩu
                 </label>
                 <div className="relative">
@@ -150,7 +150,7 @@ export default function AdminLoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 pl-11 pr-11 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
+                    className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 pl-11 pr-11 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all cursor-text select-text"
                     required
                   />
                   <button

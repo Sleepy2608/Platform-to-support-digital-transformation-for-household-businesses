@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle, ShieldCheck, Zap, Crown, Loader2, AlertCircle,
-  ArrowLeft, ArrowRight, ToggleLeft, ToggleRight, BadgeCheck,
+  ArrowLeft, ArrowRight, BadgeCheck,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -32,7 +32,7 @@ const FALLBACK_PACKAGES: PackageInfo[] = [
     yearlyPrice: 1990000,
     recommended: false,
     features: [
-      'Tất cả tính năng gói Basic',
+      'Quản lý bán hàng & hóa đơn cơ bản',
       'Quản lý tồn kho & công nợ',
       'Lập sổ kế toán TT 88/2021',
       'Tối đa 3 tài khoản nhân viên',
@@ -146,42 +146,90 @@ export default function PackageSelectionPage() {
         transition={{ duration: 0.35 }}
         className="text-center mb-8"
       >
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2 select-none" style={{ cursor: 'default', userSelect: 'none' }}>
           Chọn gói dịch vụ
         </h1>
-        <p className="text-slate-500 text-sm sm:text-base max-w-lg mx-auto">
+        <p className="text-slate-600 text-sm sm:text-base max-w-lg mx-auto font-medium select-none" style={{ cursor: 'default', userSelect: 'none' }}>
           Bắt đầu sử dụng nền tảng HKD Digital. Hủy hoặc nâng cấp bất kỳ lúc nào.
         </p>
       </motion.div>
 
-      {/* ── Billing Cycle Toggle ── */}
+      {/* ── Billing Cycle Selector ── */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.1 }}
-        className="flex items-center justify-center gap-4 mb-8"
+        className="flex items-center justify-center gap-3 mb-8"
       >
-        <span className={`text-sm font-bold transition-colors ${cycle === 'MONTHLY' ? 'text-slate-900' : 'text-slate-400'}`}>
-          Theo tháng
-        </span>
+        {/* Ô tích: Theo tháng */}
         <button
-          onClick={() => setCycle(c => c === 'MONTHLY' ? 'YEARLY' : 'MONTHLY')}
-          className="relative cursor-pointer"
-          aria-label="Toggle billing cycle"
+          type="button"
+          onClick={() => setCycle('MONTHLY')}
+          className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl border-2 font-semibold text-sm transition-all duration-200 cursor-pointer select-none
+            ${cycle === 'MONTHLY'
+              ? 'bg-slate-900 border-slate-900 text-white shadow-md scale-[1.03]'
+              : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50'
+            }`}
+          style={{ userSelect: 'none' }}
+          aria-pressed={cycle === 'MONTHLY'}
         >
-          {cycle === 'YEARLY'
-            ? <ToggleRight className="w-12 h-7 text-slate-900" />
-            : <ToggleLeft className="w-12 h-7 text-slate-400" />
-          }
+          {/* Radio dot */}
+          <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all
+            ${cycle === 'MONTHLY' ? 'border-white' : 'border-slate-400'}`}>
+            {cycle === 'MONTHLY' && (
+              <span className="w-2 h-2 rounded-full bg-white" />
+            )}
+          </span>
+          Theo tháng
         </button>
-        <span className={`text-sm font-bold transition-colors flex items-center gap-2 ${cycle === 'YEARLY' ? 'text-slate-900' : 'text-slate-400'}`}>
+
+        {/* Ô tích: Theo năm */}
+        <button
+          type="button"
+          onClick={() => setCycle('YEARLY')}
+          className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl border-2 font-semibold text-sm transition-all duration-200 cursor-pointer select-none
+            ${cycle === 'YEARLY'
+              ? 'text-white shadow-md scale-[1.03]'
+              : 'bg-white text-slate-600'
+            }`}
+          style={{
+            userSelect: 'none',
+            backgroundColor: cycle === 'YEARLY' ? '#B3945B' : undefined,
+            borderColor: cycle === 'YEARLY' ? '#B3945B' : '#e2e8f0',
+          }}
+          onMouseEnter={e => {
+            if (cycle !== 'YEARLY') {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = '#B3945B';
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#fdf6ee';
+            }
+          }}
+          onMouseLeave={e => {
+            if (cycle !== 'YEARLY') {
+              (e.currentTarget as HTMLButtonElement).style.borderColor = '#e2e8f0';
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '';
+            }
+          }}
+          aria-pressed={cycle === 'YEARLY'}
+        >
+          {/* Radio dot */}
+          <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all
+            ${cycle === 'YEARLY' ? 'border-white' : 'border-slate-400'}`}>
+            {cycle === 'YEARLY' && (
+              <span className="w-2 h-2 rounded-full bg-white" />
+            )}
+          </span>
           Theo năm
           {cycle === 'YEARLY' && (
-            <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-emerald-200">
+            <span className="bg-white/25 text-white text-[10px] font-black px-2 py-0.5 rounded-full border border-white/40 select-none" style={{ userSelect: 'none' }}>
               Tặng {savingMonths} tháng
             </span>
           )}
-        </span>
+          {cycle !== 'YEARLY' && (
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-full border select-none" style={{ userSelect: 'none', backgroundColor: '#fef3e2', color: '#B3945B', borderColor: '#e8d5b0' }}>
+              Tiết kiệm hơn
+            </span>
+          )}
+        </button>
       </motion.div>
 
       {/* ── Error Banner ── */}
@@ -248,8 +296,8 @@ export default function PackageSelectionPage() {
                     <PkgIcon className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className={`text-lg font-bold ${isVip ? 'text-white' : 'text-slate-900'}`}>{pkg.name}</h3>
-                    <p className={`text-xs mt-0.5 ${isVip ? 'text-zinc-400' : 'text-slate-500'}`}>{pkg.description}</p>
+                    <h3 className={`text-lg font-bold select-none ${isVip ? 'text-white' : 'text-slate-900'}`} style={{ userSelect: 'none', cursor: 'default' }}>{pkg.name}</h3>
+                    <p className={`text-xs mt-0.5 select-none ${isVip ? 'text-zinc-300' : 'text-slate-600'}`} style={{ userSelect: 'none' }}>{pkg.description}</p>
                   </div>
                 </div>
 
@@ -412,12 +460,12 @@ export default function PackageSelectionPage() {
 
       {/* Helper text when nothing selected */}
       {!selected && (
-        <p className="text-center text-xs text-slate-400 font-medium mt-4">
-          Vui lòng chọn một gói ở trên để tiếp tục.
+        <p className="text-center text-xs text-slate-600 font-semibold mt-4 select-none" style={{ userSelect: 'none' }}>
+          Vui lòng chọn một gói để tiếp tục.
         </p>
       )}
       {selected && !agreed && (
-        <p className="text-center text-xs text-amber-600 font-medium mt-4">
+        <p className="text-center text-xs text-amber-700 font-semibold mt-4 select-none" style={{ userSelect: 'none' }}>
           Vui lòng đồng ý với điều khoản dịch vụ để tiếp tục.
         </p>
       )}
@@ -427,7 +475,8 @@ export default function PackageSelectionPage() {
         <button
           type="button"
           onClick={() => router.push('/owner/account')}
-          className="text-sm text-slate-400 hover:text-slate-700 font-medium transition-colors cursor-pointer"
+          className="text-sm text-slate-500 hover:text-slate-800 font-semibold transition-colors cursor-pointer select-none"
+          style={{ userSelect: 'none' }}
         >
           Bỏ qua, chọn sau
         </button>
