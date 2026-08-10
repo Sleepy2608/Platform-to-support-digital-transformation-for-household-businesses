@@ -1,0 +1,45 @@
+{
+  "table" : "test_huy3",
+  "version" : 4,
+  "rows" : [ {
+    "id" : 1,
+    "ghi_chu" : "aaa",
+    "ten" : "A"
+  }, {
+    "id" : 2,
+    "ghi_chu" : "bbb",
+    "ten" : "B"
+  }, {
+    "id" : 3,
+    "ghi_chu" : "ccc",
+    "ten" : "C"
+  }, {
+    "id" : 4,
+    "ghi_chu" : "ddd",
+    "ten" : "D"
+  }, {
+    "id" : 5,
+    "ghi_chu" : "eee",
+    "ten" : "E"
+  }, {
+    "id" : 6,
+    "ghi_chu" : "fff",
+    "ten" : "F"
+  }, {
+    "id" : 7,
+    "ghi_chu" : "ggg",
+    "ten" : "G"
+  }, {
+    "id" : 8,
+    "ghi_chu" : "hhh",
+    "ten" : "H"
+  }, {
+    "id" : 9,
+    "ghi_chu" : "iii",
+    "ten" : "I"
+  }, {
+    "id" : 10,
+    "ghi_chu" : "jjj",
+    "ten" : "J"
+  } ]
+}

@@ -125,8 +125,8 @@ async function request<T = unknown>(
   // First attempt
   let response = await doFetch(skipAuth ? null : getAccessToken());
 
-  // Handle 401 — try to refresh token once
-  if (response.status === 401 && !skipAuth) {
+  // Handle 401/403 — token het han (Spring Security tra 403), thu refresh 1 lan
+  if ((response.status === 401 || response.status === 403) && !skipAuth && getRefreshToken()) {
     if (isRefreshing) {
       // Queue this request until refresh is done
       const newToken = await new Promise<string>((resolve, reject) => {
@@ -184,6 +184,9 @@ export const apiClient = {
 
   put: <T = unknown>(path: string, body?: unknown, opts?: RequestOptions) =>
     request<T>(path, { ...opts, method: 'PUT', body }),
+
+  patch: <T = unknown>(path: string, body?: unknown, opts?: RequestOptions) =>
+    request<T>(path, { ...opts, method: 'PATCH', body }),
 
   delete: <T = unknown>(path: string, body?: unknown, opts?: RequestOptions) =>
     request<T>(path, { ...opts, method: 'DELETE', body }),

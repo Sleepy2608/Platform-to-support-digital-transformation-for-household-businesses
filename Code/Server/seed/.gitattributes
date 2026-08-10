@@ -1,0 +1,5 @@
+# File seek JSON: khi merge dung driver "seedmerge" de gop 2 ban theo id
+# (giu tat ca dong, trung id lay version cao hon). Khong dung union (hong JSON),
+# khong ghi de (mat data). Xem cach cai driver o cuoi file nay.
+*.json merge=seedmerge
+*.json -diff

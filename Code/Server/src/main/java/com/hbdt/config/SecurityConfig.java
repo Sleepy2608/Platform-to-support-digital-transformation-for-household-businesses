@@ -76,6 +76,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/reference/**").permitAll()
                     // Admin routes
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                    // Seed data management (chỉ admin)
+                    .requestMatchers("/api/seed/**").hasRole("ADMIN")
                     // Owner routes (cho phép cả BUSINESS_OWNER và OWNER)
                     .requestMatchers("/api/owner/**").hasAnyRole("BUSINESS_OWNER", "OWNER")
                     // Employee routes
