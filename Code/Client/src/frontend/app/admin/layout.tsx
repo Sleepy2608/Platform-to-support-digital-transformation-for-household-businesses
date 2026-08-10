@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
+
 export default function AdminLayout({
   children,
 }: {
@@ -25,8 +27,8 @@ export default function AdminLayout({
       return;
     }
 
-    const token = localStorage.getItem('accessToken');
-    const rolesStr = localStorage.getItem('roles');
+    const token = getAccessToken();
+    const rolesStr = getAuthItem('roles');
 
     if (!token || !rolesStr) {
       router.push('/admin/login');
@@ -40,8 +42,8 @@ export default function AdminLayout({
         return;
       }
 
-      setFullName(localStorage.getItem('fullName') || 'Administrator');
-      setUsername(localStorage.getItem('username') || 'admin');
+      setFullName(getAuthItem('fullName') || 'Administrator');
+      setUsername(getAuthItem('username') || 'admin');
       setLoading(false);
     } catch (e) {
       router.push('/admin/login');
@@ -49,7 +51,9 @@ export default function AdminLayout({
   }, [router, pathname]);
 
   const handleLogout = () => {
-    localStorage.clear();
+    sessionStorage.clear();
+    document.cookie = 'auth_token=; max-age=0; path=/';
+    document.cookie = 'auth_role=; max-age=0; path=/';
     router.push('/login');
   };
 

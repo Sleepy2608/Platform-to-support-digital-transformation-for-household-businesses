@@ -11,7 +11,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const fetchAdmins = async () => {
-      const token = localStorage.getItem('accessToken');
+      const token = sessionStorage.getItem('accessToken');
       try {
         const response = await fetch('http://localhost:8080/api/admin/accounts', {
           headers: {

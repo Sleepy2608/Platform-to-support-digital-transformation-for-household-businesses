@@ -61,7 +61,7 @@ function formatVnd(amount: number): string {
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('accessToken');
+  return sessionStorage.getItem('accessToken');
 }
 
 async function fetchPackages(): Promise<PackageInfo[]> {

@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { ShieldCheck, LogIn, Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import ScrollReveal from '../../components/ScrollReveal';
 
+import { saveAuthData } from '../../lib/apiClient';
+
 export default function AdminLoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState('');
@@ -56,15 +58,17 @@ export default function AdminLoginPage() {
           return;
         }
 
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('userId', String(userId));
-        localStorage.setItem('username', resUser);
-        localStorage.setItem('fullName', fullName || '');
-        localStorage.setItem('email', email || '');
-        localStorage.setItem('roles', JSON.stringify(roles || []));
-        localStorage.setItem('businessId', String(businessId ?? ''));
-        localStorage.setItem('avatarUrl', avatarUrl || '');
+        saveAuthData({
+          accessToken,
+          refreshToken,
+          userId,
+          username: resUser,
+          fullName,
+          email,
+          roles,
+          businessId,
+          avatarUrl,
+        });
 
         const maxAge = 60 * 60 * 24; // 1 day
         document.cookie = `auth_token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;

@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Store, CheckCircle2, Circle, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { getAccessToken, getAuthItem } from '../lib/apiClient';
 
 const STEPS = [
   { id: 1, label: 'Tạo tài khoản', path: '/register' },
@@ -19,9 +20,9 @@ function getActiveStep(pathname: string): number {
 }
 
 export default function OnboardingLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
-  const [activeStep, setActiveStep] = useState(2);
+  const router = useRouter();
+  const [activeStep, setActiveStep] = useState(1);
   const [username, setUsername] = useState('');
 
   useEffect(() => {
@@ -29,8 +30,8 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
   }, [pathname]);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    const rolesRaw = localStorage.getItem('roles');
+    const token = getAccessToken();
+    const rolesRaw = getAuthItem('roles');
     if (!token || !rolesRaw) {
       router.push('/login');
       return;
@@ -41,7 +42,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
         router.push('/login');
         return;
       }
-      setUsername(localStorage.getItem('fullName') || localStorage.getItem('username') || '');
+      setUsername(getAuthItem('fullName') || getAuthItem('username') || '');
     } catch {
       router.push('/login');
     }

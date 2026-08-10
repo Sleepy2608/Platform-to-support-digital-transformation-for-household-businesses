@@ -69,15 +69,15 @@ function VerifyEmailContent() {
       
       if (json.data && json.data.accessToken) {
         const { accessToken, refreshToken, userId, username: uName, fullName, email, roles, businessId, avatarUrl } = json.data;
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('userId', String(userId));
-        localStorage.setItem('username', uName || username);
-        localStorage.setItem('fullName', fullName || '');
-        localStorage.setItem('email', email || '');
-        localStorage.setItem('roles', JSON.stringify(roles || ['BUSINESS_OWNER']));
-        localStorage.setItem('businessId', String(businessId ?? ''));
-        localStorage.setItem('avatarUrl', avatarUrl || '');
+        sessionStorage.setItem('accessToken', accessToken);
+        sessionStorage.setItem('refreshToken', refreshToken);
+        sessionStorage.setItem('userId', String(userId));
+        sessionStorage.setItem('username', uName || username);
+        sessionStorage.setItem('fullName', fullName || '');
+        sessionStorage.setItem('email', email || '');
+        sessionStorage.setItem('roles', JSON.stringify(roles || ['BUSINESS_OWNER']));
+        sessionStorage.setItem('businessId', String(businessId ?? ''));
+        sessionStorage.setItem('avatarUrl', avatarUrl || '');
 
         const maxAge = 60 * 60 * 24;
         document.cookie = `auth_token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;

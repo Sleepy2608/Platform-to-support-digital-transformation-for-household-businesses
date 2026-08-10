@@ -12,31 +12,60 @@ const BASE_URL = 'http://localhost:8080';
 
 // ─── Token helpers ────────────────────────────────────────────────────────────
 
+/**
+ * Tự động khôi phục sessionStorage cho tab mới từ localStorage (nếu có).
+ * Giúp người dùng mở tab mới hay gõ URL trực tiếp không bị mất phiên làm việc.
+ */
+export function initTabSessionIfNeeded() {
+  if (typeof window === 'undefined') return;
+  if (!sessionStorage.getItem('accessToken') && localStorage.getItem('accessToken')) {
+    const keys = [
+      'accessToken', 'refreshToken', 'userId', 'username',
+      'fullName', 'email', 'roles', 'businessId', 'avatarUrl',
+    ];
+    keys.forEach((k) => {
+      const val = localStorage.getItem(k);
+      if (val !== null) sessionStorage.setItem(k, val);
+    });
+  }
+}
+
 export function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('accessToken');
+  initTabSessionIfNeeded();
+  return sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken');
 }
 
 export function getRefreshToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('refreshToken');
+  initTabSessionIfNeeded();
+  return sessionStorage.getItem('refreshToken') || localStorage.getItem('refreshToken');
+}
+
+export function getAuthItem(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  initTabSessionIfNeeded();
+  return sessionStorage.getItem(key) || localStorage.getItem(key);
 }
 
 export function saveTokens(accessToken: string, refreshToken: string) {
+  if (typeof window === 'undefined') return;
+  sessionStorage.setItem('accessToken', accessToken);
+  sessionStorage.setItem('refreshToken', refreshToken);
   localStorage.setItem('accessToken', accessToken);
   localStorage.setItem('refreshToken', refreshToken);
 }
 
 export function clearAuth() {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('userId');
-  localStorage.removeItem('username');
-  localStorage.removeItem('fullName');
-  localStorage.removeItem('roles');
-  localStorage.removeItem('email');
-  localStorage.removeItem('avatarUrl');
-  localStorage.removeItem('businessId');
+  if (typeof window === 'undefined') return;
+  const keys = [
+    'accessToken', 'refreshToken', 'userId', 'username',
+    'fullName', 'email', 'roles', 'avatarUrl', 'businessId',
+  ];
+  keys.forEach((k) => {
+    sessionStorage.removeItem(k);
+    localStorage.removeItem(k);
+  });
 }
 
 export function saveAuthData(data: {
@@ -50,15 +79,22 @@ export function saveAuthData(data: {
   businessId?: number | null;
   avatarUrl?: string | null;
 }) {
-  localStorage.setItem('accessToken', data.accessToken);
-  localStorage.setItem('refreshToken', data.refreshToken);
-  localStorage.setItem('userId', String(data.userId));
-  localStorage.setItem('username', data.username);
-  localStorage.setItem('fullName', data.fullName || '');
-  localStorage.setItem('email', data.email || '');
-  localStorage.setItem('roles', JSON.stringify(data.roles || []));
-  localStorage.setItem('businessId', String(data.businessId ?? ''));
-  localStorage.setItem('avatarUrl', data.avatarUrl || '');
+  if (typeof window === 'undefined') return;
+  const items: Record<string, string> = {
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken,
+    userId: String(data.userId),
+    username: data.username,
+    fullName: data.fullName || '',
+    email: data.email || '',
+    roles: JSON.stringify(data.roles || []),
+    businessId: String(data.businessId ?? ''),
+    avatarUrl: data.avatarUrl || '',
+  };
+  Object.entries(items).forEach(([k, v]) => {
+    sessionStorage.setItem(k, v);
+    localStorage.setItem(k, v);
+  });
 }
 
 // ─── Token refresh ────────────────────────────────────────────────────────────

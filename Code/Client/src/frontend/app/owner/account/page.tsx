@@ -39,11 +39,12 @@ type Tab = 'profile' | 'business-profile' | 'password' | 'contact' | 'subscripti
 type OtpTarget = 'email' | 'phone' | null;
 
 function syncOwnerSummary(data: { fullName?: string; avatarUrl?: string | null }) {
+  if (typeof window === 'undefined') return;
   if (data.fullName !== undefined) {
-    localStorage.setItem('fullName', data.fullName);
+    sessionStorage.setItem('fullName', data.fullName);
   }
   if (data.avatarUrl !== undefined) {
-    localStorage.setItem('avatarUrl', data.avatarUrl || '');
+    sessionStorage.setItem('avatarUrl', data.avatarUrl || '');
   }
   window.dispatchEvent(new CustomEvent('owner-profile-updated', {
     detail: {

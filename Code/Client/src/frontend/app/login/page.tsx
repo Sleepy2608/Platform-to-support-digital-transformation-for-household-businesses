@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Store, ArrowLeft, LogIn, Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal';
+import { saveAuthData, clearAuth } from '../lib/apiClient';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -50,16 +51,18 @@ export default function LoginPage() {
           avatarUrl,
         } = resData.data;
 
-        // Persist to localStorage
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('userId', String(userId));
-        localStorage.setItem('username', resUser);
-        localStorage.setItem('fullName', fullName || '');
-        localStorage.setItem('email', email || '');
-        localStorage.setItem('roles', JSON.stringify(roles || []));
-        localStorage.setItem('businessId', String(businessId ?? ''));
-        localStorage.setItem('avatarUrl', avatarUrl || '');
+        // Persist to hybrid storage (sessionStorage for current tab, localStorage for new tabs)
+        saveAuthData({
+          accessToken,
+          refreshToken,
+          userId,
+          username: resUser,
+          fullName,
+          email,
+          roles,
+          businessId,
+          avatarUrl,
+        });
 
         // Set lightweight cookies for Edge middleware
         const maxAge = 60 * 60 * 24; // 1 day
@@ -67,7 +70,7 @@ export default function LoginPage() {
         // Admin phai dang nhap o cua rieng /admin/login
         if (Array.isArray(roles) && roles.includes('ADMIN')) {
           setError('Tài khoản quản trị vui lòng đăng nhập tại trang quản trị');
-          localStorage.clear();
+          clearAuth();
           document.cookie = 'auth_token=; max-age=0; path=/';
           document.cookie = 'auth_role=; max-age=0; path=/';
           setLoading(false);
@@ -88,7 +91,7 @@ export default function LoginPage() {
           }
         } else {
           setError('Tài khoản không có quyền truy cập hệ thống');
-          localStorage.clear();
+          clearAuth();
           document.cookie = 'auth_token=; max-age=0; path=/';
           document.cookie = 'auth_role=; max-age=0; path=/';
         }
