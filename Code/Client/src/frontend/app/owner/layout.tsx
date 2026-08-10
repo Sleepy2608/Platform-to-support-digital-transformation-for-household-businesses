@@ -1,16 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Store, UserCircle, Lock, Mail, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
-  Shield,
+  Shield, PackageOpen,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const NAV_ITEMS = [
+const NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash?: string; path?: string }> = [
+  { label: 'Sản phẩm & Danh mục', href: '/owner/products', icon: PackageOpen, path: '/owner/products' },
   { label: 'Hồ sơ cá nhân', href: '/owner/account#profile', icon: UserCircle, hash: '#profile' },
   { label: 'Đổi mật khẩu', href: '/owner/account#password', icon: Lock, hash: '#password' },
   { label: 'Email & Số điện thoại', href: '/owner/account#contact', icon: Mail, hash: '#contact' },
@@ -20,6 +22,7 @@ const NAV_ITEMS = [
 
 export default function OwnerLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(true);
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
@@ -164,11 +167,13 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                 {NAV_ITEMS.map((item) => {
                   const Icon = item.icon;
                   const isDanger = item.hash === '#danger';
-                  const isActive = currentHash === item.hash;
+                  const isActive = item.path
+                    ? pathname === item.path
+                    : pathname === '/owner/account' && currentHash === item.hash;
 
                   return (
                     <Link
-                      key={item.hash}
+                      key={item.href}
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
                       className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
