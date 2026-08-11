@@ -42,7 +42,6 @@ nbproject/
 .env
 .env.*
 !.env.example
-!Code/Server/.env
 
 *.local
 
@@ -64,7 +63,7 @@ pnpm-debug.log*
 # Backend (Java / Spring Boot / Maven)
 ############################
 
-backend/target/
+Code/Server/target/
 target/
 
 *.class
@@ -72,40 +71,38 @@ target/
 *.war
 *.ear
 
-backend/HELP.md
+Code/Server/HELP.md
 
 # Local configuration
-backend/src/main/resources/application-local.yml
-backend/src/main/resources/application-secrets.yml
-backend/src/main/resources/application-*.local.yml
+Code/Server/src/main/resources/application-local.yml
+Code/Server/src/main/resources/application-secrets.yml
+Code/Server/src/main/resources/application-*.local.yml
 
 # Maven Wrapper
 .mvn/timing.properties
 
 
 ############################
-# Frontend (React / Vite)
+# Frontend (Next.js)
 ############################
 
-frontend/node_modules/
+Code/Client/src/frontend/node_modules/
 node_modules/
 
-frontend/dist/
+Code/Client/src/frontend/dist/
 dist/
 
-frontend/build/
+Code/Client/src/frontend/build/
 
-frontend/coverage/
+Code/Client/src/frontend/coverage/
 
-frontend/.vite/
-frontend/.cache/
+# Next.js build cache & static export
+Code/Client/src/frontend/.next/
+Code/Client/src/frontend/out/
 
-frontend/.env
-frontend/.env.local
-frontend/.env.*.local
-
-# Keep default Vite assets
-#!frontend/public/vite.svg
+Code/Client/src/frontend/.env
+Code/Client/src/frontend/.env.local
+Code/Client/src/frontend/.env.*.local
 
 
 ############################
@@ -122,11 +119,11 @@ __pycache__/
 .venv/
 venv/
 
-ai-service/.venv/
-ai-service/venv/
+Code/AI/.venv/
+Code/AI/venv/
 
-ai-service/__pycache__/
-ai-service/**/__pycache__/
+Code/AI/__pycache__/
+Code/AI/**/__pycache__/
 
 *.egg-info/
 
@@ -136,11 +133,11 @@ ai-service/**/__pycache__/
 ############################
 
 # Temporary audio for Speech-to-Text
-ai-service/tmp/
+Code/AI/tmp/
 
-ai-service/**/*.wav
-ai-service/**/*.mp3
-ai-service/**/*.m4a
+Code/AI/**/*.wav
+Code/AI/**/*.mp3
+Code/AI/**/*.m4a
 
 # AI model checkpoints
 *.onnx
@@ -149,8 +146,8 @@ ai-service/**/*.m4a
 *.h5
 *.ckpt
 
-ai-service/checkpoints/
-ai-service/weights/
+Code/AI/checkpoints/
+Code/AI/weights/
 
 
 ############################
@@ -171,7 +168,7 @@ mysql-data/
 # Uploads / Generated Files
 ############################
 
-backend/uploads/
+Code/Server/uploads/
 uploads/
 
 reports/
