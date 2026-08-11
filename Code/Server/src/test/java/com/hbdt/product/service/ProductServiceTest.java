@@ -86,7 +86,7 @@ class ProductServiceTest {
     @Test
     void createAcceptsQuantityAndCreatesDefaultUnitWhenUnitsAreEmpty() {
         ProductRequest request = new ProductRequest(
-                "SP-02", "Bánh mì", null, null, null, null, null, "ACTIVE", new BigDecimal("12.5"));
+                "SP-02", "Bánh mì", null, null, null, null, null, "ACTIVE", new BigDecimal("12"));
         Unit defaultUnit = Unit.builder().id(4L).unitCode("SAN_PHAM").unitName("Sản phẩm").status("ACTIVE").build();
         when(unitRepository.findAllByStatusOrderByUnitNameAsc("ACTIVE")).thenReturn(List.of());
         when(unitRepository.findFirstByUnitCodeIgnoreCase("SAN_PHAM")).thenReturn(Optional.empty());
@@ -105,7 +105,19 @@ class ProductServiceTest {
         assertEquals("Sản phẩm", response.baseUnitName());
         ArgumentCaptor<InventoryBalance> balanceCaptor = ArgumentCaptor.forClass(InventoryBalance.class);
         verify(inventoryBalanceRepository).save(balanceCaptor.capture());
-        assertEquals(new BigDecimal("12.5"), balanceCaptor.getValue().getQuantityOnHand());
+        assertEquals(new BigDecimal("12"), balanceCaptor.getValue().getQuantityOnHand());
+    }
+
+    @Test
+    void createRejectsFractionalProductQuantity() {
+        ProductRequest request = new ProductRequest(
+                "SP-03", "Nước suối", null, null, null, null, null, "ACTIVE", new BigDecimal("0.99"));
+
+        BadRequestException error = assertThrows(BadRequestException.class,
+                () -> productService.create("owner", request));
+
+        assertEquals("Số lượng sản phẩm phải là số nguyên", error.getMessage());
+        verify(productRepository, never()).save(any(Product.class));
     }
 
     @Test

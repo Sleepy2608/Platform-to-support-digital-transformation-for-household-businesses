@@ -284,7 +284,10 @@ public class ProductService {
         if (normalized.signum() < 0) {
             throw new BadRequestException("Số lượng sản phẩm không được âm");
         }
-        return normalized;
+        if (normalized.stripTrailingZeros().scale() > 0) {
+            throw new BadRequestException("Số lượng sản phẩm phải là số nguyên");
+        }
+        return normalized.setScale(0);
     }
 
     private String normalizeStatusFilter(String status) {

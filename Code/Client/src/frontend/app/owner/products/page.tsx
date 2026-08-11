@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import {
-  Archive, Boxes, ChevronLeft, ChevronRight, FolderTree, Pencil, Plus,
+  Archive, Boxes, ChevronDown, ChevronLeft, ChevronRight, FolderTree, Pencil, Plus,
   RefreshCw, Search, X,
 } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
@@ -287,12 +287,12 @@ export default function ProductManagementPage() {
 
       {productModal && (
         <Modal title={editingProduct ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm'} onClose={() => setProductModal(false)}>
-          <form onSubmit={saveProduct} className="grid gap-4 sm:grid-cols-2">
+          <form onSubmit={saveProduct} className="grid gap-x-5 gap-y-6 sm:grid-cols-2">
             <FormField label="Mã sản phẩm"><input required maxLength={50} value={productForm.productCode} onChange={(e) => setProductForm({ ...productForm, productCode: e.target.value })} className="form-input" /></FormField>
             <FormField label="Tên sản phẩm"><input required maxLength={255} value={productForm.productName} onChange={(e) => setProductForm({ ...productForm, productName: e.target.value })} className="form-input" /></FormField>
-            <FormField label="Danh mục"><select value={productForm.categoryId} onChange={(e) => setProductForm({ ...productForm, categoryId: e.target.value })} className="form-input"><option value="">Chưa phân loại</option>{categories.filter((c) => c.status === 'ACTIVE').map((c) => <option key={c.id} value={c.id}>{c.categoryName}</option>)}</select></FormField>
-            <FormField label="Số lượng sản phẩm"><div className="relative"><input required min="0" step="0.001" type="number" value={productForm.quantityOnHand} onChange={(e) => setProductForm({ ...productForm, quantityOnHand: e.target.value })} className="form-input pr-24" /><span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-slate-400">sản phẩm</span></div></FormField>
-            <FormField label="Nhóm hoạt động tính thuế"><select value={productForm.defaultTaxActivityGroupId} onChange={(e) => setProductForm({ ...productForm, defaultTaxActivityGroupId: e.target.value })} className="form-input"><option value="">Không chọn</option>{taxGroups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></FormField>
+            <FormField label="Danh mục"><SelectControl value={productForm.categoryId} onChange={(value) => setProductForm({ ...productForm, categoryId: value })}><option value="">Chưa phân loại</option>{categories.filter((c) => c.status === 'ACTIVE').map((c) => <option key={c.id} value={c.id}>{c.categoryName}</option>)}</SelectControl></FormField>
+            <FormField label="Số lượng sản phẩm" hint="Chỉ nhập số nguyên từ 0 trở lên"><div className="relative"><input required min="0" step="1" inputMode="numeric" type="number" value={productForm.quantityOnHand} onChange={(e) => { if (/^\d*$/.test(e.target.value)) setProductForm({ ...productForm, quantityOnHand: e.target.value }); }} className="form-input pr-24" /><span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-slate-400">sản phẩm</span></div></FormField>
+            <FormField label="Nhóm hoạt động tính thuế"><SelectControl value={productForm.defaultTaxActivityGroupId} onChange={(value) => setProductForm({ ...productForm, defaultTaxActivityGroupId: value })}><option value="">Không chọn</option>{taxGroups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</SelectControl></FormField>
             <FormField label="Trạng thái"><StatusSelect value={productForm.status} onChange={(value) => setProductForm({ ...productForm, status: value })} /></FormField>
             <div className="sm:col-span-2"><FormField label="Đường dẫn ảnh"><input maxLength={500} type="url" value={productForm.imageUrl} onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })} className="form-input" /></FormField></div>
             <div className="sm:col-span-2"><FormField label="Mô tả"><textarea rows={3} value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} className="form-input" /></FormField></div>
@@ -334,8 +334,12 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   return <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl"><div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4"><h2 className="text-lg font-black text-slate-950">{title}</h2><button onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button></div><div className="p-6">{children}</div></div></div>;
 }
 
-function FormField({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label className="block"><span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">{label}</span>{children}</label>;
+function FormField({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return <label className="block"><span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">{label}</span>{children}{hint && <span className="mt-1.5 block text-xs font-medium text-slate-400">{hint}</span>}</label>;
+}
+
+function SelectControl({ value, onChange, children }: { value: string; onChange: (value: string) => void; children: React.ReactNode }) {
+  return <div className="relative"><select value={value} onChange={(e) => onChange(e.target.value)} className="form-input appearance-none bg-white pr-10">{children}</select><ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" /></div>;
 }
 
 function StatusSelect({ value, onChange }: { value: Status; onChange: (value: Status) => void }) {
