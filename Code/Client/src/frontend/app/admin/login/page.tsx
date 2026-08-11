@@ -70,10 +70,6 @@ export default function AdminLoginPage() {
           avatarUrl,
         });
 
-        const maxAge = 60 * 60 * 24; // 1 day
-        document.cookie = `auth_token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
-        document.cookie = `auth_role=ADMIN; path=/; max-age=${maxAge}; SameSite=Lax`;
-
         router.push('/admin');
       } else {
         throw new Error('Dữ liệu phản hồi không hợp lệ');

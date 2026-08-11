@@ -84,8 +84,6 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
 
   const handleLogout = () => {
     clearAuth();
-    document.cookie = 'auth_token=; max-age=0; path=/';
-    document.cookie = 'auth_role=; max-age=0; path=/';
     router.push('/login');
   };
 

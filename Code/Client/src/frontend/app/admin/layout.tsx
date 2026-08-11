@@ -51,10 +51,8 @@ export default function AdminLayout({
   }, [router, pathname]);
 
   const handleLogout = () => {
-    sessionStorage.clear();
-    document.cookie = 'auth_token=; max-age=0; path=/';
-    document.cookie = 'auth_role=; max-age=0; path=/';
-    router.push('/login');
+    clearAuth();
+    router.push('/admin/login');
   };
 
   // Trang dang nhap admin: render thang, khong bọc sidebar/kiem tra quyen

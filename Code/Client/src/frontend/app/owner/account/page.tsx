@@ -1000,8 +1000,6 @@ function DangerTab({ router }: { router: ReturnType<typeof useRouter> }) {
       setMsg({ type: 'success', text: 'Tài khoản đã được tạm khóa. Đang đăng xuất...' });
       setTimeout(() => {
         clearAuth();
-        document.cookie = 'auth_token=; max-age=0; path=/';
-        document.cookie = 'auth_role=; max-age=0; path=/';
         router.push('/login');
       }, 2000);
     } catch (err: unknown) {
@@ -1017,8 +1015,6 @@ function DangerTab({ router }: { router: ReturnType<typeof useRouter> }) {
       setMsg({ type: 'success', text: 'Tài khoản đã bị xóa vĩnh viễn.' });
       setTimeout(() => {
         clearAuth();
-        document.cookie = 'auth_token=; max-age=0; path=/';
-        document.cookie = 'auth_role=; max-age=0; path=/';
         router.push('/');
       }, 2000);
     } catch (err: unknown) {

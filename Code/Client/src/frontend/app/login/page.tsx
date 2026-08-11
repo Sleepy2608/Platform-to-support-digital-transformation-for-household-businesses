@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Store, ArrowLeft, LogIn, Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal';
-import { saveAuthData, clearAuth } from '../lib/apiClient';
+import { saveAuthData } from '../lib/apiClient';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -51,7 +51,20 @@ export default function LoginPage() {
           avatarUrl,
         } = resData.data;
 
-        // Persist to hybrid storage (sessionStorage for current tab, localStorage for new tabs)
+        // Validate the portal before replacing a session that may be open in other tabs.
+        if (Array.isArray(roles) && roles.includes('ADMIN')) {
+          setError('Tài khoản quản trị vui lòng đăng nhập tại trang quản trị');
+          setLoading(false);
+          return;
+        }
+
+        if (!Array.isArray(roles) || !roles.includes('BUSINESS_OWNER')) {
+          setError('Tài khoản không có quyền truy cập hệ thống');
+          setLoading(false);
+          return;
+        }
+
+        // Persist the shared session and notify every open tab.
         saveAuthData({
           accessToken,
           refreshToken,
@@ -64,24 +77,6 @@ export default function LoginPage() {
           avatarUrl,
         });
 
-        // Set lightweight cookies for Edge middleware
-        const maxAge = 60 * 60 * 24; // 1 day
-        document.cookie = `auth_token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
-        // Admin phai dang nhap o cua rieng /admin/login
-        if (Array.isArray(roles) && roles.includes('ADMIN')) {
-          setError('Tài khoản quản trị vui lòng đăng nhập tại trang quản trị');
-          clearAuth();
-          document.cookie = 'auth_token=; max-age=0; path=/';
-          document.cookie = 'auth_role=; max-age=0; path=/';
-          setLoading(false);
-          return;
-        }
-
-        const primaryRole = Array.isArray(roles) && roles.includes('BUSINESS_OWNER')
-          ? 'BUSINESS_OWNER'
-          : '';
-        document.cookie = `auth_role=${primaryRole}; path=/; max-age=${maxAge}; SameSite=Lax`;
-
         // Route by role
         if (roles && roles.includes('BUSINESS_OWNER')) {
           if (!businessId) {
@@ -89,11 +84,6 @@ export default function LoginPage() {
           } else {
             router.push('/owner/account');
           }
-        } else {
-          setError('Tài khoản không có quyền truy cập hệ thống');
-          clearAuth();
-          document.cookie = 'auth_token=; max-age=0; path=/';
-          document.cookie = 'auth_role=; max-age=0; path=/';
         }
       } else {
         throw new Error('Dữ liệu phản hồi không hợp lệ');
