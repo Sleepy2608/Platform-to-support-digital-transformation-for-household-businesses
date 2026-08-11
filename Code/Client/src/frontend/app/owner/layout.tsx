@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   Store, UserCircle, Lock, Mail, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
-  Shield,
+  Shield, Users,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { label: 'Đổi mật khẩu', href: '/owner/account#password', icon: Lock, hash: '#password' },
   { label: 'Email & Số điện thoại', href: '/owner/account#contact', icon: Mail, hash: '#contact' },
   { label: 'Gói đăng ký', href: '/owner/account#subscription', icon: CreditCard, hash: '#subscription' },
+  { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, hash: '#employees' },
   { label: 'Vùng nguy hiểm', href: '/owner/account#danger', icon: AlertTriangle, hash: '#danger' },
 ];
 
@@ -51,32 +52,13 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     }
   }, [router]);
 
-  useEffect(() => {
-    const syncOwnerSummary = (event?: Event) => {
-      const detail = event instanceof CustomEvent
-        ? event.detail as { fullName?: string; avatarUrl?: string }
-        : undefined;
-      setFullName(detail?.fullName ?? localStorage.getItem('fullName') ?? 'Chủ hộ kinh doanh');
-      setAvatarUrl(detail?.avatarUrl ?? localStorage.getItem('avatarUrl') ?? '');
-    };
-
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === 'fullName' || event.key === 'avatarUrl') {
-        syncOwnerSummary();
-      }
-    };
-
-    window.addEventListener('owner-profile-updated', syncOwnerSummary);
-    window.addEventListener('storage', handleStorage);
-    return () => {
-      window.removeEventListener('owner-profile-updated', syncOwnerSummary);
-      window.removeEventListener('storage', handleStorage);
-    };
-  }, []);
-
   // Keep track of current URL hash to highlight active nav item
   useEffect(() => {
     const syncHash = () => {
+      if (window.location.pathname === '/owner/employees') {
+        setCurrentHash('#employees');
+        return;
+      }
       setCurrentHash(window.location.hash || '#profile');
     };
     syncHash();
