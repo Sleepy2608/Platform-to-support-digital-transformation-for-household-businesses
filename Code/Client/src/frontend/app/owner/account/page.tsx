@@ -38,6 +38,21 @@ interface OwnerProfile {
 type Tab = 'profile' | 'business-profile' | 'password' | 'contact' | 'subscription' | 'consent' | 'danger';
 type OtpTarget = 'email' | 'phone' | null;
 
+function syncOwnerSummary(data: { fullName?: string; avatarUrl?: string | null }) {
+  if (data.fullName !== undefined) {
+    localStorage.setItem('fullName', data.fullName);
+  }
+  if (data.avatarUrl !== undefined) {
+    localStorage.setItem('avatarUrl', data.avatarUrl || '');
+  }
+  window.dispatchEvent(new CustomEvent('owner-profile-updated', {
+    detail: {
+      fullName: data.fullName,
+      avatarUrl: data.avatarUrl || undefined,
+    },
+  }));
+}
+
 // ─── Helper components ────────────────────────────────────────────────────────
 
 function Alert({ type, message }: { type: 'success' | 'error'; message: string }) {
@@ -173,8 +188,7 @@ export default function OwnerAccountPage() {
     try {
       const data = await apiClient.get<OwnerProfile>('/api/owner/profile');
       setProfile(data);
-      if (data.fullName) localStorage.setItem('fullName', data.fullName);
-      if (data.avatarUrl) localStorage.setItem('avatarUrl', data.avatarUrl);
+      syncOwnerSummary({ fullName: data.fullName, avatarUrl: data.avatarUrl });
     } catch {
       // If unauthorized, apiClient handles redirect to /login
     } finally {
@@ -302,7 +316,7 @@ function ProfileTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
     setMsg(null);
     try {
       await apiClient.put('/api/owner/profile', { fullName });
-      localStorage.setItem('fullName', fullName);
+      syncOwnerSummary({ fullName });
       setMsg({ type: 'success', text: 'Cập nhật tên thành công!' });
       setEditing(false);
       onUpdated();
@@ -322,7 +336,7 @@ function ProfileTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
     setMsg(null);
     try {
       const url = await apiClient.upload<string>('/api/owner/avatar', formData);
-      if (url) localStorage.setItem('avatarUrl', url);
+      if (url) syncOwnerSummary({ avatarUrl: url });
       setMsg({ type: 'success', text: 'Tải lên ảnh đại diện mới thành công!' });
       onUpdated();
     } catch (err: unknown) {

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
 import com.hbdt.common.service.GeoReferenceStore;
+import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.entity.BusinessProfile;
 import com.hbdt.entity.District;
 import com.hbdt.entity.Province;
@@ -18,16 +19,11 @@ import com.hbdt.repository.BusinessProfileRepository;
 import com.hbdt.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -44,21 +40,18 @@ public class BusinessProfileService {
     private final BusinessProfileRepository businessProfileRepository;
     private final GeoReferenceStore referenceStore;
     private final ObjectMapper objectMapper;
-
-    @Value("${app.upload.dir:./uploads}")
-    private String uploadDir;
-
-    @Value("${server.port:8080}")
-    private String serverPort;
+    private final ImageStorageService imageStorageService;
 
     public BusinessProfileService(UserRepository userRepository,
                                   BusinessProfileRepository businessProfileRepository,
                                   GeoReferenceStore referenceStore,
-                                  ObjectMapper objectMapper) {
+                                  ObjectMapper objectMapper,
+                                  ImageStorageService imageStorageService) {
         this.userRepository = userRepository;
         this.businessProfileRepository = businessProfileRepository;
         this.referenceStore = referenceStore;
         this.objectMapper = objectMapper;
+        this.imageStorageService = imageStorageService;
     }
 
     @Transactional(readOnly = true)
@@ -134,25 +127,23 @@ public class BusinessProfileService {
         User user = findActiveUser(username);
         BusinessProfile profile = findBusinessForUser(user);
 
-        String extension = extensionOf(file.getOriginalFilename());
-        String fileName = UUID.randomUUID() + extension;
-        String objectKey = "businesses/" + profile.getId() + "/" + imageType + "/" + fileName;
-        Path target = Paths.get(uploadDir).resolve(objectKey).normalize();
-        Path uploadRoot = Paths.get(uploadDir).toAbsolutePath().normalize();
-        Path absoluteTarget = target.toAbsolutePath().normalize();
-        if (!absoluteTarget.startsWith(uploadRoot)) {
-            throw new BadRequestException("Đường dẫn upload không hợp lệ");
-        }
-        Files.createDirectories(absoluteTarget.getParent());
-        Files.copy(file.getInputStream(), absoluteTarget, StandardCopyOption.REPLACE_EXISTING);
+        String directory = "businesses/" + profile.getId() + "/" + imageType;
+        ImageStorageService.StoredImage storedImage = imageStorageService.store(
+                file, directory, MAX_IMAGE_SIZE, ALLOWED_MIME);
 
         if ("logo".equals(imageType)) {
-            profile.setLogoObjectKey(objectKey);
+            profile.setLogoObjectKey(storedImage.objectKey());
+            profile.setLogoSha256(storedImage.sha256());
+            profile.setLogoContentType(storedImage.contentType());
+            profile.setLogoSize(storedImage.size());
         } else {
-            profile.setCoverImageObjectKey(objectKey);
+            profile.setCoverImageObjectKey(storedImage.objectKey());
+            profile.setCoverImageSha256(storedImage.sha256());
+            profile.setCoverImageContentType(storedImage.contentType());
+            profile.setCoverImageSize(storedImage.size());
         }
         businessProfileRepository.save(profile);
-        return toPublicUrl(objectKey);
+        return imageStorageService.toPublicUrl(storedImage.objectKey());
     }
 
     private void validateImage(MultipartFile file) {
@@ -165,14 +156,6 @@ public class BusinessProfileService {
         if (file.getContentType() == null || !ALLOWED_MIME.contains(file.getContentType())) {
             throw new BadRequestException("Chỉ chấp nhận ảnh JPG, PNG hoặc WEBP");
         }
-    }
-
-    private String extensionOf(String originalFilename) {
-        if (originalFilename == null || !originalFilename.contains(".")) {
-            return ".jpg";
-        }
-        String extension = originalFilename.substring(originalFilename.lastIndexOf('.')).toLowerCase();
-        return Set.of(".jpg", ".jpeg", ".png", ".webp").contains(extension) ? extension : ".jpg";
     }
 
     private User findActiveUser(String username) {
@@ -269,16 +252,11 @@ public class BusinessProfileService {
     }
 
     private String normalizeObjectKey(String value) {
-        int uploadsIndex = value.indexOf("/uploads/");
-        return uploadsIndex >= 0 ? value.substring(uploadsIndex + "/uploads/".length()) : value;
+        return imageStorageService.normalizeObjectKey(value);
     }
 
     private String toPublicUrl(String objectKey) {
-        if (objectKey == null || objectKey.isBlank() || objectKey.startsWith("http://")
-                || objectKey.startsWith("https://")) {
-            return objectKey;
-        }
-        return "http://localhost:" + serverPort + "/uploads/" + objectKey.replace('\\', '/');
+        return imageStorageService.toPublicUrl(objectKey);
     }
 
     private String newBusinessCode() {
