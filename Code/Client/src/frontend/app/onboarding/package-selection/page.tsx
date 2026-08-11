@@ -10,7 +10,7 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type BillingCycle = 'MONTHLY' | 'YEARLY';
-type PackageId = 'STANDARD' | 'VIP';
+type PackageId = string;
 
 interface PackageInfo {
   id: PackageId;

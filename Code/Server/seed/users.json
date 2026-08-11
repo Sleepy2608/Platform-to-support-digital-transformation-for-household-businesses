@@ -1,6 +1,6 @@
 {
   "table" : "users",
-  "version" : 7,
+  "version" : 9,
   "rows" : [ {
     "id" : 1,
     "address" : null,
@@ -175,6 +175,31 @@
     "avatar_content_type" : "image/jpeg",
     "avatar_size" : 462433,
     "avatar_sha256" : "47b049ecad8c7eb1af1c258a64df2b6bb9359ff906c5ef0b683fdf5cd8594c61",
+    "avatar_url" : null
+  }, {
+    "id" : 8,
+    "address" : null,
+    "business_id" : 4,
+    "created_at" : "2026-08-11T04:12:12.188884",
+    "date_of_birth" : null,
+    "email" : "tranvanngocthan@gmail.com",
+    "full_name" : "Trần thắng",
+    "gender" : null,
+    "join_date" : null,
+    "last_login_at" : null,
+    "national_id" : null,
+    "password_hash" : "$2a$10$EBKoL8oE1.GEqrU2AXCMXOcs1Auvgf5ZiYhlACEVoJ9Vt7z.19DrC",
+    "phone" : "0889111121",
+    "position" : null,
+    "status" : "ACTIVE",
+    "termination_date" : null,
+    "updated_at" : "2026-08-11T04:12:40.957882",
+    "username" : "HuyTam",
+    "role_id" : 2,
+    "avatar_object_key" : null,
+    "avatar_content_type" : null,
+    "avatar_size" : null,
+    "avatar_sha256" : null,
     "avatar_url" : null
   } ]
 }

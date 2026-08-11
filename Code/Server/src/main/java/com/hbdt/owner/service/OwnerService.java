@@ -21,10 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -242,8 +240,8 @@ public class OwnerService {
     }
 
     public OwnerProfileResponse selectPackage(String username, String packageType, String billingCycle) {
-        if (!"STANDARD".equals(packageType) && !"VIP".equals(packageType)) {
-            throw new BadRequestException("Loại gói không hợp lệ. Chỉ chấp nhận STANDARD hoặc VIP.");
+        if (packageType == null || packageType.isBlank()) {
+            throw new BadRequestException("Mã gói thuê bao không được để trống");
         }
         if (!"MONTHLY".equals(billingCycle) && !"YEARLY".equals(billingCycle)) {
             throw new BadRequestException("Chu kỳ thanh toán không hợp lệ. Chỉ chấp nhận MONTHLY hoặc YEARLY.");
@@ -253,7 +251,7 @@ public class OwnerService {
             throw new BadRequestException("Tài khoản chưa có hồ sơ hộ kinh doanh");
         }
 
-        SubscriptionPlan plan = findOrCreatePlan(packageType);
+        SubscriptionPlan plan = findActivePlan(packageType);
         LocalDate today = LocalDate.now();
         Subscription subscription = subscriptionRepository
                 .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(user.getBusinessId(), "ACTIVE")
@@ -276,40 +274,21 @@ public class OwnerService {
     }
 
     // =========================================================
-    // Available Packages (static catalog)
+    // Available Packages
     // =========================================================
 
     public List<PackageDto> getAvailablePackages() {
-        return Arrays.asList(
-            PackageDto.builder()
-                .id("STANDARD")
-                .name("Gói Standard")
-                .description("Cho cửa hàng bán lẻ có quản lý kho & nợ")
-                .monthlyPrice(199000)
-                .yearlyPrice(1990000)
-                .recommended(false)
-                .features(Arrays.asList(
-                    "Tất cả tính năng gói Basic",
-                    "Quản lý tồn kho & công nợ",
-                    "Lập sổ kế toán TT 88/2021",
-                    "Tối đa 3 tài khoản nhân viên"
-                ))
-                .build(),
-            PackageDto.builder()
-                .id("VIP")
-                .name("Gói VIP (Pro)")
-                .description("Đầy đủ sức mạnh AI & Kế toán tự động")
-                .monthlyPrice(399000)
-                .yearlyPrice(3990000)
-                .recommended(true)
-                .features(Arrays.asList(
-                    "Tất cả tính năng gói Standard",
-                    "Trợ lý AI đọc đơn giọng nói / tin nhắn",
-                    "Tự động hóa báo cáo thuế trọn gói",
-                    "Không giới hạn nhân viên"
-                ))
-                .build()
-        );
+        return subscriptionPlanRepository.findAllByStatusOrderByMonthlyPriceAsc("ACTIVE").stream()
+                .map(plan -> PackageDto.builder()
+                        .id(plan.getPlanCode())
+                        .name(plan.getPlanName())
+                        .description(plan.getDescription())
+                        .monthlyPrice(plan.getMonthlyPrice().longValue())
+                        .yearlyPrice(plan.getAnnualPrice().longValue())
+                        .recommended("VIP".equalsIgnoreCase(plan.getPlanCode()))
+                        .features(featuresFor(plan.getPlanCode()))
+                        .build())
+                .toList();
     }
 
     // =========================================================
@@ -338,21 +317,29 @@ public class OwnerService {
                 .orElseThrow(() -> new BadRequestException("Chưa có gói dịch vụ đang hoạt động"));
     }
 
-    private SubscriptionPlan findOrCreatePlan(String packageType) {
-        return subscriptionPlanRepository.findByPlanCodeAndStatus(packageType, "ACTIVE")
-                .orElseGet(() -> {
-                    boolean vip = "VIP".equals(packageType);
-                    return subscriptionPlanRepository.save(SubscriptionPlan.builder()
-                            .planCode(packageType)
-                            .planName(vip ? "Gói VIP (Pro)" : "Gói Standard")
-                            .monthlyPrice(BigDecimal.valueOf(vip ? 399000 : 199000))
-                            .annualPrice(BigDecimal.valueOf(vip ? 3990000 : 1990000))
-                            .description(vip
-                                    ? "Đầy đủ sức mạnh AI và kế toán tự động"
-                                    : "Quản lý kho, công nợ và sổ kế toán")
-                            .status("ACTIVE")
-                            .build());
-                });
+    private SubscriptionPlan findActivePlan(String packageType) {
+        return subscriptionPlanRepository
+                .findByPlanCodeIgnoreCaseAndStatus(packageType.trim(), "ACTIVE")
+                .orElseThrow(() -> new BadRequestException("Gói thuê bao không tồn tại hoặc đã bị vô hiệu hóa"));
+    }
+
+    private List<String> featuresFor(String planCode) {
+        if ("VIP".equalsIgnoreCase(planCode)) {
+            return List.of(
+                    "Tất cả tính năng gói Standard",
+                    "Trợ lý AI đọc đơn giọng nói / tin nhắn",
+                    "Tự động hóa báo cáo thuế trọn gói",
+                    "Không giới hạn nhân viên"
+            );
+        }
+        if ("STANDARD".equalsIgnoreCase(planCode)) {
+            return List.of(
+                    "Quản lý tồn kho & công nợ",
+                    "Lập sổ kế toán TT 88/2021",
+                    "Tối đa 3 tài khoản nhân viên"
+            );
+        }
+        return List.of("Các tính năng theo cấu hình của gói");
     }
 
     private OwnerProfileResponse toProfileResponse(User user) {

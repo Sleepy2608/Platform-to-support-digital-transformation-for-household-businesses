@@ -37,6 +37,16 @@ public class InventoryBalance {
     @Column(name = "inventory_value", nullable = false, precision = 18, scale = 2)
     private BigDecimal inventoryValue;
 
-    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

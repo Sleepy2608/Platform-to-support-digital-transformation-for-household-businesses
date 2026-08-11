@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Navbar from './components/Navbar';
 import ScrollReveal from './components/ScrollReveal';
+import PricingPlans from './components/PricingPlans';
 import { CheckCircle, Bot, Receipt, Package, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
 
 export default function Home() {
@@ -106,7 +107,34 @@ export default function Home() {
             <p className="text-center text-zinc-300 text-sm sm:text-base mb-12 sm:mb-16 select-none" style={{ cursor: 'default', userSelect: 'none' }}>Chọn gói tính năng phù hợp nhất với cửa hàng của bạn</p>
           </ScrollReveal>
 
+
+          <PricingPlans />
+
+          <div className="hidden">
+            {/* Gói BASIC */}
+            <ScrollReveal delay={0.1}>
+              <div className="border border-zinc-700 bg-zinc-900/90 backdrop-blur-md rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all duration-300 hover:border-zinc-500 hover:-translate-y-2 hover:shadow-xl h-full">
+                <div>
+                  <h3 className="text-lg sm:text-xl font-bold text-white">Gói Basic</h3>
+                  <p className="text-zinc-400 text-xs sm:text-sm mt-1">Cho cửa hàng nhỏ bắt đầu chuyển đổi số</p>
+                  <div className="mt-4 sm:mt-6">
+                    <span className="text-3xl sm:text-4xl font-extrabold text-white">99.000đ</span>
+                    <span className="text-zinc-400 text-xs sm:text-sm"> /tháng</span>
+                  </div>
+                  <ul className="mt-6 sm:mt-8 space-y-3 sm:space-y-4 text-zinc-200 text-xs sm:text-sm">
+                    <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-100 flex-shrink-0" /> Bán hàng tại quầy đơn giản</li>
+                    <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-100 flex-shrink-0" /> Quản lý danh mục sản phẩm</li>
+                    <li className="flex items-center gap-3"><CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-100 flex-shrink-0" /> 1 tài khoản quản lý</li>
+                  </ul>
+                </div>
+                <button className="mt-6 sm:mt-8 w-full py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-semibold transition-all duration-200 active:scale-95 hover:scale-105 cursor-pointer border border-zinc-600 text-sm">
+                  Đăng ký Basic
+                </button>
+              </div>
+            </ScrollReveal>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-stretch max-w-3xl mx-auto">
+
             {/* Gói STANDARD */}
             <ScrollReveal delay={0.1}>
               <div className="border border-zinc-600 bg-zinc-900/95 backdrop-blur-md rounded-3xl p-6 sm:p-8 flex flex-col justify-between relative transition-all duration-300 hover:border-zinc-400 hover:-translate-y-2 hover:shadow-2xl h-full">
@@ -161,6 +189,7 @@ export default function Home() {
                 </button>
               </div>
             </ScrollReveal>
+          </div>
           </div>
         </section>
       </div>
