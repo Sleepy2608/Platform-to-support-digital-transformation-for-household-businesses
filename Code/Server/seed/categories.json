@@ -1,0 +1,14 @@
+{
+  "table" : "categories",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 2,
+    "business_id" : 1,
+    "category_code" : "DM01",
+    "category_name" : "Sách",
+    "created_at" : "2026-08-11T04:46:46.679674",
+    "description" : "sách vở",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-11T04:46:46.679674"
+  } ]
+}

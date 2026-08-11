@@ -1,0 +1,13 @@
+{
+  "table" : "inventory_balances",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "average_unit_cost" : 0.00,
+    "business_id" : 1,
+    "inventory_value" : 0.00,
+    "product_id" : 5,
+    "quantity_on_hand" : 43.000,
+    "updated_at" : "2026-08-11T19:20:12.191733"
+  } ]
+}

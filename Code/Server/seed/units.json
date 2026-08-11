@@ -1,0 +1,10 @@
+{
+  "table" : "units",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "status" : "ACTIVE",
+    "unit_code" : "SAN_PHAM",
+    "unit_name" : "Sản phẩm"
+  } ]
+}
