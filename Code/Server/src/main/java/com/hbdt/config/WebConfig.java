@@ -1,13 +1,11 @@
 package com.hbdt.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.hbdt.common.service.ImageStorageService;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import java.nio.file.Paths;
 
 /**
  * Web MVC configuration:
@@ -20,14 +18,15 @@ import java.nio.file.Paths;
 @EnableScheduling
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${app.upload.dir:./uploads}")
-    private String uploadDir;
+    private final ImageStorageService imageStorageService;
+
+    public WebConfig(ImageStorageService imageStorageService) {
+        this.imageStorageService = imageStorageService;
+    }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Resolve to absolute path to be safe
-        String absoluteUploadPath = Paths.get(uploadDir).toAbsolutePath().normalize().toString();
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + absoluteUploadPath + "/");
+                .addResourceLocations(imageStorageService.resourceLocation());
     }
 }

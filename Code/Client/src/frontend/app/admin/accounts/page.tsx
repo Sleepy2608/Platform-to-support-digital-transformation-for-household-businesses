@@ -52,7 +52,7 @@ export default function AdminAccountsPage() {
   const fetchAccounts = async () => {
     setLoading(true);
     setError('');
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     try {
       const response = await fetch('http://localhost:8080/api/admin/accounts', {
         headers: {
@@ -134,7 +134,7 @@ export default function AdminAccountsPage() {
     if (!validateForm(false)) return;
 
     setActionLoading(true);
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     try {
       const response = await fetch('http://localhost:8080/api/admin/accounts', {
         method: 'POST',
@@ -173,7 +173,7 @@ export default function AdminAccountsPage() {
     if (!validateForm(true)) return;
 
     setActionLoading(true);
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     try {
       const response = await fetch(`http://localhost:8080/api/admin/accounts/${selectedAccount.id}`, {
         method: 'PUT',
@@ -209,7 +209,7 @@ export default function AdminAccountsPage() {
   const handleDeleteSubmit = async () => {
     if (!selectedAccount) return;
     setActionLoading(true);
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     try {
       const response = await fetch(`http://localhost:8080/api/admin/accounts/${selectedAccount.id}`, {
         method: 'DELETE',

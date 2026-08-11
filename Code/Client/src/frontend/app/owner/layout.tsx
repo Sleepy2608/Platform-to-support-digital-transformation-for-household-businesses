@@ -9,6 +9,7 @@ import {
   Shield, Users,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
 
 const ACCOUNT_NAV_ITEMS = [
   { label: 'Hồ sơ cá nhân', href: '/owner/account#profile', icon: UserCircle, hash: '#profile' },
@@ -32,8 +33,8 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   const [currentHash, setCurrentHash] = useState('#profile');
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    const rolesRaw = localStorage.getItem('roles');
+    const token = getAccessToken();
+    const rolesRaw = getAuthItem('roles');
 
     if (!token || !rolesRaw) {
       router.push('/login');
@@ -46,14 +47,30 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
         router.push('/login');
         return;
       }
-      setFullName(localStorage.getItem('fullName') || 'Chủ hộ kinh doanh');
-      setUsername(localStorage.getItem('username') || '');
-      setAvatarUrl(localStorage.getItem('avatarUrl') || '');
+
+      setFullName(getAuthItem('fullName') || 'Chủ hộ kinh doanh');
+      setUsername(getAuthItem('username') || '');
+      setAvatarUrl(getAuthItem('avatarUrl') || '');
       setLoading(false);
     } catch {
       router.push('/login');
     }
   }, [router]);
+
+  useEffect(() => {
+    const syncOwnerSummary = (event?: Event) => {
+      const detail = event instanceof CustomEvent
+        ? event.detail as { fullName?: string; avatarUrl?: string }
+        : undefined;
+      setFullName(detail?.fullName ?? getAuthItem('fullName') ?? 'Chủ hộ kinh doanh');
+      setAvatarUrl(detail?.avatarUrl ?? getAuthItem('avatarUrl') ?? '');
+    };
+
+    window.addEventListener('owner-profile-updated', syncOwnerSummary);
+    return () => {
+      window.removeEventListener('owner-profile-updated', syncOwnerSummary);
+    };
+  }, []);
 
   // Keep track of current URL hash to highlight active nav item
   useEffect(() => {
@@ -70,9 +87,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();
-    document.cookie = 'auth_token=; max-age=0; path=/';
-    document.cookie = 'auth_role=; max-age=0; path=/';
+    clearAuth();
     router.push('/login');
   };
 

@@ -10,8 +10,9 @@
 | Character Set | `utf8mb4` |
 | Collation | `utf8mb4_0900_ai_ci` |
 | Mô hình dữ liệu | Cơ sở dữ liệu quan hệ, multi-tenant dùng chung schema |
-| Quy mô đã xác minh | **33 bảng, 68 khóa ngoại, 10 trigger** |
-| Phiên bản tài liệu | 2.0 |
+| Quy mô đã xác minh | **36 bảng, 68 khóa ngoại, 10 trigger** |
+| Cơ chế tạo schema | Spring Data JPA `ddl-auto=update` (không dùng migration SQL) |
+| Phiên bản tài liệu | 3.0 |
 
 ---
 
@@ -187,7 +188,9 @@ Các giá trị phải được cập nhật trong cùng transaction để trán
 
 ## 5. Tổ chức dữ liệu theo phân hệ
 
-Cơ sở dữ liệu gồm **33 bảng**, chia thành 5 phân hệ.
+Cơ sở dữ liệu gồm **34 bảng nghiệp vụ** (chia thành 5 phân hệ) + **2 bảng seed tracking** (`seed_config`, `seed_key`) = **36 bảng** do JPA quản lý.
+
+> **Ghi chú về dữ liệu không phải bảng**: `province`, `district`, `ward` và `otp_codes` **không phải bảng**. Địa giới hành chính được tải từ API `provinces.open-api.vn` lúc khởi động và lưu in-memory (`GeoReferenceStore`); OTP do `OtpService` quản lý in-memory. Cột `businesses.address` lưu địa chỉ dưới dạng **JSON compact** (chứa `businessType`, `provinceCode`, `districtCode`, `wardCode`, `detailAddress`, `representativeEmail`, `storeName`) — không có bảng địa chỉ riêng.
 
 ### 5.1. Business Core – 5 bảng
 
@@ -201,12 +204,14 @@ Cơ sở dữ liệu gồm **33 bảng**, chia thành 5 phân hệ.
 
 #### 5.1.1. Logo và ảnh bìa của hộ kinh doanh
 
-Bảng `businesses` bổ sung hai cột nullable nhưng không làm thay đổi tổng số 33 bảng:
+Bảng `businesses` lưu **8 cột media** nullable (4 cho logo + 4 cho ảnh bìa) nhưng không làm thay đổi tổng số bảng:
 
 | Cột | Kiểu dữ liệu | Null | Mục đích |
 |---|---|---|---|
 | `logo_object_key` | `VARCHAR(500)` | Có | Object key của logo trong private object storage |
+| `logo_sha256`, `logo_content_type`, `logo_size` | `VARCHAR(64)`, `VARCHAR(50)`, `BIGINT UNSIGNED` | Có | Metadata của logo (hash, MIME, kích thước) |
 | `cover_image_object_key` | `VARCHAR(500)` | Có | Object key của ảnh bìa trong private object storage |
+| `cover_image_sha256`, `cover_image_content_type`, `cover_image_size` | `VARCHAR(64)`, `VARCHAR(50)`, `BIGINT UNSIGNED` | Có | Metadata của ảnh bìa (hash, MIME, kích thước) |
 
 MySQL không lưu nội dung nhị phân của ảnh. File ảnh thật được lưu trong private object storage; database chỉ lưu object key độc lập với domain hoặc nhà cung cấp lưu trữ.
 
@@ -268,6 +273,28 @@ Backend tạo signed URL có thời hạn từ object key và trả `logoUrl`, `
 | `tax_types` | Danh mục loại nghĩa vụ thuế |
 | `tax_obligations` | Nghĩa vụ thuế phát sinh theo hộ và kỳ |
 | `tax_payments` | Các lần nộp thuế gắn với nghĩa vụ cụ thể |
+
+### 5.6. Onboarding & Seed Tracking – 3 bảng
+
+| Bảng | Chức năng |
+|---|---|
+| `terms_consents` | Đồng thuận điều khoản, chính sách quyền riêng tư, xử lý dữ liệu và Thông tư 88 của người dùng |
+| `seed_config` | Theo dõi trạng thái seed từng bảng (checksum, version, `seed_order`) |
+| `seed_key` | Lưu hash khóa dùng cho cơ chế snapshot/restore seed có mã hóa |
+
+#### 5.6.1. Bảng `terms_consents` (bảng mới)
+
+| Cột | Kiểu | Ràng buộc |
+|---|---|---|
+| id | BIGINT | PK |
+| user_id | BIGINT | **FK → users**, NOT NULL |
+| terms_version, privacy_version | VARCHAR(20) | null |
+| terms_accepted, privacy_accepted, data_processing_accepted, circular88_accepted, info_accurate_confirmed, inaccuracy_understood | BOOLEAN | 6 cột, NOT NULL, default `false` |
+| ip_address | VARCHAR(45) | null |
+| user_agent | VARCHAR(500) | null |
+| accepted_at | DATETIME | NOT NULL |
+
+Bảng này lưu vết sự đồng thuận của người dùng khi đăng ký/đồng ý điều khoản, bao gồm cả xác nhận về phạm vi học thuật Thông tư 88.
 
 ---
 
@@ -331,7 +358,7 @@ sales_orders 1 ─── N debt_transactions
 users 1 ─── N debt_transactions
 ```
 
-Trong phạm vi 33 bảng:
+Trong phạm vi thiết kế:
 
 - `sales_orders.paid_amount` lưu số tiền thanh toán ngay tại thời điểm bán;
 - `debt_transactions` lưu phát sinh nợ, trả nợ và điều chỉnh;
@@ -547,8 +574,6 @@ Nếu một bước thất bại, toàn bộ giao dịch phải `ROLLBACK`.
 
 ## 9. Chính sách khóa ngoại và xóa dữ liệu
 
-Không sử dụng một quy tắc xóa duy nhất cho toàn hệ thống.
-
 ### 9.1. `ON DELETE CASCADE`
 
 Chỉ áp dụng cho dữ liệu con không có ý nghĩa độc lập:
@@ -688,65 +713,55 @@ Quy tắc:
 
 ---
 
-## 12. Quản lý migration và lỗi chạy lặp
+## 12. Quản lý schema và seed data
 
-Trong quá trình xây dựng, chạy lại các patch đã phát sinh các lỗi như:
+### 12.1. Cơ chế tạo schema
 
-- `Duplicate key name`;
-- trùng tên khóa ngoại;
-- trigger đã tồn tại;
-- không thể xóa index đã được thay đổi;
-- kiểu `BIGINT` và `BIGINT UNSIGNED` không khớp khi tạo khóa ngoại.
+Schema hiện được sinh **tự động** bởi Spring Data JPA:
 
-Phương án áp dụng:
-
-1. mỗi migration có mã phiên bản và chỉ chạy một lần;
-2. migration mới không sửa nội dung migration đã chạy;
-3. khóa chính và khóa ngoại phải cùng kiểu;
-4. tên index, constraint và trigger phải duy nhất;
-5. dùng `DROP TRIGGER IF EXISTS` trước khi tái tạo trigger;
-6. backup trước khi thay đổi schema;
-7. kiểm thử trên database trống trước khi phát hành;
-8. file schema cuối không chứa các patch thử nghiệm chồng chéo.
-
-Migration bổ sung phạm vi S1/S2/S4:
-
-```text
-V008__support_S1_S2_S4_UNSIGNED.sql
+```properties
+spring.jpa.hibernate.ddl-auto=update
 ```
 
-Migration bổ sung object key cho logo và ảnh bìa:
+Các file SQL chỉ thực hiện việc tạo database, không tạo bảng/trigger/khóa ngoại:
 
-```text
-V009__business_branding_object_keys.sql
+- `Code/Server/database/create-user.sql` → tạo database `household_business_platform` và đổi mật khẩu root;
+- `Code/Server/database/init.sql` → tạo database `agritrade` (bản cũ).
+
+Không sử dụng Flyway/Liquibase hay thư mục migration SQL.
+
+### 12.2. Seed data
+
+Seed data là các file JSON, được theo dõi bởi bảng `seed_config`. Định dạng chung:
+
+```json
+{ "table": "...", "version": N, "rows": [ ... ] }
 ```
 
-```sql
-ALTER TABLE businesses
-    ADD COLUMN logo_object_key VARCHAR(500) NULL,
-    ADD COLUMN cover_image_object_key VARCHAR(500) NULL;
-```
+`seed_config` ghi nhận `checksum`, `version`, `seed_order` và `row_count` cho từng file; seed chỉ chạy khi dữ liệu thay đổi so với lần chạy trước.
 
-Cấu trúc thư mục đề xuất:
+Danh sách file seed (`Code/Server/seed/`, bản plaintext chạy thực tế):
 
-```text
-database/
-├── schema.sql
-├── migrations/
-│   ├── V001__identity_and_subscription.sql
-│   ├── V002__product_and_inventory.sql
-│   ├── V003__sales_and_debt.sql
-│   ├── V004__ai_and_notifications.sql
-│   ├── V005__accounting_and_reporting.sql
-│   ├── V006__platform_administration.sql
-│   ├── V007__triggers.sql
-│   ├── V008__support_S1_S2_S4_UNSIGNED.sql
-│   └── V009__business_branding_object_keys.sql
-├── seed/
-│   └── reference-data.sql
-└── verification/
-    └── verify-schema.sql
-```
+| File | Bảng | Số record | Ghi chú |
+|---|---|---:|---|
+| `subscription_plans.json` | subscription_plans | 4 | FREE/BASIC/PREMIUM/STANDARD |
+| `roles.json` | roles | 3 | ADMIN/BUSINESS_OWNER/EMPLOYEE |
+| `users.json` | users | 4 | admin + owner + demo |
+| `businesses.json` | businesses | 2 | hộ kinh doanh demo |
+| `subscriptions.json` | subscriptions | 1 | đăng ký gói |
+| `audit_logs.json` | audit_logs | 7 | nhật ký kiểm toán |
+| `terms_consents.json` | terms_consents | 2 | ⭐ đồng thuận điều khoản |
+| `debt_transactions.json` | debt_transactions | 0 | chưa có dữ liệu |
+| `test_huy.json` / `test_huy3.json` | test_huy / test_huy3 | 4 / 12 | bảng test, không có entity |
+| `seed_config.json` | seed_config | 11 | cấu hình seed |
+
+Thứ tự seed (`seed_order`): subscription_plans(10) → test_huy(20) → test_huy3(30) → debt_transactions(40) → roles(50) → seed_config(60) → users(70) → audit_logs(80) → businesses(90) → subscriptions(100) → terms_consents(110).
+
+### 12.3. Cơ chế snapshot/restore có mã hóa
+
+- Thư mục `seed/` (gốc) chứa bản **mã hóa** (base64) kèm `seed_key.json` dùng để giải mã;
+- `Code/Server/seed/` chứa bản **plaintext** chạy thực tế;
+- Có git merge driver `merge-seed.js` để gộp file seed theo `id` khi merge (cấu hình trong `.gitattributes`).
 
 ---
 
@@ -949,7 +964,7 @@ Kết quả:
 
 ```text
 33 bảng
-68 khóa ngoại
+688 khóa ngoại
 10 trigger
 ```
 
@@ -1092,13 +1107,13 @@ Các điểm chính:
 - sổ và báo cáo được quản lý theo phiên bản;
 - 10 trigger bảo vệ các quy tắc liên bảng;
 - audit log, RBAC và least privilege hỗ trợ bảo mật;
-- migration đã xử lý đúng kiểu `BIGINT UNSIGNED`;
+- schema do JPA sinh tự động, seed data theo dõi bằng `seed_config`;
 - schema đã được xác minh thành công.
 
 Thông số cuối cùng:
 
 ```text
-33 bảng
+36 bảng
 68 khóa ngoại
 10 trigger
 ```
