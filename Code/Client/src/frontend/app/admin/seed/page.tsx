@@ -48,7 +48,7 @@ export default function SeedPage() {
   }, [load]);
 
   useEffect(() => {
-    if (localStorage.getItem('username') !== 'Admin') {
+    if (sessionStorage.getItem('username') !== 'Admin') {
       router.push('/admin');
       return;
     }

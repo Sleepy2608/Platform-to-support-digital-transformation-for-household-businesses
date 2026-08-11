@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
 
 const NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash?: string; path?: string }> = [
   { label: 'Sản phẩm & Danh mục', href: '/owner/products', icon: PackageOpen, path: '/owner/products' },
@@ -31,8 +32,8 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   const [currentHash, setCurrentHash] = useState('#profile');
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    const rolesRaw = localStorage.getItem('roles');
+    const token = getAccessToken();
+    const rolesRaw = getAuthItem('roles');
 
     if (!token || !rolesRaw) {
       router.push('/login');
@@ -45,9 +46,10 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
         router.push('/login');
         return;
       }
-      setFullName(localStorage.getItem('fullName') || 'Chủ hộ kinh doanh');
-      setUsername(localStorage.getItem('username') || '');
-      setAvatarUrl(localStorage.getItem('avatarUrl') || '');
+
+      setFullName(getAuthItem('fullName') || 'Chủ hộ kinh doanh');
+      setUsername(getAuthItem('username') || '');
+      setAvatarUrl(getAuthItem('avatarUrl') || '');
       setLoading(false);
     } catch {
       router.push('/login');
@@ -59,21 +61,13 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
       const detail = event instanceof CustomEvent
         ? event.detail as { fullName?: string; avatarUrl?: string }
         : undefined;
-      setFullName(detail?.fullName ?? localStorage.getItem('fullName') ?? 'Chủ hộ kinh doanh');
-      setAvatarUrl(detail?.avatarUrl ?? localStorage.getItem('avatarUrl') ?? '');
-    };
-
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === 'fullName' || event.key === 'avatarUrl') {
-        syncOwnerSummary();
-      }
+      setFullName(detail?.fullName ?? getAuthItem('fullName') ?? 'Chủ hộ kinh doanh');
+      setAvatarUrl(detail?.avatarUrl ?? getAuthItem('avatarUrl') ?? '');
     };
 
     window.addEventListener('owner-profile-updated', syncOwnerSummary);
-    window.addEventListener('storage', handleStorage);
     return () => {
       window.removeEventListener('owner-profile-updated', syncOwnerSummary);
-      window.removeEventListener('storage', handleStorage);
     };
   }, []);
 
@@ -92,9 +86,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();
-    document.cookie = 'auth_token=; max-age=0; path=/';
-    document.cookie = 'auth_role=; max-age=0; path=/';
+    clearAuth();
     router.push('/login');
   };
 

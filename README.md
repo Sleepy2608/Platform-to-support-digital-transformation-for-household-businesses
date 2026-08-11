@@ -11,10 +11,10 @@
 | :---: | :--- | :---: | :---: | :--- |
 | 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Leader | Repository & Git Management, Authorization, Password Encoder and Security, RBAC |
 | 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer | Register/Login web, Owner Account Management |
-| 3 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer | Manage purchase package payments, Admin Account Management |
-| 4 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Feature Developer | Database Management, Audit Log |
-| 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Tester & Debugger | Employee Account Management |
-| 6 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager | Database Management, CRUD |
+| 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger | Database Management, Audit Log |
+| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager | Database Management, CRUD |
+| 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Feature Developer | Employee Account Management |
+| 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer | Manage purchase package payments, Admin Account Management |
 
 > **Ghi chú:**
 > - Mọi người đều được giao task có backend code bằng Java (Vai trò trên chỉ bao gồm các vai trò khác ngoài Backend Developer)

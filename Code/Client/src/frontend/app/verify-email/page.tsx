@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useRef, Suspense } from 'react';
 import { Store, ArrowLeft, ShieldCheck, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal';
+import { saveAuthData } from '../lib/apiClient';
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -69,19 +70,17 @@ function VerifyEmailContent() {
       
       if (json.data && json.data.accessToken) {
         const { accessToken, refreshToken, userId, username: uName, fullName, email, roles, businessId, avatarUrl } = json.data;
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('userId', String(userId));
-        localStorage.setItem('username', uName || username);
-        localStorage.setItem('fullName', fullName || '');
-        localStorage.setItem('email', email || '');
-        localStorage.setItem('roles', JSON.stringify(roles || ['BUSINESS_OWNER']));
-        localStorage.setItem('businessId', String(businessId ?? ''));
-        localStorage.setItem('avatarUrl', avatarUrl || '');
-
-        const maxAge = 60 * 60 * 24;
-        document.cookie = `auth_token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
-        document.cookie = `auth_role=BUSINESS_OWNER; path=/; max-age=${maxAge}; SameSite=Lax`;
+        saveAuthData({
+          accessToken,
+          refreshToken,
+          userId,
+          username: uName || username,
+          fullName,
+          email,
+          roles: roles || ['BUSINESS_OWNER'],
+          businessId,
+          avatarUrl,
+        });
       }
 
       setSuccess(true);
