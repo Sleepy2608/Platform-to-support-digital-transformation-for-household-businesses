@@ -1,6 +1,6 @@
 {
   "table" : "subscription_plans",
-  "version" : 8,
+  "version" : 10,
   "rows" : [ {
     "id" : 1,
     "annual_price" : 0.00,
@@ -41,5 +41,15 @@
     "plan_name" : "Gói Standard",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-09T17:44:16.270805"
+  }, {
+    "id" : 5,
+    "annual_price" : 234000.00,
+    "created_at" : "2026-08-11T05:30:00.300988",
+    "description" : null,
+    "monthly_price" : 1000.00,
+    "plan_code" : "1",
+    "plan_name" : "12",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-11T05:30:00.300988"
   } ]
 }

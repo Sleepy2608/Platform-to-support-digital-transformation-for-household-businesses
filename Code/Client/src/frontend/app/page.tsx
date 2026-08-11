@@ -133,7 +133,6 @@ export default function Home() {
               </div>
             </ScrollReveal>
 
-=======
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-stretch max-w-3xl mx-auto">
 
             {/* Gói STANDARD */}
@@ -190,6 +189,7 @@ export default function Home() {
                 </button>
               </div>
             </ScrollReveal>
+          </div>
           </div>
         </section>
       </div>
