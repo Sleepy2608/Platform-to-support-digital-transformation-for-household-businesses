@@ -9,5 +9,7 @@ import java.util.Optional;
 public interface TaxActivityGroupRepository extends JpaRepository<TaxActivityGroup, Long> {
     Optional<TaxActivityGroup> findByIdAndStatus(Long id, String status);
 
+    Optional<TaxActivityGroup> findFirstByActivityCodeIgnoreCase(String activityCode);
+
     List<TaxActivityGroup> findAllByStatusOrderByActivityNameAsc(String status);
 }
