@@ -61,7 +61,9 @@ function setAuthCookies(accessToken: string, roles: string[] = []) {
     ? 'ADMIN'
     : roles.includes('BUSINESS_OWNER')
       ? 'BUSINESS_OWNER'
-      : '';
+      : roles.includes('EMPLOYEE')
+        ? 'EMPLOYEE'
+        : '';
 
   document.cookie = `auth_token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
   document.cookie = `auth_role=${role}; path=/; max-age=${maxAge}; SameSite=Lax`;

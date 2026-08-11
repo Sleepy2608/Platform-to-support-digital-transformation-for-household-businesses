@@ -101,29 +101,6 @@ public class User implements UserDetails {
     @Transient
     private LocalDateTime deletedAt;
 
-    // ===== Employee profile fields (HBDT-114) =====
-
-    @Column(name = "date_of_birth")
-    private LocalDate dateOfBirth;
-
-    @Column(name = "gender", length = 10)
-    private String gender;
-
-    @Column(name = "address", length = 500)
-    private String address;
-
-    @Column(name = "national_id", length = 20)
-    private String nationalId;
-
-    @Column(name = "join_date")
-    private LocalDate joinDate;
-
-    @Column(name = "position", length = 100)
-    private String position;
-
-    @Column(name = "termination_date")
-    private LocalDate terminationDate;
-
     // ===== Audit =====
 
     @Column(name = "created_at", updatable = false)

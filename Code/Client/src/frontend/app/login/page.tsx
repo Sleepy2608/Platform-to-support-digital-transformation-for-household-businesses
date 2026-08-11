@@ -58,7 +58,10 @@ export default function LoginPage() {
           return;
         }
 
-        if (!Array.isArray(roles) || !roles.includes('BUSINESS_OWNER')) {
+        const isBusinessOwner = Array.isArray(roles) && roles.includes('BUSINESS_OWNER');
+        const isEmployee = Array.isArray(roles) && roles.includes('EMPLOYEE');
+
+        if (!isBusinessOwner && !isEmployee) {
           setError('Tài khoản không có quyền truy cập hệ thống');
           setLoading(false);
           return;
@@ -78,12 +81,14 @@ export default function LoginPage() {
         });
 
         // Route by role
-        if (roles && roles.includes('BUSINESS_OWNER')) {
+        if (isBusinessOwner) {
           if (!businessId) {
             router.push('/onboarding/business-profile');
           } else {
             router.push('/owner/account');
           }
+        } else if (isEmployee) {
+          router.push('/employee/account');
         }
       } else {
         throw new Error('Dữ liệu phản hồi không hợp lệ');

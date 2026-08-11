@@ -2,6 +2,7 @@ package com.hbdt.employee.service;
 
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
+import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.common.service.OtpService;
 import com.hbdt.employee.dto.EmployeeProfileResponse;
 import com.hbdt.employee.dto.UpdateEmployeeProfileRequest;
@@ -15,19 +16,13 @@ import com.hbdt.owner.dto.VerifyOtpRequest;
 import com.hbdt.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Service cho Employee tự quản lý hồ sơ cá nhân (HBDT-114).
@@ -46,19 +41,16 @@ public class EmployeeProfileService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
-
-    @Value("${app.upload.dir:./uploads}")
-    private String uploadDir;
-
-    @Value("${server.port:8080}")
-    private String serverPort;
+    private final ImageStorageService imageStorageService;
 
     public EmployeeProfileService(UserRepository userRepository,
-                                  PasswordEncoder passwordEncoder,
-                                  OtpService otpService) {
+                                   PasswordEncoder passwordEncoder,
+                                   OtpService otpService,
+                                   ImageStorageService imageStorageService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.otpService = otpService;
+        this.imageStorageService = imageStorageService;
     }
 
     // =========================================================
@@ -93,26 +85,17 @@ public class EmployeeProfileService {
             throw new BadRequestException("Chỉ chấp nhận ảnh JPG, PNG, WEBP, GIF");
         }
 
-        String originalFilename = file.getOriginalFilename();
-        String ext = ".jpg";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            ext = originalFilename.substring(originalFilename.lastIndexOf('.'));
-        }
-
-        String fileName = UUID.randomUUID() + ext;
-        Path avatarDir = Paths.get(uploadDir, "avatars");
-        Files.createDirectories(avatarDir);
-        Path targetPath = avatarDir.resolve(fileName);
-        Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-
-        String avatarUrl = "http://localhost:" + serverPort + "/uploads/avatars/" + fileName;
-
         User user = findActiveEmployee(username);
-        user.setAvatarUrl(avatarUrl);
+        ImageStorageService.StoredImage storedImage = imageStorageService.store(
+                file, "avatars/" + user.getId(), MAX_AVATAR_SIZE, ALLOWED_MIME);
+        user.setAvatarObjectKey(storedImage.objectKey());
+        user.setAvatarSha256(storedImage.sha256());
+        user.setAvatarContentType(storedImage.contentType());
+        user.setAvatarSize(storedImage.size());
         userRepository.save(user);
 
-        logger.info("Avatar uploaded for employee={}: {}", username, avatarUrl);
-        return avatarUrl;
+        logger.info("Avatar uploaded for employee={}, sha256={}", username, storedImage.sha256());
+        return imageStorageService.toPublicUrl(storedImage.objectKey());
     }
 
     // =========================================================
@@ -200,7 +183,7 @@ public class EmployeeProfileService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phone(user.getPhone())
-                .avatarUrl(user.getAvatarUrl())
+                .avatarUrl(imageStorageService.toPublicUrl(user.getAvatarObjectKey()))
                 .status(user.getStatus())
                 .dateOfBirth(user.getDateOfBirth())
                 .gender(user.getGender())
