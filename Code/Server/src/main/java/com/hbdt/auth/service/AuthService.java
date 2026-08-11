@@ -3,6 +3,7 @@ package com.hbdt.auth.service;
 import com.hbdt.auth.dto.*;
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.security.JwtTokenProvider;
+import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.common.service.OtpService;
 import com.hbdt.consent.service.TermsConsentService;
 import com.hbdt.entity.Role;
@@ -35,6 +36,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final OtpService otpService;
     private final TermsConsentService termsConsentService;
+    private final ImageStorageService imageStorageService;
 
     public AuthService(AuthenticationManager authenticationManager,
                        UserRepository userRepository,
@@ -42,7 +44,8 @@ public class AuthService {
                        PasswordEncoder passwordEncoder,
                        JwtTokenProvider jwtTokenProvider,
                        OtpService otpService,
-                       TermsConsentService termsConsentService) {
+                       TermsConsentService termsConsentService,
+                       ImageStorageService imageStorageService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -50,6 +53,7 @@ public class AuthService {
         this.jwtTokenProvider = jwtTokenProvider;
         this.otpService = otpService;
         this.termsConsentService = termsConsentService;
+        this.imageStorageService = imageStorageService;
     }
 
     /**
@@ -175,6 +179,7 @@ public class AuthService {
                 .fullName(user.getFullName())
                 .roles(roles)
                 .businessId(user.getBusinessId())
+                .avatarUrl(imageStorageService.toPublicUrl(user.getAvatarObjectKey()))
                 .build();
     }
 
@@ -236,6 +241,7 @@ public class AuthService {
                 .fullName(user.getFullName())
                 .roles(roles)
                 .businessId(user.getBusinessId())
+                .avatarUrl(imageStorageService.toPublicUrl(user.getAvatarObjectKey()))
                 .build();
     }
 }
