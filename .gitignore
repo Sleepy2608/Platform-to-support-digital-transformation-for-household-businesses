@@ -42,7 +42,6 @@ nbproject/
 .env
 .env.*
 !.env.example
-!Code/Server/.env
 
 *.local
 
