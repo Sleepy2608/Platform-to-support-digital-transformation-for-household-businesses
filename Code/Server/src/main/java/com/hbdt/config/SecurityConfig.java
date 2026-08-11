@@ -1,6 +1,5 @@
 package com.hbdt.config;
 
-import com.hbdt.common.security.AuditLoggingFilter;
 import com.hbdt.common.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,14 +24,11 @@ public class SecurityConfig {
 
     private final UserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final AuditLoggingFilter auditLoggingFilter;
 
     public SecurityConfig(UserDetailsService userDetailsService,
-                          JwtAuthenticationFilter jwtAuthenticationFilter,
-                          AuditLoggingFilter auditLoggingFilter) {
+                          JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.userDetailsService = userDetailsService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.auditLoggingFilter = auditLoggingFilter;
     }
 
     @Bean
@@ -84,13 +80,14 @@ public class SecurityConfig {
                     .requestMatchers("/api/seed/**").hasRole("ADMIN")
                     // Owner routes (cho phép cả BUSINESS_OWNER và OWNER)
                     .requestMatchers("/api/owner/**").hasAnyRole("BUSINESS_OWNER", "OWNER")
+                    // Employee routes (nhân viên tự quản lý hồ sơ)
+                    .requestMatchers("/api/employee/**").hasRole("EMPLOYEE")
                     // Everything else requires authentication
                     .anyRequest().authenticated()
             );
 
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        http.addFilterAfter(auditLoggingFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
