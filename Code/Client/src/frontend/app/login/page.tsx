@@ -76,6 +76,8 @@ export default function LoginPage() {
 
         const primaryRole = Array.isArray(roles) && roles.includes('BUSINESS_OWNER')
           ? 'BUSINESS_OWNER'
+          : Array.isArray(roles) && roles.includes('EMPLOYEE')
+          ? 'EMPLOYEE'
           : '';
         document.cookie = `auth_role=${primaryRole}; path=/; max-age=${maxAge}; SameSite=Lax`;
 
@@ -86,6 +88,8 @@ export default function LoginPage() {
           } else {
             router.push('/owner/account');
           }
+        } else if (roles && roles.includes('EMPLOYEE')) {
+          router.push('/employee/account');
         } else {
           setError('Tài khoản không có quyền truy cập hệ thống');
           localStorage.clear();
