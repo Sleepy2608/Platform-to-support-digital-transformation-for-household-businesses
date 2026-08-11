@@ -9,5 +9,7 @@ import java.util.Optional;
 public interface UnitRepository extends JpaRepository<Unit, Long> {
     Optional<Unit> findByIdAndStatus(Long id, String status);
 
+    Optional<Unit> findFirstByUnitCodeIgnoreCase(String unitCode);
+
     List<Unit> findAllByStatusOrderByUnitNameAsc(String status);
 }

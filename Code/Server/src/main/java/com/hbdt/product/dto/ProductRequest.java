@@ -1,9 +1,11 @@
 package com.hbdt.product.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
+import java.math.BigDecimal;
 
 public record ProductRequest(
         @NotBlank(message = "Mã sản phẩm không được để trống")
@@ -16,7 +18,6 @@ public record ProductRequest(
 
         Long categoryId,
 
-        @NotNull(message = "Đơn vị tính cơ bản không được để trống")
         Long baseUnitId,
 
         Long defaultTaxActivityGroupId,
@@ -27,6 +28,9 @@ public record ProductRequest(
         String description,
 
         @Pattern(regexp = "(?i)ACTIVE|INACTIVE", message = "Trạng thái phải là ACTIVE hoặc INACTIVE")
-        String status
+        String status,
+
+        @DecimalMin(value = "0.0", inclusive = true, message = "Số lượng sản phẩm không được âm")
+        BigDecimal quantityOnHand
 ) {
 }

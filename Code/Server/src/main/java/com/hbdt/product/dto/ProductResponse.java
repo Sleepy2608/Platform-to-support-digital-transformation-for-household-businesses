@@ -1,5 +1,6 @@
 package com.hbdt.product.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record ProductResponse(
@@ -15,6 +16,7 @@ public record ProductResponse(
         String imageUrl,
         String description,
         String status,
+        BigDecimal quantityOnHand,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

@@ -2,11 +2,13 @@ package com.hbdt.product.service;
 
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.entity.Category;
+import com.hbdt.entity.InventoryBalance;
 import com.hbdt.entity.Product;
 import com.hbdt.entity.Unit;
 import com.hbdt.product.dto.ProductRequest;
 import com.hbdt.product.dto.ProductResponse;
 import com.hbdt.repository.CategoryRepository;
+import com.hbdt.repository.InventoryBalanceRepository;
 import com.hbdt.repository.ProductRepository;
 import com.hbdt.repository.TaxActivityGroupRepository;
 import com.hbdt.repository.UnitRepository;
@@ -14,8 +16,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,6 +40,8 @@ class ProductServiceTest {
     @Mock
     private UnitRepository unitRepository;
     @Mock
+    private InventoryBalanceRepository inventoryBalanceRepository;
+    @Mock
     private TaxActivityGroupRepository taxActivityGroupRepository;
     @Mock
     private BusinessContextService businessContextService;
@@ -44,14 +51,14 @@ class ProductServiceTest {
     @BeforeEach
     void setUp() {
         productService = new ProductService(productRepository, categoryRepository, unitRepository,
-                taxActivityGroupRepository, businessContextService);
+                inventoryBalanceRepository, taxActivityGroupRepository, businessContextService);
         when(businessContextService.requireBusinessId("owner")).thenReturn(10L);
     }
 
     @Test
     void createUsesOwnedActiveCategoryAndActiveUnit() {
         ProductRequest request = new ProductRequest(
-                " SP-01 ", " Cà phê ", 2L, 3L, null, null, "Mô tả", null);
+                " SP-01 ", " Cà phê ", 2L, 3L, null, null, "Mô tả", null, new BigDecimal("25"));
         Category category = Category.builder().id(2L).businessId(10L).categoryName("Đồ uống").status("ACTIVE").build();
         Unit unit = Unit.builder().id(3L).unitCode("KG").unitName("Kilogram").status("ACTIVE").build();
         when(categoryRepository.findByIdAndBusinessId(2L, 10L)).thenReturn(Optional.of(category));
@@ -71,12 +78,40 @@ class ProductServiceTest {
         assertEquals("Đồ uống", response.categoryName());
         assertEquals("Kilogram", response.baseUnitName());
         assertEquals("ACTIVE", response.status());
+        ArgumentCaptor<InventoryBalance> balanceCaptor = ArgumentCaptor.forClass(InventoryBalance.class);
+        verify(inventoryBalanceRepository).save(balanceCaptor.capture());
+        assertEquals(new BigDecimal("25"), balanceCaptor.getValue().getQuantityOnHand());
+    }
+
+    @Test
+    void createAcceptsQuantityAndCreatesDefaultUnitWhenUnitsAreEmpty() {
+        ProductRequest request = new ProductRequest(
+                "SP-02", "Bánh mì", null, null, null, null, null, "ACTIVE", new BigDecimal("12.5"));
+        Unit defaultUnit = Unit.builder().id(4L).unitCode("SAN_PHAM").unitName("Sản phẩm").status("ACTIVE").build();
+        when(unitRepository.findAllByStatusOrderByUnitNameAsc("ACTIVE")).thenReturn(List.of());
+        when(unitRepository.findFirstByUnitCodeIgnoreCase("SAN_PHAM")).thenReturn(Optional.empty());
+        when(unitRepository.save(any(Unit.class))).thenReturn(defaultUnit);
+        when(unitRepository.findByIdAndStatus(4L, "ACTIVE")).thenReturn(Optional.of(defaultUnit));
+        when(unitRepository.findById(4L)).thenReturn(Optional.of(defaultUnit));
+        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> {
+            Product value = invocation.getArgument(0);
+            value.setId(9L);
+            return value;
+        });
+
+        ProductResponse response = productService.create("owner", request);
+
+        assertEquals(4L, response.baseUnitId());
+        assertEquals("Sản phẩm", response.baseUnitName());
+        ArgumentCaptor<InventoryBalance> balanceCaptor = ArgumentCaptor.forClass(InventoryBalance.class);
+        verify(inventoryBalanceRepository).save(balanceCaptor.capture());
+        assertEquals(new BigDecimal("12.5"), balanceCaptor.getValue().getQuantityOnHand());
     }
 
     @Test
     void createRejectsCategoryFromAnotherBusiness() {
         ProductRequest request = new ProductRequest(
-                "SP-01", "Cà phê", 99L, 3L, null, null, null, "ACTIVE");
+                "SP-01", "Cà phê", 99L, 3L, null, null, null, "ACTIVE", BigDecimal.ZERO);
         when(categoryRepository.findByIdAndBusinessId(99L, 10L)).thenReturn(Optional.empty());
 
         BadRequestException error = assertThrows(BadRequestException.class,
@@ -89,7 +124,7 @@ class ProductServiceTest {
     @Test
     void createRejectsInactiveUnit() {
         ProductRequest request = new ProductRequest(
-                "SP-01", "Cà phê", null, 3L, null, null, null, "ACTIVE");
+                "SP-01", "Cà phê", null, 3L, null, null, null, "ACTIVE", BigDecimal.ZERO);
         when(unitRepository.findByIdAndStatus(3L, "ACTIVE")).thenReturn(Optional.empty());
 
         BadRequestException error = assertThrows(BadRequestException.class,

@@ -3,6 +3,7 @@ package com.hbdt.product.service;
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
 import com.hbdt.entity.Category;
+import com.hbdt.entity.InventoryBalance;
 import com.hbdt.entity.Product;
 import com.hbdt.entity.TaxActivityGroup;
 import com.hbdt.entity.Unit;
@@ -11,6 +12,7 @@ import com.hbdt.product.dto.ProductRequest;
 import com.hbdt.product.dto.ProductResponse;
 import com.hbdt.product.dto.ReferenceOption;
 import com.hbdt.repository.CategoryRepository;
+import com.hbdt.repository.InventoryBalanceRepository;
 import com.hbdt.repository.ProductRepository;
 import com.hbdt.repository.TaxActivityGroupRepository;
 import com.hbdt.repository.UnitRepository;
@@ -22,6 +24,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -33,22 +36,27 @@ public class ProductService {
 
     private static final String ACTIVE = "ACTIVE";
     private static final String INACTIVE = "INACTIVE";
+    private static final String DEFAULT_UNIT_CODE = "SAN_PHAM";
+    private static final String DEFAULT_UNIT_NAME = "Sản phẩm";
     private static final Set<String> SORTABLE_FIELDS = Set.of("productCode", "productName", "status", "createdAt", "updatedAt");
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final UnitRepository unitRepository;
+    private final InventoryBalanceRepository inventoryBalanceRepository;
     private final TaxActivityGroupRepository taxActivityGroupRepository;
     private final BusinessContextService businessContextService;
 
     public ProductService(ProductRepository productRepository,
                           CategoryRepository categoryRepository,
                           UnitRepository unitRepository,
+                          InventoryBalanceRepository inventoryBalanceRepository,
                           TaxActivityGroupRepository taxActivityGroupRepository,
                           BusinessContextService businessContextService) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.unitRepository = unitRepository;
+        this.inventoryBalanceRepository = inventoryBalanceRepository;
         this.taxActivityGroupRepository = taxActivityGroupRepository;
         this.businessContextService = businessContextService;
     }
@@ -108,20 +116,23 @@ public class ProductService {
         Long businessId = businessContextService.requireBusinessId(username);
         String code = cleanRequired(request.productCode());
         String name = cleanRequired(request.productName());
+        BigDecimal quantity = normalizeQuantity(request.quantityOnHand(), BigDecimal.ZERO);
         validateUnique(businessId, code, name, null);
-        validateReferences(businessId, request.categoryId(), request.baseUnitId(), request.defaultTaxActivityGroupId());
+        Long baseUnitId = resolveBaseUnitId(request.baseUnitId());
+        validateReferences(businessId, request.categoryId(), baseUnitId, request.defaultTaxActivityGroupId());
 
         Product saved = productRepository.save(Product.builder()
                 .businessId(businessId)
                 .productCode(code)
                 .productName(name)
                 .categoryId(request.categoryId())
-                .baseUnitId(request.baseUnitId())
+                .baseUnitId(baseUnitId)
                 .defaultTaxActivityGroupId(request.defaultTaxActivityGroupId())
                 .imageUrl(cleanOptional(request.imageUrl()))
                 .description(cleanOptional(request.description()))
                 .status(normalizeStatus(request.status(), ACTIVE))
                 .build());
+        saveQuantity(saved, quantity);
         return toResponse(saved);
     }
 
@@ -131,18 +142,23 @@ public class ProductService {
         Product product = findOwned(id, businessId);
         String code = cleanRequired(request.productCode());
         String name = cleanRequired(request.productName());
+        Long baseUnitId = request.baseUnitId() == null ? product.getBaseUnitId() : request.baseUnitId();
         validateUnique(businessId, code, name, id);
-        validateReferences(businessId, request.categoryId(), request.baseUnitId(), request.defaultTaxActivityGroupId());
+        validateReferences(businessId, request.categoryId(), baseUnitId, request.defaultTaxActivityGroupId());
 
         product.setProductCode(code);
         product.setProductName(name);
         product.setCategoryId(request.categoryId());
-        product.setBaseUnitId(request.baseUnitId());
+        product.setBaseUnitId(baseUnitId);
         product.setDefaultTaxActivityGroupId(request.defaultTaxActivityGroupId());
         product.setImageUrl(cleanOptional(request.imageUrl()));
         product.setDescription(cleanOptional(request.description()));
         product.setStatus(normalizeStatus(request.status(), product.getStatus()));
-        return toResponse(productRepository.save(product));
+        Product saved = productRepository.save(product);
+        if (request.quantityOnHand() != null) {
+            saveQuantity(saved, normalizeQuantity(request.quantityOnHand(), BigDecimal.ZERO));
+        }
+        return toResponse(saved);
     }
 
     @Transactional
@@ -198,6 +214,10 @@ public class ProductService {
         TaxActivityGroup taxGroup = product.getDefaultTaxActivityGroupId() == null
                 ? null
                 : taxActivityGroupRepository.findById(product.getDefaultTaxActivityGroupId()).orElse(null);
+        BigDecimal quantityOnHand = inventoryBalanceRepository
+                .findByBusinessIdAndProductId(product.getBusinessId(), product.getId())
+                .map(InventoryBalance::getQuantityOnHand)
+                .orElse(BigDecimal.ZERO);
 
         return new ProductResponse(
                 product.getId(),
@@ -212,9 +232,59 @@ public class ProductService {
                 product.getImageUrl(),
                 product.getDescription(),
                 product.getStatus(),
+                quantityOnHand,
                 product.getCreatedAt(),
                 product.getUpdatedAt()
         );
+    }
+
+    private Long resolveBaseUnitId(Long requestedUnitId) {
+        if (requestedUnitId != null) {
+            return requestedUnitId;
+        }
+
+        return unitRepository.findAllByStatusOrderByUnitNameAsc(ACTIVE).stream()
+                .findFirst()
+                .orElseGet(this::activateOrCreateDefaultUnit)
+                .getId();
+    }
+
+    private Unit activateOrCreateDefaultUnit() {
+        return unitRepository.findFirstByUnitCodeIgnoreCase(DEFAULT_UNIT_CODE)
+                .map(unit -> {
+                    unit.setStatus(ACTIVE);
+                    return unitRepository.save(unit);
+                })
+                .orElseGet(() -> unitRepository.save(Unit.builder()
+                        .unitCode(DEFAULT_UNIT_CODE)
+                        .unitName(DEFAULT_UNIT_NAME)
+                        .status(ACTIVE)
+                        .build()));
+    }
+
+    private void saveQuantity(Product product, BigDecimal quantity) {
+        InventoryBalance balance = inventoryBalanceRepository
+                .findByBusinessIdAndProductId(product.getBusinessId(), product.getId())
+                .orElseGet(() -> InventoryBalance.builder()
+                        .businessId(product.getBusinessId())
+                        .productId(product.getId())
+                        .averageUnitCost(BigDecimal.ZERO)
+                        .inventoryValue(BigDecimal.ZERO)
+                        .build());
+        BigDecimal averageCost = balance.getAverageUnitCost() == null
+                ? BigDecimal.ZERO : balance.getAverageUnitCost();
+        balance.setQuantityOnHand(quantity);
+        balance.setAverageUnitCost(averageCost);
+        balance.setInventoryValue(averageCost.multiply(quantity));
+        inventoryBalanceRepository.save(balance);
+    }
+
+    private BigDecimal normalizeQuantity(BigDecimal quantity, BigDecimal fallback) {
+        BigDecimal normalized = quantity == null ? fallback : quantity;
+        if (normalized.signum() < 0) {
+            throw new BadRequestException("Số lượng sản phẩm không được âm");
+        }
+        return normalized;
     }
 
     private String normalizeStatusFilter(String status) {

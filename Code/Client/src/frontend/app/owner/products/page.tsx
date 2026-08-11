@@ -35,6 +35,7 @@ interface Product {
   categoryName?: string;
   baseUnitId: number;
   baseUnitName?: string;
+  quantityOnHand: number;
   defaultTaxActivityGroupId?: number;
   defaultTaxActivityGroupName?: string;
   imageUrl?: string;
@@ -50,7 +51,7 @@ interface ReferenceOption {
 
 const EMPTY_CATEGORY = { categoryCode: '', categoryName: '', description: '', status: 'ACTIVE' as Status };
 const EMPTY_PRODUCT = {
-  productCode: '', productName: '', categoryId: '', baseUnitId: '', defaultTaxActivityGroupId: '',
+  productCode: '', productName: '', categoryId: '', quantityOnHand: '0', defaultTaxActivityGroupId: '',
   imageUrl: '', description: '', status: 'ACTIVE' as Status,
 };
 
@@ -58,7 +59,6 @@ export default function ProductManagementPage() {
   const [tab, setTab] = useState<'products' | 'categories'>('products');
   const [products, setProducts] = useState<PageResponse<Product> | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [units, setUnits] = useState<ReferenceOption[]>([]);
   const [taxGroups, setTaxGroups] = useState<ReferenceOption[]>([]);
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState('');
@@ -81,12 +81,7 @@ export default function ProductManagementPage() {
   }, []);
 
   const loadReferences = useCallback(async () => {
-    const [unitData, taxData] = await Promise.all([
-      apiClient.get<ReferenceOption[]>('/api/products/references/units'),
-      apiClient.get<ReferenceOption[]>('/api/products/references/tax-activity-groups'),
-    ]);
-    setUnits(unitData);
-    setTaxGroups(taxData);
+    setTaxGroups(await apiClient.get<ReferenceOption[]>('/api/products/references/tax-activity-groups'));
   }, []);
 
   const loadProducts = useCallback(async () => {
@@ -138,12 +133,12 @@ export default function ProductManagementPage() {
       productCode: product.productCode,
       productName: product.productName,
       categoryId: product.categoryId ? String(product.categoryId) : '',
-      baseUnitId: String(product.baseUnitId),
+      quantityOnHand: String(product.quantityOnHand ?? 0),
       defaultTaxActivityGroupId: product.defaultTaxActivityGroupId ? String(product.defaultTaxActivityGroupId) : '',
       imageUrl: product.imageUrl || '',
       description: product.description || '',
       status: product.status,
-    } : { ...EMPTY_PRODUCT, baseUnitId: units[0] ? String(units[0].id) : '' });
+    } : EMPTY_PRODUCT);
     setProductModal(true);
   };
 
@@ -174,7 +169,8 @@ export default function ProductManagementPage() {
     const payload = {
       ...productForm,
       categoryId: productForm.categoryId ? Number(productForm.categoryId) : null,
-      baseUnitId: Number(productForm.baseUnitId),
+      baseUnitId: editingProduct?.baseUnitId ?? null,
+      quantityOnHand: Number(productForm.quantityOnHand),
       defaultTaxActivityGroupId: productForm.defaultTaxActivityGroupId
         ? Number(productForm.defaultTaxActivityGroupId) : null,
     };
@@ -295,7 +291,7 @@ export default function ProductManagementPage() {
             <FormField label="Mã sản phẩm"><input required maxLength={50} value={productForm.productCode} onChange={(e) => setProductForm({ ...productForm, productCode: e.target.value })} className="form-input" /></FormField>
             <FormField label="Tên sản phẩm"><input required maxLength={255} value={productForm.productName} onChange={(e) => setProductForm({ ...productForm, productName: e.target.value })} className="form-input" /></FormField>
             <FormField label="Danh mục"><select value={productForm.categoryId} onChange={(e) => setProductForm({ ...productForm, categoryId: e.target.value })} className="form-input"><option value="">Chưa phân loại</option>{categories.filter((c) => c.status === 'ACTIVE').map((c) => <option key={c.id} value={c.id}>{c.categoryName}</option>)}</select></FormField>
-            <FormField label="Đơn vị tính cơ bản"><select required value={productForm.baseUnitId} onChange={(e) => setProductForm({ ...productForm, baseUnitId: e.target.value })} className="form-input"><option value="">Chọn đơn vị</option>{units.map((u) => <option key={u.id} value={u.id}>{u.name} ({u.code})</option>)}</select></FormField>
+            <FormField label="Số lượng sản phẩm"><div className="relative"><input required min="0" step="0.001" type="number" value={productForm.quantityOnHand} onChange={(e) => setProductForm({ ...productForm, quantityOnHand: e.target.value })} className="form-input pr-24" /><span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-slate-400">sản phẩm</span></div></FormField>
             <FormField label="Nhóm hoạt động tính thuế"><select value={productForm.defaultTaxActivityGroupId} onChange={(e) => setProductForm({ ...productForm, defaultTaxActivityGroupId: e.target.value })} className="form-input"><option value="">Không chọn</option>{taxGroups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select></FormField>
             <FormField label="Trạng thái"><StatusSelect value={productForm.status} onChange={(value) => setProductForm({ ...productForm, status: value })} /></FormField>
             <div className="sm:col-span-2"><FormField label="Đường dẫn ảnh"><input maxLength={500} type="url" value={productForm.imageUrl} onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })} className="form-input" /></FormField></div>
@@ -314,7 +310,7 @@ function TabButton({ active, onClick, icon, label }: { active: boolean; onClick:
 
 function ProductTable({ items, onEdit, onDeactivate }: { items: Product[]; onEdit: (item: Product) => void; onDeactivate: (id: number) => void }) {
   if (!items.length) return <EmptyState label="Chưa có sản phẩm phù hợp" />;
-  return <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-400"><tr><th className="px-5 py-3">Sản phẩm</th><th className="px-5 py-3">Danh mục</th><th className="px-5 py-3">Đơn vị</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3 text-right">Thao tác</th></tr></thead><tbody className="divide-y divide-slate-100">{items.map((item) => <tr key={item.id} className="hover:bg-slate-50/70"><td className="px-5 py-4"><p className="font-bold text-slate-900">{item.productName}</p><p className="text-xs text-slate-400">{item.productCode}</p></td><td className="px-5 py-4 text-slate-600">{item.categoryName || 'Chưa phân loại'}</td><td className="px-5 py-4 text-slate-600">{item.baseUnitName || `#${item.baseUnitId}`}</td><td className="px-5 py-4"><StatusBadge status={item.status} /></td><td className="px-5 py-4"><RowActions inactive={item.status === 'INACTIVE'} onEdit={() => onEdit(item)} onDeactivate={() => onDeactivate(item.id)} /></td></tr>)}</tbody></table></div>;
+  return <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-400"><tr><th className="px-5 py-3">Sản phẩm</th><th className="px-5 py-3">Danh mục</th><th className="px-5 py-3">Số lượng</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3 text-right">Thao tác</th></tr></thead><tbody className="divide-y divide-slate-100">{items.map((item) => <tr key={item.id} className="hover:bg-slate-50/70"><td className="px-5 py-4"><p className="font-bold text-slate-900">{item.productName}</p><p className="text-xs text-slate-400">{item.productCode}</p></td><td className="px-5 py-4 text-slate-600">{item.categoryName || 'Chưa phân loại'}</td><td className="px-5 py-4 font-semibold text-slate-700">{Number(item.quantityOnHand || 0).toLocaleString('vi-VN')} sản phẩm</td><td className="px-5 py-4"><StatusBadge status={item.status} /></td><td className="px-5 py-4"><RowActions inactive={item.status === 'INACTIVE'} onEdit={() => onEdit(item)} onDeactivate={() => onDeactivate(item.id)} /></td></tr>)}</tbody></table></div>;
 }
 
 function CategoryTable({ items, onEdit, onDeactivate }: { items: Category[]; onEdit: (item: Category) => void; onDeactivate: (id: number) => void }) {
