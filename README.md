@@ -1,7 +1,13 @@
-# Platform to Support Digital Transformation for Household Businesses
+<p align="center">
+<h1 align="center"> Platform to Support Digital Transformation for Household Businesses </h1>
+</p>
 
-> **Đề tài:** Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh <br>
-> **Môn học:** Lập trình Java
+<p align="center"><em>
+<b>Đề tài:</b> Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh<em> <br>
+<b>Môn học:</b> Lập trình Java 
+<br>
+<img src="https://img.shields.io/badge/Java-21-orange?logo=openjdk" alt="Java-21">
+</p>
 
 ---
 
