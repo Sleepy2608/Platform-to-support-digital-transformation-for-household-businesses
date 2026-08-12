@@ -6,12 +6,12 @@ import com.hbdt.auth.dto.AdminProfileUpdateRequest;
 import com.hbdt.common.dto.ApiResponse;
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
+import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.entity.User;
 import com.hbdt.repository.UserRepository;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,12 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * REST controller for Admin self-service profile management.
@@ -43,17 +38,14 @@ public class AdminProfileController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
-    @Value("${app.upload.dir:./uploads}")
-    private String uploadDir;
-
-    @Value("${server.port:8080}")
-    private String serverPort;
+    private final ImageStorageService imageStorageService;
 
     public AdminProfileController(UserRepository userRepository,
-                                  PasswordEncoder passwordEncoder) {
+                                  PasswordEncoder passwordEncoder,
+                                  ImageStorageService imageStorageService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.imageStorageService = imageStorageService;
     }
 
     /**
@@ -145,28 +137,17 @@ public class AdminProfileController {
             throw new BadRequestException("Chỉ chấp nhận ảnh JPG, PNG, WEBP, GIF");
         }
 
-        // Determine file extension
-        String originalFilename = file.getOriginalFilename();
-        String ext = ".jpg";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            ext = originalFilename.substring(originalFilename.lastIndexOf('.'));
-        }
-
-        // Save file to disk
-        String fileName = UUID.randomUUID() + ext;
-        Path avatarDir = Paths.get(uploadDir, "avatars");
-        Files.createDirectories(avatarDir);
-        Path targetPath = avatarDir.resolve(fileName);
-        Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-
-        // Build accessible URL
-        String avatarUrl = "http://localhost:" + serverPort + "/uploads/avatars/" + fileName;
-
         User admin = findAdmin(userDetails.getUsername());
-        admin.setAvatarUrl(avatarUrl);
+        ImageStorageService.StoredImage storedImage = imageStorageService.store(
+                file, "avatars/" + admin.getId(), MAX_AVATAR_SIZE, ALLOWED_MIME);
+        admin.setAvatarObjectKey(storedImage.objectKey());
+        admin.setAvatarSha256(storedImage.sha256());
+        admin.setAvatarContentType(storedImage.contentType());
+        admin.setAvatarSize(storedImage.size());
         User saved = userRepository.save(admin);
 
-        logger.info("Avatar uploaded for admin={}: {}", userDetails.getUsername(), avatarUrl);
+        logger.info("Avatar uploaded for admin={}, sha256={}",
+                userDetails.getUsername(), storedImage.sha256());
         return ResponseEntity.ok(ApiResponse.success("Cập nhật ảnh đại diện thành công", toResponse(saved)));
     }
 
@@ -184,7 +165,7 @@ public class AdminProfileController {
                 .fullName(user.getFullName())
                 .email(user.getEmail())
                 .phone(user.getPhone())
-                .avatarUrl(user.getAvatarUrl())
+                .avatarUrl(imageStorageService.toPublicUrl(user.getAvatarObjectKey()))
                 .status(user.getStatus())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
