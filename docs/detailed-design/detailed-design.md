@@ -40,6 +40,7 @@
    - 3.6. [Trigger](#36-trigger)
    - 3.7. [Transaction quan trọng](#37-transaction-quan-trọng)
    - 3.8. [Quản lý schema và seed](#38-quản-lý-schema-và-seed)
+   - 3.9. [Chiến lược Indexing chi tiết](#39-chiến-lược-indexing-chi-tiết)
 4. [Thiết kế chi tiết Frontend Web Apps](#4-thiết-kế-chi-tiết-frontend-web-apps)
    - 4.1. [Công nghệ](#41-công-nghệ)
    - 4.2. [Cấu trúc thư mục và định tuyến](#42-cấu-trúc-thư-mục-và-định-tuyến)
@@ -74,6 +75,8 @@
    - 7.6. [Workflow AI Draft Order](#76-workflow-ai-draft-order)
    - 7.7. [Workflow Kế toán, Thuế & Báo cáo](#77-workflow-kế-toán-thuế--báo-cáo)
    - 7.8. [Workflow Quản trị (Admin)](#78-workflow-quản-trị-admin)
+   - 7.9. [Workflow Nhập kho & Tồn kho](#79-workflow-nhập-kho--tồn-kho)
+   - 7.10. [Workflow Khách hàng & Công nợ](#710-workflow-khách-hàng--công-nợ)
 8. [Sequence Diagram và Class Diagram chi tiết](#8-sequence-diagram-và-class-diagram-chi-tiết)
    - 8.1. [Class Diagram — Tổng quan Entity](#81-class-diagram--tổng-quan-entity)
    - 8.2. [Class Diagram — Service Layer](#82-class-diagram--service-layer)
@@ -83,6 +86,13 @@
    - 8.6. [Sequence — Đăng nhập & Gọi API](#86-sequence--đăng-nhập--gọi-api)
    - 8.7. [Sequence — CRUD Sản phẩm (multi-tenant)](#87-sequence--crud-sản-phẩm-multi-tenant)
    - 8.8. [Sequence — Chọn gói thuê bao](#88-sequence--chọn-gói-thuê-bao)
+   - 8.9. [Class Diagram — Chi tiết Module Auth](#89-class-diagram--chi-tiết-module-auth)
+   - 8.10. [Class Diagram — Chi tiết Module Owner](#810-class-diagram--chi-tiết-module-owner)
+   - 8.11. [Class Diagram — Chi tiết Module Product](#811-class-diagram--chi-tiết-module-product)
+   - 8.12. [Sequence — Quên mật khẩu](#812-sequence--quên-mật-khẩu)
+   - 8.13. [Sequence — Đổi Email/SĐT (OTP)](#813-sequence--đổi-emailsđt-otp)
+   - 8.14. [Sequence — Checkout & Công nợ](#814-sequence--checkout--công-nợ)
+   - 8.15. [Sequence — AI Draft Order](#815-sequence--ai-draft-order)
 9. [Thiết kế bảo mật chi tiết](#9-thiết-kế-bảo-mật-chi-tiết)
    - 9.1. [Xác thực — JWT (stateless)](#91-xác-thực--jwt-stateless)
    - 9.2. [Mật khẩu](#92-mật-khẩu)
@@ -587,6 +597,8 @@ Client → POST /api/products (Authorization: Bearer token)
 
 ## 2.6. Xử lý lỗi và format response
 
+### 2.6.1. Format response chuẩn
+
 Mọi response của API đều bọc trong `ApiResponse<T>`:
 
 ```json
@@ -597,14 +609,51 @@ Mọi response của API đều bọc trong `ApiResponse<T>`:
 }
 ```
 
-Lỗi nghiệp vụ được ném từ service dưới dạng exception, tầng xử lý toàn cục chuyển thành:
+### 2.6.2. Cách hoạt động của `@RestControllerAdvice`
 
-| Exception | HTTP Status |
+- Khi một exception nghiệp vụ được ném ra từ tầng Service (hoặc Controller), nó lan truyền lên đến **`@RestControllerAdvice` toàn cục** (Global Exception Handler) trong `common/exception`.
+- Handler bắt exception theo từng loại và trả về `ResponseEntity<ApiResponse<T>>` với HTTP status tương ứng.
+- Người gọi API luôn nhận được body lỗi chuẩn (không tràn stack trace ra ngoài), đồng thời exception được ghi log phục vụ truy vết.
+
+```text
+Service ném exception
+   → @RestControllerAdvice (GlobalExceptionHandler)
+       → xác định loại exception
+       → ghi log (kèm requestId)
+       → trả ResponseEntity<ApiResponse> (success=false) + HTTP status
+```
+
+| Exception (`common/exception`) | HTTP Status |
 |---|---|
 | `BadRequestException` | 400 Bad Request |
 | `ResourceNotFoundException` | 404 Not Found |
 | Lỗi xác thực (sai mật khẩu, token hết hạn) | 401 Unauthorized |
-| Sai quyền truy cập | 403 Forbidden |
+| Sai quyền truy cập (`AccessDeniedException`) | 403 Forbidden |
+| Validation exception (`MethodArgumentNotValidException`) | 400 Bad Request |
+
+### 2.6.3. Bảng mã lỗi nghiệp vụ
+
+| Mã lỗi | Loại | HTTP Status | Thông báo tiếng Việt (mẫu) |
+|---|---|---|---|
+| `AUTH_001` | Sai thông tin đăng nhập | 401 | "Tên đăng nhập hoặc mật khẩu không đúng" |
+| `AUTH_002` | Tài khoản bị khóa | 403 | "Tài khoản đã bị khóa" |
+| `AUTH_003` | OTP không hợp lệ / hết hạn | 400 | "Mã xác thực không hợp lệ hoặc đã hết hạn" |
+| `AUTH_004` | Refresh token không hợp lệ | 401 | "Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại" |
+| `USER_001` | Trùng username/email/phone | 409 | "Tên đăng nhập đã tồn tại" / "Email đã được sử dụng" |
+| `USER_002` | Tài khoản không tồn tại | 404 | "Không tìm thấy tài khoản" |
+| `PWD_001` | Mật khẩu cũ không đúng | 400 | "Mật khẩu hiện tại không chính xác" |
+| `PWD_002` | Mật khẩu quá ngắn | 400 | "Mật khẩu phải từ 6 ký tự trở lên" |
+| `OWNER_001` | Chưa có hồ sơ kinh doanh | 404 | "Chưa có hồ sơ kinh doanh" |
+| `OWNER_002` | Không được thay đổi Root Admin | 400 | "Không thể thay đổi trạng thái hoạt động của Root Admin" |
+| `PRODUCT_001` | Không tìm thấy sản phẩm | 404 | "Không tìm thấy sản phẩm" |
+| `PRODUCT_002` | Trùng mã sản phẩm | 409 | "Mã sản phẩm đã tồn tại" |
+| `CATEGORY_001` | Không tìm thấy danh mục | 404 | "Không tìm thấy danh mục" |
+| `PLAN_001` | Không tìm thấy gói thuê bao | 404 | "Không tìm thấy gói thuê bao" |
+| `PLAN_002` | Gói thuê bao đã vô hiệu hóa | 400 | "Gói thuê bao đã bị vô hiệu hóa" |
+| `VALIDATION_001` | Dữ liệu không hợp lệ | 400 | "Dữ liệu không hợp lệ" (kèm chi tiết trường lỗi) |
+| `GENERAL_500` | Lỗi hệ thống | 500 | "Đã có lỗi xảy ra, vui lòng thử lại sau" |
+
+> **Ghi chú:** Bảng mã lỗi trên là **quy ước đề xuất** cho tài liệu; khi triển khai cần thống nhất theo bộ mã chung của team.
 
 ---
 
@@ -744,6 +793,98 @@ Cơ sở dữ liệu gồm **34 bảng nghiệp vụ** (5 phân hệ) + **2 bả
 - Schema do Hibernate sinh (dev `update`), prod `validate`.
 - Seed data theo `seed_config` (version/checksum) + cơ chế snapshot/restore có mã hóa (`seed_key`).
 - Xem chi tiết tại `docs/detailed-design/database-design.md` (mục 12, 16, 17).
+
+## 3.9. Chiến lược Indexing chi tiết
+
+> Schema hiện do Hibernate sinh (dev). Các script dưới đây là **chiến lược index đề xuất** khi chuyển sang production (dùng migration có version — Flyway/Liquibase hoặc SQL review). Một số unique constraint đã được khai báo trong entity (JPA).
+
+```sql
+-- ============================================================
+-- INDEXING STRATEGY — HBDT (MySQL 8 / InnoDB)
+-- ============================================================
+
+-- 1. BUSINESS CORE ---------------------------------------------
+-- users: tra cứu theo tenant, email, phone, trạng thái, role
+CREATE INDEX idx_users_business_id ON users (business_id);
+CREATE INDEX idx_users_email      ON users (email);
+CREATE INDEX idx_users_phone      ON users (phone);
+CREATE INDEX idx_users_status     ON users (status);
+CREATE INDEX idx_users_role_id    ON users (role_id);
+
+-- businesses: tra cứu theo mã số thuế / trạng thái
+CREATE INDEX idx_businesses_tax_code ON businesses (tax_code);
+CREATE INDEX idx_businesses_status   ON businesses (status);
+
+-- subscriptions: theo hộ + gói + hạn dùng
+CREATE INDEX idx_subscriptions_business  ON subscriptions (business_id, status);
+CREATE INDEX idx_subscriptions_plan      ON subscriptions (plan_id);
+CREATE INDEX idx_subscriptions_expires   ON subscriptions (expires_at);
+
+-- 2. PRODUCT & INVENTORY ---------------------------------------
+-- products: tìm kiếm theo tenant + danh mục + trạng thái
+CREATE INDEX idx_products_business_status ON products (business_id, status);
+CREATE INDEX idx_products_category        ON products (category_id);
+CREATE INDEX idx_products_tax_group       ON products (default_tax_activity_group_id);
+
+-- inventory: theo sản phẩm (số dư + lịch sử)
+CREATE INDEX idx_inventory_balances_product ON inventory_balances (business_id, product_id);
+CREATE INDEX idx_inventory_tx_product_time  ON inventory_transactions (business_id, product_id, created_at);
+CREATE INDEX idx_inventory_tx_type          ON inventory_transactions (type);
+
+-- stock_imports / items
+CREATE INDEX idx_stock_imports_business_status ON stock_imports (business_id, status);
+CREATE INDEX idx_stock_import_items_import     ON stock_import_items (import_id);
+CREATE INDEX idx_stock_import_items_product    ON stock_import_items (product_id);
+
+-- 3. SALES & CUSTOMER DEBT -------------------------------------
+-- sales_orders: theo hộ + khách + người lập + trạng thái
+CREATE INDEX idx_sales_orders_business_status ON sales_orders (business_id, status);
+CREATE INDEX idx_sales_orders_customer        ON sales_orders (customer_id);
+CREATE INDEX idx_sales_orders_created_by      ON sales_orders (created_by);
+
+-- sales_order_items
+CREATE INDEX idx_sales_order_items_order   ON sales_order_items (order_id);
+CREATE INDEX idx_sales_order_items_product ON sales_order_items (product_id);
+
+-- customers / debt_transactions
+CREATE INDEX idx_customers_business_phone ON customers (business_id, phone);
+CREATE INDEX idx_debt_tx_business         ON debt_transactions (business_id, customer_id);
+CREATE INDEX idx_debt_tx_order            ON debt_transactions (order_id);
+
+-- 4. ACCOUNTING, TAX & REPORTING --------------------------------
+-- sổ kế toán + dòng sổ
+CREATE INDEX idx_accounting_books_business_period ON accounting_books (business_id, period);
+CREATE INDEX idx_accounting_entries_book          ON accounting_book_entries (book_id);
+
+-- thuế
+CREATE INDEX idx_tax_obligations_business_period ON tax_obligations (business_id, period, status);
+CREATE INDEX idx_tax_obligations_type            ON tax_obligations (tax_type_id);
+CREATE INDEX idx_tax_payments_obligation         ON tax_payments (obligation_id);
+CREATE INDEX idx_tax_payments_date               ON tax_payments (payment_date);
+
+-- biểu mẫu / báo cáo
+CREATE INDEX idx_report_templates_status    ON report_templates (status);
+CREATE INDEX idx_report_versions_template   ON report_template_versions (template_id);
+CREATE INDEX idx_generated_reports_business_status ON generated_reports (business_id, status);
+
+-- 5. SYSTEM OPERATIONS ------------------------------------------
+-- thông báo: theo người nhận + đã đọc
+CREATE INDEX idx_notifications_user_read    ON notifications (user_id, is_read);
+CREATE INDEX idx_notifications_user_created ON notifications (user_id, created_at);
+
+-- audit log
+CREATE INDEX idx_audit_logs_user     ON audit_logs (user_id);
+CREATE INDEX idx_audit_logs_created  ON audit_logs (created_at);
+
+-- AI requests
+CREATE INDEX idx_ai_requests_business_status ON ai_requests (business_id, status);
+CREATE INDEX idx_ai_requests_created         ON ai_requests (created_at);
+
+-- 6. ONBOARDING --------------------------------------------------
+CREATE INDEX idx_terms_consents_user ON terms_consents (user_id);
+```
+
+> **Lưu ý:** Không tạo index trùng với khóa chính/unique đã có (ví dụ `products(business_id, product_code)` là UNIQUE). Với các bảng có kiểm tra **chồng thời gian** qua trigger (`tax_activity_groups`, `report_template_versions`), cần index phù hợp với cột hiệu lực để truy vấn kiểm tra nhanh.
 
 ---
 
@@ -1470,6 +1611,66 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 
 ---
 
+## 7.9. Workflow Nhập kho & Tồn kho
+
+```text
+┌────────────────────────────────────────────────────────────────────────────┐
+│                   WORKFLOW: NHẬP KHO & TỒN KHO                             │
+│                                                                            │
+│  ┌───────────────┐   ┌───────────────┐   ┌───────────────────────────────┐ │
+│  │  Lập phiếu    │──►│  Xác nhận     │──►│  Cập nhật tồn kho             │ │
+│  │  nhập kho     │   │  nhập kho     │   │  (StockImport + Items)        │ │
+│  │  (StockImport)│   │  (StockImport)│   └──────────────┬────────────────┘ │
+│  └───────────────┘   └───────────────┘                  │                  │
+│                                                         ▼                  │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  TRANSACTION XÁC NHẬN NHẬP KHO                                      │  │
+│  │  1. Ghi StockImport + StockImportItems                              │  │
+│  │  2. Tạo InventoryTransaction (loại NHẬP, giá nhập)                  │  │
+│  │  3. Cập nhật InventoryBalance (số lượng + giá vốn bình quân)        │  │
+│  │  4. Sinh AccountingEntry (giá trị nhập kho)                         │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                            │
+│  Theo dõi:                                                                │
+│  - Số dư hiện tại: inventory_balances (truy vấn nhanh)                   │
+│  - Lịch sử biến động: inventory_transactions (nhập/xuất/điều chỉnh)       │
+│  - Phương pháp tính giá xuất kho: cấu hình theo hộ kinh doanh            │
+│    (businesses.inventory_method)                                          │
+│                                                                            │
+│  Ghi chú: module đang ở giai đoạn kế hoạch (entity đã có trong database)  │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+## 7.10. Workflow Khách hàng & Công nợ
+
+```text
+┌────────────────────────────────────────────────────────────────────────────┐
+│                WORKFLOW: KHÁCH HÀNG & CÔNG NỢ                              │
+│                                                                            │
+│  ┌───────────────┐   ┌───────────────┐   ┌───────────────────────────────┐ │
+│  │  Tạo khách    │──►│  Bán chịu      │──►│  Phát sinh nợ                 │ │
+│  │  hàng         │   │  (đơn ghi nợ)  │   │  (DebtTransaction: NỢ)        │ │
+│  │  (Customer)   │   └───────┬───────┘   └──────────────┬────────────────┘ │
+│  └───────────────┘           │                           │                  │
+│                              ▼                           ▼                  │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  KIỂM SOÁT CÔNG NỢ:                                                 │  │
+│  │  - Trigger kiểm tra hạn mức công nợ khi xác nhận đơn                │  │
+│  │  - SalesOrder: total_amount / paid_amount / debt_amount             │  │
+│  │  - Khi khách trả nợ → DebtTransaction (loại TRẢ NỢ)                 │  │
+│  │    → cập nhật debt_amount + paid_amount                             │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                            │
+│  Trạng thái công nợ:                                                      │
+│  CHƯA TRẢ → CÒN NỢ → ĐÃ TRẢ HẾT                                          │
+│  (theo debt_transactions + trạng thái đơn hàng)                           │
+│                                                                            │
+│  Ghi chú: module đang ở giai đoạn kế hoạch (entity đã có trong database)  │
+└────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 # 8. Sequence Diagram và Class Diagram chi tiết
 
 ## 8.1. Class Diagram — Tổng quan Entity
@@ -1849,6 +2050,244 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 │    │                  │                  │ save              │            │  │
 │    │                  │                  │───────────────────────────────►│  │
 │    │◄── 200 OK ───────│◄── profile (expiresAt)──────────────│            │  │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 8.9. Class Diagram — Chi tiết Module Auth
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                        MODULE AUTH — CLASS DIAGRAM                           │
+│                                                                              │
+│  ┌──────────────────────────┐   ┌──────────────────────────────┐             │
+│  │ <<Controller>>           │   │ <<Service>>                  │             │
+│  │ AuthController           │──►│ AuthService                  │             │
+│  │ /api/auth                │   │──────────────────────────────│             │
+│  │──────────────────────────│   │ - userRepository             │             │
+│  │ + login()                │   │ - roleRepository             │             │
+│  │ + register()             │   │ - otpService · mailService   │             │
+│  │ + verifyOtp()            │   │ - jwtTokenProvider           │             │
+│  │ + refreshToken()         │   │ - passwordEncoder (BCrypt)   │             │
+│  │ + forgotPassword()       │   │──────────────────────────────│             │
+│  │ + resetPassword()        │   │ + login(LoginRequest)        │             │
+│  │ + logout()               │   │ + register(RegisterRequest)  │             │
+│  └────────────┬─────────────┘   │ + verifyRegistrationOtp()    │             │
+│               │                 │ + refreshToken() · logout()  │             │
+│               ▼                 └───────────────┬──────────────┘             │
+│  ┌──────────────────────────┐                   ▼                            │
+│  │ <<Security>>             │   ┌──────────────────────────────┐             │
+│  │ JwtTokenProvider         │   │ <<Repository / Entity>>      │             │
+│  │ JwtAuthenticationFilter  │   │ UserRepository · RoleRepo    │             │
+│  │ CustomUserDetailsService │   │ User · Role · TermsConsent  │             │
+│  │ RateLimitService         │   └──────────────────────────────┘             │
+│  └──────────────────────────┘                                               │
+│                                                                              │
+│  Điểm đặc biệt:                                                             │
+│  - Login/Forgot: RateLimitService.checkLoginLimit / checkOtpLimit theo IP   │
+│  - JwtAuthenticationFilter chạy trước mọi request qua SecurityConfig        │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+## 8.10. Class Diagram — Chi tiết Module Owner
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                       MODULE OWNER — CLASS DIAGRAM                           │
+│                                                                              │
+│  ┌────────────────────────────┐   ┌────────────────────────────────────┐     │
+│  │ <<Controller>>             │   │ <<Service>>                        │     │
+│  │ OwnerController            │──►│ OwnerService                       │     │
+│  │ /api/owner                 │   │ BusinessProfileService             │     │
+│  │ @PreAuthorize(...OWNER)    │   │────────────────────────────────────│     │
+│  │────────────────────────────│   │ + getProfile() / updateProfile()   │     │
+│  │ + get/updateProfile        │   │ + changePassword()                 │     │
+│  │ + uploadAvatar             │   │ + initiate/confirm EmailChange     │     │
+│  │ + changePassword           │   │ + initiate/confirm PhoneChange     │     │
+│  │ + email/phone OTP flows    │   │ + lock/unlock/deactivate           │     │
+│  │ + lock/unlock/deactivate   │   │ + renewSubscription/selectPackage  │     │
+│  │ + subscription renew/packs │   │ + createOrUpdate(BusinessProfile)  │     │
+│  │ + business-profile CRUD    │   │ + uploadStoreLogo/uploadCoverImage │     │
+│  └─────────────┬──────────────┘   └───────────────┬────────────────────┘     │
+│                │                                  │                          │
+│                ▼                                  ▼                          │
+│  ┌────────────────────────────┐   ┌────────────────────────────────────┐     │
+│  │ <<Service (common)>>       │   │ <<Repository / Entity>>            │     │
+│  │ RateLimitService           │   │ UserRepository · SubscriptionRepo  │     │
+│  │ ImageStorageService        │   │ BusinessProfile · Subscription     │     │
+│  │ OtpService · MailService   │   │ SubscriptionPlan                   │     │
+│  └────────────────────────────┘   └────────────────────────────────────┘     │
+│                                                                              │
+│  Điểm đặc biệt:                                                             │
+│  - Đổi email/SĐT dùng luồng OTP hai bước (initiate → confirm)               │
+│  - Ảnh (avatar, logo, ảnh bìa) qua ImageStorageService + object storage     │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+## 8.11. Class Diagram — Chi tiết Module Product
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                      MODULE PRODUCT — CLASS DIAGRAM                          │
+│                                                                              │
+│  ┌────────────────────────────┐   ┌────────────────────────────────────┐     │
+│  │ <<Controller>>             │   │ <<Service>>                        │     │
+│  │ ProductController          │──►│ ProductService                     │     │
+│  │ CategoryController         │   │ CategoryService                    │     │
+│  │ /api/products /api/categories│  │ BusinessContextService            │     │
+│  │ @PreAuthorize(...OWNER)    │   │────────────────────────────────────│     │
+│  │────────────────────────────│   │ + search(businessId, keyword,      │     │
+│  │ + search (page/sort)       │   │   status, categoryId, page, size)  │     │
+│  │ + get/{id}                 │   │ + create(businessId, req)          │     │
+│  │ + create/update/deactivate │   │ + update/deactivate(businessId, id)│     │
+│  │ + references/units         │   │ + getUnits()/getTaxActivityGroups()│     │
+│  │ + references/tax-groups    │   │ + resolveBusinessId(username)      │     │
+│  └─────────────┬──────────────┘   └────────────────────┬───────────────┘     │
+│                │                                      │                      │
+│                ▼                                      ▼                      │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │ <<Repository / Entity>>                                              │   │
+│  │ ProductRepository · CategoryRepository · UnitRepository              │   │
+│  │ Product · ProductUnit · ProductPrice · Category · Unit · TaxActGroup │   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
+│                                                                              │
+│  Điểm đặc biệt:                                                             │
+│  - Mọi truy vấn đều kèm businessId (tenant isolation)                       │
+│  - BusinessContextService lấy businessId từ username trong token            │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+## 8.12. Sequence — Quên mật khẩu
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│            SEQUENCE DIAGRAM: QUÊN / ĐẶT LẠI MẬT KHẨU                         │
+│                                                                              │
+│  Client       AuthController       AuthService      OtpService    MailService │
+│    │                │                  │                │            │        │
+│    │ POST /api/auth/forgot-password   │                │            │        │
+│    │────────────────►│                │                │            │        │
+│    │                │ checkOtpLimit(IP)                │            │        │
+│    │                │ forgotPassword(email)            │            │        │
+│    │                │────────────────►│                │            │        │
+│    │                │                 │ generate OTP   │            │        │
+│    │                │                 │───────────────►│            │        │
+│    │                │                 │ send email     │            │        │
+│    │                │                 │───────────────────────────────►│        │
+│    │◄── 200 OK ─────│                 │                │            │        │
+│    │                │                 │                │            │        │
+│    │ POST /api/auth/reset-password    │                │            │        │
+│    │  { otpCode, newPassword }        │                │            │        │
+│    │────────────────►│                │                │            │        │
+│    │                │ resetPassword(otp, newPassword)  │            │        │
+│    │                │────────────────►│                │            │        │
+│    │                │                 │ validate OTP   │            │        │
+│    │                │                 │───────────────►│            │        │
+│    │                │                 │◄── valid ──────│            │        │
+│    │                │                 │ update password (BCrypt)    │        │
+│    │◄── 200 OK ─────│◄── OK ──────────│                │            │        │
+│    │  ("Đặt lại mật khẩu thành công")│                │            │        │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+## 8.13. Sequence — Đổi Email/SĐT (OTP)
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│            SEQUENCE DIAGRAM: ĐỔI EMAIL / SĐT (OTP 2 BƯỚC)                    │
+│                                                                              │
+│  Client       OwnerController      OwnerService     OtpService    MailService│
+│    │                │                  │                │            │        │
+│    │ POST /api/owner/email/initiate   │                │            │        │
+│    │  { newEmail }                    │                │            │        │
+│    │────────────────►│                │                │            │        │
+│    │                │ checkOtpLimit(IP)                │            │        │
+│    │                │ initiateEmailChange(newEmail)    │            │        │
+│    │                │────────────────►│                │            │        │
+│    │                │                 │ generate OTP   │            │        │
+│    │                │                 │───────────────►│            │        │
+│    │                │                 │ send to new email            │        │
+│    │                │                 │───────────────────────────────►│        │
+│    │◄── 200 OK ─────│                 │                │            │        │
+│    │                │                 │                │            │        │
+│    │ POST /api/owner/email/confirm?newEmail=...        │            │        │
+│    │  { otpCode }   │                 │                │            │        │
+│    │────────────────►│                │                │            │        │
+│    │                │ confirmEmailChange(user, newEmail, otp)        │        │
+│    │                │────────────────►│                │            │        │
+│    │                │                 │ validate OTP   │            │        │
+│    │                │                 │───────────────►│            │        │
+│    │                │                 │◄── valid ──────│            │        │
+│    │                │                 │ update user.email            │        │
+│    │◄── 200 OK ─────│◄── OK ──────────│                │            │        │
+│    │                │                 │                │            │        │
+│    │ (Luồng đổi SĐT tương tự: /phone/initiate + /phone/confirm?newPhone=...)│
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+## 8.14. Sequence — Checkout & Công nợ
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│            SEQUENCE DIAGRAM: CHECKOUT & CÔNG NỢ (XÁC NHẬN ĐƠN)               │
+│                                                                              │
+│  Client     OrderCtrl(*)    OrderService(*)  Inventory     Debt              │
+│    │             │                │             │           │                 │
+│    │ POST /api/orders            │             │           │                 │
+│    │  (items, customer, debt)    │             │           │                 │
+│    │────────────►│               │             │           │                 │
+│    │             │ createOrder(businessId, items)          │                 │
+│    │             │───────────────►│             │           │                 │
+│    │             │                │ ① Trừ tồn kho          │                 │
+│    │             │                │  (InventoryTransaction │                 │
+│    │             │                │   + InventoryBalance)  │                 │
+│    │             │                │────────────►│           │                 │
+│    │             │                │ ② Tạo SalesOrder       │                 │
+│    │             │                │   + SalesOrderItems    │                 │
+│    │             │                │ ③ Nếu ghi nợ:          │                 │
+│    │             │                │   tạo DebtTransaction  │                 │
+│    │             │                │────────────►│           │                 │
+│    │             │                │ ④ Sinh AccountingEntry │                 │
+│    │             │                │  (cùng 1 transaction)  │                 │
+│    │◄─ 201 ──────│◄─ OrderResponse─│             │           │                 │
+│    │             │                │             │           │                 │
+│    │ (*) Ghi chú: module Order đang ở giai đoạn KẾ HOẠCH.                    │
+│    │     Entity SalesOrder/SalesOrderItem/DebtTransaction/                    │
+│    │     InventoryTransaction đã có trong database.                           │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+## 8.15. Sequence — AI Draft Order
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────┐
+│               SEQUENCE DIAGRAM: AI DRAFT ORDER                                │
+│                                                                              │
+│  Employee   OrderCtrl(*)  AIService(FastAPI)   Backend(*)       DB           │
+│    │            │              │                  │             │             │
+│    │ POST /api/v1/ai/parse-order (text)          │             │             │
+│    │───────────►│              │                  │             │             │
+│    │            │ parseOrder(text, storeId)      │             │             │
+│    │            │─────────────►│                  │             │             │
+│    │            │              │ ① STT (voice) / NLP parse    │             │
+│    │            │              │ ② Match sản phẩm, khách hàng │             │
+│    │            │              │ ③ Ambiguity detection        │             │
+│    │            │              │ ④ Gọi backend nếu cần match  │             │
+│    │            │              │────────────────────────────►│             │
+│    │            │◄─ DraftOrder (proposed)────────────────────│             │
+│    │            │              │                  │             │             │
+│    │            │ lưu AiRequest + tạo Draft Order             │             │
+│    │            │ (status = PENDING_REVIEW)                  │             │
+│    │            │───────────────────────────────────────────────────────►│    │
+│    │            │ thông báo Employee/Owner (Notification)    │             │
+│    │            │───────────────────────────────────────────────────────►│    │
+│    │◄── 200 ────│  { draft_order, ambiguities }              │             │
+│    │            │              │                  │             │             │
+│    │  Employee/Owner duyệt:                                  │             │
+│    │    Xác nhận → chuyển thành đơn thật (xem 8.14)          │             │
+│    │    Sửa / Từ chối → cập nhật hoặc hủy Draft Order        │             │
+│    │  Ghi chú: AI parser chưa triển khai đầy đủ (Sprint 5-6) │             │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
