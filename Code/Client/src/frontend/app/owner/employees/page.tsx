@@ -456,7 +456,7 @@ export default function EmployeesPage() {
                               onClick={() => handleResetPassword(emp.id)}
                               className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-blue-700 hover:bg-blue-50 transition cursor-pointer"
                             >
-                              <KeyRound className="w-4 h-4" /> Reset mật khẩu
+                              <KeyRound className="w-4 h-4" /> Cấp mật khẩu cho nhân viên
                             </button>
                             <div className="my-1 border-t border-slate-100" />
                             <button
