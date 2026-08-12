@@ -38,6 +38,22 @@ interface OwnerProfile {
 type Tab = 'profile' | 'business-profile' | 'password' | 'contact' | 'subscription' | 'consent' | 'danger';
 type OtpTarget = 'email' | 'phone' | null;
 
+function syncOwnerSummary(data: { fullName?: string; avatarUrl?: string | null }) {
+  if (typeof window === 'undefined') return;
+  if (data.fullName !== undefined) {
+    sessionStorage.setItem('fullName', data.fullName);
+  }
+  if (data.avatarUrl !== undefined) {
+    sessionStorage.setItem('avatarUrl', data.avatarUrl || '');
+  }
+  window.dispatchEvent(new CustomEvent('owner-profile-updated', {
+    detail: {
+      fullName: data.fullName,
+      avatarUrl: data.avatarUrl || undefined,
+    },
+  }));
+}
+
 // ─── Helper components ────────────────────────────────────────────────────────
 
 function Alert({ type, message }: { type: 'success' | 'error'; message: string }) {
@@ -66,8 +82,8 @@ function SectionHeader({ icon: Icon, title, subtitle }: { icon: React.ElementTyp
         <Icon className="w-5 h-5" />
       </div>
       <div>
-        <h2 className="text-base sm:text-lg font-bold text-slate-900">{title}</h2>
-        {subtitle && <p className="text-xs text-slate-500 font-medium mt-0.5">{subtitle}</p>}
+        <h2 className="text-base sm:text-lg font-bold text-slate-900 select-none" style={{ userSelect: 'none', cursor: 'default' }}>{title}</h2>
+        {subtitle && <p className="text-xs text-slate-500 font-medium mt-0.5 select-none" style={{ userSelect: 'none' }}>{subtitle}</p>}
       </div>
     </div>
   );
@@ -88,7 +104,7 @@ function InputField({
 }) {
   return (
     <div>
-      <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+      <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 select-none" style={{ userSelect: 'none', cursor: 'default' }}>
         {label}
       </label>
       <div className="relative">
@@ -100,7 +116,7 @@ function InputField({
           onChange={onChange ? (e) => onChange(e.target.value) : undefined}
           placeholder={placeholder}
           disabled={disabled}
-          className={`w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 font-medium focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all disabled:opacity-60 disabled:cursor-not-allowed
+          className={`w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 font-medium focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-text select-text
             ${Icon ? 'pl-10' : 'pl-4'} ${suffix ? 'pr-12' : 'pr-4'}`}
         />
         {suffix && <div className="absolute right-3.5 top-1/2 -translate-y-1/2">{suffix}</div>}
@@ -173,8 +189,7 @@ export default function OwnerAccountPage() {
     try {
       const data = await apiClient.get<OwnerProfile>('/api/owner/profile');
       setProfile(data);
-      if (data.fullName) localStorage.setItem('fullName', data.fullName);
-      if (data.avatarUrl) localStorage.setItem('avatarUrl', data.avatarUrl);
+      syncOwnerSummary({ fullName: data.fullName, avatarUrl: data.avatarUrl });
     } catch {
       // If unauthorized, apiClient handles redirect to /login
     } finally {
@@ -204,14 +219,14 @@ export default function OwnerAccountPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-100/70 p-4 sm:p-8 lg:p-10">
+    <div className="min-h-screen bg-slate-100/70 p-4 sm:p-8 lg:p-10 select-none" style={{ cursor: 'default' }}>
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Page Title Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Cài đặt tài khoản</h1>
-            <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight select-none" style={{ userSelect: 'none' }}>Cài đặt tài khoản</h1>
+            <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1 select-none" style={{ userSelect: 'none' }}>
               Quản lý thông tin hồ sơ cá nhân, bảo mật và gói đăng ký dịch vụ
             </p>
           </div>
@@ -302,7 +317,7 @@ function ProfileTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
     setMsg(null);
     try {
       await apiClient.put('/api/owner/profile', { fullName });
-      localStorage.setItem('fullName', fullName);
+      syncOwnerSummary({ fullName });
       setMsg({ type: 'success', text: 'Cập nhật tên thành công!' });
       setEditing(false);
       onUpdated();
@@ -322,7 +337,7 @@ function ProfileTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
     setMsg(null);
     try {
       const url = await apiClient.upload<string>('/api/owner/avatar', formData);
-      if (url) localStorage.setItem('avatarUrl', url);
+      if (url) syncOwnerSummary({ avatarUrl: url });
       setMsg({ type: 'success', text: 'Tải lên ảnh đại diện mới thành công!' });
       onUpdated();
     } catch (err: unknown) {
@@ -381,8 +396,8 @@ function ProfileTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
           />
         </div>
         <div>
-          <p className="font-bold text-slate-900 text-base">{profile?.fullName}</p>
-          <p className="text-xs text-slate-500 font-medium">@{profile?.username}</p>
+          <p className="font-bold text-slate-900 text-base select-none" style={{ userSelect: 'none' }}>{profile?.fullName}</p>
+          <p className="text-xs text-slate-500 font-medium select-none" style={{ userSelect: 'none' }}>@{profile?.username}</p>
           <button
             onClick={() => fileRef.current?.click()}
             className="mt-2 text-xs font-bold text-slate-900 hover:underline flex items-center gap-1.5 cursor-pointer"
@@ -529,7 +544,7 @@ function PasswordTab() {
     show: boolean; setShow: (v: boolean) => void; id: string;
   }) => (
     <div>
-      <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">{label}</label>
+      <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5 select-none" style={{ userSelect: 'none', cursor: 'default' }}>{label}</label>
       <div className="relative">
         <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
@@ -538,7 +553,7 @@ function PasswordTab() {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           required
-          className="w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2.5 pl-10 pr-10 text-xs sm:text-sm text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all"
+          className="w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2.5 pl-10 pr-10 text-xs sm:text-sm text-slate-900 font-medium focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all cursor-text select-text"
         />
         <button
           type="button"
@@ -985,8 +1000,6 @@ function DangerTab({ router }: { router: ReturnType<typeof useRouter> }) {
       setMsg({ type: 'success', text: 'Tài khoản đã được tạm khóa. Đang đăng xuất...' });
       setTimeout(() => {
         clearAuth();
-        document.cookie = 'auth_token=; max-age=0; path=/';
-        document.cookie = 'auth_role=; max-age=0; path=/';
         router.push('/login');
       }, 2000);
     } catch (err: unknown) {
@@ -1002,8 +1015,6 @@ function DangerTab({ router }: { router: ReturnType<typeof useRouter> }) {
       setMsg({ type: 'success', text: 'Tài khoản đã bị xóa vĩnh viễn.' });
       setTimeout(() => {
         clearAuth();
-        document.cookie = 'auth_token=; max-age=0; path=/';
-        document.cookie = 'auth_role=; max-age=0; path=/';
         router.push('/');
       }, 2000);
     } catch (err: unknown) {

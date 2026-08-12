@@ -74,8 +74,26 @@ public class BusinessProfile {
     @Column(name = "logo_object_key", length = 500)
     private String logoObjectKey;
 
+    @Column(name = "logo_sha256", length = 64)
+    private String logoSha256;
+
+    @Column(name = "logo_content_type", length = 50)
+    private String logoContentType;
+
+    @Column(name = "logo_size", columnDefinition = "BIGINT UNSIGNED")
+    private Long logoSize;
+
     @Column(name = "cover_image_object_key", length = 500)
     private String coverImageObjectKey;
+
+    @Column(name = "cover_image_sha256", length = 64)
+    private String coverImageSha256;
+
+    @Column(name = "cover_image_content_type", length = 50)
+    private String coverImageContentType;
+
+    @Column(name = "cover_image_size", columnDefinition = "BIGINT UNSIGNED")
+    private Long coverImageSize;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

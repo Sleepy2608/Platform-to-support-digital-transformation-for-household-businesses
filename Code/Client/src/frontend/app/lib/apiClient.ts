@@ -10,33 +10,147 @@
 
 const BASE_URL = 'http://localhost:8080';
 
+const AUTH_STORAGE_KEYS = [
+  'accessToken', 'refreshToken', 'userId', 'username',
+  'fullName', 'email', 'roles', 'businessId', 'avatarUrl',
+] as const;
+
+const AUTH_SYNC_STORAGE_KEY = 'hbdt:auth-sync';
+const AUTH_SYNC_CHANNEL = 'hbdt-auth';
+
+export type AuthSyncEventType = 'signed-in' | 'signed-out' | 'tokens-refreshed';
+
+export interface AuthSyncEvent {
+  id: string;
+  type: AuthSyncEventType;
+  timestamp: number;
+}
+
+function createAuthSyncEvent(type: AuthSyncEventType): AuthSyncEvent {
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    type,
+    timestamp: Date.now(),
+  };
+}
+
+function publishAuthSync(type: AuthSyncEventType) {
+  if (typeof window === 'undefined') return;
+
+  const event = createAuthSyncEvent(type);
+  try {
+    localStorage.setItem(AUTH_SYNC_STORAGE_KEY, JSON.stringify(event));
+  } catch {
+    // BroadcastChannel can still synchronize tabs when storage is unavailable.
+  }
+
+  if ('BroadcastChannel' in window) {
+    try {
+      const channel = new BroadcastChannel(AUTH_SYNC_CHANNEL);
+      channel.postMessage(event);
+      channel.close();
+    } catch {
+      // localStorage remains the compatibility fallback.
+    }
+  }
+}
+
+function setAuthCookies(accessToken: string, roles: string[] = []) {
+  const maxAge = 60 * 60 * 24;
+  const role = roles.includes('ADMIN')
+    ? 'ADMIN'
+    : roles.includes('BUSINESS_OWNER')
+      ? 'BUSINESS_OWNER'
+      : '';
+
+  document.cookie = `auth_token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  document.cookie = `auth_role=${role}; path=/; max-age=${maxAge}; SameSite=Lax`;
+}
+
+function clearAuthCookies() {
+  document.cookie = 'auth_token=; max-age=0; path=/';
+  document.cookie = 'auth_role=; max-age=0; path=/';
+}
+
 // ─── Token helpers ────────────────────────────────────────────────────────────
+
+/**
+ * Tự động khôi phục sessionStorage cho tab mới từ localStorage (nếu có).
+ * Giúp người dùng mở tab mới hay gõ URL trực tiếp không bị mất phiên làm việc.
+ */
+export function initTabSessionIfNeeded() {
+  if (typeof window === 'undefined') return;
+  if (!sessionStorage.getItem('accessToken') && localStorage.getItem('accessToken')) {
+    AUTH_STORAGE_KEYS.forEach((k) => {
+      const val = localStorage.getItem(k);
+      if (val !== null) sessionStorage.setItem(k, val);
+    });
+  }
+}
+
+/** Replace this tab's auth snapshot with the shared auth snapshot. */
+export function syncTabSessionFromSharedStorage() {
+  if (typeof window === 'undefined') return;
+
+  AUTH_STORAGE_KEYS.forEach((key) => {
+    const value = localStorage.getItem(key);
+    if (value === null) {
+      sessionStorage.removeItem(key);
+    } else {
+      sessionStorage.setItem(key, value);
+    }
+  });
+}
 
 export function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('accessToken');
+  initTabSessionIfNeeded();
+  return localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
 }
 
 export function getRefreshToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('refreshToken');
+  initTabSessionIfNeeded();
+  return localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
+}
+
+export function getAuthItem(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  initTabSessionIfNeeded();
+  return localStorage.getItem(key) || sessionStorage.getItem(key);
 }
 
 export function saveTokens(accessToken: string, refreshToken: string) {
+  if (typeof window === 'undefined') return;
+  sessionStorage.setItem('accessToken', accessToken);
+  sessionStorage.setItem('refreshToken', refreshToken);
   localStorage.setItem('accessToken', accessToken);
   localStorage.setItem('refreshToken', refreshToken);
+  const rolesRaw = localStorage.getItem('roles');
+  let roles: string[] = [];
+  try {
+    const parsedRoles: unknown = rolesRaw ? JSON.parse(rolesRaw) : [];
+    roles = Array.isArray(parsedRoles)
+      ? parsedRoles.filter((role): role is string => typeof role === 'string')
+      : [];
+  } catch {
+    // Invalid roles are handled by protected layouts.
+  }
+  setAuthCookies(accessToken, roles);
+  publishAuthSync('tokens-refreshed');
 }
 
-export function clearAuth() {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('userId');
-  localStorage.removeItem('username');
-  localStorage.removeItem('fullName');
-  localStorage.removeItem('roles');
-  localStorage.removeItem('email');
-  localStorage.removeItem('avatarUrl');
-  localStorage.removeItem('businessId');
+export function clearAuth(options: { broadcast?: boolean } = {}) {
+  if (typeof window === 'undefined') return;
+  AUTH_STORAGE_KEYS.forEach((k) => {
+    sessionStorage.removeItem(k);
+    localStorage.removeItem(k);
+  });
+  clearAuthCookies();
+
+  if (options.broadcast !== false) {
+    publishAuthSync('signed-out');
+  }
 }
 
 export function saveAuthData(data: {
@@ -50,16 +164,30 @@ export function saveAuthData(data: {
   businessId?: number | null;
   avatarUrl?: string | null;
 }) {
-  localStorage.setItem('accessToken', data.accessToken);
-  localStorage.setItem('refreshToken', data.refreshToken);
-  localStorage.setItem('userId', String(data.userId));
-  localStorage.setItem('username', data.username);
-  localStorage.setItem('fullName', data.fullName || '');
-  localStorage.setItem('email', data.email || '');
-  localStorage.setItem('roles', JSON.stringify(data.roles || []));
-  localStorage.setItem('businessId', String(data.businessId ?? ''));
-  localStorage.setItem('avatarUrl', data.avatarUrl || '');
+  if (typeof window === 'undefined') return;
+  const items: Record<string, string> = {
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken,
+    userId: String(data.userId),
+    username: data.username,
+    fullName: data.fullName || '',
+    email: data.email || '',
+    roles: JSON.stringify(data.roles || []),
+    businessId: String(data.businessId ?? ''),
+    avatarUrl: data.avatarUrl || '',
+  };
+  Object.entries(items).forEach(([k, v]) => {
+    sessionStorage.setItem(k, v);
+    localStorage.setItem(k, v);
+  });
+  setAuthCookies(data.accessToken, data.roles || []);
+  publishAuthSync('signed-in');
 }
+
+export const authSyncConfig = {
+  channelName: AUTH_SYNC_CHANNEL,
+  storageKey: AUTH_SYNC_STORAGE_KEY,
+} as const;
 
 // ─── Token refresh ────────────────────────────────────────────────────────────
 

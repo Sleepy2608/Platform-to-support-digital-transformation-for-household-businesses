@@ -1,16 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Store, UserCircle, Lock, Mail, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
-  Shield,
+  Shield, PackageOpen,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
 
-const NAV_ITEMS = [
+const NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash?: string; path?: string }> = [
+  { label: 'Sản phẩm & Danh mục', href: '/owner/products', icon: PackageOpen, path: '/owner/products' },
   { label: 'Hồ sơ cá nhân', href: '/owner/account#profile', icon: UserCircle, hash: '#profile' },
   { label: 'Đổi mật khẩu', href: '/owner/account#password', icon: Lock, hash: '#password' },
   { label: 'Email & Số điện thoại', href: '/owner/account#contact', icon: Mail, hash: '#contact' },
@@ -20,6 +23,7 @@ const NAV_ITEMS = [
 
 export default function OwnerLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(true);
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
@@ -28,8 +32,8 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   const [currentHash, setCurrentHash] = useState('#profile');
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    const rolesRaw = localStorage.getItem('roles');
+    const token = getAccessToken();
+    const rolesRaw = getAuthItem('roles');
 
     if (!token || !rolesRaw) {
       router.push('/login');
@@ -42,14 +46,30 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
         router.push('/login');
         return;
       }
-      setFullName(localStorage.getItem('fullName') || 'Chủ hộ kinh doanh');
-      setUsername(localStorage.getItem('username') || '');
-      setAvatarUrl(localStorage.getItem('avatarUrl') || '');
+
+      setFullName(getAuthItem('fullName') || 'Chủ hộ kinh doanh');
+      setUsername(getAuthItem('username') || '');
+      setAvatarUrl(getAuthItem('avatarUrl') || '');
       setLoading(false);
     } catch {
       router.push('/login');
     }
   }, [router]);
+
+  useEffect(() => {
+    const syncOwnerSummary = (event?: Event) => {
+      const detail = event instanceof CustomEvent
+        ? event.detail as { fullName?: string; avatarUrl?: string }
+        : undefined;
+      setFullName(detail?.fullName ?? getAuthItem('fullName') ?? 'Chủ hộ kinh doanh');
+      setAvatarUrl(detail?.avatarUrl ?? getAuthItem('avatarUrl') ?? '');
+    };
+
+    window.addEventListener('owner-profile-updated', syncOwnerSummary);
+    return () => {
+      window.removeEventListener('owner-profile-updated', syncOwnerSummary);
+    };
+  }, []);
 
   // Keep track of current URL hash to highlight active nav item
   useEffect(() => {
@@ -66,9 +86,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();
-    document.cookie = 'auth_token=; max-age=0; path=/';
-    document.cookie = 'auth_role=; max-age=0; path=/';
+    clearAuth();
     router.push('/login');
   };
 
@@ -164,11 +182,13 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                 {NAV_ITEMS.map((item) => {
                   const Icon = item.icon;
                   const isDanger = item.hash === '#danger';
-                  const isActive = currentHash === item.hash;
+                  const isActive = item.path
+                    ? pathname === item.path
+                    : pathname === '/owner/account' && currentHash === item.hash;
 
                   return (
                     <Link
-                      key={item.hash}
+                      key={item.href}
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
                       className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer

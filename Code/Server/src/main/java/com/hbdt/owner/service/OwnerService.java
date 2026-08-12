@@ -2,6 +2,7 @@ package com.hbdt.owner.service;
 
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
+import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.common.service.OtpService;
 import com.hbdt.entity.Subscription;
 import com.hbdt.entity.SubscriptionPlan;
@@ -14,24 +15,16 @@ import com.hbdt.repository.SubscriptionRepository;
 import com.hbdt.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,23 +41,20 @@ public class OwnerService {
     private final SubscriptionPlanRepository subscriptionPlanRepository;
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
-
-    @Value("${app.upload.dir:./uploads}")
-    private String uploadDir;
-
-    @Value("${server.port:8080}")
-    private String serverPort;
+    private final ImageStorageService imageStorageService;
 
     public OwnerService(UserRepository userRepository,
                         SubscriptionRepository subscriptionRepository,
                         SubscriptionPlanRepository subscriptionPlanRepository,
                         PasswordEncoder passwordEncoder,
-                        OtpService otpService) {
+                        OtpService otpService,
+                        ImageStorageService imageStorageService) {
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.subscriptionPlanRepository = subscriptionPlanRepository;
         this.passwordEncoder = passwordEncoder;
         this.otpService = otpService;
+        this.imageStorageService = imageStorageService;
     }
 
     // =========================================================
@@ -99,29 +89,17 @@ public class OwnerService {
             throw new BadRequestException("Chỉ chấp nhận ảnh JPG, PNG, WEBP, GIF");
         }
 
-        // Determine extension
-        String originalFilename = file.getOriginalFilename();
-        String ext = ".jpg";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            ext = originalFilename.substring(originalFilename.lastIndexOf('.'));
-        }
-
-        // Save file
-        String fileName = UUID.randomUUID() + ext;
-        Path avatarDir = Paths.get(uploadDir, "avatars");
-        Files.createDirectories(avatarDir);
-        Path targetPath = avatarDir.resolve(fileName);
-        Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
-
-        // Build accessible URL
-        String avatarUrl = "http://localhost:" + serverPort + "/uploads/avatars/" + fileName;
-
         User user = findActiveUser(username);
-        user.setAvatarUrl(avatarUrl);
+        ImageStorageService.StoredImage storedImage = imageStorageService.store(
+                file, "avatars/" + user.getId(), MAX_AVATAR_SIZE, ALLOWED_MIME);
+        user.setAvatarObjectKey(storedImage.objectKey());
+        user.setAvatarSha256(storedImage.sha256());
+        user.setAvatarContentType(storedImage.contentType());
+        user.setAvatarSize(storedImage.size());
         userRepository.save(user);
 
-        logger.info("Avatar uploaded for user={}: {}", username, avatarUrl);
-        return avatarUrl;
+        logger.info("Avatar uploaded for user={}, sha256={}", username, storedImage.sha256());
+        return imageStorageService.toPublicUrl(storedImage.objectKey());
     }
 
     // =========================================================
@@ -262,8 +240,8 @@ public class OwnerService {
     }
 
     public OwnerProfileResponse selectPackage(String username, String packageType, String billingCycle) {
-        if (!"STANDARD".equals(packageType) && !"VIP".equals(packageType)) {
-            throw new BadRequestException("Loại gói không hợp lệ. Chỉ chấp nhận STANDARD hoặc VIP.");
+        if (packageType == null || packageType.isBlank()) {
+            throw new BadRequestException("Mã gói thuê bao không được để trống");
         }
         if (!"MONTHLY".equals(billingCycle) && !"YEARLY".equals(billingCycle)) {
             throw new BadRequestException("Chu kỳ thanh toán không hợp lệ. Chỉ chấp nhận MONTHLY hoặc YEARLY.");
@@ -273,7 +251,7 @@ public class OwnerService {
             throw new BadRequestException("Tài khoản chưa có hồ sơ hộ kinh doanh");
         }
 
-        SubscriptionPlan plan = findOrCreatePlan(packageType);
+        SubscriptionPlan plan = findActivePlan(packageType);
         LocalDate today = LocalDate.now();
         Subscription subscription = subscriptionRepository
                 .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(user.getBusinessId(), "ACTIVE")
@@ -296,40 +274,21 @@ public class OwnerService {
     }
 
     // =========================================================
-    // Available Packages (static catalog)
+    // Available Packages
     // =========================================================
 
     public List<PackageDto> getAvailablePackages() {
-        return Arrays.asList(
-            PackageDto.builder()
-                .id("STANDARD")
-                .name("Gói Standard")
-                .description("Cho cửa hàng bán lẻ có quản lý kho & nợ")
-                .monthlyPrice(199000)
-                .yearlyPrice(1990000)
-                .recommended(false)
-                .features(Arrays.asList(
-                    "Tất cả tính năng gói Basic",
-                    "Quản lý tồn kho & công nợ",
-                    "Lập sổ kế toán TT 88/2021",
-                    "Tối đa 3 tài khoản nhân viên"
-                ))
-                .build(),
-            PackageDto.builder()
-                .id("VIP")
-                .name("Gói VIP (Pro)")
-                .description("Đầy đủ sức mạnh AI & Kế toán tự động")
-                .monthlyPrice(399000)
-                .yearlyPrice(3990000)
-                .recommended(true)
-                .features(Arrays.asList(
-                    "Tất cả tính năng gói Standard",
-                    "Trợ lý AI đọc đơn giọng nói / tin nhắn",
-                    "Tự động hóa báo cáo thuế trọn gói",
-                    "Không giới hạn nhân viên"
-                ))
-                .build()
-        );
+        return subscriptionPlanRepository.findAllByStatusOrderByMonthlyPriceAsc("ACTIVE").stream()
+                .map(plan -> PackageDto.builder()
+                        .id(plan.getPlanCode())
+                        .name(plan.getPlanName())
+                        .description(plan.getDescription())
+                        .monthlyPrice(plan.getMonthlyPrice().longValue())
+                        .yearlyPrice(plan.getAnnualPrice().longValue())
+                        .recommended("VIP".equalsIgnoreCase(plan.getPlanCode()))
+                        .features(featuresFor(plan.getPlanCode()))
+                        .build())
+                .toList();
     }
 
     // =========================================================
@@ -358,21 +317,29 @@ public class OwnerService {
                 .orElseThrow(() -> new BadRequestException("Chưa có gói dịch vụ đang hoạt động"));
     }
 
-    private SubscriptionPlan findOrCreatePlan(String packageType) {
-        return subscriptionPlanRepository.findByPlanCodeAndStatus(packageType, "ACTIVE")
-                .orElseGet(() -> {
-                    boolean vip = "VIP".equals(packageType);
-                    return subscriptionPlanRepository.save(SubscriptionPlan.builder()
-                            .planCode(packageType)
-                            .planName(vip ? "Gói VIP (Pro)" : "Gói Standard")
-                            .monthlyPrice(BigDecimal.valueOf(vip ? 399000 : 199000))
-                            .annualPrice(BigDecimal.valueOf(vip ? 3990000 : 1990000))
-                            .description(vip
-                                    ? "Đầy đủ sức mạnh AI và kế toán tự động"
-                                    : "Quản lý kho, công nợ và sổ kế toán")
-                            .status("ACTIVE")
-                            .build());
-                });
+    private SubscriptionPlan findActivePlan(String packageType) {
+        return subscriptionPlanRepository
+                .findByPlanCodeIgnoreCaseAndStatus(packageType.trim(), "ACTIVE")
+                .orElseThrow(() -> new BadRequestException("Gói thuê bao không tồn tại hoặc đã bị vô hiệu hóa"));
+    }
+
+    private List<String> featuresFor(String planCode) {
+        if ("VIP".equalsIgnoreCase(planCode)) {
+            return List.of(
+                    "Tất cả tính năng gói Standard",
+                    "Trợ lý AI đọc đơn giọng nói / tin nhắn",
+                    "Tự động hóa báo cáo thuế trọn gói",
+                    "Không giới hạn nhân viên"
+            );
+        }
+        if ("STANDARD".equalsIgnoreCase(planCode)) {
+            return List.of(
+                    "Quản lý tồn kho & công nợ",
+                    "Lập sổ kế toán TT 88/2021",
+                    "Tối đa 3 tài khoản nhân viên"
+            );
+        }
+        return List.of("Các tính năng theo cấu hình của gói");
     }
 
     private OwnerProfileResponse toProfileResponse(User user) {
@@ -395,7 +362,7 @@ public class OwnerService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phone(user.getPhone())
-                .avatarUrl(user.getAvatarUrl())
+                .avatarUrl(imageStorageService.toPublicUrl(user.getAvatarObjectKey()))
                 .status(user.getStatus())
                 .businessId(user.getBusinessId())
                 .subscriptionExpiresAt(subscriptionExpiresAt)
