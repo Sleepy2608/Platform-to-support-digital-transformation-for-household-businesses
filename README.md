@@ -146,6 +146,8 @@ DB_USERNAME=<username>
 DB_PASSWORD=<password>
 ```
 
+Vào mục Edit Configurations -> Chọn Evironment variables -> Thêm file .env vừa tạo
+
 ### 4. Backend
 
 - Vào thư mục `Code\Server\src\main\java\com.hbdt`

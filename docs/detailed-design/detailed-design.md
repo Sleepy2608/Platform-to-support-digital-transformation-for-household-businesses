@@ -8,8 +8,9 @@
 | **Tên dự án (VN)** | Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | **Viết tắt** | HBDT |
 | **Loại tài liệu** | Detailed Design Document |
-| **Phiên bản** | 1.0 |
-| **Ngày tạo** | 13/08/2026 |
+| **Phiên bản** | 2.0 |
+| **Ngày tạo** | 12/08/2026 |
+| **Lần cuối cập nhật** | 13/08/2026 |
 | **Trạng thái** | Bản nháp (Draft) |
 | **Tài liệu liên quan** | Các tài liệu trong thư mục docs (URD, SRS, Architecture Design Document, Database Design Document) |
 
