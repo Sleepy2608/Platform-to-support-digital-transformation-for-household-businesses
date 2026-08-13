@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   UserCircle, Lock, Mail, Phone, LogOut, Menu, X,
   ChevronRight, Briefcase,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
 
 const NAV_ITEMS = [
   { label: 'Hồ sơ cá nhân', href: '/employee/account#profile', icon: UserCircle, hash: '#profile' },
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
 
 export default function EmployeeLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(true);
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
@@ -26,27 +28,31 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
   const [currentHash, setCurrentHash] = useState('#profile');
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    const rolesRaw = localStorage.getItem('roles');
+    if (pathname === '/employee/login') {
+      setLoading(false);
+      return;
+    }
+    const token = getAccessToken();
+    const rolesRaw = getAuthItem('roles');
     if (!token || !rolesRaw) {
-      router.push('/login');
+      router.push('/employee/login');
       return;
     }
     try {
       const roles: string[] = JSON.parse(rolesRaw);
       if (!roles.includes('EMPLOYEE')) {
-        router.push('/login');
+        router.push('/employee/login');
         return;
       }
-      setFullName(localStorage.getItem('fullName') || 'Nhân viên');
-      setUsername(localStorage.getItem('username') || '');
-      setAvatarUrl(localStorage.getItem('avatarUrl') || '');
-      setPosition(localStorage.getItem('position') || 'Nhân viên');
+      setFullName(getAuthItem('fullName') || 'Nhân viên');
+      setUsername(getAuthItem('username') || '');
+      setAvatarUrl(getAuthItem('avatarUrl') || '');
+      setPosition(getAuthItem('position') || 'Nhân viên');
       setLoading(false);
     } catch {
-      router.push('/login');
+      router.push('/employee/login');
     }
-  }, [router]);
+  }, [router, pathname]);
 
   useEffect(() => {
     const syncHash = () => setCurrentHash(window.location.hash || '#profile');
@@ -60,11 +66,13 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();
-    document.cookie = 'auth_token=; max-age=0; path=/';
-    document.cookie = 'auth_role=; max-age=0; path=/';
-    router.push('/login');
+    clearAuth();
+    router.push('/employee/login');
   };
+
+  if (pathname === '/employee/login') {
+    return <>{children}</>;
+  }
 
   if (loading) {
     return (

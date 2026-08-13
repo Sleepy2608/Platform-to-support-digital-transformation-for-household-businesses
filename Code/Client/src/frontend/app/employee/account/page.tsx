@@ -7,6 +7,7 @@ import {
   Eye, EyeOff, Send, Shield,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getAccessToken, getAuthItem } from '../../lib/apiClient';
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -47,13 +48,22 @@ export default function EmployeeAccountPage() {
 
   // Auth
   useEffect(() => {
-    const t = localStorage.getItem('accessToken');
-    const roles: string[] = JSON.parse(localStorage.getItem('roles') ?? '[]');
-    if (!t || !roles.includes('EMPLOYEE')) {
-      router.push('/login');
+    const t = getAccessToken();
+    const rolesRaw = getAuthItem('roles');
+    if (!t || !rolesRaw) {
+      router.push('/employee/login');
       return;
     }
-    setToken(t);
+    try {
+      const roles: string[] = JSON.parse(rolesRaw);
+      if (!roles.includes('EMPLOYEE')) {
+        router.push('/employee/login');
+        return;
+      }
+      setToken(t);
+    } catch {
+      router.push('/employee/login');
+    }
   }, [router]);
 
   // Fetch profile
