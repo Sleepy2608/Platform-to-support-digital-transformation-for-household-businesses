@@ -9,6 +9,11 @@ import type { NextRequest } from 'next/server';
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Allow public employee login route
+  if (pathname === '/employee/login') {
+    return NextResponse.next();
+  }
+
   // Protect /owner/* routes (BUSINESS_OWNER only)
   if (pathname.startsWith('/owner')) {
     const authCookie = request.cookies.get('auth_role')?.value;
@@ -29,7 +34,7 @@ export function proxy(request: NextRequest) {
     const hasToken = request.cookies.get('auth_token')?.value;
 
     if (!hasToken || authCookie !== 'EMPLOYEE') {
-      const loginUrl = new URL('/login', request.url);
+      const loginUrl = new URL('/employee/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }

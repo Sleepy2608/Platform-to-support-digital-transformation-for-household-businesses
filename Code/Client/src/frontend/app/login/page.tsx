@@ -61,13 +61,19 @@ export default function LoginPage() {
         const isBusinessOwner = Array.isArray(roles) && roles.includes('BUSINESS_OWNER');
         const isEmployee = Array.isArray(roles) && roles.includes('EMPLOYEE');
 
-        if (!isBusinessOwner && !isEmployee) {
-          setError('Tài khoản không có quyền truy cập hệ thống');
+        if (isEmployee && !isBusinessOwner) {
+          setError('Tài khoản Nhân viên vui lòng đăng nhập tại Cổng Nhân viên (/employee/login)');
           setLoading(false);
           return;
         }
 
-        // Persist the shared session and notify every open tab.
+        if (!isBusinessOwner) {
+          setError('Tài khoản không có quyền truy cập trang Chủ hộ kinh doanh');
+          setLoading(false);
+          return;
+        }
+
+        // Persist the session.
         saveAuthData({
           accessToken,
           refreshToken,
@@ -80,15 +86,10 @@ export default function LoginPage() {
           avatarUrl,
         });
 
-        // Route by role
-        if (isBusinessOwner) {
-          if (!businessId) {
-            router.push('/onboarding/business-profile');
-          } else {
-            router.push('/owner/account');
-          }
-        } else if (isEmployee) {
-          router.push('/employee/account');
+        if (!businessId) {
+          router.push('/onboarding/business-profile');
+        } else {
+          router.push('/owner/account');
         }
       } else {
         throw new Error('Dữ liệu phản hồi không hợp lệ');

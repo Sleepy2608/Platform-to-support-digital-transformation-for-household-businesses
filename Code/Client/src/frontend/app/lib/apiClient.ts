@@ -1,11 +1,6 @@
 /**
  * apiClient.ts
- * Centralized HTTP client with automatic JWT refresh token handling.
- *
- * Usage:
- *   import { apiClient } from '@/app/lib/apiClient';
- *   const data = await apiClient.get('/api/owner/profile');
- *   await apiClient.post('/api/owner/password', { currentPassword, newPassword, confirmPassword });
+ * Centralized HTTP client with automatic JWT refresh token handling and multi-tab auth synchronization.
  */
 
 const BASE_URL = 'http://localhost:8080';
@@ -107,19 +102,19 @@ export function syncTabSessionFromSharedStorage() {
 export function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
   initTabSessionIfNeeded();
-  return localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+  return sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken');
 }
 
 export function getRefreshToken(): string | null {
   if (typeof window === 'undefined') return null;
   initTabSessionIfNeeded();
-  return localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
+  return sessionStorage.getItem('refreshToken') || localStorage.getItem('refreshToken');
 }
 
 export function getAuthItem(key: string): string | null {
   if (typeof window === 'undefined') return null;
   initTabSessionIfNeeded();
-  return localStorage.getItem(key) || sessionStorage.getItem(key);
+  return sessionStorage.getItem(key) || localStorage.getItem(key);
 }
 
 export function saveTokens(accessToken: string, refreshToken: string) {
@@ -232,7 +227,6 @@ async function request<T = unknown>(
       ...(customHeaders as Record<string, string>),
     };
     if (token) h['Authorization'] = `Bearer ${token}`;
-    // Don't set Content-Type for FormData (browser handles boundary)
     if (!(body instanceof FormData)) {
       h['Content-Type'] = 'application/json';
     }
@@ -252,13 +246,10 @@ async function request<T = unknown>(
       body: buildBody(),
     });
 
-  // First attempt
   let response = await doFetch(skipAuth ? null : getAccessToken());
 
-  // Handle 401/403 — token het han (Spring Security tra 403), thu refresh 1 lan
   if ((response.status === 401 || response.status === 403) && !skipAuth && getRefreshToken()) {
     if (isRefreshing) {
-      // Queue this request until refresh is done
       const newToken = await new Promise<string>((resolve, reject) => {
         pendingRequests.push((token) => resolve(token));
         setTimeout(() => reject(new Error('Refresh timeout')), 10000);
@@ -277,14 +268,19 @@ async function request<T = unknown>(
         pendingRequests = [];
         clearAuth();
         if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+          const pathname = window.location.pathname;
+          const loginPath = pathname.startsWith('/admin')
+            ? '/admin/login'
+            : pathname.startsWith('/employee')
+              ? '/employee/login'
+              : '/login';
+          window.location.href = loginPath;
         }
         throw new Error('Session expired. Please log in again.');
       }
     }
   }
 
-  // Parse JSON response
   const contentType = response.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -321,7 +317,6 @@ export const apiClient = {
   delete: <T = unknown>(path: string, body?: unknown, opts?: RequestOptions) =>
     request<T>(path, { ...opts, method: 'DELETE', body }),
 
-  /** For multipart form uploads */
   upload: <T = unknown>(path: string, formData: FormData, opts?: RequestOptions) =>
     request<T>(path, { ...opts, method: 'POST', body: formData }),
 };

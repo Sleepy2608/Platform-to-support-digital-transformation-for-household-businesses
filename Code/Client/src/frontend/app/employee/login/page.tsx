@@ -52,9 +52,16 @@ export default function EmployeeLoginPage() {
         } = resData.data;
 
         const isEmployee = Array.isArray(roles) && roles.includes('EMPLOYEE');
+        const isBusinessOwner = Array.isArray(roles) && roles.includes('BUSINESS_OWNER');
+
+        if (isBusinessOwner && !isEmployee) {
+          setError('Tài khoản Chủ hộ kinh doanh vui lòng đăng nhập tại trang Đăng nhập chính (/login)');
+          setLoading(false);
+          return;
+        }
 
         if (!isEmployee) {
-          setError('Tài khoản không phải là tài khoản nhân viên. Vui lòng sử dụng trang đăng nhập phù hợp.');
+          setError('Tài khoản không có quyền truy cập Cổng Nhân viên');
           setLoading(false);
           return;
         }
