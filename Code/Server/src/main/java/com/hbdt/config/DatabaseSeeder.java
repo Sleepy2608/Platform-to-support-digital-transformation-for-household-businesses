@@ -13,6 +13,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @Component
 @Order(1)
@@ -23,6 +24,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JdbcTemplate jdbcTemplate;
 
     @Value("${app.seed.roles-enabled:true}")
     private boolean rolesEnabled;
@@ -30,20 +32,31 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Value("${app.seed.demo-users-enabled:false}")
     private boolean demoUsersEnabled;
 
-    public DatabaseSeeder(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public DatabaseSeeder(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, JdbcTemplate jdbcTemplate) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
     public void run(String... args) {
+        dropOldRoleCheckConstraint();
         if (rolesEnabled) {
             seedRoles();
         }
         seedHeadAdmin(); // Always ensure HEAD_ADMIN account exists
         if (demoUsersEnabled) {
             seedOwnerUser();
+        }
+    }
+
+    private void dropOldRoleCheckConstraint() {
+        try {
+            jdbcTemplate.execute("ALTER TABLE roles DROP CHECK roles_chk_1");
+            logger.info("Successfully dropped old check constraint 'roles_chk_1' on table 'roles'.");
+        } catch (Exception e) {
+            logger.debug("Constraint 'roles_chk_1' might not exist or already dropped.");
         }
     }
 

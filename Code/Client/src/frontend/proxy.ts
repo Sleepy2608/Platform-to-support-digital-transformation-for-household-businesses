@@ -3,11 +3,28 @@ import type { NextRequest } from 'next/server';
 
 /**
  * proxy.ts
- * Next.js 16 Edge Proxy — protects /owner/* and /employee/* routes.
+ * Next.js 16 Edge Proxy — protects /admin/*, /owner/*, and /employee/* routes.
  * In Next.js 16, proxy function must be exported as `proxy` or `default`.
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const authRole = request.cookies.get('auth_role')?.value ?? '';
+  const authToken = request.cookies.get('auth_token')?.value ?? '';
+
+  // ── /admin/* ────────────────────────────────────────────────────────────────
+  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
+    const isAdminRole = authRole === 'HEAD_ADMIN' || authRole === 'ADMIN';
+    if (!authToken || !isAdminRole) {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
+  }
+
+  // ── /admin/seed – chỉ HEAD_ADMIN ─────────────────────────────────────────
+  if (pathname.startsWith('/admin/seed')) {
+    if (authRole !== 'HEAD_ADMIN') {
+      return NextResponse.redirect(new URL('/admin', request.url));
+    }
+  }
 
   // Allow public employee login route
   if (pathname === '/employee/login') {
@@ -16,29 +33,21 @@ export function proxy(request: NextRequest) {
 
   // Protect /owner/* routes (BUSINESS_OWNER only)
   if (pathname.startsWith('/owner')) {
-    const authCookie = request.cookies.get('auth_role')?.value;
-    const hasToken = request.cookies.get('auth_token')?.value;
-
-    if (!hasToken || authCookie !== 'BUSINESS_OWNER') {
+    if (!authToken || authRole !== 'BUSINESS_OWNER') {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
-
     return NextResponse.next();
   }
 
   // Protect /employee/* routes (EMPLOYEE only)
   if (pathname.startsWith('/employee')) {
-    const authCookie = request.cookies.get('auth_role')?.value;
-    const hasToken = request.cookies.get('auth_token')?.value;
-
-    if (!hasToken || authCookie !== 'EMPLOYEE') {
+    if (!authToken || authRole !== 'EMPLOYEE') {
       const loginUrl = new URL('/employee/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
-
     return NextResponse.next();
   }
 
@@ -46,5 +55,9 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/owner/:path*', '/employee/:path*'],
+  matcher: [
+    '/admin/:path*',
+    '/owner/:path*',
+    '/employee/:path*',
+  ],
 };
