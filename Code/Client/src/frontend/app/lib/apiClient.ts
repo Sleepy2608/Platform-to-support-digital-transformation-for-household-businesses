@@ -52,13 +52,16 @@ function publishAuthSync(type: AuthSyncEventType) {
 
 function setAuthCookies(accessToken: string, roles: string[] = []) {
   const maxAge = 60 * 60 * 24;
-  const role = roles.includes('ADMIN')
-    ? 'ADMIN'
-    : roles.includes('BUSINESS_OWNER')
-      ? 'BUSINESS_OWNER'
-      : roles.includes('EMPLOYEE')
-        ? 'EMPLOYEE'
-        : '';
+  // HEAD_ADMIN check phải đứng trước ADMIN để không bị gộp vào ADMIN thường
+  const role = roles.includes('HEAD_ADMIN')
+    ? 'HEAD_ADMIN'
+    : roles.includes('ADMIN')
+      ? 'ADMIN'
+      : roles.includes('BUSINESS_OWNER')
+        ? 'BUSINESS_OWNER'
+        : roles.includes('EMPLOYEE')
+          ? 'EMPLOYEE'
+          : '';
 
   document.cookie = `auth_token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
   document.cookie = `auth_role=${role}; path=/; max-age=${maxAge}; SameSite=Lax`;

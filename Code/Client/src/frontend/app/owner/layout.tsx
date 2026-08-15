@@ -11,6 +11,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
+import { isOwner } from '../lib/roles';
 
 
 const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash?: string; path?: string }> = [
@@ -47,7 +48,8 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
 
     try {
       const roles: string[] = JSON.parse(rolesRaw);
-      if (!roles.includes('BUSINESS_OWNER')) {
+      // Route Guard: chỉ BUSINESS_OWNER được vào /owner
+      if (!isOwner(roles as never)) {
         router.push('/login');
         return;
       }

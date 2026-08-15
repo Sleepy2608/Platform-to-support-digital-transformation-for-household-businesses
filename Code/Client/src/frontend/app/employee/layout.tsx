@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
+import { isEmployee } from '../lib/roles';
 
 const NAV_ITEMS = [
   { label: 'Hồ sơ cá nhân', href: '/employee/account#profile', icon: UserCircle, hash: '#profile' },
@@ -40,7 +41,8 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
     }
     try {
       const roles: string[] = JSON.parse(rolesRaw);
-      if (!roles.includes('EMPLOYEE')) {
+      // Route Guard: chỉ EMPLOYEE được vào /employee
+      if (!isEmployee(roles as never)) {
         router.push('/employee/login');
         return;
       }

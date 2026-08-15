@@ -2,14 +2,27 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Users, Shield, Cpu, Clock, ArrowRight } from 'lucide-react';
+import { Users, Shield, Cpu, Clock, ArrowRight, Database, ShieldCheck } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal';
+import { getAuthItem } from '../lib/apiClient';
+import { isHeadAdmin, type AppRole } from '../lib/roles';
 
 export default function AdminDashboard() {
   const [adminCount, setAdminCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userRoles, setUserRoles] = useState<AppRole[]>([]);
 
   useEffect(() => {
+    // Lấy role từ session để quyết định hiển thị UI
+    try {
+      const rolesRaw = getAuthItem('roles');
+      if (rolesRaw) {
+        setUserRoles(JSON.parse(rolesRaw) as AppRole[]);
+      }
+    } catch {
+      // ignore
+    }
+
     const fetchAdmins = async () => {
       const token = sessionStorage.getItem('accessToken');
       try {
@@ -33,6 +46,8 @@ export default function AdminDashboard() {
 
     fetchAdmins();
   }, []);
+
+  const headAdmin = isHeadAdmin(userRoles);
 
   const stats = [
     {
@@ -62,7 +77,19 @@ export default function AdminDashboard() {
     <div className="space-y-8">
       {/* Welcome Header */}
       <div>
-        <h1 className="text-3xl font-extrabold tracking-tight">Tổng quan Hệ thống</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-extrabold tracking-tight">Tổng quan Hệ thống</h1>
+          {/* Menu Guard indicator – hiển thị role badge */}
+          {headAdmin ? (
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full">
+              <ShieldCheck className="w-3.5 h-3.5" /> HEAD ADMIN
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 bg-zinc-800 border border-zinc-700 px-3 py-1 rounded-full">
+              ADMIN
+            </span>
+          )}
+        </div>
         <p className="text-zinc-400 text-sm mt-1">
           Bảng điều khiển quản trị trung tâm của HKD.DIGITAL
         </p>
@@ -119,6 +146,22 @@ export default function AdminDashboard() {
                   <ArrowRight className="w-4 h-4 text-zinc-500 transition-transform duration-200 group-hover:translate-x-1" />
                 </div>
               </Link>
+
+              {/* Menu Guard: chỉ HEAD_ADMIN thấy shortcut Seek Data */}
+              {headAdmin && (
+                <Link 
+                  href="/admin/seed"
+                  className="p-4 bg-amber-500/5 border border-amber-500/20 hover:border-amber-500/40 rounded-xl flex flex-col justify-between gap-4 transition-all duration-200 hover:scale-[1.02] hover:bg-amber-500/10 active:scale-95 group"
+                >
+                  <div className="p-2.5 bg-amber-500/10 border border-amber-500/30 w-fit rounded-lg">
+                    <Database className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-amber-300">Seek Data</span>
+                    <ArrowRight className="w-4 h-4 text-amber-500/60 transition-transform duration-200 group-hover:translate-x-1" />
+                  </div>
+                </Link>
+              )}
             </div>
           </div>
         </ScrollReveal>
@@ -139,7 +182,7 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <p className="font-semibold text-zinc-300">Khởi chạy hệ thống hoàn tất</p>
-                  <p className="text-zinc-500 mt-0.5">DatabaseSeeder đã khởi tạo vai trò và tài khoản quản trị mặc định.</p>
+                  <p className="text-zinc-500 mt-0.5">DatabaseSeeder đã khởi tạo vai trò và tài khoản HEAD_ADMIN mặc định.</p>
                 </div>
               </div>
               <div className="flex gap-4 items-start text-xs">

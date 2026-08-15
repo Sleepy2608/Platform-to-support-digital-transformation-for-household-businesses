@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { ArrowLeft, LogIn, Lock, User, AlertCircle, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import ScrollReveal from '../../components/ScrollReveal';
 import { saveAuthData } from '../../lib/apiClient';
+import { isAnyAdmin, isOwner, isEmployee as checkIsEmployee, getLoginRedirectPath, type AppRole } from '../../lib/roles';
 
 export default function EmployeeLoginPage() {
   const router = useRouter();
@@ -51,16 +52,21 @@ export default function EmployeeLoginPage() {
           avatarUrl,
         } = resData.data;
 
-        const isEmployee = Array.isArray(roles) && roles.includes('EMPLOYEE');
-        const isBusinessOwner = Array.isArray(roles) && roles.includes('BUSINESS_OWNER');
+        const rolesArr: AppRole[] = Array.isArray(roles) ? roles as AppRole[] : [];
 
-        if (isBusinessOwner && !isEmployee) {
+        if (isAnyAdmin(rolesArr)) {
+          setError('Tài khoản quản trị vui lòng đăng nhập tại /admin/login');
+          setLoading(false);
+          return;
+        }
+
+        if (isOwner(rolesArr) && !checkIsEmployee(rolesArr)) {
           setError('Tài khoản Chủ hộ kinh doanh vui lòng đăng nhập tại trang Đăng nhập chính (/login)');
           setLoading(false);
           return;
         }
 
-        if (!isEmployee) {
+        if (!checkIsEmployee(rolesArr)) {
           setError('Tài khoản không có quyền truy cập Cổng Nhân viên');
           setLoading(false);
           return;
@@ -74,12 +80,13 @@ export default function EmployeeLoginPage() {
           username: resUser,
           fullName,
           email,
-          roles,
+          roles: rolesArr,
           businessId,
           avatarUrl,
         });
 
-        router.push('/employee/account');
+        const redirectPath = getLoginRedirectPath(rolesArr, businessId);
+        router.push(redirectPath);
       } else {
         throw new Error('Dữ liệu phản hồi không hợp lệ');
       }

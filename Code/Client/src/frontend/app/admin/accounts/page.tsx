@@ -6,6 +6,8 @@ import {
   Check, AlertTriangle, Eye, EyeOff, Loader2, Phone, Mail, User, ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getAuthItem } from '../../lib/apiClient';
+import { isHeadAdmin, type AppRole } from '../../lib/roles';
 
 interface AdminAccount {
   id: number;
@@ -24,6 +26,7 @@ export default function AdminAccountsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [isRootAdmin, setIsRootAdmin] = useState(false);
 
   // Modals state
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -75,6 +78,15 @@ export default function AdminAccountsPage() {
   };
 
   useEffect(() => {
+    try {
+      const rolesStr = getAuthItem('roles');
+      if (rolesStr) {
+        const roles = JSON.parse(rolesStr) as AppRole[];
+        setIsRootAdmin(isHeadAdmin(roles));
+      }
+    } catch (e) {
+      console.error(e);
+    }
     fetchAccounts();
   }, []);
 
@@ -293,15 +305,17 @@ export default function AdminAccountsPage() {
             Xem danh sách, thêm mới, điều chỉnh quyền lực hoặc vô hiệu hóa các tài khoản quản trị viên.
           </p>
         </div>
-        <button
-          onClick={() => {
-            resetForm();
-            setIsAddOpen(true);
-          }}
-          className="bg-white hover:bg-zinc-200 text-zinc-950 font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-lg flex-shrink-0"
-        >
-          <UserPlus className="w-4 h-4" /> Thêm Admin
-        </button>
+        {isRootAdmin && (
+          <button
+            onClick={() => {
+              resetForm();
+              setIsAddOpen(true);
+            }}
+            className="bg-white hover:bg-zinc-200 text-zinc-950 font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-lg flex-shrink-0"
+          >
+            <UserPlus className="w-4 h-4" /> Thêm Admin
+          </button>
+        )}
       </div>
 
       {/* Filter and search bar */}
@@ -355,7 +369,7 @@ export default function AdminAccountsPage() {
                   <th className="p-4">Thông tin liên hệ</th>
                   <th className="p-4 text-center">Trạng thái</th>
                   <th className="p-4">Ngày tạo</th>
-                  <th className="p-4 pr-6 text-right">Thao tác</th>
+                  {isRootAdmin && <th className="p-4 pr-6 text-right">Thao tác</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/60">
@@ -403,27 +417,29 @@ export default function AdminAccountsPage() {
                         day: 'numeric'
                       }) : 'N/A'}
                     </td>
-                    <td className="p-4 pr-6 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => openEdit(acc)}
-                          className="p-2 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-colors cursor-pointer"
-                          title="Chỉnh sửa thông tin"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => openDelete(acc)}
-                          disabled={acc.username === 'admin'}
-                          className={`p-2 hover:bg-red-950/20 text-zinc-400 hover:text-red-400 rounded-lg transition-colors cursor-pointer ${
-                            acc.username === 'admin' ? 'opacity-30 pointer-events-none' : ''
-                          }`}
-                          title={acc.username === 'admin' ? 'Không thể xóa Admin mặc định' : 'Xóa tài khoản'}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
+                    {isRootAdmin && (
+                      <td className="p-4 pr-6 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => openEdit(acc)}
+                            className="p-2 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+                            title="Chỉnh sửa thông tin"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => openDelete(acc)}
+                            disabled={acc.username === 'admin'}
+                            className={`p-2 hover:bg-red-950/20 text-zinc-400 hover:text-red-400 rounded-lg transition-colors cursor-pointer ${
+                              acc.username === 'admin' ? 'opacity-30 pointer-events-none' : ''
+                            }`}
+                            title={acc.username === 'admin' ? 'Không thể xóa Admin mặc định' : 'Xóa tài khoản'}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

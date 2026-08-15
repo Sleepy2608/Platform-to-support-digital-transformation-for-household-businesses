@@ -41,8 +41,8 @@ public class DatabaseSeeder implements CommandLineRunner {
         if (rolesEnabled) {
             seedRoles();
         }
+        seedHeadAdmin(); // Always ensure HEAD_ADMIN account exists
         if (demoUsersEnabled) {
-            seedAdminUser();
             seedOwnerUser();
         }
     }
@@ -63,6 +63,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     private String getRoleDisplayName(RoleType roleType) {
         return switch (roleType) {
+            case HEAD_ADMIN -> "Siêu quản trị viên";
             case ADMIN -> "Quản trị viên";
             case BUSINESS_OWNER -> "Chủ hộ kinh doanh";
             case EMPLOYEE -> "Nhân viên";
@@ -71,29 +72,45 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     private String getRoleDescription(RoleType roleType) {
         return switch (roleType) {
-            case ADMIN -> "Quản trị viên hệ thống";
+            case HEAD_ADMIN -> "Siêu quản trị viên hệ thống – toàn quyền seed/create/delete Admin";
+            case ADMIN -> "Quản trị viên thường – không được seed hoặc tạo/xóa Admin";
             case BUSINESS_OWNER -> "Chủ hộ kinh doanh";
             case EMPLOYEE -> "Nhân viên cửa hàng";
         };
     }
 
-    private void seedAdminUser() {
-        if (!userRepository.existsByUsername("Admin")) {
-            Role adminRole = roleRepository.findFirstByName(RoleType.ADMIN)
-                    .orElseThrow(() -> new RuntimeException("Role ADMIN not found"));
-            User admin = User.builder()
-                    .username("Admin")
-                    .password(passwordEncoder.encode("Admin"))
-                    .email("admin@hbdt.com")
-                    .fullName("System Administrator")
-                    .phone("0123456789")
-                    .status(UserStatus.ACTIVE)
-                    .role(adminRole)
-                    .build();
-
-            userRepository.save(admin);
-            logger.info("Seeded default admin user: Admin / Admin");
+    /**
+     * Đảm bảo tài khoản HEAD_ADMIN mặc định (admin/admin) luôn tồn tại.
+     * Nếu tài khoản đang có role ADMIN, nâng cấp lên HEAD_ADMIN.
+     */
+    private void seedHeadAdmin() {
+        Role headAdminRole = roleRepository.findFirstByName(RoleType.HEAD_ADMIN)
+                .orElse(null);
+        if (headAdminRole == null) {
+            // Vai trò HEAD_ADMIN chưa được seed – bỏ qua, seedRoles() sẽ tạo
+            return;
         }
+
+        userRepository.findByUsername("admin").ifPresentOrElse(existing -> {
+            // Nếu tài khoản tồn tại nhưng chưa phải HEAD_ADMIN, nâng cấp
+            if (existing.getRole() == null || existing.getRole().getName() != RoleType.HEAD_ADMIN) {
+                existing.setRole(headAdminRole);
+                userRepository.save(existing);
+                logger.info("Upgraded 'admin' account to HEAD_ADMIN");
+            }
+        }, () -> {
+            User headAdmin = User.builder()
+                    .username("admin")
+                    .password(passwordEncoder.encode("admin"))
+                    .email("admin@hbdt.com")
+                    .fullName("Head Administrator")
+                    .phone("0000000000")
+                    .status(UserStatus.ACTIVE)
+                    .role(headAdminRole)
+                    .build();
+            userRepository.save(headAdmin);
+            logger.info("Seeded HEAD_ADMIN account: admin / admin");
+        });
     }
 
     private void seedOwnerUser() {

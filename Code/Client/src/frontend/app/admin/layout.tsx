@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, BadgeDollarSign } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, BadgeDollarSign, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
+import { isAnyAdmin, isHeadAdmin, type AppRole } from '../lib/roles';
 
 export default function AdminLayout({
   children,
@@ -18,10 +19,11 @@ export default function AdminLayout({
   const [loading, setLoading] = useState(true);
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
+  const [roles, setRoles] = useState<AppRole[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    // Trang dang nhap admin khong can token -> bo qua kiem tra
+    // Trang đăng nhập admin không cần token -> bỏ qua kiểm tra
     if (pathname === '/admin/login') {
       setLoading(false);
       return;
@@ -36,16 +38,19 @@ export default function AdminLayout({
     }
 
     try {
-      const roles = JSON.parse(rolesStr);
-      if (!roles.includes('ADMIN')) {
+      const parsedRoles: AppRole[] = JSON.parse(rolesStr);
+
+      // Route Guard: chỉ HEAD_ADMIN hoặc ADMIN được vào /admin
+      if (!isAnyAdmin(parsedRoles)) {
         router.push('/admin/login');
         return;
       }
 
+      setRoles(parsedRoles);
       setFullName(getAuthItem('fullName') || 'Administrator');
       setUsername(getAuthItem('username') || 'admin');
       setLoading(false);
-    } catch (e) {
+    } catch {
       router.push('/admin/login');
     }
   }, [router, pathname]);
@@ -55,7 +60,7 @@ export default function AdminLayout({
     router.push('/admin/login');
   };
 
-  // Trang dang nhap admin: render thang, khong bọc sidebar/kiem tra quyen
+  // Trang đăng nhập admin: render thẳng, không bọc sidebar/kiểm tra quyền
   if (pathname === '/admin/login') {
     return <>{children}</>;
   }
@@ -71,14 +76,32 @@ export default function AdminLayout({
     );
   }
 
+  const headAdmin = isHeadAdmin(roles);
+
+  /**
+   * Menu Guard: HEAD_ADMIN thấy thêm Seek Data, tạo/xóa Admin
+   * ADMIN chỉ thấy Tổng quan, Tài khoản Admin (xem), Gói thuê bao
+   */
   const navItems = [
     { name: 'Tổng quan', href: '/admin', icon: LayoutDashboard },
     { name: 'Tài khoản Admin', href: '/admin/accounts', icon: Users },
     { name: 'Gói thuê bao', href: '/admin/subscription-plans', icon: BadgeDollarSign },
-    ...(username === 'Admin'
+    // Chỉ HEAD_ADMIN mới thấy Seek Data
+    ...(headAdmin
       ? [{ name: 'Seek Data', href: '/admin/seed', icon: Database }]
       : []),
   ];
+
+  // Badge hiển thị role trong sidebar
+  const roleBadge = headAdmin ? (
+    <span className="inline-flex items-center gap-1 text-[10px] text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold mt-1">
+      <ShieldCheck className="w-3 h-3" /> HEAD ADMIN
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-400 bg-zinc-700/40 border border-zinc-700 px-2 py-0.5 rounded-full font-semibold mt-1">
+      ADMIN
+    </span>
+  );
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex flex-col md:flex-row relative">
@@ -127,6 +150,8 @@ export default function AdminLayout({
                 <div className="min-w-0">
                   <p className="text-sm font-semibold truncate leading-none">{fullName}</p>
                   <span className="text-[10px] text-zinc-400">@{username}</span>
+                  {/* Role badge – Menu Guard indicator */}
+                  <div>{roleBadge}</div>
                 </div>
               </div>
 

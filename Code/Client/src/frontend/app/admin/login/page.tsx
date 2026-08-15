@@ -6,6 +6,7 @@ import { ShieldCheck, LogIn, Lock, User, AlertCircle, Eye, EyeOff } from 'lucide
 import ScrollReveal from '../../components/ScrollReveal';
 
 import { saveAuthData } from '../../lib/apiClient';
+import { getLoginRedirectPath, type AppRole } from '../../lib/roles';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -51,9 +52,14 @@ export default function AdminLoginPage() {
           avatarUrl,
         } = resData.data;
 
-        // Chi cho phep tai khoan ADMIN dang nhap o cua nay
-        if (!Array.isArray(roles) || !roles.includes('ADMIN')) {
-          setError('Tài khoản này không phải quản trị viên');
+        const rolesArr: AppRole[] = Array.isArray(roles) ? roles as AppRole[] : [];
+
+        // Chỉ cho phép HEAD_ADMIN hoặc ADMIN đăng nhập tại đây
+        const isAdminPortalUser =
+          rolesArr.includes('HEAD_ADMIN') || rolesArr.includes('ADMIN');
+
+        if (!isAdminPortalUser) {
+          setError('Tài khoản này không phải quản trị viên. Vui lòng sử dụng đúng cổng đăng nhập.');
           setLoading(false);
           return;
         }
@@ -65,12 +71,14 @@ export default function AdminLoginPage() {
           username: resUser,
           fullName,
           email,
-          roles,
+          roles: rolesArr,
           businessId,
           avatarUrl,
         });
 
-        router.push('/admin');
+        // Redirect về /admin – layout sẽ phân biệt HEAD_ADMIN / ADMIN để hiển thị menu
+        const redirectPath = getLoginRedirectPath(rolesArr, businessId);
+        router.push(redirectPath);
       } else {
         throw new Error('Dữ liệu phản hồi không hợp lệ');
       }

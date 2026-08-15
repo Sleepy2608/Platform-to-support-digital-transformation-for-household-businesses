@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Store, ArrowLeft, LogIn, Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal';
 import { saveAuthData } from '../lib/apiClient';
+import { getLoginRedirectPath, isAnyAdmin, isEmployee, isOwner, type AppRole } from '../lib/roles';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -51,23 +52,23 @@ export default function LoginPage() {
           avatarUrl,
         } = resData.data;
 
-        // Validate the portal before replacing a session that may be open in other tabs.
-        if (Array.isArray(roles) && roles.includes('ADMIN')) {
-          setError('Tài khoản quản trị vui lòng đăng nhập tại trang quản trị');
+        const rolesArr: AppRole[] = Array.isArray(roles) ? roles as AppRole[] : [];
+
+        // Cổng này chỉ dành cho BUSINESS_OWNER
+        // Các role khác phải vào đúng cổng của mình
+        if (isAnyAdmin(rolesArr)) {
+          setError('Tài khoản quản trị vui lòng đăng nhập tại /admin/login');
           setLoading(false);
           return;
         }
 
-        const isBusinessOwner = Array.isArray(roles) && roles.includes('BUSINESS_OWNER');
-        const isEmployee = Array.isArray(roles) && roles.includes('EMPLOYEE');
-
-        if (isEmployee && !isBusinessOwner) {
+        if (isEmployee(rolesArr) && !isOwner(rolesArr)) {
           setError('Tài khoản Nhân viên vui lòng đăng nhập tại Cổng Nhân viên (/employee/login)');
           setLoading(false);
           return;
         }
 
-        if (!isBusinessOwner) {
+        if (!isOwner(rolesArr)) {
           setError('Tài khoản không có quyền truy cập trang Chủ hộ kinh doanh');
           setLoading(false);
           return;
@@ -81,16 +82,13 @@ export default function LoginPage() {
           username: resUser,
           fullName,
           email,
-          roles,
+          roles: rolesArr,
           businessId,
           avatarUrl,
         });
 
-        if (!businessId) {
-          router.push('/onboarding/business-profile');
-        } else {
-          router.push('/owner/account');
-        }
+        const redirectPath = getLoginRedirectPath(rolesArr, businessId);
+        router.push(redirectPath);
       } else {
         throw new Error('Dữ liệu phản hồi không hợp lệ');
       }

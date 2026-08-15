@@ -15,6 +15,7 @@ import com.hbdt.repository.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,17 +38,31 @@ public class AdminUserController {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /**
+     * GET /api/admin/accounts – Lấy danh sách Admin.
+     * Cả HEAD_ADMIN và ADMIN đều được xem (SecurityConfig đã cho phép /api/admin/**).
+     */
     @GetMapping
     public ResponseEntity<ApiResponse<List<AdminResponse>>> getAllAdmins() {
-        List<User> admins = userRepository.findByRoleType(RoleType.ADMIN);
-        List<AdminResponse> response = admins.stream()
-                .filter(u -> !"Admin".equals(u.getUsername()))
+        List<User> headAdmins = userRepository.findByRoleType(RoleType.HEAD_ADMIN);
+        List<User> regularAdmins = userRepository.findByRoleType(RoleType.ADMIN);
+        
+        List<User> allAdmins = new java.util.ArrayList<>();
+        allAdmins.addAll(headAdmins);
+        allAdmins.addAll(regularAdmins);
+
+        List<AdminResponse> response = allAdmins.stream()
                 .map(this::mapToAdminResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách Admin thành công", response));
     }
 
+    /**
+     * POST /api/admin/accounts – Tạo Admin mới.
+     * Chỉ HEAD_ADMIN được phép.
+     */
     @PostMapping
+    @PreAuthorize("hasRole('HEAD_ADMIN')")
     public ResponseEntity<ApiResponse<AdminResponse>> createAdmin(@Valid @RequestBody AdminCreateRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new BadRequestException("Tên đăng nhập đã tồn tại");
@@ -76,12 +91,21 @@ public class AdminUserController {
                 .body(ApiResponse.success("Thêm Admin mới thành công", mapToAdminResponse(savedAdmin)));
     }
 
+    /**
+     * PUT /api/admin/accounts/{id} – Cập nhật thông tin Admin.
+     * Cả HEAD_ADMIN và ADMIN đều được (SecurityConfig cho phép /api/admin/**).
+     */
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<AdminResponse>> updateAdmin(
             @PathVariable Long id,
             @Valid @RequestBody AdminUpdateRequest request) {
         User admin = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản Admin với ID: " + id));
+
+        // Chỉ cho phép sửa ADMIN thường, không cho sửa HEAD_ADMIN qua endpoint này
+        if (admin.getRole() != null && admin.getRole().getName() == RoleType.HEAD_ADMIN) {
+            throw new BadRequestException("Không thể sửa tài khoản Siêu quản trị viên qua endpoint này");
+        }
 
         // Check duplicate email
         if (!admin.getEmail().equalsIgnoreCase(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
@@ -100,11 +124,6 @@ public class AdminUserController {
         admin.setEmail(request.getEmail());
         admin.setFullName(request.getFullName());
         admin.setPhone(request.getPhone());
-        
-        // Prevent disabling default 'admin' account
-        if ("Admin".equals(admin.getUsername()) && request.getStatus() != UserStatus.ACTIVE) {
-            throw new BadRequestException("Không thể thay đổi trạng thái hoạt động của Root Admin");
-        }
         admin.setStatus(request.getStatus());
 
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
@@ -118,14 +137,19 @@ public class AdminUserController {
         return ResponseEntity.ok(ApiResponse.success("Cập nhật tài khoản Admin thành công", mapToAdminResponse(updatedAdmin)));
     }
 
+    /**
+     * DELETE /api/admin/accounts/{id} – Xóa Admin.
+     * Chỉ HEAD_ADMIN được phép.
+     */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('HEAD_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteAdmin(@PathVariable Long id) {
         User admin = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản Admin với ID: " + id));
 
-        // Prevent deleting default 'admin' account
-        if ("Admin".equals(admin.getUsername())) {
-            throw new BadRequestException("Không thể xóa tài khoản Admin hệ thống mặc định");
+        // Không cho phép xóa tài khoản HEAD_ADMIN
+        if (admin.getRole() != null && admin.getRole().getName() == RoleType.HEAD_ADMIN) {
+            throw new BadRequestException("Không thể xóa tài khoản Siêu quản trị viên");
         }
 
         userRepository.delete(admin);
