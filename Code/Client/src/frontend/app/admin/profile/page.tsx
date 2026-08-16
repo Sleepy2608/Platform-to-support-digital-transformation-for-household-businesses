@@ -6,6 +6,7 @@ import {
   Check, AlertTriangle, Loader2, Eye, EyeOff, Edit3, Save, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { apiClient } from '@/app/lib/apiClient';
 
 interface AdminProfile {
   id: number;
@@ -18,9 +19,6 @@ interface AdminProfile {
   createdAt: string;
   updatedAt: string;
 }
-
-const API_BASE = 'http://localhost:8080';
-
 export default function AdminProfilePage() {
   const [profile, setProfile] = useState<AdminProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,23 +43,17 @@ export default function AdminProfilePage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const token = () => localStorage.getItem('accessToken') ?? '';
-
   // ─── Fetch Profile ─────────────────────────────────────────────────────────
   const fetchProfile = async () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE}/api/admin/profile`, {
-        headers: { Authorization: `Bearer ${token()}` },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Không thể tải thông tin');
-      setProfile(data.data);
+      const data = await apiClient.get<AdminProfile>('/api/admin/profile');
+      setProfile(data);
       setEditData({
-        fullName: data.data.fullName ?? '',
-        email: data.data.email ?? '',
-        phone: data.data.phone ?? '',
+        fullName: data.fullName ?? '',
+        email: data.email ?? '',
+        phone: data.phone ?? '',
       });
     } catch (err: any) {
       setError(err.message || 'Lỗi kết nối máy chủ');
@@ -99,21 +91,14 @@ export default function AdminProfilePage() {
     if (!validateInfo()) return;
     setSavingInfo(true);
     try {
-      const res = await fetch(`${API_BASE}/api/admin/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token()}`,
-        },
-        body: JSON.stringify(editData),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Cập nhật thất bại');
-      setProfile(data.data);
+      const data = await apiClient.put<AdminProfile>('/api/admin/profile', editData);
+      setProfile(data);
       setIsEditing(false);
       setSuccessMsg('Cập nhật thông tin thành công!');
-      // Sync localStorage fullName for sidebar
-      localStorage.setItem('fullName', data.data.fullName);
+      // Sync localStorage & sessionStorage for sidebar
+      localStorage.setItem('fullName', data.fullName ?? '');
+      sessionStorage.setItem('fullName', data.fullName ?? '');
+      window.dispatchEvent(new CustomEvent('admin-profile-updated', { detail: data }));
     } catch (err: any) {
       setError(err.message || 'Lỗi kết nối máy chủ');
     } finally {
@@ -149,16 +134,7 @@ export default function AdminProfilePage() {
     if (!validatePw()) return;
     setSavingPw(true);
     try {
-      const res = await fetch(`${API_BASE}/api/admin/profile/password`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token()}`,
-        },
-        body: JSON.stringify(pwData),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Đổi mật khẩu thất bại');
+      await apiClient.put('/api/admin/profile/password', pwData);
       setPwData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setPwErrors({});
       setSuccessMsg('Đổi mật khẩu thành công!');
@@ -181,14 +157,13 @@ export default function AdminProfilePage() {
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const res = await fetch(`${API_BASE}/api/admin/profile/avatar`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token()}` },
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Upload thất bại');
-      setProfile(data.data);
+      const data = await apiClient.upload<AdminProfile>('/api/admin/profile/avatar', formData);
+      setProfile(data);
+      if (data.avatarUrl) {
+        localStorage.setItem('avatarUrl', data.avatarUrl);
+        sessionStorage.setItem('avatarUrl', data.avatarUrl);
+      }
+      window.dispatchEvent(new CustomEvent('admin-profile-updated', { detail: data }));
       setSuccessMsg('Cập nhật ảnh đại diện thành công!');
     } catch (err: any) {
       setError(err.message || 'Lỗi kết nối máy chủ');

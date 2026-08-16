@@ -13,6 +13,7 @@ interface AdminAccount {
   email: string;
   fullName: string;
   phone: string;
+  avatarUrl?: string | null;
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING_VERIFICATION';
   createdAt: string;
 }
@@ -364,9 +365,17 @@ export default function AdminAccountsPage() {
                 {filteredAccounts.map((acc) => (
                   <tr key={acc.id} className="hover:bg-zinc-800/20 transition-colors">
                     <td className="p-4 pl-6 font-medium text-white flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/60 flex items-center justify-center font-bold text-zinc-300">
-                        {acc.fullName.charAt(0).toUpperCase()}
-                      </div>
+                      {acc.avatarUrl ? (
+                        <img
+                          src={acc.avatarUrl}
+                          alt="Avatar"
+                          className="w-9 h-9 rounded-full object-cover border border-zinc-700/60 flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/60 flex items-center justify-center font-bold text-zinc-300 flex-shrink-0">
+                          {acc.fullName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <div>
                         <div className="font-semibold text-white">{acc.fullName}</div>
                         {acc.username === 'admin' && (

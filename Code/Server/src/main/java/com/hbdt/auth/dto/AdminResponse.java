@@ -16,6 +16,7 @@ public class AdminResponse {
     private String email;
     private String fullName;
     private String phone;
+    private String avatarUrl;
     private UserStatus status;
     private LocalDateTime createdAt;
 }

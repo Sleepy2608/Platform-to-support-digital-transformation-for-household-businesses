@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, BadgeDollarSign } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, BadgeDollarSign, UserCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
@@ -18,6 +18,7 @@ export default function AdminLayout({
   const [loading, setLoading] = useState(true);
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -44,11 +45,27 @@ export default function AdminLayout({
 
       setFullName(getAuthItem('fullName') || 'Administrator');
       setUsername(getAuthItem('username') || 'admin');
+      setAvatarUrl(getAuthItem('avatarUrl') || '');
       setLoading(false);
     } catch (e) {
       router.push('/admin/login');
     }
   }, [router, pathname]);
+
+  useEffect(() => {
+    const syncAdminSummary = (event?: Event) => {
+      const detail = event instanceof CustomEvent
+        ? event.detail as { fullName?: string; avatarUrl?: string }
+        : undefined;
+      setFullName(detail?.fullName ?? getAuthItem('fullName') ?? 'Administrator');
+      setAvatarUrl(detail?.avatarUrl ?? getAuthItem('avatarUrl') ?? '');
+    };
+
+    window.addEventListener('admin-profile-updated', syncAdminSummary);
+    return () => {
+      window.removeEventListener('admin-profile-updated', syncAdminSummary);
+    };
+  }, []);
 
   const handleLogout = () => {
     clearAuth();
@@ -75,6 +92,7 @@ export default function AdminLayout({
     { name: 'Tổng quan', href: '/admin', icon: LayoutDashboard },
     { name: 'Tài khoản Admin', href: '/admin/accounts', icon: Users },
     { name: 'Gói thuê bao', href: '/admin/subscription-plans', icon: BadgeDollarSign },
+    { name: 'Hồ sơ cá nhân', href: '/admin/profile', icon: UserCircle },
     ...(username === 'Admin'
       ? [{ name: 'Seek Data', href: '/admin/seed', icon: Database }]
       : []),
@@ -120,15 +138,28 @@ export default function AdminLayout({
               </div>
 
               {/* User Profile Summary */}
-              <div className="p-4 bg-zinc-800/50 border border-zinc-700/40 rounded-2xl flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center font-bold text-zinc-200 border border-zinc-600">
-                  {fullName.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold truncate leading-none">{fullName}</p>
+              <Link
+                href="/admin/profile"
+                onClick={() => setSidebarOpen(false)}
+                className="p-3.5 bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700/40 hover:border-zinc-600 rounded-2xl flex items-center gap-3 transition-all group cursor-pointer"
+                title="Xem & Chỉnh sửa hồ sơ admin"
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Avatar"
+                    className="w-10 h-10 rounded-full object-cover border border-zinc-600 flex-shrink-0 group-hover:scale-105 transition-transform"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center font-bold text-zinc-200 border border-zinc-600 flex-shrink-0 group-hover:bg-zinc-600 transition-colors">
+                    {fullName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold truncate leading-none text-white">{fullName}</p>
                   <span className="text-[10px] text-zinc-400">@{username}</span>
                 </div>
-              </div>
+              </Link>
 
               {/* Navigation Links */}
               <nav className="flex flex-col gap-2">

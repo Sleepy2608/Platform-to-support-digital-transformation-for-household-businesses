@@ -6,6 +6,7 @@ import com.hbdt.auth.dto.AdminUpdateRequest;
 import com.hbdt.common.dto.ApiResponse;
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
+import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.entity.Role;
 import com.hbdt.entity.User;
 import com.hbdt.entity.enums.RoleType;
@@ -28,13 +29,16 @@ public class AdminUserController {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ImageStorageService imageStorageService;
 
     public AdminUserController(UserRepository userRepository,
                                RoleRepository roleRepository,
-                               PasswordEncoder passwordEncoder) {
+                               PasswordEncoder passwordEncoder,
+                               ImageStorageService imageStorageService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.imageStorageService = imageStorageService;
     }
 
     @GetMapping
@@ -139,6 +143,7 @@ public class AdminUserController {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phone(user.getPhone())
+                .avatarUrl(imageStorageService.toPublicUrl(user.getAvatarObjectKey()))
                 .status(user.getStatus())
                 .createdAt(user.getCreatedAt())
                 .build();
