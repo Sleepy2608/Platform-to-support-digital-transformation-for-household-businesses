@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAuthItem } from '../../lib/apiClient';
-import { isHeadAdmin, type AppRole } from '../../lib/roles';
+import { isAdmin, type AppRole } from '../../lib/roles';
 
 interface AdminAccount {
   id: number;
@@ -82,7 +82,7 @@ export default function AdminAccountsPage() {
       const rolesStr = getAuthItem('roles');
       if (rolesStr) {
         const roles = JSON.parse(rolesStr) as AppRole[];
-        setIsRootAdmin(isHeadAdmin(roles));
+        setIsRootAdmin(isAdmin(roles));
       }
     } catch (e) {
       console.error(e);

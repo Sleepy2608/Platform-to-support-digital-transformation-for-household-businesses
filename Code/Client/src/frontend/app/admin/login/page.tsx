@@ -54,12 +54,11 @@ export default function AdminLoginPage() {
 
         const rolesArr: AppRole[] = Array.isArray(roles) ? roles as AppRole[] : [];
 
-        // Chỉ cho phép HEAD_ADMIN hoặc ADMIN đăng nhập tại đây
-        const isAdminPortalUser =
-          rolesArr.includes('HEAD_ADMIN') || rolesArr.includes('ADMIN');
+        // Chỉ cho phép ADMIN đăng nhập tại đây (cổng admin riêng)
+        const isAdminPortalUser = rolesArr.includes('ADMIN');
 
         if (!isAdminPortalUser) {
-          setError('Tài khoản này không phải quản trị viên. Vui lòng sử dụng đúng cổng đăng nhập.');
+          setError('Tài khoản này không phải quản trị viên hệ thống cấp cao. Vui lòng sử dụng đúng cổng đăng nhập.');
           setLoading(false);
           return;
         }

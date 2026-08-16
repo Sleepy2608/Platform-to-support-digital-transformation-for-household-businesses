@@ -7,7 +7,7 @@ import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, BadgeDollarSi
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
-import { isAnyAdmin, isHeadAdmin, type AppRole } from '../lib/roles';
+import { isAdmin, type AppRole } from '../lib/roles';
 
 export default function AdminLayout({
   children,
@@ -40,8 +40,8 @@ export default function AdminLayout({
     try {
       const parsedRoles: AppRole[] = JSON.parse(rolesStr);
 
-      // Route Guard: chỉ HEAD_ADMIN hoặc ADMIN được vào /admin
-      if (!isAnyAdmin(parsedRoles)) {
+      // Route Guard: chỉ ADMIN được vào /admin
+      if (!isAdmin(parsedRoles)) {
         router.push('/admin/login');
         return;
       }
@@ -76,30 +76,22 @@ export default function AdminLayout({
     );
   }
 
-  const headAdmin = isHeadAdmin(roles);
+  const headAdmin = isAdmin(roles);
 
   /**
-   * Menu Guard: HEAD_ADMIN thấy thêm Seek Data, tạo/xóa Admin
-   * ADMIN chỉ thấy Tổng quan, Tài khoản Admin (xem), Gói thuê bao
+   * Menu Guard: ADMIN (toàn quyền)
    */
   const navItems = [
     { name: 'Tổng quan', href: '/admin', icon: LayoutDashboard },
     { name: 'Tài khoản Admin', href: '/admin/accounts', icon: Users },
     { name: 'Gói thuê bao', href: '/admin/subscription-plans', icon: BadgeDollarSign },
-    // Chỉ HEAD_ADMIN mới thấy Seek Data
-    ...(headAdmin
-      ? [{ name: 'Seek Data', href: '/admin/seed', icon: Database }]
-      : []),
+    { name: 'Seek Data', href: '/admin/seed', icon: Database },
   ];
 
   // Badge hiển thị role trong sidebar
-  const roleBadge = headAdmin ? (
+  const roleBadge = (
     <span className="inline-flex items-center gap-1 text-[10px] text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold mt-1">
-      <ShieldCheck className="w-3 h-3" /> HEAD ADMIN
-    </span>
-  ) : (
-    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-400 bg-zinc-700/40 border border-zinc-700 px-2 py-0.5 rounded-full font-semibold mt-1">
-      ADMIN
+      <ShieldCheck className="w-3 h-3" /> ADMIN
     </span>
   );
 
