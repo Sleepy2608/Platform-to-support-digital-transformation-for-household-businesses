@@ -111,8 +111,10 @@ export default function AdminAccountsPage() {
     if (!isEdit) {
       if (!formData.username.trim()) {
         errors.username = 'Tên đăng nhập không được để trống';
-      } else if (formData.username.length < 4) {
-        errors.username = 'Tên đăng nhập phải từ 4 ký tự trở lên';
+      } else if (formData.username.length < 4 || formData.username.length > 50) {
+        errors.username = 'Tên đăng nhập phải từ 4-50 ký tự';
+      } else if (!/^[a-zA-Z0-9_.@]+$/.test(formData.username)) {
+        errors.username = 'Tên đăng nhập chỉ được chứa các chữ cái tiếng Anh không dấu, số, dấu gạch dưới (_), dấu chấm (.) và @';
       }
       if (!formData.password) {
         errors.password = 'Mật khẩu không được để trống';
