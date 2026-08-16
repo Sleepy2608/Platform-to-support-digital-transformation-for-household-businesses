@@ -52,11 +52,10 @@ function publishAuthSync(type: AuthSyncEventType) {
 
 function setAuthCookies(accessToken: string, roles: string[] = []) {
   const maxAge = 60 * 60 * 24;
-  // HEAD_ADMIN check phải đứng trước ADMIN để không bị gộp vào ADMIN thường
-  const role = roles.includes('HEAD_ADMIN')
-    ? 'HEAD_ADMIN'
-    : roles.includes('ADMIN')
-      ? 'ADMIN'
+  const role = roles.includes('ADMIN')
+    ? 'ADMIN'
+    : roles.includes('MANAGER')
+      ? 'MANAGER'
       : roles.includes('BUSINESS_OWNER')
         ? 'BUSINESS_OWNER'
         : roles.includes('EMPLOYEE')
