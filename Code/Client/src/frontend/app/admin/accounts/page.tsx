@@ -13,6 +13,7 @@ interface AdminAccount {
   email: string;
   fullName: string;
   phone: string;
+  avatarUrl?: string | null;
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING_VERIFICATION';
   createdAt: string;
 }
@@ -111,8 +112,10 @@ export default function AdminAccountsPage() {
     if (!isEdit) {
       if (!formData.username.trim()) {
         errors.username = 'Tên đăng nhập không được để trống';
-      } else if (formData.username.length < 4) {
-        errors.username = 'Tên đăng nhập phải từ 4 ký tự trở lên';
+      } else if (formData.username.length < 4 || formData.username.length > 50) {
+        errors.username = 'Tên đăng nhập phải từ 4-50 ký tự';
+      } else if (!/^[a-zA-Z0-9_.@]+$/.test(formData.username)) {
+        errors.username = 'Tên đăng nhập chỉ được chứa các chữ cái tiếng Anh không dấu, số, dấu gạch dưới (_), dấu chấm (.) và @';
       }
       if (!formData.password) {
         errors.password = 'Mật khẩu không được để trống';
@@ -362,9 +365,17 @@ export default function AdminAccountsPage() {
                 {filteredAccounts.map((acc) => (
                   <tr key={acc.id} className="hover:bg-zinc-800/20 transition-colors">
                     <td className="p-4 pl-6 font-medium text-white flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/60 flex items-center justify-center font-bold text-zinc-300">
-                        {acc.fullName.charAt(0).toUpperCase()}
-                      </div>
+                      {acc.avatarUrl ? (
+                        <img
+                          src={acc.avatarUrl}
+                          alt="Avatar"
+                          className="w-9 h-9 rounded-full object-cover border border-zinc-700/60 flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/60 flex items-center justify-center font-bold text-zinc-300 flex-shrink-0">
+                          {acc.fullName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <div>
                         <div className="font-semibold text-white">{acc.fullName}</div>
                         {acc.username === 'admin' && (

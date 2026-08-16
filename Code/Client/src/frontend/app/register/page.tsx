@@ -43,6 +43,14 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
 
+    if (username.length < 4 || username.length > 50) {
+      setError('Tên đăng nhập phải từ 4-50 ký tự');
+      return;
+    }
+    if (!/^[a-zA-Z0-9_.@]+$/.test(username)) {
+      setError('Tên đăng nhập chỉ được chứa các chữ cái tiếng Anh không dấu, số, dấu gạch dưới (_), dấu chấm (.) và @');
+      return;
+    }
     if (password !== confirmPassword) {
       setError('Mật khẩu xác nhận không khớp');
       return;
