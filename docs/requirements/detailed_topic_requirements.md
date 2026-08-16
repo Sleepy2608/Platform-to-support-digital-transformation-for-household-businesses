@@ -116,7 +116,13 @@ Administrators can:
 - Manage AI configuration
 - Broadcast system announcements
 
-# 2.4 System
+# 2.4 Head Admin
+
+Head Admins have all Administrator permissions, plus exclusive authority to:
+- Seed and initialize system data
+- Create, update, deactivate, and delete Administrator accounts
+
+# 2.5 System
 
 The system automatically:
 
@@ -291,7 +297,7 @@ Benefits:
 
 The platform continuously updates report templates whenever government regulations change.
 
-# 3.4 Administrator Functions
+# 3.4 Administrator & Head Admin Functions
 
 ## Owner Account Management
 
@@ -331,6 +337,13 @@ Administrators manage:
 - Accounting templates
 - System announcements
 
+## Head Admin Exclusive Functions
+
+Head Admins can:
+
+- Trigger data seeding, snapshots, and database restoration
+- Manage Administrator accounts (create, update, lock, unlock, delete)
+
 ---
 
 # 4. Non-Functional Requirements
@@ -340,7 +353,7 @@ Administrators manage:
 - Protect household business data
 - Secure customer information
 - Role-based access control
-- Employee, Owner, and Admin permissions
+- Employee, Owner, Admin, and Head Admin permissions
 - Authentication and authorization
 
 ## 4.2 Performance & Scalability
