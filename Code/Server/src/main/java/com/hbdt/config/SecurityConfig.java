@@ -78,10 +78,12 @@ public class SecurityConfig {
                     .requestMatchers("/api/public/**").permitAll()
                     // Public reference data (Tỉnh/Huyện/Xã — không cần đăng nhập)
                     .requestMatchers("/api/reference/**").permitAll()
-                    // Seed data – chỉ HEAD_ADMIN được phép
-                    .requestMatchers("/api/seed/**").hasRole("HEAD_ADMIN")
-                    // Admin accounts management – HEAD_ADMIN (create/delete admin) hoặc ADMIN (xem, sửa)
-                    .requestMatchers("/api/admin/**").hasAnyRole("HEAD_ADMIN", "ADMIN")
+                    // Seed data – chỉ ADMIN được phép
+                    .requestMatchers("/api/seed/**").hasRole("ADMIN")
+                    // Admin accounts management – ADMIN (toàn quyền) hoặc MANAGER (xem, sửa)
+                    .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "MANAGER")
+                    // Manager routes
+                    .requestMatchers("/api/manager/**").hasRole("MANAGER")
                     // Owner routes
                     .requestMatchers("/api/owner/**").hasAnyRole("BUSINESS_OWNER", "OWNER")
                     // Employee routes

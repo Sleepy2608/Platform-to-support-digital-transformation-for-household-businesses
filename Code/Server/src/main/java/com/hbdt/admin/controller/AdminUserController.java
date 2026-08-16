@@ -40,12 +40,12 @@ public class AdminUserController {
 
     /**
      * GET /api/admin/accounts – Lấy danh sách Admin.
-     * Cả HEAD_ADMIN và ADMIN đều được xem (SecurityConfig đã cho phép /api/admin/**).
+     * Cả ADMIN và MANAGER đều được xem (SecurityConfig đã cho phép /api/admin/**).
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<AdminResponse>>> getAllAdmins() {
-        List<User> headAdmins = userRepository.findByRoleType(RoleType.HEAD_ADMIN);
-        List<User> regularAdmins = userRepository.findByRoleType(RoleType.ADMIN);
+        List<User> headAdmins = userRepository.findByRoleType(RoleType.ADMIN);
+        List<User> regularAdmins = userRepository.findByRoleType(RoleType.MANAGER);
         
         List<User> allAdmins = new java.util.ArrayList<>();
         allAdmins.addAll(headAdmins);
@@ -59,10 +59,10 @@ public class AdminUserController {
 
     /**
      * POST /api/admin/accounts – Tạo Admin mới.
-     * Chỉ HEAD_ADMIN được phép.
+     * Chỉ ADMIN được phép.
      */
     @PostMapping
-    @PreAuthorize("hasRole('HEAD_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<AdminResponse>> createAdmin(@Valid @RequestBody AdminCreateRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new BadRequestException("Tên đăng nhập đã tồn tại");
@@ -74,8 +74,8 @@ public class AdminUserController {
             throw new BadRequestException("Số điện thoại đã được sử dụng");
         }
 
-        Role adminRole = roleRepository.findFirstByName(RoleType.ADMIN)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy vai trò ADMIN"));
+        Role adminRole = roleRepository.findFirstByName(RoleType.MANAGER)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy vai trò MANAGER"));
         User admin = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
@@ -93,7 +93,7 @@ public class AdminUserController {
 
     /**
      * PUT /api/admin/accounts/{id} – Cập nhật thông tin Admin.
-     * Cả HEAD_ADMIN và ADMIN đều được (SecurityConfig cho phép /api/admin/**).
+     * Cả ADMIN và MANAGER đều được (SecurityConfig cho phép /api/admin/**).
      */
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<AdminResponse>> updateAdmin(
@@ -102,8 +102,8 @@ public class AdminUserController {
         User admin = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản Admin với ID: " + id));
 
-        // Chỉ cho phép sửa ADMIN thường, không cho sửa HEAD_ADMIN qua endpoint này
-        if (admin.getRole() != null && admin.getRole().getName() == RoleType.HEAD_ADMIN) {
+        // Chỉ cho phép sửa MANAGER thường, không cho sửa ADMIN qua endpoint này
+        if (admin.getRole() != null && admin.getRole().getName() == RoleType.ADMIN) {
             throw new BadRequestException("Không thể sửa tài khoản Siêu quản trị viên qua endpoint này");
         }
 
@@ -139,16 +139,16 @@ public class AdminUserController {
 
     /**
      * DELETE /api/admin/accounts/{id} – Xóa Admin.
-     * Chỉ HEAD_ADMIN được phép.
+     * Chỉ ADMIN được phép.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('HEAD_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteAdmin(@PathVariable Long id) {
         User admin = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản Admin với ID: " + id));
 
-        // Không cho phép xóa tài khoản HEAD_ADMIN
-        if (admin.getRole() != null && admin.getRole().getName() == RoleType.HEAD_ADMIN) {
+        // Không cho phép xóa tài khoản ADMIN
+        if (admin.getRole() != null && admin.getRole().getName() == RoleType.ADMIN) {
             throw new BadRequestException("Không thể xóa tài khoản Siêu quản trị viên");
         }
 
