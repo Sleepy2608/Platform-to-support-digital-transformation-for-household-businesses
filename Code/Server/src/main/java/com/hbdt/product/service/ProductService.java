@@ -2,12 +2,14 @@ package com.hbdt.product.service;
 
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
+import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.entity.Category;
 import com.hbdt.entity.InventoryBalance;
 import com.hbdt.entity.Product;
 import com.hbdt.entity.TaxActivityGroup;
 import com.hbdt.entity.Unit;
 import com.hbdt.product.dto.PageResponse;
+import com.hbdt.product.dto.ProductImageResponse;
 import com.hbdt.product.dto.ProductRequest;
 import com.hbdt.product.dto.ProductResponse;
 import com.hbdt.product.dto.ReferenceOption;
@@ -46,19 +48,25 @@ public class ProductService {
     private final InventoryBalanceRepository inventoryBalanceRepository;
     private final TaxActivityGroupRepository taxActivityGroupRepository;
     private final BusinessContextService businessContextService;
+    private final ProductImageService productImageService;
+    private final ImageStorageService imageStorageService;
 
     public ProductService(ProductRepository productRepository,
                           CategoryRepository categoryRepository,
                           UnitRepository unitRepository,
                           InventoryBalanceRepository inventoryBalanceRepository,
                           TaxActivityGroupRepository taxActivityGroupRepository,
-                          BusinessContextService businessContextService) {
+                          BusinessContextService businessContextService,
+                          ProductImageService productImageService,
+                          ImageStorageService imageStorageService) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.unitRepository = unitRepository;
         this.inventoryBalanceRepository = inventoryBalanceRepository;
         this.taxActivityGroupRepository = taxActivityGroupRepository;
         this.businessContextService = businessContextService;
+        this.productImageService = productImageService;
+        this.imageStorageService = imageStorageService;
     }
 
     public PageResponse<ProductResponse> search(String username, String keyword, String status, Long categoryId,
@@ -219,6 +227,9 @@ public class ProductService {
                 .map(InventoryBalance::getQuantityOnHand)
                 .orElse(BigDecimal.ZERO);
 
+        List<ProductImageResponse> images = productImageService.getImagesByProductId(product.getId());
+        String publicImageUrl = imageStorageService.toPublicUrl(product.getImageUrl());
+
         return new ProductResponse(
                 product.getId(),
                 product.getProductCode(),
@@ -229,7 +240,8 @@ public class ProductService {
                 unit == null ? null : unit.getUnitName(),
                 product.getDefaultTaxActivityGroupId(),
                 taxGroup == null ? null : taxGroup.getActivityName(),
-                product.getImageUrl(),
+                publicImageUrl,
+                images,
                 product.getDescription(),
                 product.getStatus(),
                 quantityOnHand,

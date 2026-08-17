@@ -1,9 +1,9 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Archive, Boxes, ChevronDown, ChevronLeft, ChevronRight, FolderTree, Pencil, Plus,
-  RefreshCw, Search, X,
+  Archive, Boxes, ChevronDown, ChevronLeft, ChevronRight, FolderTree, ImagePlus,
+  Pencil, Plus, RefreshCw, Search, Star, Trash2, Upload, X,
 } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
 
@@ -27,6 +27,14 @@ interface Category {
   status: Status;
 }
 
+interface ProductImage {
+  id: number;
+  productId: number;
+  imageUrl: string;
+  isPrimary: boolean;
+  createdAt: string;
+}
+
 interface Product {
   id: number;
   productCode: string;
@@ -39,6 +47,7 @@ interface Product {
   defaultTaxActivityGroupId?: number;
   defaultTaxActivityGroupName?: string;
   imageUrl?: string;
+  images?: ProductImage[];
   description?: string;
   status: Status;
 }
@@ -74,6 +83,12 @@ export default function ProductManagementPage() {
   const [categoryForm, setCategoryForm] = useState(EMPTY_CATEGORY);
   const [productForm, setProductForm] = useState(EMPTY_PRODUCT);
   const [saving, setSaving] = useState(false);
+
+  // Image management state
+  const [productImages, setProductImages] = useState<ProductImage[]>([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
   const loadCategories = useCallback(async () => {
     const result = await apiClient.get<PageResponse<Category>>('/api/categories?size=100&sortBy=categoryName&direction=asc');
@@ -139,6 +154,8 @@ export default function ProductManagementPage() {
       description: product.description || '',
       status: product.status,
     } : EMPTY_PRODUCT);
+    setProductImages(product?.images || []);
+    setPendingFiles([]);
     setProductModal(true);
   };
 
@@ -175,11 +192,23 @@ export default function ProductManagementPage() {
         ? Number(productForm.defaultTaxActivityGroupId) : null,
     };
     try {
+      let productId: number;
       if (editingProduct) {
         await apiClient.put(`/api/products/${editingProduct.id}`, payload);
+        productId = editingProduct.id;
       } else {
-        await apiClient.post('/api/products', payload);
+        const created = await apiClient.post<Product>('/api/products', payload);
+        productId = created.id;
       }
+
+      // Auto-upload pending files after create/update
+      if (pendingFiles.length > 0) {
+        const formData = new FormData();
+        pendingFiles.forEach((file) => formData.append('files', file));
+        await apiClient.upload(`/api/products/${productId}/images`, formData);
+        setPendingFiles([]);
+      }
+
       setProductModal(false);
       showNotice(editingProduct ? 'Đã cập nhật sản phẩm' : 'Đã tạo sản phẩm');
       await reload();
@@ -201,6 +230,95 @@ export default function ProductManagementPage() {
     }
   };
 
+  // =========================================================
+  // Image management handlers
+  // =========================================================
+
+  const validateFiles = (files: FileList | File[]): File[] | null => {
+    const maxSize = 5 * 1024 * 1024;
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const arr = Array.from(files);
+    for (const file of arr) {
+      if (!allowedTypes.includes(file.type)) {
+        setError(`File "${file.name}" không hợp lệ. Chỉ chấp nhận PNG, JPG, JPEG, WEBP.`);
+        return null;
+      }
+      if (file.size > maxSize) {
+        setError(`File "${file.name}" vượt quá 5MB.`);
+        return null;
+      }
+    }
+    return arr;
+  };
+
+  const handlePendingFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const validated = validateFiles(files);
+    if (!validated) return;
+    const totalCount = pendingFiles.length + productImages.length + validated.length;
+    if (totalCount > 10) {
+      setError(`Tối đa 10 ảnh/sản phẩm. Hiện có ${pendingFiles.length + productImages.length}, không thể thêm ${validated.length} ảnh.`);
+      return;
+    }
+    setPendingFiles((prev) => [...prev, ...validated]);
+  };
+
+  const handleRemovePendingFile = (index: number) => {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleImageUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0 || !editingProduct) return;
+    const validated = validateFiles(files);
+    if (!validated) return;
+
+    setUploadingImages(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      validated.forEach((file) => formData.append('files', file));
+      const uploaded = await apiClient.upload<ProductImage[]>(
+        `/api/products/${editingProduct.id}/images`, formData
+      );
+      setProductImages((prev) => [...prev, ...uploaded]);
+      // Reload products to update the imageUrl in the table
+      await loadProducts();
+      showNotice(`Đã upload ${uploaded.length} ảnh thành công`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể upload ảnh');
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  const handleDeleteImage = async (imageId: number) => {
+    setDeleteConfirmId(null);
+    setError('');
+    try {
+      await apiClient.delete(`/api/products/images/${imageId}`);
+      setProductImages((prev) => prev.filter((img) => img.id !== imageId));
+      await loadProducts();
+      showNotice('Đã xóa ảnh thành công');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể xóa ảnh');
+    }
+  };
+
+  const handleSetPrimary = async (imageId: number) => {
+    if (!editingProduct) return;
+    setError('');
+    try {
+      await apiClient.put(`/api/products/${editingProduct.id}/images/${imageId}/primary`);
+      setProductImages((prev) =>
+        prev.map((img) => ({ ...img, isPrimary: img.id === imageId }))
+      );
+      await loadProducts();
+      showNotice('Đã đặt ảnh đại diện thành công');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể đặt ảnh đại diện');
+    }
+  };
+
   const visibleCategories = categories.filter((item) => {
     const matchesKeyword = !keyword.trim() || `${item.categoryCode} ${item.categoryName}`.toLowerCase().includes(keyword.toLowerCase());
     return matchesKeyword && (!status || item.status === status);
@@ -211,7 +329,7 @@ export default function ProductManagementPage() {
       <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">HBDT-25</p>
+            
             <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">Sản phẩm & Danh mục</h1>
             <p className="mt-2 text-sm text-slate-500">Quản lý danh mục hàng hóa riêng của hộ kinh doanh.</p>
           </div>
@@ -294,15 +412,229 @@ export default function ProductManagementPage() {
             <FormField label="Số lượng sản phẩm" hint="Chỉ nhập số nguyên từ 0 trở lên"><div className="relative"><input required min="0" step="1" inputMode="numeric" type="number" value={productForm.quantityOnHand} onChange={(e) => { if (/^\d*$/.test(e.target.value)) setProductForm({ ...productForm, quantityOnHand: e.target.value }); }} className="form-input pr-24" /><span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-slate-400">sản phẩm</span></div></FormField>
             <FormField label="Nhóm hoạt động tính thuế"><SelectControl value={productForm.defaultTaxActivityGroupId} onChange={(value) => setProductForm({ ...productForm, defaultTaxActivityGroupId: value })}><option value="">Không chọn</option>{taxGroups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</SelectControl></FormField>
             <FormField label="Trạng thái"><StatusSelect value={productForm.status} onChange={(value) => setProductForm({ ...productForm, status: value })} /></FormField>
-            <div className="sm:col-span-2"><FormField label="Đường dẫn ảnh"><input maxLength={500} type="url" value={productForm.imageUrl} onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })} className="form-input" /></FormField></div>
             <div className="sm:col-span-2"><FormField label="Mô tả"><textarea rows={3} value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} className="form-input" /></FormField></div>
+
+            {/* Image Management Section */}
+            <div className="sm:col-span-2">
+              <ImageSection
+                images={productImages}
+                pendingFiles={pendingFiles}
+                uploading={uploadingImages}
+                isCreateMode={!editingProduct}
+                deleteConfirmId={deleteConfirmId}
+                onUpload={editingProduct ? handleImageUpload : handlePendingFiles}
+                onDelete={(id) => setDeleteConfirmId(id)}
+                onConfirmDelete={handleDeleteImage}
+                onCancelDelete={() => setDeleteConfirmId(null)}
+                onSetPrimary={handleSetPrimary}
+                onRemovePendingFile={handleRemovePendingFile}
+              />
+            </div>
+
             <div className="sm:col-span-2"><SubmitButton saving={saving} /></div>
           </form>
         </Modal>
       )}
+
+      {/* Delete confirmation popup */}
+      {deleteConfirmId !== null && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-black text-slate-950">Xác nhận xóa ảnh</h3>
+            <p className="mt-2 text-sm text-slate-500">Bạn có chắc chắn muốn xóa ảnh này không? Hành động này không thể hoàn tác.</p>
+            <div className="mt-5 flex gap-3">
+              <button onClick={() => setDeleteConfirmId(null)} className="flex-1 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50">Hủy</button>
+              <button onClick={() => void handleDeleteImage(deleteConfirmId)} className="flex-1 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-red-700">Xóa ảnh</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+// =========================================================
+// Image Section Component
+// =========================================================
+
+function ImageSection({ images, pendingFiles = [], uploading, isCreateMode, deleteConfirmId, onUpload, onDelete, onConfirmDelete, onCancelDelete, onSetPrimary, onRemovePendingFile }: {
+  images: ProductImage[];
+  pendingFiles?: File[];
+  uploading: boolean;
+  isCreateMode?: boolean;
+  deleteConfirmId: number | null;
+  onUpload: (files: FileList | null) => void;
+  onDelete: (id: number) => void;
+  onConfirmDelete: (id: number) => void;
+  onCancelDelete: () => void;
+  onSetPrimary: (id: number) => void;
+  onRemovePendingFile?: (index: number) => void;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    onUpload(e.dataTransfer.files);
+  };
+
+  const totalCount = images.length + pendingFiles.length;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <ImagePlus className="h-4 w-4 text-slate-500" />
+        <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Hình ảnh sản phẩm</span>
+        <span className="ml-auto text-xs text-slate-400">{totalCount}/10 ảnh</span>
+      </div>
+
+      {/* Drop zone */}
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={() => fileInputRef.current?.click()}
+        className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 transition-all ${
+          isDragOver
+            ? 'border-blue-400 bg-blue-50'
+            : 'border-slate-300 bg-slate-50/50 hover:border-slate-400 hover:bg-slate-50'
+        }`}
+      >
+        {uploading ? (
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <RefreshCw className="h-5 w-5 animate-spin" />
+            <span>Đang upload...</span>
+          </div>
+        ) : (
+          <>
+            <Upload className="mb-2 h-8 w-8 stroke-1 text-slate-400" />
+            <p className="text-sm font-medium text-slate-600">Kéo thả ảnh vào đây hoặc nhấn để chọn</p>
+            <p className="mt-1 text-xs text-slate-400">
+              PNG, JPG, JPEG, WEBP • Tối đa 5MB/ảnh
+              {isCreateMode && ' • Ảnh sẽ được upload khi lưu sản phẩm'}
+            </p>
+          </>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            onUpload(e.target.files);
+            e.target.value = '';
+          }}
+        />
+      </div>
+
+      {/* Pending files preview (create mode) */}
+      {pendingFiles.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold text-amber-600">⏳ {pendingFiles.length} ảnh chờ upload (sẽ upload khi bấm &quot;Lưu thay đổi&quot;)</p>
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
+            {pendingFiles.map((file, index) => (
+              <PendingFileThumbnail
+                key={`pending-${index}-${file.name}`}
+                file={file}
+                onRemove={() => onRemovePendingFile?.(index)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Uploaded image grid (edit mode) */}
+      {images.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
+          {images.map((img) => (
+            <div key={img.id} className="group relative aspect-square overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+              <img
+                src={img.imageUrl}
+                alt="Product"
+                className="h-full w-full object-cover transition-transform group-hover:scale-105"
+              />
+
+              {/* Primary badge */}
+              {img.isPrimary && (
+                <div className="absolute left-1.5 top-1.5 flex items-center gap-1 rounded-lg bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                  <Star className="h-3 w-3 fill-current" /> Đại diện
+                </div>
+              )}
+
+              {/* Action overlay */}
+              <div className="absolute inset-0 flex items-end justify-center gap-1.5 bg-gradient-to-t from-slate-900/70 via-transparent to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                {!img.isPrimary && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onSetPrimary(img.id); }}
+                    className="rounded-lg bg-white/90 p-1.5 text-amber-600 shadow-sm backdrop-blur-sm hover:bg-white"
+                    title="Đặt làm ảnh đại diện"
+                  >
+                    <Star className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDelete(img.id); }}
+                  className="rounded-lg bg-white/90 p-1.5 text-red-600 shadow-sm backdrop-blur-sm hover:bg-white"
+                  title="Xóa ảnh"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PendingFileThumbnail({ file, onRemove }: { file: File; onRemove: () => void }) {
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  return (
+    <div className="group relative aspect-square overflow-hidden rounded-xl border-2 border-dashed border-amber-300 bg-amber-50">
+      {previewUrl && (
+        <img src={previewUrl} alt={file.name} className="h-full w-full object-cover" />
+      )}
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onRemove(); }}
+        className="absolute right-1 top-1 rounded-full bg-red-600 p-1 text-white shadow-sm opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-700"
+        title="Bỏ ảnh"
+      >
+        <X className="h-3 w-3" />
+      </button>
+      <div className="absolute bottom-0 left-0 right-0 bg-amber-500/80 px-1.5 py-0.5 text-center text-[9px] font-bold text-white truncate">
+        {file.name}
+      </div>
+    </div>
+  );
+}
+
+// =========================================================
+// Shared UI Components
+// =========================================================
 
 function TabButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
   return <button onClick={onClick} className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold ${active ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>{icon}{label}</button>;
@@ -310,7 +642,24 @@ function TabButton({ active, onClick, icon, label }: { active: boolean; onClick:
 
 function ProductTable({ items, onEdit, onDeactivate }: { items: Product[]; onEdit: (item: Product) => void; onDeactivate: (id: number) => void }) {
   if (!items.length) return <EmptyState label="Chưa có sản phẩm phù hợp" />;
-  return <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-400"><tr><th className="px-5 py-3">Sản phẩm</th><th className="px-5 py-3">Danh mục</th><th className="px-5 py-3">Số lượng</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3 text-right">Thao tác</th></tr></thead><tbody className="divide-y divide-slate-100">{items.map((item) => <tr key={item.id} className="hover:bg-slate-50/70"><td className="px-5 py-4"><p className="font-bold text-slate-900">{item.productName}</p><p className="text-xs text-slate-400">{item.productCode}</p></td><td className="px-5 py-4 text-slate-600">{item.categoryName || 'Chưa phân loại'}</td><td className="px-5 py-4 font-semibold text-slate-700">{Number(item.quantityOnHand || 0).toLocaleString('vi-VN')} sản phẩm</td><td className="px-5 py-4"><StatusBadge status={item.status} /></td><td className="px-5 py-4"><RowActions inactive={item.status === 'INACTIVE'} onEdit={() => onEdit(item)} onDeactivate={() => onDeactivate(item.id)} /></td></tr>)}</tbody></table></div>;
+  return <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-400"><tr><th className="px-5 py-3">Sản phẩm</th><th className="px-5 py-3">Danh mục</th><th className="px-5 py-3">Số lượng</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3 text-right">Thao tác</th></tr></thead><tbody className="divide-y divide-slate-100">{items.map((item) => <tr key={item.id} className="hover:bg-slate-50/70"><td className="px-5 py-4"><div className="flex items-center gap-3"><ProductThumbnail imageUrl={item.imageUrl} /><div><p className="font-bold text-slate-900">{item.productName}</p><p className="text-xs text-slate-400">{item.productCode}</p></div></div></td><td className="px-5 py-4 text-slate-600">{item.categoryName || 'Chưa phân loại'}</td><td className="px-5 py-4 font-semibold text-slate-700">{Number(item.quantityOnHand || 0).toLocaleString('vi-VN')} sản phẩm</td><td className="px-5 py-4"><StatusBadge status={item.status} /></td><td className="px-5 py-4"><RowActions inactive={item.status === 'INACTIVE'} onEdit={() => onEdit(item)} onDeactivate={() => onDeactivate(item.id)} /></td></tr>)}</tbody></table></div>;
+}
+
+function ProductThumbnail({ imageUrl }: { imageUrl?: string }) {
+  if (!imageUrl) {
+    return (
+      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+        <ImagePlus className="h-5 w-5 stroke-1" />
+      </div>
+    );
+  }
+  return (
+    <img
+      src={imageUrl}
+      alt="Product"
+      className="h-10 w-10 flex-shrink-0 rounded-lg border border-slate-200 object-cover"
+    />
+  );
 }
 
 function CategoryTable({ items, onEdit, onDeactivate }: { items: Category[]; onEdit: (item: Category) => void; onDeactivate: (id: number) => void }) {

@@ -2,6 +2,7 @@ package com.hbdt.product.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record ProductResponse(
         Long id,
@@ -14,6 +15,7 @@ public record ProductResponse(
         Long defaultTaxActivityGroupId,
         String defaultTaxActivityGroupName,
         String imageUrl,
+        List<ProductImageResponse> images,
         String description,
         String status,
         BigDecimal quantityOnHand,
