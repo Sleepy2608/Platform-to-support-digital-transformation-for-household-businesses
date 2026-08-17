@@ -127,122 +127,229 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
         </button>
       </div>
 
-      {/* ── Sidebar Component ── */}
+      {/* ── Mobile Sidebar Drawer (Slide from Right to Left) ── */}
       <AnimatePresence>
-        {(sidebarOpen || true) && (
-          <motion.aside
-            initial={{ x: -280, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -280, opacity: 0 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-            className={`fixed md:sticky top-0 left-0 bottom-0 z-50 w-[270px] bg-white border-r border-slate-200/80
-              flex flex-col justify-between py-6 h-screen md:translate-x-0 shadow-xs
-              ${sidebarOpen ? 'flex' : 'hidden md:flex'}`}
-          >
-            {/* Top Container */}
-            <div className="flex flex-col gap-6 px-5">
-              {/* Brand Logo */}
-              <div className="flex items-center gap-3 pb-2 border-b border-slate-100">
-                <div className="p-2.5 bg-slate-900 text-white rounded-xl shadow-sm">
-                  <Store className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-base font-bold tracking-tight text-slate-900 block leading-tight">HKD.DIGITAL</span>
-                  <span className="text-[11px] text-slate-500 font-medium">Quản lý Hộ kinh doanh</span>
-                </div>
-              </div>
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-50 md:hidden flex justify-end">
+            {/* Backdrop overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              onClick={() => setSidebarOpen(false)}
+              className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs cursor-pointer"
+            />
 
-              {/* User Profile Summary */}
-              <div className="p-3.5 bg-slate-50 border border-slate-200/70 rounded-2xl flex items-center gap-3 shadow-2xs">
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt="avatar"
-                    className="w-11 h-11 rounded-full object-cover border border-slate-300 flex-shrink-0 shadow-2xs"
-                  />
-                ) : (
-                  <div className="w-11 h-11 rounded-full bg-slate-900 text-white flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-2xs">
-                    {initials || '?'}
+            {/* Slide-over panel from Right */}
+            <motion.aside
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 240 }}
+              className="relative z-10 w-[285px] h-full bg-white shadow-2xl flex flex-col justify-between py-5 overflow-y-auto"
+            >
+              {/* Top Container */}
+              <div className="flex flex-col gap-5 px-5">
+                {/* Brand Logo & Close Button */}
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-slate-900 text-white rounded-xl shadow-sm">
+                      <Store className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-base font-bold tracking-tight text-slate-900 block leading-tight">HKD.DIGITAL</span>
+                      <span className="text-[11px] text-slate-500 font-medium">Hộ kinh doanh</span>
+                    </div>
                   </div>
-                )}
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-slate-900 truncate">{fullName}</p>
-                  <span className="text-xs text-slate-500 font-medium">@{username}</span>
-                  <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold border border-emerald-200/60 mt-1">
-                    <Shield className="w-3 h-3" /> Owner
-                  </span>
+                  <button
+                    onClick={() => setSidebarOpen(false)}
+                    className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                    title="Đóng menu"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* User Profile Summary */}
+                <div className="p-3 bg-slate-50 border border-slate-200/70 rounded-2xl flex items-center gap-3 shadow-2xs">
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt="avatar"
+                      className="w-10 h-10 rounded-full object-cover border border-slate-300 flex-shrink-0 shadow-2xs"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 shadow-2xs">
+                      {initials || '?'}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-slate-900 truncate">{fullName}</p>
+                    <span className="text-[11px] text-slate-500 font-medium block truncate">@{username}</span>
+                    <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold border border-emerald-200/60 mt-0.5">
+                      <Shield className="w-3 h-3" /> Owner
+                    </span>
+                  </div>
+                </div>
+
+                {/* Navigation Menu */}
+                <nav className="flex flex-col gap-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1">
+                    CÀI ĐẶT TÀI KHOẢN
+                  </p>
+                  {NAV_ITEMS.map((item) => {
+                    const Icon = item.icon;
+                    const isDanger = item.hash === '#danger';
+                    const isActive = item.path
+                      ? pathname === item.path
+                      : pathname === '/owner/account' && currentHash === item.hash;
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 group cursor-pointer
+                          ${isActive
+                            ? isDanger
+                              ? 'bg-red-50 text-red-700 border border-red-200/80 shadow-2xs'
+                              : 'bg-slate-900 text-white shadow-sm'
+                            : isDanger
+                            ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                          }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? (isDanger ? 'text-red-600' : 'text-white') : 'text-slate-400 group-hover:text-slate-600'}`} />
+                          <span>{item.label}</span>
+                        </div>
+                        <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              {/* Footer / Logout */}
+              <div className="px-5 pt-3">
+                <div className="pt-3 border-t border-slate-100 space-y-1">
+                  <Link
+                    href="/"
+                    className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <Store className="w-4 h-4" />
+                    <span>Trang chủ</span>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-2.5 w-full px-3.5 py-2 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl text-xs font-semibold transition-all cursor-pointer border border-transparent hover:border-red-200/60"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Đăng xuất</span>
+                  </button>
                 </div>
               </div>
-
-              {/* Navigation Menu */}
-              <nav className="flex flex-col gap-1">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-2">
-                  CÀI ĐẶT TÀI KHOẢN
-                </p>
-                {NAV_ITEMS.map((item) => {
-                  const Icon = item.icon;
-                  const isDanger = item.hash === '#danger';
-                  const isActive = item.path
-                    ? pathname === item.path
-                    : pathname === '/owner/account' && currentHash === item.hash;
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
-                        ${isActive
-                          ? isDanger
-                            ? 'bg-red-50 text-red-700 border border-red-200/80 shadow-2xs'
-                            : 'bg-slate-900 text-white shadow-sm'
-                          : isDanger
-                          ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                        }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? (isDanger ? 'text-red-600' : 'text-white') : 'text-slate-400 group-hover:text-slate-600'}`} />
-                        <span>{item.label}</span>
-                      </div>
-                      <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
-
-            {/* Footer / Logout */}
-            <div className="px-5">
-              <div className="pt-4 border-t border-slate-100 space-y-1">
-                <Link
-                  href="/"
-                  className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <Store className="w-4 h-4" />
-                  <span>Trang chủ</span>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer border border-transparent hover:border-red-200/60"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Đăng xuất</span>
-                </button>
-              </div>
-            </div>
-          </motion.aside>
+            </motion.aside>
+          </div>
         )}
       </AnimatePresence>
 
-      {/* Mobile Drawer Overlay */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 md:hidden"
-        />
-      )}
+      {/* ── Desktop Permanent Sidebar (Left) ── */}
+      <aside className="hidden md:flex md:sticky md:top-0 md:left-0 md:h-screen w-[260px] lg:w-[270px] bg-white border-r border-slate-200/80 flex-col justify-between py-6 flex-shrink-0 shadow-xs z-30">
+        {/* Top Container */}
+        <div className="flex flex-col gap-6 px-5">
+          {/* Brand Logo */}
+          <div className="flex items-center gap-3 pb-2 border-b border-slate-100">
+            <div className="p-2.5 bg-slate-900 text-white rounded-xl shadow-sm">
+              <Store className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-base font-bold tracking-tight text-slate-900 block leading-tight">HKD.DIGITAL</span>
+              <span className="text-[11px] text-slate-500 font-medium">Quản lý Hộ kinh doanh</span>
+            </div>
+          </div>
+
+          {/* User Profile Summary */}
+          <div className="p-3.5 bg-slate-50 border border-slate-200/70 rounded-2xl flex items-center gap-3 shadow-2xs">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="avatar"
+                className="w-10 h-10 lg:w-11 lg:h-11 rounded-full object-cover border border-slate-300 flex-shrink-0 shadow-2xs"
+              />
+            ) : (
+              <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-full bg-slate-900 text-white flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-2xs">
+                {initials || '?'}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-slate-900 truncate">{fullName}</p>
+              <span className="text-xs text-slate-500 font-medium block truncate">@{username}</span>
+              <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold border border-emerald-200/60 mt-1">
+                <Shield className="w-3 h-3" /> Owner
+              </span>
+            </div>
+          </div>
+
+          {/* Navigation Menu */}
+          <nav className="flex flex-col gap-1">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-2">
+              CÀI ĐẶT TÀI KHOẢN
+            </p>
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isDanger = item.hash === '#danger';
+              const isActive = item.path
+                ? pathname === item.path
+                : pathname === '/owner/account' && currentHash === item.hash;
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
+                    ${isActive
+                      ? isDanger
+                        ? 'bg-red-50 text-red-700 border border-red-200/80 shadow-2xs'
+                        : 'bg-slate-900 text-white shadow-sm'
+                      : isDanger
+                      ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                    }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? (isDanger ? 'text-red-600' : 'text-white') : 'text-slate-400 group-hover:text-slate-600'}`} />
+                    <span>{item.label}</span>
+                  </div>
+                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Footer / Logout */}
+        <div className="px-5">
+          <div className="pt-4 border-t border-slate-100 space-y-1">
+            <Link
+              href="/"
+              className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
+            >
+              <Store className="w-4 h-4" />
+              <span>Trang chủ</span>
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer border border-transparent hover:border-red-200/60"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Đăng xuất</span>
+            </button>
+          </div>
+        </div>
+      </aside>
 
       {/* Main Content Area */}
       <main className="flex-1 min-w-0 overflow-y-auto">
