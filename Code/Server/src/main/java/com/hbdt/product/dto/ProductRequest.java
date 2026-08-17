@@ -22,6 +22,9 @@ public record ProductRequest(
 
         Long defaultTaxActivityGroupId,
 
+        @DecimalMin(value = "0.0", inclusive = true, message = "Đơn giá không được âm")
+        BigDecimal salePrice,
+
         @Size(max = 500, message = "Đường dẫn ảnh không được vượt quá 500 ký tự")
         String imageUrl,
 
@@ -33,4 +36,17 @@ public record ProductRequest(
         @DecimalMin(value = "0.0", inclusive = true, message = "Số lượng sản phẩm không được âm")
         BigDecimal quantityOnHand
 ) {
+    public ProductRequest(
+            String productCode,
+            String productName,
+            Long categoryId,
+            Long baseUnitId,
+            Long defaultTaxActivityGroupId,
+            String imageUrl,
+            String description,
+            String status,
+            BigDecimal quantityOnHand
+    ) {
+        this(productCode, productName, categoryId, baseUnitId, defaultTaxActivityGroupId, BigDecimal.ZERO, imageUrl, description, status, quantityOnHand);
+    }
 }

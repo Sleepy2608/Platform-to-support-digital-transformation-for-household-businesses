@@ -125,6 +125,10 @@ public class ProductService {
         String code = cleanRequired(request.productCode());
         String name = cleanRequired(request.productName());
         BigDecimal quantity = normalizeQuantity(request.quantityOnHand(), BigDecimal.ZERO);
+        BigDecimal salePrice = request.salePrice() == null ? BigDecimal.ZERO : request.salePrice();
+        if (salePrice.signum() < 0) {
+            throw new BadRequestException("Đơn giá sản phẩm không được âm");
+        }
         validateUnique(businessId, code, name, null);
         Long baseUnitId = resolveBaseUnitId(request.baseUnitId());
         validateReferences(businessId, request.categoryId(), baseUnitId, request.defaultTaxActivityGroupId());
@@ -135,6 +139,7 @@ public class ProductService {
                 .productName(name)
                 .categoryId(request.categoryId())
                 .baseUnitId(baseUnitId)
+                .salePrice(salePrice)
                 .defaultTaxActivityGroupId(request.defaultTaxActivityGroupId())
                 .imageUrl(cleanOptional(request.imageUrl()))
                 .description(cleanOptional(request.description()))
@@ -158,6 +163,12 @@ public class ProductService {
         product.setProductName(name);
         product.setCategoryId(request.categoryId());
         product.setBaseUnitId(baseUnitId);
+        if (request.salePrice() != null) {
+            if (request.salePrice().signum() < 0) {
+                throw new BadRequestException("Đơn giá sản phẩm không được âm");
+            }
+            product.setSalePrice(request.salePrice());
+        }
         product.setDefaultTaxActivityGroupId(request.defaultTaxActivityGroupId());
         product.setImageUrl(cleanOptional(request.imageUrl()));
         product.setDescription(cleanOptional(request.description()));
@@ -229,6 +240,7 @@ public class ProductService {
 
         List<ProductImageResponse> images = productImageService.getImagesByProductId(product.getId());
         String publicImageUrl = imageStorageService.toPublicUrl(product.getImageUrl());
+        BigDecimal salePrice = product.getSalePrice() != null ? product.getSalePrice() : BigDecimal.ZERO;
 
         return new ProductResponse(
                 product.getId(),
@@ -238,6 +250,7 @@ public class ProductService {
                 category == null ? null : category.getCategoryName(),
                 product.getBaseUnitId(),
                 unit == null ? null : unit.getUnitName(),
+                salePrice,
                 product.getDefaultTaxActivityGroupId(),
                 taxGroup == null ? null : taxGroup.getActivityName(),
                 publicImageUrl,

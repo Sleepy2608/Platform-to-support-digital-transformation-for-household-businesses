@@ -29,7 +29,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
-@PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
+@PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER', 'EMPLOYEE')")
 public class ProductController {
 
     private final ProductService productService;
@@ -48,12 +48,14 @@ public class ProductController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) Integer limit,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
+        int pageSize = limit != null ? limit : (size != null ? size : 20);
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách sản phẩm thành công",
                 productService.search(authentication.getName(), keyword, status, categoryId,
-                        page, size, sortBy, direction)));
+                        page, pageSize, sortBy, direction)));
     }
 
     @GetMapping("/{id}")
