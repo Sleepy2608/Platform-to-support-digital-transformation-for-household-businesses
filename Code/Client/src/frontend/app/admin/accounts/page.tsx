@@ -1,28 +1,26 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import {
-  UserPlus, Edit2, Trash2, Search, X,
-  Check, AlertTriangle, Eye, EyeOff, Loader2, Phone, Mail, User
+import { useEffect, useState } from 'react';
+import { 
+  Users, UserPlus, Edit2, Trash2, Search, X, 
+  Check, AlertTriangle, Eye, EyeOff, Loader2, Phone, Mail, User, ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface ManagerAccount {
+interface AdminAccount {
   id: number;
   username: string;
   email: string;
   fullName: string;
   phone: string;
+  avatarUrl?: string | null;
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING_VERIFICATION';
   createdAt: string;
 }
 
-function getErrorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback;
-}
-
-export default function ManagerAccountsPage() {
-  const [accounts, setAccounts] = useState<ManagerAccount[]>([]);
+export default function AdminAccountsPage() {
+  const [accounts, setAccounts] = useState<AdminAccount[]>([]);
+  const [filteredAccounts, setFilteredAccounts] = useState<AdminAccount[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -34,7 +32,7 @@ export default function ManagerAccountsPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   
   // Selected account for edit or delete
-  const [selectedAccount, setSelectedAccount] = useState<ManagerAccount | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<AdminAccount | null>(null);
 
   // Password visibility
   const [showPassword, setShowPassword] = useState(false);
@@ -68,28 +66,33 @@ export default function ManagerAccountsPage() {
       }
       if (data.success && Array.isArray(data.data)) {
         setAccounts(data.data);
+        setFilteredAccounts(data.data);
       }
-    } catch (err: unknown) {
-      setError(getErrorMessage(err, 'Lỗi kết nối máy chủ'));
+    } catch (err: any) {
+      setError(err.message || 'Lỗi kết nối máy chủ');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    const initialLoad = window.setTimeout(() => void fetchAccounts(), 0);
-    return () => window.clearTimeout(initialLoad);
+    fetchAccounts();
   }, []);
 
-  const filteredAccounts = useMemo(() => {
+  // Search filter
+  useEffect(() => {
     const query = searchQuery.toLowerCase().trim();
-    if (!query) return accounts;
-    return accounts.filter(acc =>
+    if (!query) {
+      setFilteredAccounts(accounts);
+    } else {
+      const filtered = accounts.filter(acc => 
         acc.fullName.toLowerCase().includes(query) ||
         acc.username.toLowerCase().includes(query) ||
         acc.email.toLowerCase().includes(query) ||
         (acc.phone && acc.phone.includes(query))
-    );
+      );
+      setFilteredAccounts(filtered);
+    }
   }, [searchQuery, accounts]);
 
   const showSuccess = (msg: string) => {
@@ -109,8 +112,10 @@ export default function ManagerAccountsPage() {
     if (!isEdit) {
       if (!formData.username.trim()) {
         errors.username = 'Tên đăng nhập không được để trống';
-      } else if (formData.username.length < 4) {
-        errors.username = 'Tên đăng nhập phải từ 4 ký tự trở lên';
+      } else if (formData.username.length < 4 || formData.username.length > 50) {
+        errors.username = 'Tên đăng nhập phải từ 4-50 ký tự';
+      } else if (!/^[a-zA-Z0-9_.@]+$/.test(formData.username)) {
+        errors.username = 'Tên đăng nhập chỉ được chứa các chữ cái tiếng Anh không dấu, số, dấu gạch dưới (_), dấu chấm (.) và @';
       }
       if (!formData.password) {
         errors.password = 'Mật khẩu không được để trống';
@@ -154,12 +159,12 @@ export default function ManagerAccountsPage() {
         throw new Error(res.message || 'Lỗi thêm tài khoản');
       }
 
-      showSuccess('Thêm tài khoản Manager mới thành công');
+      showSuccess('Thêm tài khoản Admin mới thành công');
       setIsAddOpen(false);
       resetForm();
       fetchAccounts();
-    } catch (err: unknown) {
-      setFormErrors({ submit: getErrorMessage(err, 'Lỗi xử lý yêu cầu') });
+    } catch (err: any) {
+      setFormErrors({ submit: err.message || 'Lỗi xử lý yêu cầu' });
     } finally {
       setActionLoading(false);
     }
@@ -193,12 +198,12 @@ export default function ManagerAccountsPage() {
         throw new Error(res.message || 'Lỗi cập nhật tài khoản');
       }
 
-      showSuccess('Cập nhật thông tin Manager thành công');
+      showSuccess('Cập nhật thông tin Admin thành công');
       setIsEditOpen(false);
       resetForm();
       fetchAccounts();
-    } catch (err: unknown) {
-      setFormErrors({ submit: getErrorMessage(err, 'Lỗi xử lý yêu cầu') });
+    } catch (err: any) {
+      setFormErrors({ submit: err.message || 'Lỗi xử lý yêu cầu' });
     } finally {
       setActionLoading(false);
     }
@@ -220,19 +225,19 @@ export default function ManagerAccountsPage() {
         throw new Error(res.message || 'Lỗi xóa tài khoản');
       }
 
-      showSuccess('Xóa tài khoản Manager thành công');
+      showSuccess('Xóa tài khoản Admin thành công');
       setIsDeleteOpen(false);
       setSelectedAccount(null);
       fetchAccounts();
-    } catch (err: unknown) {
-      setError(getErrorMessage(err, 'Lỗi xóa tài khoản'));
+    } catch (err: any) {
+      setError(err.message || 'Lỗi xóa tài khoản');
       setIsDeleteOpen(false);
     } finally {
       setActionLoading(false);
     }
   };
 
-  const openEdit = (acc: ManagerAccount) => {
+  const openEdit = (acc: AdminAccount) => {
     setSelectedAccount(acc);
     setFormData({
       username: acc.username,
@@ -246,7 +251,7 @@ export default function ManagerAccountsPage() {
     setIsEditOpen(true);
   };
 
-  const openDelete = (acc: ManagerAccount) => {
+  const openDelete = (acc: AdminAccount) => {
     setSelectedAccount(acc);
     setIsDeleteOpen(true);
   };
@@ -286,9 +291,9 @@ export default function ManagerAccountsPage() {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Quản lý Tài khoản Manager</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Quản lý Tài khoản Admin</h1>
           <p className="text-zinc-400 text-sm mt-1">
-            Xem danh sách, thêm mới, cập nhật hoặc vô hiệu hóa các tài khoản Manager.
+            Xem danh sách, thêm mới, điều chỉnh quyền lực hoặc vô hiệu hóa các tài khoản quản trị viên.
           </p>
         </div>
         <button
@@ -298,7 +303,7 @@ export default function ManagerAccountsPage() {
           }}
           className="bg-white hover:bg-zinc-200 text-zinc-950 font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-lg flex-shrink-0"
         >
-          <UserPlus className="w-4 h-4" /> Thêm Manager
+          <UserPlus className="w-4 h-4" /> Thêm Admin
         </button>
       </div>
 
@@ -341,7 +346,7 @@ export default function ManagerAccountsPage() {
           </div>
         ) : filteredAccounts.length === 0 ? (
           <div className="py-20 text-center text-zinc-500 text-sm">
-            {searchQuery ? 'Không tìm thấy tài khoản Manager nào khớp với từ khóa' : 'Chưa có tài khoản Manager nào được tạo'}
+            {searchQuery ? 'Không tìm thấy tài khoản admin nào khớp với từ khóa' : 'Chưa có tài khoản admin nào được đăng ký'}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -360,10 +365,25 @@ export default function ManagerAccountsPage() {
                 {filteredAccounts.map((acc) => (
                   <tr key={acc.id} className="hover:bg-zinc-800/20 transition-colors">
                     <td className="p-4 pl-6 font-medium text-white flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/60 flex items-center justify-center font-bold text-zinc-300">
-                        {acc.fullName.charAt(0).toUpperCase()}
+                      {acc.avatarUrl ? (
+                        <img
+                          src={acc.avatarUrl}
+                          alt="Avatar"
+                          className="w-9 h-9 rounded-full object-cover border border-zinc-700/60 flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/60 flex items-center justify-center font-bold text-zinc-300 flex-shrink-0">
+                          {acc.fullName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-semibold text-white">{acc.fullName}</div>
+                        {acc.username === 'admin' && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] bg-white/10 text-white font-semibold px-2 py-0.5 rounded-full mt-0.5">
+                            <ShieldCheck className="w-3 h-3" /> Root Admin
+                          </span>
+                        )}
                       </div>
-                      <div className="font-semibold text-white">{acc.fullName}</div>
                     </td>
                     <td className="p-4 text-zinc-300 font-mono">@{acc.username}</td>
                     <td className="p-4 space-y-1">
@@ -399,14 +419,17 @@ export default function ManagerAccountsPage() {
                         <button
                           onClick={() => openEdit(acc)}
                           className="p-2 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-colors cursor-pointer"
-                          title="Chỉnh sửa thông tin Manager"
+                          title="Chỉnh sửa thông tin"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => openDelete(acc)}
-                          className="p-2 hover:bg-red-950/20 text-zinc-400 hover:text-red-400 rounded-lg transition-colors cursor-pointer"
-                          title="Xóa tài khoản Manager"
+                          disabled={acc.username === 'admin'}
+                          className={`p-2 hover:bg-red-950/20 text-zinc-400 hover:text-red-400 rounded-lg transition-colors cursor-pointer ${
+                            acc.username === 'admin' ? 'opacity-30 pointer-events-none' : ''
+                          }`}
+                          title={acc.username === 'admin' ? 'Không thể xóa Admin mặc định' : 'Xóa tài khoản'}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -420,7 +443,7 @@ export default function ManagerAccountsPage() {
         )}
       </div>
 
-      {/* Add Manager Modal */}
+      {/* Add Admin Modal */}
       <AnimatePresence>
         {isAddOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -443,7 +466,7 @@ export default function ManagerAccountsPage() {
                   <div className="p-2 bg-white/10 rounded-xl border border-zinc-700">
                     <UserPlus className="w-5 h-5 text-white" />
                   </div>
-                  <h2 className="text-xl font-bold">Thêm mới Manager</h2>
+                  <h2 className="text-xl font-bold">Thêm mới Admin</h2>
                 </div>
                 <button 
                   onClick={() => setIsAddOpen(false)}
@@ -570,7 +593,7 @@ export default function ManagerAccountsPage() {
         )}
       </AnimatePresence>
 
-      {/* Edit Manager Modal */}
+      {/* Edit Admin Modal */}
       <AnimatePresence>
         {isEditOpen && selectedAccount && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -593,7 +616,7 @@ export default function ManagerAccountsPage() {
                   <div className="p-2 bg-white/10 rounded-xl border border-zinc-700">
                     <Edit2 className="w-5 h-5 text-white" />
                   </div>
-                  <h2 className="text-xl font-bold">Cập nhật tài khoản Manager</h2>
+                  <h2 className="text-xl font-bold">Cập nhật tài khoản Admin</h2>
                 </div>
                 <button 
                   onClick={() => setIsEditOpen(false)}
@@ -679,11 +702,15 @@ export default function ManagerAccountsPage() {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({...formData, status: e.target.value as 'ACTIVE' | 'INACTIVE'})}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-white transition-all"
+                    disabled={selectedAccount.username === 'admin'}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
                     <option value="INACTIVE">Khóa tài khoản (INACTIVE)</option>
                   </select>
+                  {selectedAccount.username === 'admin' && (
+                    <p className="text-zinc-500 text-[10px] mt-1">Không thể thay đổi trạng thái của Root Admin</p>
+                  )}
                 </div>
 
                 {/* Đổi mật khẩu (Optional) */}
@@ -756,9 +783,9 @@ export default function ManagerAccountsPage() {
                 <div className="p-4 bg-red-500/10 border border-red-500/25 rounded-full text-red-400 mb-4 animate-pulse">
                   <AlertTriangle className="w-8 h-8" />
                 </div>
-                <h2 className="text-xl font-bold mb-2">Xác nhận xóa Manager?</h2>
+                <h2 className="text-xl font-bold mb-2">Xác nhận xóa Admin?</h2>
                 <p className="text-zinc-400 text-sm mb-6">
-                  Bạn có chắc chắn muốn xóa tài khoản Manager <strong className="text-white">@{selectedAccount.username}</strong> ({selectedAccount.fullName})? Hành động này sẽ loại bỏ hoàn toàn quyền truy cập của họ và không thể hoàn tác.
+                  Bạn có chắc chắn muốn xóa tài khoản quản trị <strong className="text-white">@{selectedAccount.username}</strong> ({selectedAccount.fullName})? Hành động này sẽ loại bỏ hoàn toàn quyền truy cập của họ và không thể hoàn tác.
                 </p>
 
                 <div className="flex w-full gap-3">

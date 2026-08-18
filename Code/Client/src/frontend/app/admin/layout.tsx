@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, BadgeDollarSign, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, BadgeDollarSign, UserCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
-import { isAdmin, type AppRole } from '../lib/roles';
 
 export default function AdminLayout({
   children,
@@ -19,11 +18,11 @@ export default function AdminLayout({
   const [loading, setLoading] = useState(true);
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
-  const [roles, setRoles] = useState<AppRole[]>([]);
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    // Trang đăng nhập admin không cần token -> bỏ qua kiểm tra
+    // Trang dang nhap admin khong can token -> bo qua kiem tra
     if (pathname === '/admin/login') {
       setLoading(false);
       return;
@@ -38,29 +37,42 @@ export default function AdminLayout({
     }
 
     try {
-      const parsedRoles: AppRole[] = JSON.parse(rolesStr);
-
-      // Route Guard: chỉ ADMIN được vào /admin
-      if (!isAdmin(parsedRoles)) {
+      const roles = JSON.parse(rolesStr);
+      if (!roles.includes('ADMIN')) {
         router.push('/admin/login');
         return;
       }
 
-      setRoles(parsedRoles);
       setFullName(getAuthItem('fullName') || 'Administrator');
       setUsername(getAuthItem('username') || 'admin');
+      setAvatarUrl(getAuthItem('avatarUrl') || '');
       setLoading(false);
-    } catch {
+    } catch (e) {
       router.push('/admin/login');
     }
   }, [router, pathname]);
+
+  useEffect(() => {
+    const syncAdminSummary = (event?: Event) => {
+      const detail = event instanceof CustomEvent
+        ? event.detail as { fullName?: string; avatarUrl?: string }
+        : undefined;
+      setFullName(detail?.fullName ?? getAuthItem('fullName') ?? 'Administrator');
+      setAvatarUrl(detail?.avatarUrl ?? getAuthItem('avatarUrl') ?? '');
+    };
+
+    window.addEventListener('admin-profile-updated', syncAdminSummary);
+    return () => {
+      window.removeEventListener('admin-profile-updated', syncAdminSummary);
+    };
+  }, []);
 
   const handleLogout = () => {
     clearAuth();
     router.push('/admin/login');
   };
 
-  // Trang đăng nhập admin: render thẳng, không bọc sidebar/kiểm tra quyền
+  // Trang dang nhap admin: render thang, khong bọc sidebar/kiem tra quyen
   if (pathname === '/admin/login') {
     return <>{children}</>;
   }
@@ -76,24 +88,15 @@ export default function AdminLayout({
     );
   }
 
-  const headAdmin = isAdmin(roles);
-
-  /**
-   * Menu Guard: ADMIN (toàn quyền)
-   */
   const navItems = [
     { name: 'Tổng quan', href: '/admin', icon: LayoutDashboard },
-    { name: 'Tài khoản Manager', href: '/admin/accounts', icon: Users },
+    { name: 'Tài khoản Admin', href: '/admin/accounts', icon: Users },
     { name: 'Gói thuê bao', href: '/admin/subscription-plans', icon: BadgeDollarSign },
-    { name: 'Seek Data', href: '/admin/seed', icon: Database },
+    { name: 'Hồ sơ cá nhân', href: '/admin/profile', icon: UserCircle },
+    ...(username === 'Admin'
+      ? [{ name: 'Seek Data', href: '/admin/seed', icon: Database }]
+      : []),
   ];
-
-  // Badge hiển thị role trong sidebar
-  const roleBadge = (
-    <span className="inline-flex items-center gap-1 text-[10px] text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold mt-1">
-      <ShieldCheck className="w-3 h-3" /> ADMIN
-    </span>
-  );
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white flex flex-col md:flex-row relative">
@@ -135,17 +138,28 @@ export default function AdminLayout({
               </div>
 
               {/* User Profile Summary */}
-              <div className="p-4 bg-zinc-800/50 border border-zinc-700/40 rounded-2xl flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center font-bold text-zinc-200 border border-zinc-600">
-                  {fullName.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold truncate leading-none">{fullName}</p>
+              <Link
+                href="/admin/profile"
+                onClick={() => setSidebarOpen(false)}
+                className="p-3.5 bg-zinc-800/50 hover:bg-zinc-800 border border-zinc-700/40 hover:border-zinc-600 rounded-2xl flex items-center gap-3 transition-all group cursor-pointer"
+                title="Xem & Chỉnh sửa hồ sơ admin"
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Avatar"
+                    className="w-10 h-10 rounded-full object-cover border border-zinc-600 flex-shrink-0 group-hover:scale-105 transition-transform"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center font-bold text-zinc-200 border border-zinc-600 flex-shrink-0 group-hover:bg-zinc-600 transition-colors">
+                    {fullName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold truncate leading-none text-white">{fullName}</p>
                   <span className="text-[10px] text-zinc-400">@{username}</span>
-                  {/* Role badge – Menu Guard indicator */}
-                  <div>{roleBadge}</div>
                 </div>
-              </div>
+              </Link>
 
               {/* Navigation Links */}
               <nav className="flex flex-col gap-2">

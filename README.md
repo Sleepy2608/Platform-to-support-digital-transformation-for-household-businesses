@@ -3,8 +3,8 @@
 </p>
 
 <p align="center"><em>
-<b>Đề tài:</b> Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh<em> <br>
-<b>Môn học:</b> Lập trình Java 
+<b>Đề tài:</b> Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh <br>
+<b>Môn học:</b> Lập trình Java </em>
 <br>
 <img src="https://img.shields.io/badge/Java-21-orange?logo=openjdk" alt="Java-21">
 </p>

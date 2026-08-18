@@ -105,6 +105,7 @@ Ngoài các thao tác do người dùng thực hiện, tài liệu xác định 
 | Employee | Người trực tiếp xử lý đơn bán hàng và các nghiệp vụ được Owner giao quyền |
 | Owner | Chủ hộ hoặc người quản lý hộ kinh doanh; có toàn bộ chức năng của Employee và các quyền quản lý |
 | Administrator | Người quản trị tài khoản Owner, gói thuê bao, cấu hình và hoạt động của toàn nền tảng |
+| Head Admin | Quản trị viên cấp cao nhất trên toàn nền tảng; có toàn bộ quyền của Administrator và độc quyền khởi tạo dữ liệu (seed data), tạo/xóa/quản lý tài khoản Administrator khác |
 | Draft Order | Đơn hàng nháp do hệ thống tạo từ yêu cầu bằng văn bản hoặc giọng nói; phải được người dùng kiểm tra trước khi xác nhận |
 | Trợ lý AI | Thành phần phân tích ngôn ngữ tự nhiên và hỗ trợ tạo Draft Order |
 | POS | Hệ thống bán hàng tại điểm bán (Point of Sale) |
@@ -186,9 +187,10 @@ Hệ thống phải cho phép:
 ### 2.4.1. Tài khoản và phân quyền
 
 - Đăng nhập.
-- Phân quyền Employee, Owner và Administrator.
+- Phân quyền Employee, Owner, Administrator và Head Admin.
 - Owner quản lý tài khoản Employee thuộc hộ kinh doanh của mình.
 - Administrator quản lý tài khoản Owner trên toàn nền tảng.
+- Head Admin quản lý tài khoản Administrator và có quyền khởi tạo/seed dữ liệu hệ thống.
 
 ### 2.4.2. Sản phẩm và giá bán
 
@@ -273,6 +275,7 @@ Trong phạm vi hiện tại, “nhật ký thanh toán” bao gồm:
 | Employee | Đăng nhập, lập đơn, ghi nhận công nợ, in đơn, nhận thông báo và xử lý Draft Order |
 | Owner | Có toàn bộ quyền của Employee; quản lý sản phẩm, kho, khách hàng, công nợ, nghĩa vụ thuế, sổ, báo cáo và tài khoản Employee |
 | Administrator | Quản lý Owner, thuê bao, số liệu nền tảng, phản hồi, cấu hình hệ thống, AI, nhóm hoạt động tính thuế, biểu mẫu và thông báo |
+| Head Admin | Có toàn bộ quyền của Administrator; quản lý (thêm/sửa/xóa/vô hiệu hóa) các tài khoản Administrator và khởi tạo/seed dữ liệu toàn hệ thống |
 
 ---
 
@@ -331,6 +334,8 @@ Owner có toàn bộ chức năng của Employee và các yêu cầu bổ sung s
 | FR-QT-05 | **Quản lý nhóm hoạt động và tỷ lệ tính thuế.** Administrator tạo phiên bản mới, thiết lập thời gian hiệu lực và ngừng sử dụng phiên bản cũ. | Không có hai phiên bản đang hoạt động bị chồng thời gian; giao dịch cũ không bị thay đổi. |
 | FR-QT-06 | **Quản lý biểu mẫu S1-HKD, S2-HKD và S4-HKD.** Administrator quản lý cấu trúc, phiên bản và thời gian áp dụng. | Hệ thống sử dụng đúng phiên bản có hiệu lực và giữ được lịch sử phiên bản cũ. |
 | FR-QT-07 | **Phát thông báo hệ thống.** Administrator gửi thông báo toàn nền tảng hoặc theo nhóm người dùng. | Thông báo đến đúng đối tượng và đúng khoảng thời gian cấu hình. |
+| FR-QT-08 | **Quản lý tài khoản Administrator (Độc quyền Head Admin).** Head Admin thêm mới, chỉnh sửa, xóa hoặc vô hiệu hóa tài khoản Administrator khác. | Danh sách Administrator được cập nhật đúng; tài khoản Head Admin mặc định được bảo vệ không thể bị xóa. |
+| FR-QT-09 | **Khởi tạo dữ liệu nền tảng / Seed data (Độc quyền Head Admin).** Head Admin thực hiện kích hoạt seed data ban đầu, snapshot hoặc restore dữ liệu hệ thống. | Dữ liệu khởi tạo chính xác theo cấu hình seed và ghi nhật ký kiểm toán. |
 
 ---
 
@@ -339,7 +344,7 @@ Owner có toàn bộ chức năng của Employee và các yêu cầu bổ sung s
 | Mã | Tên và nội dung yêu cầu | Tiêu chí chấp nhận |
 |---|---|---|
 | NFR-BM-01 | **Bảo vệ dữ liệu hộ kinh doanh.** Đơn hàng, sản phẩm, khách hàng, kho, công nợ, thuế và báo cáo của từng hộ phải được tách biệt. | Người dùng không truy cập được dữ liệu của hộ khác. |
-| NFR-BM-02 | **Phân quyền theo vai trò.** Employee, Owner và Administrator chỉ được thực hiện chức năng thuộc quyền. | Yêu cầu ngoài quyền hạn bị từ chối ở backend. |
+| NFR-BM-02 | **Phân quyền theo vai trò.** Employee, Owner, Administrator và Head Admin chỉ được thực hiện chức năng thuộc quyền. | Yêu cầu ngoài quyền hạn bị từ chối ở backend. |
 | NFR-BM-03 | **Bảo vệ thông tin xác thực.** Mật khẩu không được lưu ở dạng rõ; thông tin kết nối và khóa bí mật không xuất hiện trong mã nguồn công khai. | Kiểm tra hệ thống không phát hiện mật khẩu rõ hoặc secret bị commit. |
 | NFR-BM-04 | **Truy vết thay đổi.** Thao tác quan trọng phải ghi người thực hiện, thời điểm và nội dung thay đổi. | Audit log có đủ thông tin để truy vết. |
 | NFR-HN-01 | **Thời gian phản hồi.** Các thao tác cốt lõi phải phản hồi dưới 2.000 ms trong môi trường kiểm thử được xác định. | Kết quả đo đạt giới hạn yêu cầu. |
@@ -371,7 +376,7 @@ Owner có toàn bộ chức năng của Employee và các yêu cầu bổ sung s
 | NT-05 | S2-HKD thể hiện đúng đơn vị, đơn giá, số lượng và thành tiền nhập–xuất–tồn; số liệu khớp dữ liệu kho. |
 | NT-06 | S4-HKD thể hiện đúng nghĩa vụ, số đã nộp, số còn phải nộp hoặc nộp thừa theo từng loại thuế. |
 | NT-07 | Owner xem, kiểm tra, xác nhận hoặc từ chối sổ/báo cáo; lịch sử duyệt được lưu. |
-| NT-08 | Administrator quản lý được Owner, thuê bao, cấu hình, nhóm hoạt động tính thuế, biểu mẫu S1/S2/S4, phản hồi và thông báo. |
+| NT-08 | Administrator và Head Admin quản lý được Owner, thuê bao, cấu hình, nhóm hoạt động tính thuế, biểu mẫu S1/S2/S4, phản hồi và thông báo. Head Admin quản lý bổ sung tài khoản Admin và Seed data. |
 | NT-09 | Phân quyền và tách biệt dữ liệu bảo đảm người dùng chỉ truy cập đúng hộ kinh doanh và chức năng được cấp. |
 | NT-10 | Các thao tác cốt lõi đáp ứng thời gian phản hồi dưới 2.000 ms trong môi trường kiểm thử. |
 | NT-11 | Giao diện hiển thị tiếng Việt, bảo toàn Unicode và cung cấp thông báo thời gian thực. |
