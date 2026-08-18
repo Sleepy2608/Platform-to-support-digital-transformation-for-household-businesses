@@ -90,7 +90,7 @@ export default function AdminLayout({
 
   const navItems = [
     { name: 'Tổng quan', href: '/admin', icon: LayoutDashboard },
-    { name: 'Tài khoản Admin', href: '/admin/accounts', icon: Users },
+    { name: 'Tài khoản Manager', href: '/admin/accounts', icon: Users },
     { name: 'Gói thuê bao', href: '/admin/subscription-plans', icon: BadgeDollarSign },
     { name: 'Hồ sơ cá nhân', href: '/admin/profile', icon: UserCircle },
     ...(username === 'Admin'
