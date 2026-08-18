@@ -95,8 +95,8 @@ Tài liệu này dành cho các đối tượng sau.
 | UX | Trải nghiệm người dùng — Trải nghiệm người dùng |
 | Chủ hộ kinh doanh | Chủ hộ kinh doanh |
 | Nhân viên | Nhân viên cửa hàng |
-| Quản trị viên | Quản trị viên nền tảng (Admin) |
-| Head Admin | Quản trị viên cấp cao nhất (Super/Head Admin) |
+| Quản trị viên | Quản trị viên nền tảng vận hành (Manager) |
+| Administrator (Admin) | Quản trị viên cấp cao nhất (System Admin) |
 | Đơn hàng nháp | Đơn hàng nháp do AI tạo, chờ xác nhận |
 | Gói thuê bao | Gói dịch vụ được mua bởi Chủ hộ kinh doanh |
 
@@ -437,30 +437,31 @@ Trách nhiệm bao gồm:
 
 ---
 
-## Quản trị viên (Quản trị viên)
+## Manager (Quản trị viên vận hành)
 
-Quản trị viên duy trì và quản lý vận hành nền tảng.
+Manager duy trì và quản lý vận hành nền tảng.
 
 Trách nhiệm bao gồm:
 
 - Quản lý tài khoản Chủ hộ kinh doanh
-- Định giá gói thuê bao
-- Cấu hình hệ thống
-- Cấu hình AI
-- Quản lý mẫu báo cáo tài chính
-- Phân tích nền tảng
+- Theo dõi trạng thái và phân tích nền tảng
+- Xử lý phản hồi từ Owner và Employee
+- Theo dõi trạng thái gói thuê bao
 
 ---
 
-## Head Admin (Quản trị viên cấp cao)
+## Administrator (Quản trị viên cấp cao)
 
-Head Admin là quản trị viên tối cao của hệ thống.
+Administrator là quản trị viên tối cao của hệ thống.
 
 Trách nhiệm bao gồm:
 
-- Sở hữu toàn bộ quyền hạn của Quản trị viên
+- Sở hữu toàn bộ quyền hạn của Manager
+- Định giá gói thuê bao và cấu hình hệ thống
+- Cấu hình AI
+- Quản lý mẫu báo cáo tài chính
 - Khởi tạo và seed dữ liệu toàn hệ thống (Seed data)
-- Quản lý các tài khoản Quản trị viên khác (Tạo, sửa, xóa, khóa/mở khóa)
+- Quản lý các tài khoản Manager khác (Tạo, sửa, xóa, khóa/mở khóa)
 
 ---
 
@@ -990,8 +991,8 @@ P0 – Bắt buộc
 
 - Nhân viên
 - Chủ hộ kinh doanh
-- Quản trị viên (Admin)
-- Head Admin (Quản trị viên cấp cao)
+- Manager (Quản trị viên vận hành)
+- Administrator (Quản trị viên cấp cao)
 
 ### Quy tắc nghiệp vụ
 
@@ -999,9 +1000,9 @@ Nhân viên không thể truy cập các trang quản trị.
 
 Chủ hộ kinh doanh không thể truy cập chức năng quản trị nền tảng.
 
-Quản trị viên thường không thể thực hiện seed data hoặc truy cập các chức năng quản lý tài khoản Quản trị viên (chỉ dành cho Head Admin).
+Manager không thể thực hiện seed data hoặc truy cập các chức năng quản lý tài khoản Manager (chỉ dành cho Administrator).
 
-Quản trị viên không thể truy cập dữ liệu kinh doanh của chủ hộ khác.
+Manager không thể truy cập dữ liệu kinh doanh của chủ hộ khác.
 
 ### Tiêu chí chấp nhận
 

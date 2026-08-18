@@ -26,11 +26,16 @@ Build an application (mobile and/or web) that supports the following core functi
 ○ Manage customers (info, purchase history, debt).
 ○ View reports and analytics (daily/monthly revenue, best-sellers, outstanding debt).
 ○ Manage employee accounts.
-● Administrator:
+● Manager:
 ○ Manage owner accounts.
-○ View reports, analytics and feedback.
-○ Manage Subscription Pricing.
-○ Update system config and templates for financial reports.
+○ View reports, analytics and customer feedback.
+○ Track subscription payment status.
+● Administrator:
+○ Inherits all Manager capabilities.
+○ Manage Manager accounts.
+○ Manage Subscription Pricing & Plans.
+○ Update system config, AI parameters, and master templates for financial reports.
+○ Broadcast system announcements and view system audit logs.
 ● System:
 ○ Convert natural language into draft order.
 ○ It automatically does the bookkeeping.
@@ -51,15 +56,18 @@ Owner (Owner includes all Employee functions, plus the following additional capa
 System:
 ● Convert natural language into draft order: It "listens" (or reads) what the user says (e.g., "get 5 cement bags for Mr. Ba, put it on his tab") and automatically creates a draft order from that command.
 ●It automatically does the bookkeeping: The system automatically performs bookkeeping for every sale, stock import, and customer debt transaction. Based on this recorded data, it automatically calculates, summarizes, and populates the official accounting books and financial reports required by Circular 88/2021/TT-BTC (Vietnam's official accounting standard for household businesses). This feature eliminates all manual calculation and data entry in Excel, ensuring that reports (e.g., Detailed Revenue Ledger, Outstanding Debt Report, Business Operations Report) are accurate and legally compliant for tax purposes. The platform guarantees that these report templates will be continuously updated to align with the latest government regulations as they are issued, ensuring long-term compliance for the business owner.
-Administrator:
-● Owner Account Management: Admins can view, search, filter, and manage all registered "Owner" (business household) accounts. This includes activating or deactivating accounts, and viewing detailed profiles.
-● Manage Subscription Pricing: Admins can define and update the pricing for the various subscription plans offered on the platform (e.g., set the monthly/annual cost for the Basic, Pro plans).
-● Platform Analytics & Reporting: Admins can access a global dashboard to monitor the health, growth, and revenue of the entire platform. This includes viewing total active users, new subscriptions.
-● System & AI Configuration: Admins can manage global system settings. Updating the master templates for financial reports (Circular 88/2021/TT-BTC), and broadcasting system-wide announcements.
+Manager:
+● Owner Account Management: Managers can view, search, filter, and manage all registered "Owner" (business household) accounts. This includes activating or deactivating accounts, and viewing detailed profiles.
+● Platform Analytics & Reporting: Managers can access a global dashboard to monitor the health, growth, and revenue of the entire platform. This includes viewing total active users, new subscriptions, and resolving customer feedback.
+● Subscription Tracking: Managers track subscription statuses, expiration dates, and payment history.
+Administrator (Admin):
+● Manager Account Management: Admins can manage Manager accounts (create, update, deactivate).
+● Manage Subscription Pricing: Admins can define and update the pricing for the various subscription plans offered on the platform.
+● System & AI Configuration: Admins manage global system settings, AI model parameters, master templates for financial reports, system announcements, and system audit logs.
 ● Non - functional requirements:
 1. Security & Privacy
 ● Protect the sales information of household businesses.
-● Strict role-based access control for Employee, Owner, and Admin roles.
+● Strict role-based access control for Employee, Owner, Manager, and Administrator (Admin) roles.
 
 2. Performance & Scalability
 ● Application responds quickly (< 2000 ms for core actions).

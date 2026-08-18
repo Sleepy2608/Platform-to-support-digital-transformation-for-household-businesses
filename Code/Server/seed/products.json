@@ -1,0 +1,18 @@
+{
+  "table" : "products",
+  "version" : 2,
+  "rows" : [ {
+    "id" : 5,
+    "base_unit_id" : 1,
+    "business_id" : 1,
+    "category_id" : 2,
+    "created_at" : "2026-08-11T19:20:12.171431",
+    "default_tax_activity_group_id" : 2,
+    "description" : "123",
+    "image_url" : null,
+    "product_code" : "123",
+    "product_name" : "1234",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-11T19:23:24.740117"
+  } ]
+}

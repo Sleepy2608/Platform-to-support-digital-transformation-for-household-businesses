@@ -1,0 +1,53 @@
+{
+  "table" : "tax_activity_groups",
+  "version" : 2,
+  "rows" : [ {
+    "id" : 1,
+    "activity_code" : "DISTRIBUTION_GOODS",
+    "activity_name" : "Phân phối, cung cấp hàng hóa",
+    "created_at" : "2026-08-11T18:56:12.030251",
+    "created_by" : null,
+    "effective_from" : "2026-01-01",
+    "effective_to" : null,
+    "pit_calculation_rate" : 0.5000,
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-11T18:56:12.030251",
+    "vat_calculation_rate" : 1.0000
+  }, {
+    "id" : 2,
+    "activity_code" : "SERVICES_NO_MATERIALS",
+    "activity_name" : "Dịch vụ, xây dựng không bao thầu nguyên vật liệu",
+    "created_at" : "2026-08-11T18:56:12.058234",
+    "created_by" : null,
+    "effective_from" : "2026-01-01",
+    "effective_to" : null,
+    "pit_calculation_rate" : 2.0000,
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-11T18:56:12.058234",
+    "vat_calculation_rate" : 5.0000
+  }, {
+    "id" : 3,
+    "activity_code" : "PRODUCTION_TRANSPORT",
+    "activity_name" : "Sản xuất, vận tải, dịch vụ gắn với hàng hóa",
+    "created_at" : "2026-08-11T18:56:12.065968",
+    "created_by" : null,
+    "effective_from" : "2026-01-01",
+    "effective_to" : null,
+    "pit_calculation_rate" : 1.5000,
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-11T18:56:12.065968",
+    "vat_calculation_rate" : 3.0000
+  }, {
+    "id" : 4,
+    "activity_code" : "OTHER_BUSINESS",
+    "activity_name" : "Hoạt động kinh doanh khác",
+    "created_at" : "2026-08-11T18:56:12.073939",
+    "created_by" : null,
+    "effective_from" : "2026-01-01",
+    "effective_to" : null,
+    "pit_calculation_rate" : 1.0000,
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-11T18:56:12.073939",
+    "vat_calculation_rate" : 2.0000
+  } ]
+}

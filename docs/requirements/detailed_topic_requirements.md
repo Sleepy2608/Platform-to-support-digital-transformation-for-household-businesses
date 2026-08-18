@@ -104,23 +104,25 @@ Owners inherit all Employee permissions and can additionally:
 - View reports and analytics
 - Manage employee accounts
 
-# 2.3 Administrator
+# 2.3 Manager
 
-Administrators can:
+Managers can:
 
-- Manage owner accounts
-- Manage subscription pricing
-- Monitor platform analytics
-- Manage system configurations
-- Update accounting report templates
-- Manage AI configuration
+- Manage owner accounts (view, search, filter, activate, deactivate)
+- View platform analytics and reporting (active users, growth, subscriptions)
+- Resolve customer feedback from owners and employees
+- Track subscription payment statuses
+
+# 2.4 Administrator (Admin)
+
+Administrators inherit all Manager capabilities and can additionally:
+
+- Manage Manager accounts (create, update, deactivate)
+- Manage subscription pricing and plan definitions
+- Manage global system settings and AI configuration
+- Update master templates for financial/tax reports
 - Broadcast system announcements
-
-# 2.4 Head Admin
-
-Head Admins have all Administrator permissions, plus exclusive authority to:
-- Seed and initialize system data
-- Create, update, deactivate, and delete Administrator accounts
+- View system-wide audit logs
 
 # 2.5 System
 
@@ -297,17 +299,39 @@ Benefits:
 
 The platform continuously updates report templates whenever government regulations change.
 
-# 3.4 Administrator & Head Admin Functions
+# 3.4 Manager Functions
 
 ## Owner Account Management
 
-Administrators can:
+Managers can:
 
 - Search owners
 - Filter owners
 - Activate accounts
 - Deactivate accounts
 - View detailed profiles
+
+## Platform Analytics & Feedback
+
+Managers can monitor:
+
+- Active users
+- New subscriptions
+- Platform revenue
+- Business growth
+- Customer feedback and support resolution
+
+## Subscription Tracking
+
+Managers can track subscription statuses, expiration dates, and payment history.
+
+# 3.5 Administrator (Admin) Functions
+
+Administrators inherit all Manager capabilities and can additionally:
+
+## Manager Account Management
+
+Administrators can create, update, deactivate, and manage Manager accounts.
 
 ## Subscription Pricing Management
 
@@ -318,31 +342,15 @@ Administrators can configure pricing plans such as:
 - Monthly subscriptions
 - Annual subscriptions
 
-## Platform Analytics
-
-Administrators can monitor:
-
-- Active users
-- New subscriptions
-- Platform revenue
-- Business growth
-- Customer feedback
-
 ## System & AI Configuration
 
 Administrators manage:
 
 - Global settings
-- AI configuration
-- Accounting templates
+- AI model configuration and parameters
+- Accounting templates and tax rules
 - System announcements
-
-## Head Admin Exclusive Functions
-
-Head Admins can:
-
-- Trigger data seeding, snapshots, and database restoration
-- Manage Administrator accounts (create, update, lock, unlock, delete)
+- System audit log tracking
 
 ---
 
@@ -353,7 +361,7 @@ Head Admins can:
 - Protect household business data
 - Secure customer information
 - Role-based access control
-- Employee, Owner, Admin, and Head Admin permissions
+- Employee, Owner, Manager, and Administrator (Admin) permissions
 - Authentication and authorization
 
 ## 4.2 Performance & Scalability

@@ -374,11 +374,11 @@ Mỗi module nghiệp vụ tuân theo mô hình phân lớp chuẩn của Spring
 
 | Class | Loại | Vai trò | Quyền |
 |---|---|---|---|
-| `AdminUserController` | REST Controller | Quản lý tài khoản Admin `/api/admin/accounts/*` | `HEAD_ADMIN` |
-| `DatabaseSeeder` / `SeedController` | Config / Controller | Khởi tạo dữ liệu hệ thống (Seed data) `/api/admin/seed/*` | `HEAD_ADMIN` |
-| `SubscriptionPlanController` | REST Controller | Quản lý gói thuê bao `/api/admin/subscription-plans/*` | `ADMIN`, `HEAD_ADMIN` |
+| `AdminUserController` | REST Controller | Quản lý tài khoản Manager `/api/admin/accounts/*` | `ADMIN` |
+| `DatabaseSeeder` / `SeedController` | Config / Controller | Khởi tạo dữ liệu hệ thống (Seed data) `/api/admin/seed/*` | `ADMIN` |
+| `SubscriptionPlanController` | REST Controller | Quản lý gói thuê bao `/api/admin/subscription-plans/*` | `ADMIN`, `MANAGER` |
 
-Endpoint quản lý tài khoản Admin thực hiện trực tiếp qua `UserRepository`/`RoleRepository` + `PasswordEncoder` (kiểu quản trị đơn giản, kiểm soát nghiêm ngặt chỉ vai trò `HEAD_ADMIN` được phép truy cập và không được phép thao tác xóa tài khoản Root Head Admin).
+Endpoint quản lý tài khoản Manager thực hiện trực tiếp qua `UserRepository`/`RoleRepository` + `PasswordEncoder` (kiểu quản trị đơn giản, kiểm soát nghiêm ngặt chỉ vai trò `ADMIN` được phép truy cập và không được phép thao tác xóa tài khoản Root Admin).
 
 ### 2.4.6. Hạ tầng dùng chung (`common`)
 
@@ -978,9 +978,9 @@ src/frontend/app/
 | `/onboarding` | Thiết lập hồ sơ kinh doanh ban đầu |
 | `/owner/account` | Hồ sơ, đổi mật khẩu, email, SĐT, gói thuê bao |
 | `/owner/products` | Quản lý sản phẩm, danh mục |
-| `/admin/accounts` | Quản lý tài khoản admin (Yêu cầu vai trò `HEAD_ADMIN`) |
-| `/admin/subscription-plans` | Quản lý gói thuê bao (Yêu cầu vai trò `ADMIN` hoặc `HEAD_ADMIN`) |
-| `/admin/seed` | Quản lý seed data (Yêu cầu vai trò `HEAD_ADMIN`) |
+| `/admin/accounts` | Quản lý tài khoản Manager (Yêu cầu vai trò `ADMIN`) |
+| `/admin/subscription-plans` | Quản lý gói thuê bao (Yêu cầu vai trò `ADMIN` hoặc `MANAGER`) |
+| `/admin/seed` | Quản lý seed data (Yêu cầu vai trò `ADMIN`) |
 
 ## 4.7. Component Tree
 
@@ -1151,8 +1151,8 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 | `/uploads/**` | Public (file tĩnh) |
 | `/api/public/**` | Public |
 | `/api/reference/**` | Public |
-| `/api/admin/accounts/**`, `/api/admin/seed/**`, `/api/seed/**` | `HEAD_ADMIN` |
-| `/api/admin/**` | `ADMIN` hoặc `HEAD_ADMIN` |
+| `/api/admin/accounts/**`, `/api/admin/seed/**`, `/api/seed/**` | `ADMIN` |
+| `/api/admin/**` | `ADMIN` hoặc `MANAGER` |
 | `/api/owner/**` | `BUSINESS_OWNER` hoặc `OWNER` |
 | Còn lại | Xác thực (authenticated) |
 
@@ -1214,16 +1214,16 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 | PUT | `/api/categories/{id}` | path `id` + `CategoryRequest` | `CategoryResponse` |
 | DELETE | `/api/categories/{id}` | path `id` | `CategoryResponse` |
 
-## 6.7. Admin — `/api/admin/accounts` (Độc quyền HEAD_ADMIN)
+## 6.7. Admin — `/api/admin/accounts` (Độc quyền ADMIN)
 
 | Method | Path | Request | Response | Ghi chú |
 |---|---|---|---|---|
-| GET | `/api/admin/accounts` | — | `List<AdminResponse>` | Quản lý danh sách Admin (loại trừ Root Head Admin) |
-| POST | `/api/admin/accounts` | `AdminCreateRequest` | `AdminResponse` (201) | Kiểm tra trùng username/email/phone, chỉ Head Admin được gọi |
-| PUT | `/api/admin/accounts/{id}` | `AdminUpdateRequest` | `AdminResponse` | Cập nhật thông tin/trạng thái Admin |
-| DELETE | `/api/admin/accounts/{id}` | — | `Void` | Không cho phép xóa Root Head Admin |
+| GET | `/api/admin/accounts` | — | `List<ManagerResponse>` | Quản lý danh sách Manager (loại trừ Root Admin) |
+| POST | `/api/admin/accounts` | `ManagerCreateRequest` | `ManagerResponse` (201) | Kiểm tra trùng username/email/phone, chỉ Admin được gọi |
+| PUT | `/api/admin/accounts/{id}` | `ManagerUpdateRequest` | `ManagerResponse` | Cập nhật thông tin/trạng thái Manager |
+| DELETE | `/api/admin/accounts/{id}` | — | `Void` | Không cho phép xóa Root Admin |
 
-**Admin Seed — `/api/admin/seed` (Độc quyền HEAD_ADMIN)**
+**Admin Seed — `/api/admin/seed` (Độc quyền ADMIN)**
 
 | Method | Path | Request | Response | Ghi chú |
 |---|---|---|---|---|
@@ -1232,7 +1232,7 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 
 ## 6.8. Subscription Plans — Admin & Public
 
-**Admin — `/api/admin/subscription-plans` (ADMIN / HEAD_ADMIN)**
+**Admin — `/api/admin/subscription-plans` (ADMIN / MANAGER)**
 
 | Method | Path | Request/Params | Response |
 |---|---|---|---|
@@ -1888,13 +1888,14 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 │  ┌────────────────┐   ┌──────────────────────────────────────────────────┐  │
 │  │   Role (bảng)  │   │  Quyền truy cập (SecurityConfig + @PreAuthorize) │  │
 │  ├────────────────┤   ├──────────────────────────────────────────────────┤  │
-│  │ HEAD_ADMIN     │──►│  Toàn quyền hệ thống:                            │  │
-│  │ (Quản trị cao  │   │  - /api/admin/accounts/** (Quản lý Admin)        │  │
-│  │  cấp)          │   │  - /api/admin/seed/** /api/seed/** (Seed data)   │  │
-│  │                │   │  + Toàn bộ quyền của ADMIN                       │  │
+│  │ ADMIN          │──►│  Toàn quyền hệ thống:                            │  │
+│  │ (Quản trị viên │   │  - /api/admin/accounts/** (Quản lý Manager)      │  │
+│  │  cấp cao)      │   │  - /api/admin/seed/** /api/seed/** (Seed data)   │  │
+│  │                │   │  + Toàn bộ quyền của MANAGER                     │  │
 │  │                │   │                                                   │  │
-│  │ ADMIN          │──►│  - /api/admin/** (trừ accounts & seed)            │  │
-│  │ (Quản trị viên)│   │  - Quản lý Owner, gói thuê bao, cấu hình, AI      │  │
+│  │ MANAGER        │──►│  - /api/admin/** (trừ accounts & seed)            │  │
+│  │ (Quản lý vận   │   │  - Quản lý Owner, gói thuê bao, phân tích,       │  │
+│  │  hành)         │   │    xử lý phản hồi, theo dõi thuê bao             │  │
 │  │                │   │                                                   │  │
 │  │ BUSINESS_OWNER │──►│  /api/owner/**  /api/products/*  /api/categories/*  │  │
 │  │ (Chủ hộ)       │   │  (hasAnyRole BUSINESS_OWNER, OWNER)               │  │
@@ -1911,7 +1912,7 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 │                                                                              │
 │  Luồng phân quyền:                                                           │
 │  JWT Bearer → JwtAuthenticationFilter → SecurityContext → @PreAuthorize     │
-│  + Root Head Admin ("headadmin") được bảo vệ: không khóa/xóa được            │
+│  + Root Admin ("admin") được bảo vệ: không khóa/xóa được                    │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -2333,13 +2334,13 @@ Quy trình:
 
 ## 9.3. Phân quyền RBAC
 
-- Roles: `HEAD_ADMIN`, `ADMIN`, `BUSINESS_OWNER`, `OWNER`, `EMPLOYEE` (bảng `roles`, entity `Role`).
+- Roles: `ADMIN`, `MANAGER`, `BUSINESS_OWNER`, `OWNER`, `EMPLOYEE` (bảng `roles`, entity `Role`).
 - **Method security:**
-  - `@PreAuthorize("hasRole('HEAD_ADMIN')")` dành riêng cho seed data và quản lý tài khoản Admin.
-  - `@PreAuthorize("hasAnyRole('ADMIN','HEAD_ADMIN')")` dành cho các chức năng quản trị vận hành chung (Owner, Subscriptions, Config, AI).
+  - `@PreAuthorize("hasRole('ADMIN')")` dành riêng cho seed data và quản lý tài khoản Manager.
+  - `@PreAuthorize("hasAnyRole('ADMIN','MANAGER')")` dành cho các chức năng quản trị vận hành chung (Owner, Subscriptions, Config, AI).
   - `@PreAuthorize("hasAnyRole('BUSINESS_OWNER','OWNER')")` dành cho nghiệp vụ của Chủ hộ.
 - **URL security:** `SecurityConfig` phân quyền theo pattern (xem 6.2).
-- **Bảo vệ Root Head Admin:** không cho phép khóa/xóa tài khoản Head Admin mặc định (`headadmin`).
+- **Bảo vệ Root Admin:** không cho phép khóa/xóa tài khoản Admin mặc định (`admin`).
 
 ## 9.4. Cách ly tenant (multi-tenant)
 
