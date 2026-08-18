@@ -1,6 +1,6 @@
 {
   "table" : "subscriptions",
-  "version" : 8,
+  "version" : 9,
   "rows" : [ {
     "id" : 1,
     "billing_cycle" : "MONTHLY",
@@ -41,5 +41,15 @@
     "status" : "ACTIVE",
     "updated_at" : "2026-08-11T04:12:48.438044",
     "plan_id" : 4
+  }, {
+    "id" : 5,
+    "billing_cycle" : "MONTHLY",
+    "business_id" : 5,
+    "created_at" : "2026-08-18T09:12:10.936911",
+    "end_date" : "2026-09-18",
+    "start_date" : "2026-08-18",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-18T09:12:10.936911",
+    "plan_id" : 2
   } ]
 }

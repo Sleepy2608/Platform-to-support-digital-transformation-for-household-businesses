@@ -8,7 +8,7 @@ import { getAuthItem } from '../lib/apiClient';
 import { isAdmin, type AppRole } from '../lib/roles';
 
 export default function AdminDashboard() {
-  const [adminCount, setAdminCount] = useState<number | null>(null);
+  const [managerCount, setManagerCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [userRoles, setUserRoles] = useState<AppRole[]>([]);
 
@@ -23,7 +23,7 @@ export default function AdminDashboard() {
       // ignore
     }
 
-    const fetchAdmins = async () => {
+    const fetchManagers = async () => {
       const token = sessionStorage.getItem('accessToken');
       try {
         const response = await fetch('http://localhost:8080/api/admin/accounts', {
@@ -34,25 +34,25 @@ export default function AdminDashboard() {
         if (response.ok) {
           const res = await response.json();
           if (res.success && Array.isArray(res.data)) {
-            setAdminCount(res.data.length);
+            setManagerCount(res.data.length);
           }
         }
       } catch (err) {
-        console.error('Error fetching admin count', err);
+        console.error('Error fetching manager count', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAdmins();
+    fetchManagers();
   }, []);
 
   const headAdmin = isAdmin(userRoles);
 
   const stats = [
     {
-      name: 'Tài khoản Quản trị',
-      value: adminCount !== null ? adminCount.toString() : '...',
+      name: 'Tài khoản Manager',
+      value: managerCount !== null ? managerCount.toString() : '...',
       subText: 'Đang hoạt động trên hệ thống',
       icon: Users,
       color: 'text-white bg-white/10',
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
                   <Users className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold">Tài khoản Admin</span>
+                  <span className="text-sm font-semibold">Tài khoản Manager</span>
                   <ArrowRight className="w-4 h-4 text-zinc-500 transition-transform duration-200 group-hover:translate-x-1" />
                 </div>
               </Link>

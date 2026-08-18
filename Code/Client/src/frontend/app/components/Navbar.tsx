@@ -37,12 +37,6 @@ export default function Navbar() {
               <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-white transition-all duration-300 ease-out group-hover:w-full" />
             </Link>
             <Link 
-              href="/employee/login" 
-              className="text-emerald-400 hover:text-emerald-300 font-medium transition-all duration-200 active:scale-95 hover:scale-105"
-            >
-              Cổng nhân viên
-            </Link>
-            <Link 
               href="/login" 
               className="flex items-center gap-1 text-zinc-300 hover:text-white font-medium transition-all duration-200 active:scale-95 hover:scale-105"
             >

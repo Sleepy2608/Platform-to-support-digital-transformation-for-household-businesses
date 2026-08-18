@@ -1,15 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { 
-  Users, UserPlus, Edit2, Trash2, Search, X, 
-  Check, AlertTriangle, Eye, EyeOff, Loader2, Phone, Mail, User, ShieldCheck
+import { useEffect, useMemo, useState } from 'react';
+import {
+  UserPlus, Edit2, Trash2, Search, X,
+  Check, AlertTriangle, Eye, EyeOff, Loader2, Phone, Mail, User
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getAuthItem } from '../../lib/apiClient';
-import { isAdmin, type AppRole } from '../../lib/roles';
 
-interface AdminAccount {
+interface ManagerAccount {
   id: number;
   username: string;
   email: string;
@@ -19,14 +17,16 @@ interface AdminAccount {
   createdAt: string;
 }
 
-export default function AdminAccountsPage() {
-  const [accounts, setAccounts] = useState<AdminAccount[]>([]);
-  const [filteredAccounts, setFilteredAccounts] = useState<AdminAccount[]>([]);
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
+}
+
+export default function ManagerAccountsPage() {
+  const [accounts, setAccounts] = useState<ManagerAccount[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [isRootAdmin, setIsRootAdmin] = useState(false);
 
   // Modals state
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -34,7 +34,7 @@ export default function AdminAccountsPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   
   // Selected account for edit or delete
-  const [selectedAccount, setSelectedAccount] = useState<AdminAccount | null>(null);
+  const [selectedAccount, setSelectedAccount] = useState<ManagerAccount | null>(null);
 
   // Password visibility
   const [showPassword, setShowPassword] = useState(false);
@@ -68,42 +68,28 @@ export default function AdminAccountsPage() {
       }
       if (data.success && Array.isArray(data.data)) {
         setAccounts(data.data);
-        setFilteredAccounts(data.data);
       }
-    } catch (err: any) {
-      setError(err.message || 'Lỗi kết nối máy chủ');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Lỗi kết nối máy chủ'));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    try {
-      const rolesStr = getAuthItem('roles');
-      if (rolesStr) {
-        const roles = JSON.parse(rolesStr) as AppRole[];
-        setIsRootAdmin(isAdmin(roles));
-      }
-    } catch (e) {
-      console.error(e);
-    }
-    fetchAccounts();
+    const initialLoad = window.setTimeout(() => void fetchAccounts(), 0);
+    return () => window.clearTimeout(initialLoad);
   }, []);
 
-  // Search filter
-  useEffect(() => {
+  const filteredAccounts = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
-    if (!query) {
-      setFilteredAccounts(accounts);
-    } else {
-      const filtered = accounts.filter(acc => 
+    if (!query) return accounts;
+    return accounts.filter(acc =>
         acc.fullName.toLowerCase().includes(query) ||
         acc.username.toLowerCase().includes(query) ||
         acc.email.toLowerCase().includes(query) ||
         (acc.phone && acc.phone.includes(query))
-      );
-      setFilteredAccounts(filtered);
-    }
+    );
   }, [searchQuery, accounts]);
 
   const showSuccess = (msg: string) => {
@@ -168,12 +154,12 @@ export default function AdminAccountsPage() {
         throw new Error(res.message || 'Lỗi thêm tài khoản');
       }
 
-      showSuccess('Thêm tài khoản Admin mới thành công');
+      showSuccess('Thêm tài khoản Manager mới thành công');
       setIsAddOpen(false);
       resetForm();
       fetchAccounts();
-    } catch (err: any) {
-      setFormErrors({ submit: err.message || 'Lỗi xử lý yêu cầu' });
+    } catch (err: unknown) {
+      setFormErrors({ submit: getErrorMessage(err, 'Lỗi xử lý yêu cầu') });
     } finally {
       setActionLoading(false);
     }
@@ -207,12 +193,12 @@ export default function AdminAccountsPage() {
         throw new Error(res.message || 'Lỗi cập nhật tài khoản');
       }
 
-      showSuccess('Cập nhật thông tin Admin thành công');
+      showSuccess('Cập nhật thông tin Manager thành công');
       setIsEditOpen(false);
       resetForm();
       fetchAccounts();
-    } catch (err: any) {
-      setFormErrors({ submit: err.message || 'Lỗi xử lý yêu cầu' });
+    } catch (err: unknown) {
+      setFormErrors({ submit: getErrorMessage(err, 'Lỗi xử lý yêu cầu') });
     } finally {
       setActionLoading(false);
     }
@@ -234,19 +220,19 @@ export default function AdminAccountsPage() {
         throw new Error(res.message || 'Lỗi xóa tài khoản');
       }
 
-      showSuccess('Xóa tài khoản Admin thành công');
+      showSuccess('Xóa tài khoản Manager thành công');
       setIsDeleteOpen(false);
       setSelectedAccount(null);
       fetchAccounts();
-    } catch (err: any) {
-      setError(err.message || 'Lỗi xóa tài khoản');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err, 'Lỗi xóa tài khoản'));
       setIsDeleteOpen(false);
     } finally {
       setActionLoading(false);
     }
   };
 
-  const openEdit = (acc: AdminAccount) => {
+  const openEdit = (acc: ManagerAccount) => {
     setSelectedAccount(acc);
     setFormData({
       username: acc.username,
@@ -260,7 +246,7 @@ export default function AdminAccountsPage() {
     setIsEditOpen(true);
   };
 
-  const openDelete = (acc: AdminAccount) => {
+  const openDelete = (acc: ManagerAccount) => {
     setSelectedAccount(acc);
     setIsDeleteOpen(true);
   };
@@ -300,22 +286,20 @@ export default function AdminAccountsPage() {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Quản lý Tài khoản Admin</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Quản lý Tài khoản Manager</h1>
           <p className="text-zinc-400 text-sm mt-1">
-            Xem danh sách, thêm mới, điều chỉnh quyền lực hoặc vô hiệu hóa các tài khoản quản trị viên.
+            Xem danh sách, thêm mới, cập nhật hoặc vô hiệu hóa các tài khoản Manager.
           </p>
         </div>
-        {isRootAdmin && (
-          <button
-            onClick={() => {
-              resetForm();
-              setIsAddOpen(true);
-            }}
-            className="bg-white hover:bg-zinc-200 text-zinc-950 font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-lg flex-shrink-0"
-          >
-            <UserPlus className="w-4 h-4" /> Thêm Admin
-          </button>
-        )}
+        <button
+          onClick={() => {
+            resetForm();
+            setIsAddOpen(true);
+          }}
+          className="bg-white hover:bg-zinc-200 text-zinc-950 font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-lg flex-shrink-0"
+        >
+          <UserPlus className="w-4 h-4" /> Thêm Manager
+        </button>
       </div>
 
       {/* Filter and search bar */}
@@ -357,7 +341,7 @@ export default function AdminAccountsPage() {
           </div>
         ) : filteredAccounts.length === 0 ? (
           <div className="py-20 text-center text-zinc-500 text-sm">
-            {searchQuery ? 'Không tìm thấy tài khoản admin nào khớp với từ khóa' : 'Chưa có tài khoản admin nào được đăng ký'}
+            {searchQuery ? 'Không tìm thấy tài khoản Manager nào khớp với từ khóa' : 'Chưa có tài khoản Manager nào được tạo'}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -369,7 +353,7 @@ export default function AdminAccountsPage() {
                   <th className="p-4">Thông tin liên hệ</th>
                   <th className="p-4 text-center">Trạng thái</th>
                   <th className="p-4">Ngày tạo</th>
-                  {isRootAdmin && <th className="p-4 pr-6 text-right">Thao tác</th>}
+                  <th className="p-4 pr-6 text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/60">
@@ -379,14 +363,7 @@ export default function AdminAccountsPage() {
                       <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/60 flex items-center justify-center font-bold text-zinc-300">
                         {acc.fullName.charAt(0).toUpperCase()}
                       </div>
-                      <div>
-                        <div className="font-semibold text-white">{acc.fullName}</div>
-                        {acc.username === 'admin' && (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] bg-white/10 text-white font-semibold px-2 py-0.5 rounded-full mt-0.5">
-                            <ShieldCheck className="w-3 h-3" /> Root Admin
-                          </span>
-                        )}
-                      </div>
+                      <div className="font-semibold text-white">{acc.fullName}</div>
                     </td>
                     <td className="p-4 text-zinc-300 font-mono">@{acc.username}</td>
                     <td className="p-4 space-y-1">
@@ -417,29 +394,24 @@ export default function AdminAccountsPage() {
                         day: 'numeric'
                       }) : 'N/A'}
                     </td>
-                    {isRootAdmin && (
-                      <td className="p-4 pr-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => openEdit(acc)}
-                            className="p-2 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-colors cursor-pointer"
-                            title="Chỉnh sửa thông tin"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => openDelete(acc)}
-                            disabled={acc.username === 'admin'}
-                            className={`p-2 hover:bg-red-950/20 text-zinc-400 hover:text-red-400 rounded-lg transition-colors cursor-pointer ${
-                              acc.username === 'admin' ? 'opacity-30 pointer-events-none' : ''
-                            }`}
-                            title={acc.username === 'admin' ? 'Không thể xóa Admin mặc định' : 'Xóa tài khoản'}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    )}
+                    <td className="p-4 pr-6 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openEdit(acc)}
+                          className="p-2 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+                          title="Chỉnh sửa thông tin Manager"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => openDelete(acc)}
+                          className="p-2 hover:bg-red-950/20 text-zinc-400 hover:text-red-400 rounded-lg transition-colors cursor-pointer"
+                          title="Xóa tài khoản Manager"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -448,7 +420,7 @@ export default function AdminAccountsPage() {
         )}
       </div>
 
-      {/* Add Admin Modal */}
+      {/* Add Manager Modal */}
       <AnimatePresence>
         {isAddOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -471,7 +443,7 @@ export default function AdminAccountsPage() {
                   <div className="p-2 bg-white/10 rounded-xl border border-zinc-700">
                     <UserPlus className="w-5 h-5 text-white" />
                   </div>
-                  <h2 className="text-xl font-bold">Thêm mới Admin</h2>
+                  <h2 className="text-xl font-bold">Thêm mới Manager</h2>
                 </div>
                 <button 
                   onClick={() => setIsAddOpen(false)}
@@ -598,7 +570,7 @@ export default function AdminAccountsPage() {
         )}
       </AnimatePresence>
 
-      {/* Edit Admin Modal */}
+      {/* Edit Manager Modal */}
       <AnimatePresence>
         {isEditOpen && selectedAccount && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -621,7 +593,7 @@ export default function AdminAccountsPage() {
                   <div className="p-2 bg-white/10 rounded-xl border border-zinc-700">
                     <Edit2 className="w-5 h-5 text-white" />
                   </div>
-                  <h2 className="text-xl font-bold">Cập nhật tài khoản Admin</h2>
+                  <h2 className="text-xl font-bold">Cập nhật tài khoản Manager</h2>
                 </div>
                 <button 
                   onClick={() => setIsEditOpen(false)}
@@ -707,15 +679,11 @@ export default function AdminAccountsPage() {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({...formData, status: e.target.value as 'ACTIVE' | 'INACTIVE'})}
-                    disabled={selectedAccount.username === 'admin'}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:border-white transition-all"
                   >
                     <option value="ACTIVE">Đang hoạt động (ACTIVE)</option>
                     <option value="INACTIVE">Khóa tài khoản (INACTIVE)</option>
                   </select>
-                  {selectedAccount.username === 'admin' && (
-                    <p className="text-zinc-500 text-[10px] mt-1">Không thể thay đổi trạng thái của Root Admin</p>
-                  )}
                 </div>
 
                 {/* Đổi mật khẩu (Optional) */}
@@ -788,9 +756,9 @@ export default function AdminAccountsPage() {
                 <div className="p-4 bg-red-500/10 border border-red-500/25 rounded-full text-red-400 mb-4 animate-pulse">
                   <AlertTriangle className="w-8 h-8" />
                 </div>
-                <h2 className="text-xl font-bold mb-2">Xác nhận xóa Admin?</h2>
+                <h2 className="text-xl font-bold mb-2">Xác nhận xóa Manager?</h2>
                 <p className="text-zinc-400 text-sm mb-6">
-                  Bạn có chắc chắn muốn xóa tài khoản quản trị <strong className="text-white">@{selectedAccount.username}</strong> ({selectedAccount.fullName})? Hành động này sẽ loại bỏ hoàn toàn quyền truy cập của họ và không thể hoàn tác.
+                  Bạn có chắc chắn muốn xóa tài khoản Manager <strong className="text-white">@{selectedAccount.username}</strong> ({selectedAccount.fullName})? Hành động này sẽ loại bỏ hoàn toàn quyền truy cập của họ và không thể hoàn tác.
                 </p>
 
                 <div className="flex w-full gap-3">

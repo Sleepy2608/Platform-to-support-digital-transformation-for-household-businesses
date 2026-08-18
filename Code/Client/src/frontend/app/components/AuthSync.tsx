@@ -23,7 +23,6 @@ function isAuthSyncEvent(value: unknown): value is AuthSyncEvent {
 function getLoginPath() {
   const pathname = window.location.pathname;
   if (pathname.startsWith('/admin')) return '/admin/login';
-  if (pathname.startsWith('/employee')) return '/employee/login';
   return '/login';
 }
 
@@ -41,6 +40,7 @@ function getLandingPath() {
   }
 
   if (roles.includes('ADMIN')) return '/admin';
+  if (roles.includes('MANAGER')) return '/manager';
   if (roles.includes('BUSINESS_OWNER')) {
     return getAuthItem('businessId') ? '/owner/account' : '/onboarding/business-profile';
   }
@@ -68,11 +68,12 @@ export default function AuthSync() {
 
       if (event.type === 'signed-in') {
         const pathname = window.location.pathname;
-        if (pathname === '/login' || pathname === '/admin/login' || pathname === '/employee/login' || pathname === '/verify-email') {
+        if (pathname === '/login' || pathname === '/admin/login' || pathname === '/verify-email') {
           window.location.replace(getLandingPath());
         } else if (
           pathname.startsWith('/owner')
           || pathname.startsWith('/admin')
+          || pathname.startsWith('/manager')
           || pathname.startsWith('/employee')
           || pathname.startsWith('/onboarding')
         ) {

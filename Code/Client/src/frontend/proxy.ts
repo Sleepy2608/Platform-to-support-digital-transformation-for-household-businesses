@@ -36,11 +36,6 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow public employee login route
-  if (pathname === '/employee/login') {
-    return NextResponse.next();
-  }
-
   // Protect /owner/* routes (BUSINESS_OWNER only)
   if (pathname.startsWith('/owner')) {
     if (!authToken || authRole !== 'BUSINESS_OWNER') {
@@ -54,7 +49,7 @@ export function proxy(request: NextRequest) {
   // Protect /employee/* routes (EMPLOYEE only)
   if (pathname.startsWith('/employee')) {
     if (!authToken || authRole !== 'EMPLOYEE') {
-      const loginUrl = new URL('/employee/login', request.url);
+      const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }

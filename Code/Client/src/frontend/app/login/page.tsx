@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Store, ArrowLeft, LogIn, Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal';
 import { saveAuthData } from '../lib/apiClient';
-import { getLoginRedirectPath, isAnyAdmin, isEmployee, isOwner, type AppRole } from '../lib/roles';
+import { getLoginRedirectPath, type AppRole } from '../lib/roles';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -56,7 +56,7 @@ export default function LoginPage() {
 
         // ADMIN thì bắt buộc qua /admin/login
         if (rolesArr.includes('ADMIN')) {
-          setError('Tài khoản quản trị vui lòng đăng nhập tại /admin/login');
+          setError('Tài khoản admin đăng nhập tại trang đăng nhập cho admin');
           setLoading(false);
           return;
         }

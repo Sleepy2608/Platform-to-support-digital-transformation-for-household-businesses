@@ -273,9 +273,7 @@ async function request<T = unknown>(
           const pathname = window.location.pathname;
           const loginPath = pathname.startsWith('/admin')
             ? '/admin/login'
-            : pathname.startsWith('/employee')
-              ? '/employee/login'
-              : '/login';
+            : '/login';
           window.location.href = loginPath;
         }
         throw new Error('Session expired. Please log in again.');

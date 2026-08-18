@@ -80,8 +80,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/reference/**").permitAll()
                     // Seed data – chỉ ADMIN được phép
                     .requestMatchers("/api/seed/**").hasRole("ADMIN")
-                    // Admin accounts management – ADMIN (toàn quyền) hoặc MANAGER (xem, sửa)
-                    .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "MANAGER")
+                    // Quản lý tài khoản Manager – chỉ ADMIN
+                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
                     // Manager routes
                     .requestMatchers("/api/manager/**").hasRole("MANAGER")
                     // Owner routes

@@ -1,6 +1,6 @@
 {
   "table" : "roles",
-  "version" : 9,
+  "version" : 10,
   "rows" : [ {
     "id" : 1,
     "description" : "Quản trị viên hệ thống",
@@ -16,5 +16,10 @@
     "description" : "Nhân viên cửa hàng",
     "role_code" : "EMPLOYEE",
     "role_name" : "Nhân viên"
+  }, {
+    "id" : 4,
+    "description" : "Quản trị viên thường / Chuyên viên – không toàn quyền",
+    "role_code" : "MANAGER",
+    "role_name" : "Quản lý / Chuyên viên"
   } ]
 }
