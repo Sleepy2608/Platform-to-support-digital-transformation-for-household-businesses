@@ -194,4 +194,4 @@ npm run dev
 
 - Web được chạy ở:
   * Local: http://localhost:3000/
-  * Network: http://192.168.23.1:3000
+  * Network: http://[IP_ADDRESS]/

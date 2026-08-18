@@ -708,7 +708,7 @@ Order & Checkout module xử lý như đơn thủ công (transaction đầy đ�
 
 ### 10.2. Ma trận phân quyền RBAC (rút gọn)
 
-| Quyền | Employee | Owner | Administrator | Head Admin |
+| Quyền | Employee | Owner | Manager | Admin |
 |---|:---:|:---:|:---:|:---:|
 | Tạo đơn tại quầy | ✔ | ✔ | ✔ | ✔ |
 | Xác nhận Draft Order AI | ✔ | ✔ | ✔ | ✔ |
@@ -718,11 +718,14 @@ Order & Checkout module xử lý như đơn thủ công (transaction đầy đ�
 | Quản lý tài khoản Employee | — | ✔ | ✔ | ✔ |
 | Xem báo cáo cửa hàng | — | ✔ | ✔ | ✔ |
 | Quản lý tài khoản Owner | — | — | ✔ | ✔ |
-| Cấu hình giá gói Subscription | — | — | ✔ | ✔ |
-| Cập nhật template báo cáo kế toán | — | — | ✔ | ✔ |
 | Xem phân tích toàn nền tảng | — | — | ✔ | ✔ |
+| Xử lý phản hồi Owner/Employee | — | — | ✔ | ✔ |
+| Theo dõi trạng thái thuê bao | — | — | ✔ | ✔ |
+| Cấu hình giá gói Subscription | — | — | — | ✔ |
+| Cập nhật template báo cáo kế toán | — | — | — | ✔ |
+| Cấu hình hệ thống & AI | — | — | — | ✔ |
 | Seed/Khởi tạo dữ liệu hệ thống | — | — | — | ✔ |
-| Quản lý tài khoản Administrator | — | — | — | ✔ |
+| Quản lý tài khoản Manager | — | — | — | ✔ |
 
 ### 10.3. Ràng buộc kiến trúc bổ sung (từ rà soát)
 
