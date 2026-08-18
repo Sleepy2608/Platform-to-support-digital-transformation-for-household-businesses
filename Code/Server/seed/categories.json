@@ -1,6 +1,6 @@
 {
   "table" : "categories",
-  "version" : 1,
+  "version" : 2,
   "rows" : [ {
     "id" : 2,
     "business_id" : 1,

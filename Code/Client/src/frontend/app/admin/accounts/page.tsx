@@ -6,8 +6,6 @@ import {
   Check, AlertTriangle, Eye, EyeOff, Loader2, Phone, Mail, User, ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getAuthItem } from '../../lib/apiClient';
-import { isHeadAdmin, type AppRole } from '../../lib/roles';
 
 interface AdminAccount {
   id: number;
@@ -15,6 +13,7 @@ interface AdminAccount {
   email: string;
   fullName: string;
   phone: string;
+  avatarUrl?: string | null;
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING_VERIFICATION';
   createdAt: string;
 }
@@ -26,7 +25,6 @@ export default function AdminAccountsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [isRootAdmin, setIsRootAdmin] = useState(false);
 
   // Modals state
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -78,15 +76,6 @@ export default function AdminAccountsPage() {
   };
 
   useEffect(() => {
-    try {
-      const rolesStr = getAuthItem('roles');
-      if (rolesStr) {
-        const roles = JSON.parse(rolesStr) as AppRole[];
-        setIsRootAdmin(isHeadAdmin(roles));
-      }
-    } catch (e) {
-      console.error(e);
-    }
     fetchAccounts();
   }, []);
 
@@ -123,8 +112,10 @@ export default function AdminAccountsPage() {
     if (!isEdit) {
       if (!formData.username.trim()) {
         errors.username = 'Tên đăng nhập không được để trống';
-      } else if (formData.username.length < 4) {
-        errors.username = 'Tên đăng nhập phải từ 4 ký tự trở lên';
+      } else if (formData.username.length < 4 || formData.username.length > 50) {
+        errors.username = 'Tên đăng nhập phải từ 4-50 ký tự';
+      } else if (!/^[a-zA-Z0-9_.@]+$/.test(formData.username)) {
+        errors.username = 'Tên đăng nhập chỉ được chứa các chữ cái tiếng Anh không dấu, số, dấu gạch dưới (_), dấu chấm (.) và @';
       }
       if (!formData.password) {
         errors.password = 'Mật khẩu không được để trống';
@@ -300,22 +291,20 @@ export default function AdminAccountsPage() {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Quản lý Tài khoản Admin</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Quản lý Tài khoản Manager</h1>
           <p className="text-zinc-400 text-sm mt-1">
             Xem danh sách, thêm mới, điều chỉnh quyền lực hoặc vô hiệu hóa các tài khoản quản trị viên.
           </p>
         </div>
-        {isRootAdmin && (
-          <button
-            onClick={() => {
-              resetForm();
-              setIsAddOpen(true);
-            }}
-            className="bg-white hover:bg-zinc-200 text-zinc-950 font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-lg flex-shrink-0"
-          >
-            <UserPlus className="w-4 h-4" /> Thêm Admin
-          </button>
-        )}
+        <button
+          onClick={() => {
+            resetForm();
+            setIsAddOpen(true);
+          }}
+          className="bg-white hover:bg-zinc-200 text-zinc-950 font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-lg flex-shrink-0"
+        >
+          <UserPlus className="w-4 h-4" /> Thêm Manager
+        </button>
       </div>
 
       {/* Filter and search bar */}
@@ -369,16 +358,24 @@ export default function AdminAccountsPage() {
                   <th className="p-4">Thông tin liên hệ</th>
                   <th className="p-4 text-center">Trạng thái</th>
                   <th className="p-4">Ngày tạo</th>
-                  {isRootAdmin && <th className="p-4 pr-6 text-right">Thao tác</th>}
+                  <th className="p-4 pr-6 text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/60">
                 {filteredAccounts.map((acc) => (
                   <tr key={acc.id} className="hover:bg-zinc-800/20 transition-colors">
                     <td className="p-4 pl-6 font-medium text-white flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/60 flex items-center justify-center font-bold text-zinc-300">
-                        {acc.fullName.charAt(0).toUpperCase()}
-                      </div>
+                      {acc.avatarUrl ? (
+                        <img
+                          src={acc.avatarUrl}
+                          alt="Avatar"
+                          className="w-9 h-9 rounded-full object-cover border border-zinc-700/60 flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-zinc-800 border border-zinc-700/60 flex items-center justify-center font-bold text-zinc-300 flex-shrink-0">
+                          {acc.fullName.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                       <div>
                         <div className="font-semibold text-white">{acc.fullName}</div>
                         {acc.username === 'admin' && (
@@ -417,29 +414,27 @@ export default function AdminAccountsPage() {
                         day: 'numeric'
                       }) : 'N/A'}
                     </td>
-                    {isRootAdmin && (
-                      <td className="p-4 pr-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => openEdit(acc)}
-                            className="p-2 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-colors cursor-pointer"
-                            title="Chỉnh sửa thông tin"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => openDelete(acc)}
-                            disabled={acc.username === 'admin'}
-                            className={`p-2 hover:bg-red-950/20 text-zinc-400 hover:text-red-400 rounded-lg transition-colors cursor-pointer ${
-                              acc.username === 'admin' ? 'opacity-30 pointer-events-none' : ''
-                            }`}
-                            title={acc.username === 'admin' ? 'Không thể xóa Admin mặc định' : 'Xóa tài khoản'}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    )}
+                    <td className="p-4 pr-6 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openEdit(acc)}
+                          className="p-2 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+                          title="Chỉnh sửa thông tin"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => openDelete(acc)}
+                          disabled={acc.username === 'admin'}
+                          className={`p-2 hover:bg-red-950/20 text-zinc-400 hover:text-red-400 rounded-lg transition-colors cursor-pointer ${
+                            acc.username === 'admin' ? 'opacity-30 pointer-events-none' : ''
+                          }`}
+                          title={acc.username === 'admin' ? 'Không thể xóa Admin mặc định' : 'Xóa tài khoản'}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

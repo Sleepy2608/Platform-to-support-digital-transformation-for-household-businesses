@@ -10,12 +10,13 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AdminResponse {
+public class ManagerResponse {
     private Long id;
     private String username;
     private String email;
     private String fullName;
     private String phone;
+    private String avatarUrl;
     private UserStatus status;
     private LocalDateTime createdAt;
 }

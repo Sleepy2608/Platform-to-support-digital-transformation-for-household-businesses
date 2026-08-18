@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Store, ArrowLeft, LogIn, Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal';
 import { saveAuthData } from '../lib/apiClient';
-import { getLoginRedirectPath, isAnyAdmin, isEmployee, isOwner, type AppRole } from '../lib/roles';
+import { getLoginRedirectPath, type AppRole } from '../lib/roles';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -54,22 +54,21 @@ export default function LoginPage() {
 
         const rolesArr: AppRole[] = Array.isArray(roles) ? roles as AppRole[] : [];
 
-        // Cổng này chỉ dành cho BUSINESS_OWNER
-        // Các role khác phải vào đúng cổng của mình
-        if (isAnyAdmin(rolesArr)) {
-          setError('Tài khoản quản trị vui lòng đăng nhập tại /admin/login');
+        // ADMIN thì bắt buộc qua /admin/login
+        if (rolesArr.includes('ADMIN')) {
+          setError('Tài khoản admin đăng nhập tại trang đăng nhập cho admin');
           setLoading(false);
           return;
         }
 
-        if (isEmployee(rolesArr) && !isOwner(rolesArr)) {
-          setError('Tài khoản Nhân viên vui lòng đăng nhập tại Cổng Nhân viên (/employee/login)');
-          setLoading(false);
-          return;
-        }
+        // Cho phép MANAGER, BUSINESS_OWNER, và EMPLOYEE
+        const hasValidRole =
+          rolesArr.includes('MANAGER') ||
+          rolesArr.includes('BUSINESS_OWNER') ||
+          rolesArr.includes('EMPLOYEE');
 
-        if (!isOwner(rolesArr)) {
-          setError('Tài khoản không có quyền truy cập trang Chủ hộ kinh doanh');
+        if (!hasValidRole) {
+          setError('Tài khoản không có quyền truy cập cổng này.');
           setLoading(false);
           return;
         }

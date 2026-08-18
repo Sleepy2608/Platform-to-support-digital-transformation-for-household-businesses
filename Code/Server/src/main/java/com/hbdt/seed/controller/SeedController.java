@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * SeedController – chỉ HEAD_ADMIN được truy cập.
- * SecurityConfig đã bảo vệ /api/seed/** bằng hasRole("HEAD_ADMIN"),
+ * SeedController – chỉ ADMIN được truy cập.
+ * SecurityConfig đã bảo vệ /api/seed/** bằng hasRole("ADMIN"),
  * @PreAuthorize thêm một lớp bảo vệ rõ ràng ở method level.
  */
 @RestController
 @RequestMapping("/api/seed")
-@PreAuthorize("hasRole('HEAD_ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")
 public class SeedController {
 
     private final SeedService seedService;

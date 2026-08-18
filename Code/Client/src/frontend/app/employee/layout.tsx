@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   UserCircle, Lock, Mail, Phone, LogOut, Menu, X,
@@ -19,7 +19,6 @@ const NAV_ITEMS = [
 
 export default function EmployeeLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname();
   const [loading, setLoading] = useState(true);
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
@@ -29,21 +28,17 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
   const [currentHash, setCurrentHash] = useState('#profile');
 
   useEffect(() => {
-    if (pathname === '/employee/login') {
-      setLoading(false);
-      return;
-    }
     const token = getAccessToken();
     const rolesRaw = getAuthItem('roles');
     if (!token || !rolesRaw) {
-      router.push('/employee/login');
+      router.push('/login');
       return;
     }
     try {
       const roles: string[] = JSON.parse(rolesRaw);
       // Route Guard: chỉ EMPLOYEE được vào /employee
       if (!isEmployee(roles as never)) {
-        router.push('/employee/login');
+        router.push('/login');
         return;
       }
       setFullName(getAuthItem('fullName') || 'Nhân viên');
@@ -52,9 +47,9 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
       setPosition(getAuthItem('position') || 'Nhân viên');
       setLoading(false);
     } catch {
-      router.push('/employee/login');
+      router.push('/login');
     }
-  }, [router, pathname]);
+  }, [router]);
 
   useEffect(() => {
     const syncHash = () => setCurrentHash(window.location.hash || '#profile');
@@ -69,12 +64,8 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
 
   const handleLogout = () => {
     clearAuth();
-    router.push('/employee/login');
+    router.push('/login');
   };
-
-  if (pathname === '/employee/login') {
-    return <>{children}</>;
-  }
 
   if (loading) {
     return (

@@ -13,21 +13,26 @@ export function proxy(request: NextRequest) {
 
   // ── /admin/* ────────────────────────────────────────────────────────────────
   if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
-    const isAdminRole = authRole === 'HEAD_ADMIN' || authRole === 'ADMIN';
+    const isAdminRole = authRole === 'ADMIN';
     if (!authToken || !isAdminRole) {
       return NextResponse.redirect(new URL('/admin/login', request.url));
     }
   }
 
-  // ── /admin/seed – chỉ HEAD_ADMIN ─────────────────────────────────────────
+  // ── /admin/seed – chỉ ADMIN ─────────────────────────────────────────
   if (pathname.startsWith('/admin/seed')) {
-    if (authRole !== 'HEAD_ADMIN') {
+    if (authRole !== 'ADMIN') {
       return NextResponse.redirect(new URL('/admin', request.url));
     }
   }
 
-  // Allow public employee login route
-  if (pathname === '/employee/login') {
+  // Protect /manager/* routes (MANAGER only)
+  if (pathname.startsWith('/manager')) {
+    if (!authToken || authRole !== 'MANAGER') {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
     return NextResponse.next();
   }
 
@@ -44,7 +49,7 @@ export function proxy(request: NextRequest) {
   // Protect /employee/* routes (EMPLOYEE only)
   if (pathname.startsWith('/employee')) {
     if (!authToken || authRole !== 'EMPLOYEE') {
-      const loginUrl = new URL('/employee/login', request.url);
+      const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
@@ -57,6 +62,7 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     '/admin/:path*',
+    '/manager/:path*',
     '/owner/:path*',
     '/employee/:path*',
   ],

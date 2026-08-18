@@ -1,6 +1,6 @@
 {
   "table" : "inventory_balances",
-  "version" : 1,
+  "version" : 2,
   "rows" : [ {
     "id" : 1,
     "average_unit_cost" : 0.00,

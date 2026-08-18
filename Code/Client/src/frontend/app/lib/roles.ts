@@ -5,13 +5,13 @@
  * để kiểm tra quyền truy cập dựa trên role từ JWT/session.
  *
  * 4 Role hệ thống:
- *   HEAD_ADMIN   – Siêu quản trị viên: seed data, create/delete Admin
- *   ADMIN        – Quản trị viên thường: quản lý Owner/hệ thống, không seed/create/delete Admin
+ *   ADMIN          – Quản trị viên hệ thống cấp cao
+ *   MANAGER        – Quản trị viên thường / Chuyên viên
  *   BUSINESS_OWNER – Chủ hộ kinh doanh: quản lý cửa hàng, CRUD nhân viên
- *   EMPLOYEE     – Nhân viên: các nghiệp vụ được cấp quyền
+ *   EMPLOYEE       – Nhân viên: các nghiệp vụ được cấp quyền
  */
 
-export type AppRole = 'HEAD_ADMIN' | 'ADMIN' | 'BUSINESS_OWNER' | 'EMPLOYEE';
+export type AppRole = 'ADMIN' | 'MANAGER' | 'BUSINESS_OWNER' | 'EMPLOYEE';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -30,27 +30,27 @@ export function getRoles(): AppRole[] {
     return parsed.filter(
       (r): r is AppRole =>
         typeof r === 'string' &&
-        ['HEAD_ADMIN', 'ADMIN', 'BUSINESS_OWNER', 'EMPLOYEE'].includes(r)
+        ['ADMIN', 'MANAGER', 'BUSINESS_OWNER', 'EMPLOYEE'].includes(r)
     );
   } catch {
     return [];
   }
 }
 
-/** Kiểm tra user có role HEAD_ADMIN không. */
-export function isHeadAdmin(roles?: AppRole[]): boolean {
-  return (roles ?? getRoles()).includes('HEAD_ADMIN');
-}
-
-/** Kiểm tra user có role ADMIN (thường) không. */
+/** Kiểm tra user có role ADMIN không. */
 export function isAdmin(roles?: AppRole[]): boolean {
   return (roles ?? getRoles()).includes('ADMIN');
 }
 
-/** Kiểm tra user có bất kỳ admin role nào (HEAD_ADMIN hoặc ADMIN). */
+/** Kiểm tra user có role MANAGER không. */
+export function isManager(roles?: AppRole[]): boolean {
+  return (roles ?? getRoles()).includes('MANAGER');
+}
+
+/** Kiểm tra user có bất kỳ admin role nào (ADMIN hoặc MANAGER). */
 export function isAnyAdmin(roles?: AppRole[]): boolean {
   const r = roles ?? getRoles();
-  return r.includes('HEAD_ADMIN') || r.includes('ADMIN');
+  return r.includes('ADMIN') || r.includes('MANAGER');
 }
 
 /** Kiểm tra user có role BUSINESS_OWNER không. */
@@ -71,8 +71,8 @@ export function getLoginRedirectPath(
   roles: AppRole[],
   businessId?: number | null
 ): string {
-  if (roles.includes('HEAD_ADMIN')) return '/admin';
   if (roles.includes('ADMIN')) return '/admin';
+  if (roles.includes('MANAGER')) return '/manager';
   if (roles.includes('BUSINESS_OWNER')) {
     return businessId ? '/owner/account' : '/onboarding/business-profile';
   }
@@ -85,13 +85,15 @@ export function getLoginRedirectPath(
  * portal: 'admin' | 'owner' | 'employee'
  */
 export function canAccessPortal(
-  portal: 'admin' | 'owner' | 'employee',
+  portal: 'admin' | 'manager' | 'owner' | 'employee',
   roles?: AppRole[]
 ): boolean {
   const r = roles ?? getRoles();
   switch (portal) {
     case 'admin':
-      return r.includes('HEAD_ADMIN') || r.includes('ADMIN');
+      return r.includes('ADMIN');
+    case 'manager':
+      return r.includes('MANAGER');
     case 'owner':
       return r.includes('BUSINESS_OWNER');
     case 'employee':

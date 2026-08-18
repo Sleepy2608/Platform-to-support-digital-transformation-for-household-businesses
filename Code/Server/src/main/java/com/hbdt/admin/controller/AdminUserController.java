@@ -1,11 +1,12 @@
 package com.hbdt.admin.controller;
 
-import com.hbdt.auth.dto.AdminCreateRequest;
-import com.hbdt.auth.dto.AdminResponse;
-import com.hbdt.auth.dto.AdminUpdateRequest;
+import com.hbdt.auth.dto.ManagerCreateRequest;
+import com.hbdt.auth.dto.ManagerResponse;
+import com.hbdt.auth.dto.ManagerUpdateRequest;
 import com.hbdt.common.dto.ApiResponse;
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
+import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.entity.Role;
 import com.hbdt.entity.User;
 import com.hbdt.entity.enums.RoleType;
@@ -29,41 +30,32 @@ public class AdminUserController {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ImageStorageService imageStorageService;
 
     public AdminUserController(UserRepository userRepository,
                                RoleRepository roleRepository,
-                               PasswordEncoder passwordEncoder) {
+                               PasswordEncoder passwordEncoder,
+                               ImageStorageService imageStorageService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.imageStorageService = imageStorageService;
     }
 
-    /**
-     * GET /api/admin/accounts – Lấy danh sách Admin.
-     * Cả HEAD_ADMIN và ADMIN đều được xem (SecurityConfig đã cho phép /api/admin/**).
-     */
+    /** GET /api/admin/accounts – ADMIN xem danh sách tài khoản MANAGER. */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<AdminResponse>>> getAllAdmins() {
-        List<User> headAdmins = userRepository.findByRoleType(RoleType.HEAD_ADMIN);
-        List<User> regularAdmins = userRepository.findByRoleType(RoleType.ADMIN);
-        
-        List<User> allAdmins = new java.util.ArrayList<>();
-        allAdmins.addAll(headAdmins);
-        allAdmins.addAll(regularAdmins);
-
-        List<AdminResponse> response = allAdmins.stream()
-                .map(this::mapToAdminResponse)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<ManagerResponse>>> getAllManagers() {
+        List<ManagerResponse> response = userRepository.findByRoleType(RoleType.MANAGER).stream()
+                .map(this::mapToManagerResponse)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách Admin thành công", response));
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách Manager thành công", response));
     }
 
-    /**
-     * POST /api/admin/accounts – Tạo Admin mới.
-     * Chỉ HEAD_ADMIN được phép.
-     */
+    /** POST /api/admin/accounts – ADMIN tạo tài khoản MANAGER mới. */
     @PostMapping
-    @PreAuthorize("hasRole('HEAD_ADMIN')")
-    public ResponseEntity<ApiResponse<AdminResponse>> createAdmin(@Valid @RequestBody AdminCreateRequest request) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ManagerResponse>> createManager(@Valid @RequestBody ManagerCreateRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new BadRequestException("Tên đăng nhập đã tồn tại");
         }
@@ -74,95 +66,87 @@ public class AdminUserController {
             throw new BadRequestException("Số điện thoại đã được sử dụng");
         }
 
-        Role adminRole = roleRepository.findFirstByName(RoleType.ADMIN)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy vai trò ADMIN"));
-        User admin = User.builder()
+        Role managerRole = roleRepository.findFirstByName(RoleType.MANAGER)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy vai trò MANAGER"));
+        User manager = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
                 .status(UserStatus.ACTIVE)
-                .role(adminRole)
+                .role(managerRole)
                 .build();
 
-        User savedAdmin = userRepository.save(admin);
+        User savedManager = userRepository.save(manager);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Thêm Admin mới thành công", mapToAdminResponse(savedAdmin)));
+                .body(ApiResponse.success("Thêm Manager mới thành công", mapToManagerResponse(savedManager)));
     }
 
-    /**
-     * PUT /api/admin/accounts/{id} – Cập nhật thông tin Admin.
-     * Cả HEAD_ADMIN và ADMIN đều được (SecurityConfig cho phép /api/admin/**).
-     */
+    /** PUT /api/admin/accounts/{id} – ADMIN cập nhật tài khoản MANAGER. */
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<AdminResponse>> updateAdmin(
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ManagerResponse>> updateManager(
             @PathVariable Long id,
-            @Valid @RequestBody AdminUpdateRequest request) {
-        User admin = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản Admin với ID: " + id));
-
-        // Chỉ cho phép sửa ADMIN thường, không cho sửa HEAD_ADMIN qua endpoint này
-        if (admin.getRole() != null && admin.getRole().getName() == RoleType.HEAD_ADMIN) {
-            throw new BadRequestException("Không thể sửa tài khoản Siêu quản trị viên qua endpoint này");
-        }
+            @Valid @RequestBody ManagerUpdateRequest request) {
+        User manager = findManager(id);
 
         // Check duplicate email
-        if (!admin.getEmail().equalsIgnoreCase(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
+        if (!manager.getEmail().equalsIgnoreCase(request.getEmail()) && userRepository.existsByEmail(request.getEmail())) {
             throw new BadRequestException("Email đã được sử dụng");
         }
 
         // Check duplicate phone
         if (request.getPhone() != null && !request.getPhone().isBlank()) {
-            if (admin.getPhone() == null || !admin.getPhone().equals(request.getPhone())) {
+            if (manager.getPhone() == null || !manager.getPhone().equals(request.getPhone())) {
                 if (userRepository.existsByPhone(request.getPhone())) {
                     throw new BadRequestException("Số điện thoại đã được sử dụng");
                 }
             }
         }
 
-        admin.setEmail(request.getEmail());
-        admin.setFullName(request.getFullName());
-        admin.setPhone(request.getPhone());
-        admin.setStatus(request.getStatus());
+        manager.setEmail(request.getEmail());
+        manager.setFullName(request.getFullName());
+        manager.setPhone(request.getPhone());
+        manager.setStatus(request.getStatus());
 
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             if (request.getPassword().length() < 6) {
                 throw new BadRequestException("Mật khẩu phải từ 6 ký tự trở lên");
             }
-            admin.setPassword(passwordEncoder.encode(request.getPassword()));
+            manager.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
-        User updatedAdmin = userRepository.save(admin);
-        return ResponseEntity.ok(ApiResponse.success("Cập nhật tài khoản Admin thành công", mapToAdminResponse(updatedAdmin)));
+        User updatedManager = userRepository.save(manager);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật tài khoản Manager thành công", mapToManagerResponse(updatedManager)));
     }
 
-    /**
-     * DELETE /api/admin/accounts/{id} – Xóa Admin.
-     * Chỉ HEAD_ADMIN được phép.
-     */
+    /** DELETE /api/admin/accounts/{id} – ADMIN xóa tài khoản MANAGER. */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('HEAD_ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> deleteAdmin(@PathVariable Long id) {
-        User admin = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản Admin với ID: " + id));
-
-        // Không cho phép xóa tài khoản HEAD_ADMIN
-        if (admin.getRole() != null && admin.getRole().getName() == RoleType.HEAD_ADMIN) {
-            throw new BadRequestException("Không thể xóa tài khoản Siêu quản trị viên");
-        }
-
-        userRepository.delete(admin);
-        return ResponseEntity.ok(ApiResponse.success("Xóa tài khoản Admin thành công", null));
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteManager(@PathVariable Long id) {
+        User manager = findManager(id);
+        userRepository.delete(manager);
+        return ResponseEntity.ok(ApiResponse.success("Xóa tài khoản Manager thành công", null));
     }
 
-    private AdminResponse mapToAdminResponse(User user) {
-        return AdminResponse.builder()
+    private User findManager(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản Manager với ID: " + id));
+        if (user.getRole() == null || user.getRole().getName() != RoleType.MANAGER) {
+            throw new BadRequestException("Chỉ được phép thao tác trên tài khoản Manager");
+        }
+        return user;
+    }
+
+    private ManagerResponse mapToManagerResponse(User user) {
+        return ManagerResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phone(user.getPhone())
+                .avatarUrl(imageStorageService.toPublicUrl(user.getAvatarObjectKey()))
                 .status(user.getStatus())
                 .createdAt(user.getCreatedAt())
                 .build();

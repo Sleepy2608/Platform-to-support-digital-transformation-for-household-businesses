@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { Users, Shield, Cpu, Clock, ArrowRight, Database, ShieldCheck } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal';
 import { getAuthItem } from '../lib/apiClient';
-import { isHeadAdmin, type AppRole } from '../lib/roles';
+import { isAdmin, type AppRole } from '../lib/roles';
 
 export default function AdminDashboard() {
-  const [adminCount, setAdminCount] = useState<number | null>(null);
+  const [managerCount, setManagerCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [userRoles, setUserRoles] = useState<AppRole[]>([]);
 
@@ -23,7 +23,7 @@ export default function AdminDashboard() {
       // ignore
     }
 
-    const fetchAdmins = async () => {
+    const fetchManagers = async () => {
       const token = sessionStorage.getItem('accessToken');
       try {
         const response = await fetch('http://localhost:8080/api/admin/accounts', {
@@ -34,25 +34,25 @@ export default function AdminDashboard() {
         if (response.ok) {
           const res = await response.json();
           if (res.success && Array.isArray(res.data)) {
-            setAdminCount(res.data.length);
+            setManagerCount(res.data.length);
           }
         }
       } catch (err) {
-        console.error('Error fetching admin count', err);
+        console.error('Error fetching manager count', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAdmins();
+    fetchManagers();
   }, []);
 
-  const headAdmin = isHeadAdmin(userRoles);
+  const headAdmin = isAdmin(userRoles);
 
   const stats = [
     {
-      name: 'Tài khoản Quản trị',
-      value: adminCount !== null ? adminCount.toString() : '...',
+      name: 'Tài khoản Manager',
+      value: managerCount !== null ? managerCount.toString() : '...',
       subText: 'Đang hoạt động trên hệ thống',
       icon: Users,
       color: 'text-white bg-white/10',
@@ -80,15 +80,9 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-extrabold tracking-tight">Tổng quan Hệ thống</h1>
           {/* Menu Guard indicator – hiển thị role badge */}
-          {headAdmin ? (
             <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full">
-              <ShieldCheck className="w-3.5 h-3.5" /> HEAD ADMIN
+              <ShieldCheck className="w-3.5 h-3.5" /> ADMIN
             </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 bg-zinc-800 border border-zinc-700 px-3 py-1 rounded-full">
-              ADMIN
-            </span>
-          )}
         </div>
         <p className="text-zinc-400 text-sm mt-1">
           Bảng điều khiển quản trị trung tâm của HKD.DIGITAL
@@ -142,7 +136,7 @@ export default function AdminDashboard() {
                   <Users className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold">Tài khoản Admin</span>
+                  <span className="text-sm font-semibold">Tài khoản Manager</span>
                   <ArrowRight className="w-4 h-4 text-zinc-500 transition-transform duration-200 group-hover:translate-x-1" />
                 </div>
               </Link>

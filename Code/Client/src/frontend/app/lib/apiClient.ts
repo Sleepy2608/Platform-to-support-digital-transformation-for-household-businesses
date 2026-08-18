@@ -52,11 +52,10 @@ function publishAuthSync(type: AuthSyncEventType) {
 
 function setAuthCookies(accessToken: string, roles: string[] = []) {
   const maxAge = 60 * 60 * 24;
-  // HEAD_ADMIN check phải đứng trước ADMIN để không bị gộp vào ADMIN thường
-  const role = roles.includes('HEAD_ADMIN')
-    ? 'HEAD_ADMIN'
-    : roles.includes('ADMIN')
-      ? 'ADMIN'
+  const role = roles.includes('ADMIN')
+    ? 'ADMIN'
+    : roles.includes('MANAGER')
+      ? 'MANAGER'
       : roles.includes('BUSINESS_OWNER')
         ? 'BUSINESS_OWNER'
         : roles.includes('EMPLOYEE')
@@ -274,9 +273,7 @@ async function request<T = unknown>(
           const pathname = window.location.pathname;
           const loginPath = pathname.startsWith('/admin')
             ? '/admin/login'
-            : pathname.startsWith('/employee')
-              ? '/employee/login'
-              : '/login';
+            : '/login';
           window.location.href = loginPath;
         }
         throw new Error('Session expired. Please log in again.');

@@ -51,18 +51,18 @@ export default function EmployeeAccountPage() {
     const t = getAccessToken();
     const rolesRaw = getAuthItem('roles');
     if (!t || !rolesRaw) {
-      router.push('/employee/login');
+      router.push('/login');
       return;
     }
     try {
       const roles: string[] = JSON.parse(rolesRaw);
       if (!roles.includes('EMPLOYEE')) {
-        router.push('/employee/login');
+        router.push('/login');
         return;
       }
       setToken(t);
     } catch {
-      router.push('/employee/login');
+      router.push('/login');
     }
   }, [router]);
 
