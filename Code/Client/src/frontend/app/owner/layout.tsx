@@ -12,6 +12,7 @@ import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
 import { isOwner } from '../lib/roles';
+import { EntitlementProvider } from '../lib/EntitlementContext';
 
 
 const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash?: string; path?: string }> = [
@@ -283,7 +284,9 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
 
       {/* Main Content Area */}
       <main className="flex-1 min-w-0 overflow-y-auto">
-        {children}
+        <EntitlementProvider>
+          {children}
+        </EntitlementProvider>
       </main>
     </div>
   );

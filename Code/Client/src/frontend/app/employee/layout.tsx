@@ -10,6 +10,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
 import { isEmployee } from '../lib/roles';
+import { EntitlementProvider } from '../lib/EntitlementContext';
 
 const NAV_ITEMS = [
   { label: 'Hồ sơ cá nhân', href: '/employee/account#profile', icon: UserCircle, hash: '#profile' },
@@ -198,7 +199,9 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
       )}
 
       <main className="flex-1 min-w-0 overflow-y-auto">
-        {children}
+        <EntitlementProvider>
+          {children}
+        </EntitlementProvider>
       </main>
     </div>
   );
