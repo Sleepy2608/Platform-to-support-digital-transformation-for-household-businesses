@@ -360,9 +360,12 @@ users 1 ─── N debt_transactions
 
 Trong phạm vi thiết kế:
 
-- `sales_orders.paid_amount` lưu số tiền thanh toán ngay tại thời điểm bán;
-- `debt_transactions` lưu phát sinh nợ, trả nợ và điều chỉnh;
-- `transaction_code`, `payment_method`, `reference_number` và `transaction_date` hỗ trợ nhật ký thanh toán công nợ.
+- `sales_orders.paid_amount` lưu số tiền thanh toán lũy kế; `sales_orders.debt_amount` lưu số còn phải trả;
+- `sales_orders.payment_status` lưu trạng thái thanh toán (`UNPAID`, `PARTIALLY_PAID`, `PAID`);
+- `sales_orders.last_payment_at` lưu thời điểm thanh toán gần nhất;
+- `debt_transactions` lưu lịch sử phát sinh nợ, trả nợ (`PAYMENT`), điều chỉnh và hủy giao dịch (`status = ACTIVE/VOIDED`);
+- `transaction_code`, `payment_method` (`CASH`/`BANK_TRANSFER`), `reference_number` và `transaction_date` hỗ trợ nhật ký thanh toán công nợ;
+- REST API hỗ trợ ghi nhận thanh toán cho từng đơn hàng (`POST /api/payments`), tra cứu theo đơn (`GET /api/payments/orders/{orderId}`) và theo khách hàng (`GET /api/payments/customers/{customerId}/history`).
 
 Thiết kế chưa hỗ trợ phân bổ một khoản thanh toán cho nhiều đơn hàng hoặc hoàn tiền phức tạp. Nếu yêu cầu này xuất hiện, cần bổ sung mô hình thanh toán riêng.
 
