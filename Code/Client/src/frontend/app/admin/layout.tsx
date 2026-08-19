@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, BadgeDollarSign, UserCircle } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, BadgeDollarSign, UserCircle, Boxes } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
@@ -92,6 +92,7 @@ export default function AdminLayout({
     { name: 'Tổng quan', href: '/admin', icon: LayoutDashboard },
     { name: 'Tài khoản Manager', href: '/admin/accounts', icon: Users },
     { name: 'Gói thuê bao', href: '/admin/subscription-plans', icon: BadgeDollarSign },
+    { name: 'Quản lý tính năng', href: '/admin/features', icon: Boxes },
     { name: 'Hồ sơ cá nhân', href: '/admin/profile', icon: UserCircle },
     ...(username === 'Admin'
       ? [{ name: 'Seek Data', href: '/admin/seed', icon: Database }]
