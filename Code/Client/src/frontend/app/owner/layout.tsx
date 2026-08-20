@@ -6,19 +6,24 @@ import Link from 'next/link';
 import {
   Store, UserCircle, Lock, Mail, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
-  Shield, PackageOpen,
+  Shield, Users, PackageOpen,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
+import { isOwner } from '../lib/roles';
 
-const NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash?: string; path?: string }> = [
-  { label: 'Sản phẩm & Danh mục', href: '/owner/products', icon: PackageOpen, path: '/owner/products' },
+const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash?: string; path?: string }> = [
   { label: 'Hồ sơ cá nhân', href: '/owner/account#profile', icon: UserCircle, hash: '#profile' },
   { label: 'Đổi mật khẩu', href: '/owner/account#password', icon: Lock, hash: '#password' },
   { label: 'Email & Số điện thoại', href: '/owner/account#contact', icon: Mail, hash: '#contact' },
   { label: 'Gói đăng ký', href: '/owner/account#subscription', icon: CreditCard, hash: '#subscription' },
   { label: 'Vùng nguy hiểm', href: '/owner/account#danger', icon: AlertTriangle, hash: '#danger' },
+];
+
+const MANAGE_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; path: string }> = [
+  { label: 'Sản phẩm & Danh mục', href: '/owner/products', icon: PackageOpen, path: '/owner/products' },
+  { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
 ];
 
 export default function OwnerLayout({ children }: { children: React.ReactNode }) {
@@ -42,7 +47,8 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
 
     try {
       const roles: string[] = JSON.parse(rolesRaw);
-      if (!roles.includes('BUSINESS_OWNER')) {
+      // Route Guard: chỉ BUSINESS_OWNER được vào /owner
+      if (!isOwner(roles as never)) {
         router.push('/login');
         return;
       }
@@ -194,49 +200,79 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                 </div>
 
                 {/* Navigation Menu */}
-                <nav className="flex flex-col gap-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1">
-                    CÀI ĐẶT TÀI KHOẢN
-                  </p>
-                  {NAV_ITEMS.map((item) => {
-                    const Icon = item.icon;
-                    const isDanger = item.hash === '#danger';
-                    const isActive = item.path
-                      ? pathname === item.path
-                      : pathname === '/owner/account' && currentHash === item.hash;
+                <nav className="flex flex-col gap-3">
+                  {/* Quản lý cửa hàng */}
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1.5">
+                      QUẢN LÝ CỬA HÀNG
+                    </p>
+                    {MANAGE_NAV_ITEMS.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = pathname.startsWith(item.path);
+                      return (
+                        <Link
+                          key={item.path}
+                          href={item.href}
+                          onClick={() => setSidebarOpen(false)}
+                          className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
+                            ${isActive
+                              ? 'bg-slate-900 text-white shadow-sm'
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                            }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                            <span>{item.label}</span>
+                          </div>
+                          <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
+                        </Link>
+                      );
+                    })}
+                  </div>
 
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 group cursor-pointer
-                          ${isActive
-                            ? isDanger
-                              ? 'bg-red-50 text-red-700 border border-red-200/80 shadow-2xs'
-                              : 'bg-slate-900 text-white shadow-sm'
-                            : isDanger
-                            ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
-                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                          }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? (isDanger ? 'text-red-600' : 'text-white') : 'text-slate-400 group-hover:text-slate-600'}`} />
-                          <span>{item.label}</span>
-                        </div>
-                        <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
-                      </Link>
-                    );
-                  })}
+                  {/* Cài đặt tài khoản */}
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1.5">
+                      CÀI ĐẶT TÀI KHOẢN
+                    </p>
+                    {ACCOUNT_NAV_ITEMS.map((item) => {
+                      const Icon = item.icon;
+                      const isDanger = item.hash === '#danger';
+                      const isActive = pathname === '/owner/account' && currentHash === item.hash;
+
+                      return (
+                        <Link
+                          key={item.hash}
+                          href={item.href}
+                          onClick={() => setSidebarOpen(false)}
+                          className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
+                            ${isActive
+                              ? isDanger
+                                ? 'bg-red-50 text-red-700 border border-red-200/80 shadow-2xs'
+                                : 'bg-slate-900 text-white shadow-sm'
+                              : isDanger
+                              ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                            }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? (isDanger ? 'text-red-600' : 'text-white') : 'text-slate-400 group-hover:text-slate-600'}`} />
+                            <span>{item.label}</span>
+                          </div>
+                          <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </nav>
               </div>
 
               {/* Footer / Logout */}
-              <div className="px-5 pt-3">
-                <div className="pt-3 border-t border-slate-100 space-y-1">
+              <div className="px-5">
+                <div className="pt-4 border-t border-slate-100 space-y-1">
                   <Link
                     href="/"
-                    className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
+                    className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
                     onClick={() => setSidebarOpen(false)}
                   >
                     <Store className="w-4 h-4" />
@@ -244,7 +280,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-2.5 w-full px-3.5 py-2 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl text-xs font-semibold transition-all cursor-pointer border border-transparent hover:border-red-200/60"
+                    className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer border border-transparent hover:border-red-200/60"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Đăng xuất</span>
@@ -294,39 +330,68 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
           </div>
 
           {/* Navigation Menu */}
-          <nav className="flex flex-col gap-1">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-2">
-              CÀI ĐẶT TÀI KHOẢN
-            </p>
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const isDanger = item.hash === '#danger';
-              const isActive = item.path
-                ? pathname === item.path
-                : pathname === '/owner/account' && currentHash === item.hash;
+          <nav className="flex flex-col gap-3">
+            {/* Quản lý cửa hàng */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1.5">
+                QUẢN LÝ CỬA HÀNG
+              </p>
+              {MANAGE_NAV_ITEMS.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname.startsWith(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    href={item.href}
+                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
+                      ${isActive
+                        ? 'bg-slate-900 text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                      }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                      <span>{item.label}</span>
+                    </div>
+                    <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
+                  </Link>
+                );
+              })}
+            </div>
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
-                    ${isActive
-                      ? isDanger
-                        ? 'bg-red-50 text-red-700 border border-red-200/80 shadow-2xs'
-                        : 'bg-slate-900 text-white shadow-sm'
-                      : isDanger
-                      ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                    }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? (isDanger ? 'text-red-600' : 'text-white') : 'text-slate-400 group-hover:text-slate-600'}`} />
-                    <span>{item.label}</span>
-                  </div>
-                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
-                </Link>
-              );
-            })}
+            {/* Cài đặt tài khoản */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1.5">
+                CÀI ĐẶT TÀI KHOẢN
+              </p>
+              {ACCOUNT_NAV_ITEMS.map((item) => {
+                const Icon = item.icon;
+                const isDanger = item.hash === '#danger';
+                const isActive = pathname === '/owner/account' && currentHash === item.hash;
+
+                return (
+                  <Link
+                    key={item.hash}
+                    href={item.href}
+                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
+                      ${isActive
+                        ? isDanger
+                          ? 'bg-red-50 text-red-700 border border-red-200/80 shadow-2xs'
+                          : 'bg-slate-900 text-white shadow-sm'
+                        : isDanger
+                        ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                      }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? (isDanger ? 'text-red-600' : 'text-white') : 'text-slate-400 group-hover:text-slate-600'}`} />
+                      <span>{item.label}</span>
+                    </div>
+                    <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
+                  </Link>
+                );
+              })}
+            </div>
           </nav>
         </div>
 

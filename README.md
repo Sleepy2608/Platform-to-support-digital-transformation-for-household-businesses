@@ -16,15 +16,37 @@
 | STT | Họ và Tên | MSSV | Vai trò | Nhiệm vụ được giao |
 | :---: | :--- | :---: | :---: | :--- |
 | 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Leader | Repository & Git Management, Authorization, Password Encoder and Security, RBAC |
-| 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer | Register/Login web, Owner Account Management |
-| 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger | Database Management, Audit Log |
-| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager | Database Management, CRUD |
-| 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Feature Developer | Employee Account Management |
-| 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer | Manage purchase package payments, Admin Account Management |
+| 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer | Register/Login web, Owner Account Management, Searching Engine |
+| 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger | Database Management, Audit Log, Measurement & Product Pricing Rules |
+| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager | Database Management, CRUD (Product, Category, Subcription) |
+| 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Feature Developer | Employee Account Management, Subcription Management |
+| 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer | Manage purchase package payments, Admin Account Management, Subcription Management |
 
 > **Ghi chú:**
 > - Mọi người đều được giao task có backend code bằng Java (Vai trò trên chỉ bao gồm các vai trò khác ngoài Backend Developer)
-> - Nhiệm vụ được giao sẽ được dựa vào nhiệm vụ được giao trên [Jira](https://java-project-platform-for-household-business.atlassian.net/jira/software/projects/SCRUM/summary) - Tiến độ: Sprint 3
+> - Nhiệm vụ được giao sẽ được dựa vào nhiệm vụ được giao trên [Jira](https://java-project-platform-for-household-business.atlassian.net/jira/software/projects/SCRUM/summary)
+
+---
+
+## Tiến độ triển khai dự án (Project Deployment Progress)
+
+*Tiến độ: Sprint 3*
+
+| Issue | Frontend | Backend | Data Base | Status |
+|:--------|:---------|:----------|:----------------|:------------:|
+| Đăng nhập/Đăng ký | Login, Register | Log, Auth, Entity, Controller, Security | — | Hoàn thành |
+| Trang Admin | Login, Register | Seed data, CRUD Manager, System Management, Log, Auth, Entity, Controller, Security | — | Hoàn thành |
+| Trang Manager | Login, Register | System Management, Log, Auth, Entity, Controller, Security | — | Hoàn thành |
+| Trang Owner | Login, Register | Log, Auth, Entity, Controller, Security | — | Hoàn thành |
+| Trang Employee | Login, Register | Log, Auth, Entity, Controller, Security | — | Hoàn thành |
+| RBAC | Admin login vào trang riêng còn Manager, Owner, Employee sẽ dùng portal login chung | Log, Auth, Entity, Controller, Security, Role, Permission | — | Hoàn thành |
+| Chính sách và điều khoản | For new business (Register) | Accept all to use | terms consents | Hoàn thành |
+| Quản lý gói đăng ký | Upgrade, Downgrade, Renewal & Subscription Lifecycle | Subscription, Subscription Plan, Subscription History, Payment & Purchase History | — | Đang triển khai |
+| Tính toán giá sản phẩm | Measurement & Product Pricing Rules | Đang triển khai | Đang triển khai | Đang triển khai |
+| Tìm kiếm sản phẩm | Searching Engine | Đang triển khai | Đang triển khai | Đang triển khai |
+
+> Các issue sẽ được test trước khi merge vào nhánh chính và sẽ cập nhật theo tiến độ triển khai thực tế
+> Ngày cập nhật lần cuối: 18/08/2026
 
 ---
 
@@ -37,7 +59,7 @@
 | **Database** | MySQL 8 |
 | **AI Service (Tentative)** | Python, FastAPI, Uvicorn, Pydantic |
 | **Build & Công cụ** | Maven, npm, ESLint, Lombok |
-| **DevOps** | Docker, Docker Compose, CI/CD (GitHub Actions) |
+| **DevOps** | Docker, Docker Compose |
 
 ---
 
@@ -150,9 +172,8 @@ Vào mục Edit Configurations -> Chọn Evironment variables -> Thêm file .env
 
 ### 4. Backend
 
-- Vào thư mục `Code\Server\src\main\java\com.hbdt`
-
-- Chạy thư mục `HbdtApplication`. Click vào `Run 'HbdtApplication.main()'`
+- Click chuột phải vào thư mục `HbdtApplication.java`. Chọn vào `Run 'HbdtApplication.main()'`
+- Hãy đảm bảo rằng bạn đã có đủ các thông tin cho file .env và MySQL đang hoạt động
 
 ### 5. Frontend
 
@@ -173,4 +194,4 @@ npm run dev
 
 - Web được chạy ở:
   * Local: http://localhost:3000/
-  * Network: http://192.168.23.1:3000
+  * Network: http://[IP_ADDRESS]/
