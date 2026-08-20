@@ -8,6 +8,7 @@ import {
   Users, RefreshCw, AlertCircle, CheckCircle2, Copy, Loader2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { FeatureGate } from '@/app/components/FeatureGate';
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -261,7 +262,8 @@ export default function EmployeesPage() {
   // Render
   // ─────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
+    <FeatureGate feature="EMPLOYEE_MANAGEMENT" fallback="locked">
+      <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
       {/* Toast */}
       <AnimatePresence>
         {toast && (
@@ -734,6 +736,7 @@ export default function EmployeesPage() {
       {actionMenu !== null && (
         <div className="fixed inset-0 z-20" onClick={() => setActionMenu(null)} />
       )}
-    </div>
+      </div>
+    </FeatureGate>
   );
 }
