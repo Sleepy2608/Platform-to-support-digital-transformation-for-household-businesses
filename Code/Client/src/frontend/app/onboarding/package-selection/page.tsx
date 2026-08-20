@@ -636,18 +636,13 @@ export default function PackageSelectionPage() {
                         Quét mã QR để thanh toán nhanh
                       </p>
 
-                      {/* Mock QR Image Container */}
-                      <div className="bg-white p-4 rounded-2xl inline-block shadow-md border-4 border-slate-800">
-                        <div className="w-44 h-44 bg-slate-100 rounded-xl flex flex-col items-center justify-center relative overflow-hidden border border-slate-200">
-                          <svg className="w-36 h-36 text-slate-900" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm9-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm13-2h4v2h-4v-2zm-4 0h2v4h-2v-4zm2 4h2v4h-2v-4zm2-2h4v2h-4v-2zm-2 4h4v2h-4v-2zM7 7h2v2H7V7zm10 0h2v2h-2V7zm-10 10h2v2H7v-2z" />
-                          </svg>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md border border-white">
-                              VIETQR / BANK
-                            </span>
-                          </div>
-                        </div>
+                      {/* Real QR Image Container */}
+                      <div className="bg-white p-2 rounded-2xl inline-block shadow-md border-4 border-slate-800">
+                        <img
+                          src="/qr-coded.jpg"
+                          alt="Mã QR Chuyển Khoản"
+                          className="w-48 h-48 object-contain rounded-xl"
+                        />
                       </div>
 
                       <div className="mt-3">
