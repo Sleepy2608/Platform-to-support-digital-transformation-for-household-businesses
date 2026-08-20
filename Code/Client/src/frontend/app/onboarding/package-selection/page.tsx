@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle, ShieldCheck, Zap, Crown, Loader2, AlertCircle,
-  ArrowLeft, ArrowRight, BadgeCheck,
+  ArrowLeft, ArrowRight, BadgeCheck, QrCode, Building2, Copy,
+  Check, X, CreditCard, Sparkles, AlertTriangle
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -24,6 +25,19 @@ interface PackageInfo {
 
 // ─── Fallback static data (used if API fails) ─────────────────────────────────
 const FALLBACK_PACKAGES: PackageInfo[] = [
+  {
+    id: 'FREE',
+    name: 'Gói Dùng Thử',
+    description: 'Miễn phí trải nghiệm tính năng cơ bản',
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    recommended: false,
+    features: [
+      'Quản lý đơn hàng & sản phẩm cơ bản',
+      'Tối đa 1 tài khoản quản lý',
+      'Hỗ trợ qua tài liệu hướng dẫn',
+    ],
+  },
   {
     id: 'STANDARD',
     name: 'Gói Standard',
@@ -104,11 +118,22 @@ export default function PackageSelectionPage() {
   const [agreed, setAgreed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+
+  // Payment Modal State for > 0 VND packages
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [copiedAccountNum, setCopiedAccountNum] = useState(false);
+  const [copiedSyntax, setCopiedSyntax] = useState(false);
 
   // Load packages from API
   useEffect(() => {
     fetchPackages()
-      .then(setPackages)
+      .then((data) => {
+        if (data && data.length > 0) {
+          setPackages(data);
+        }
+      })
       .catch(() => { /* use fallback silently */ });
   }, []);
 
@@ -123,16 +148,63 @@ export default function PackageSelectionPage() {
   const canSubmit = selected !== null && agreed && !submitting;
 
   const handleActivate = async () => {
+    if (!selected || !selectedPkg) return;
+
+    if (totalAmount > 0) {
+      // Gói > 0 đồng: Hiện modal chuyển khoản QR & thông báo cần thanh toán
+      setError(null);
+      setPaymentSuccess(false);
+      setShowPaymentModal(true);
+    } else {
+      // Gói 0 đồng (miễn phí): Kích hoạt ngay & hiện thông báo thành công
+      setSubmitting(true);
+      setError(null);
+      try {
+        await selectPackageApi(selected, cycle);
+        setSuccessToast('Đăng ký gói dịch vụ miễn phí thành công!');
+        setTimeout(() => {
+          router.push('/owner/account');
+        }, 1500);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.');
+      } finally {
+        setSubmitting(false);
+      }
+    }
+  };
+
+  // Xác nhận thanh toán (Tạm thời luôn thành công theo yêu cầu test)
+  const handleConfirmPaymentTest = async () => {
     if (!selected) return;
     setSubmitting(true);
     setError(null);
     try {
       await selectPackageApi(selected, cycle);
-      router.push('/owner/account');
+      setPaymentSuccess(true);
+      setTimeout(() => {
+        setShowPaymentModal(false);
+        router.push('/owner/account');
+      }, 1800);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.');
+      setError(err instanceof Error ? err.message : 'Xác nhận thanh toán thất bại, vui lòng thử lại.');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const transferSyntax = `HKD ${selectedPkg?.id || 'SUB'} ${cycle}`;
+  const bankAccountNo = '0388999888';
+  const bankAccountName = 'HE THONG HKD DIGITAL';
+  const bankName = 'MBBank (Ngan hang Quan doi)';
+
+  const copyToClipboard = (text: string, type: 'acc' | 'syntax') => {
+    navigator.clipboard.writeText(text);
+    if (type === 'acc') {
+      setCopiedAccountNum(true);
+      setTimeout(() => setCopiedAccountNum(false), 2000);
+    } else {
+      setCopiedSyntax(true);
+      setTimeout(() => setCopiedSyntax(false), 2000);
     }
   };
 
@@ -154,6 +226,21 @@ export default function PackageSelectionPage() {
         </p>
       </motion.div>
 
+      {/* ── Success Toast (Cho gói 0 đồng) ── */}
+      <AnimatePresence>
+        {successToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-3 text-emerald-800 text-sm font-bold shadow-sm"
+          >
+            <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            <span>{successToast}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Billing Cycle Selector ── */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -173,7 +260,6 @@ export default function PackageSelectionPage() {
           style={{ userSelect: 'none' }}
           aria-pressed={cycle === 'MONTHLY'}
         >
-          {/* Radio dot */}
           <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all
             ${cycle === 'MONTHLY' ? 'border-white' : 'border-slate-400'}`}>
             {cycle === 'MONTHLY' && (
@@ -211,7 +297,6 @@ export default function PackageSelectionPage() {
           }}
           aria-pressed={cycle === 'YEARLY'}
         >
-          {/* Radio dot */}
           <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all
             ${cycle === 'YEARLY' ? 'border-white' : 'border-slate-400'}`}>
             {cycle === 'YEARLY' && (
@@ -234,7 +319,7 @@ export default function PackageSelectionPage() {
 
       {/* ── Error Banner ── */}
       <AnimatePresence>
-        {error && (
+        {error && !showPaymentModal && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -248,7 +333,7 @@ export default function PackageSelectionPage() {
       </AnimatePresence>
 
       {/* ── Package Cards ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <div className={`grid grid-cols-1 ${packages.length > 2 ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-6 mb-8`}>
         {packages.map((pkg, idx) => {
           const isVip = pkg.id === 'VIP';
           const isSelected = selected === pkg.id;
@@ -265,7 +350,7 @@ export default function PackageSelectionPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1, duration: 0.35 }}
-              className={`relative text-left rounded-3xl p-7 sm:p-8 flex flex-col justify-between shadow-sm transition-all duration-200 cursor-pointer outline-none
+              className={`relative text-left rounded-3xl p-7 flex flex-col justify-between shadow-sm transition-all duration-200 cursor-pointer outline-none
                 ${isVip
                   ? isSelected
                     ? 'bg-zinc-950 border-2 border-white shadow-2xl scale-[1.02]'
@@ -304,14 +389,16 @@ export default function PackageSelectionPage() {
                 {/* Price */}
                 <div className="mb-2 flex items-end gap-1.5">
                   <span className={`text-3xl sm:text-4xl font-extrabold ${isVip ? 'text-white' : 'text-slate-900'}`}>
-                    {formatVnd(price)}
+                    {price === 0 ? 'Miễn phí' : formatVnd(price)}
                   </span>
-                  <span className={`text-sm pb-1 ${isVip ? 'text-zinc-400' : 'text-slate-500'}`}>
-                    /{cycle === 'YEARLY' ? 'năm' : 'tháng'}
-                  </span>
+                  {price > 0 && (
+                    <span className={`text-sm pb-1 ${isVip ? 'text-zinc-400' : 'text-slate-500'}`}>
+                      /{cycle === 'YEARLY' ? 'năm' : 'tháng'}
+                    </span>
+                  )}
                 </div>
 
-                {cycle === 'YEARLY' && (
+                {cycle === 'YEARLY' && price > 0 && (
                   <p className={`text-xs mb-4 font-medium ${isVip ? 'text-zinc-400' : 'text-slate-500'}`}>
                     ≈ {formatVnd(Math.round(price / 12))}/tháng · Tiết kiệm {formatVnd(pkg.monthlyPrice * 2)}
                   </p>
@@ -373,14 +460,14 @@ export default function PackageSelectionPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500 font-medium">Đơn giá</span>
-                <span className="font-bold text-slate-900">{formatVnd(unitPrice)}</span>
+                <span className="font-bold text-slate-900">{unitPrice === 0 ? 'Miễn phí' : formatVnd(unitPrice)}</span>
               </div>
               <div className="h-px bg-slate-200 my-2" />
               <div className="flex justify-between text-base">
                 <span className="font-bold text-slate-900">Tổng thanh toán</span>
-                <span className="font-extrabold text-slate-900">{formatVnd(totalAmount)}</span>
+                <span className="font-extrabold text-slate-900">{totalAmount === 0 ? '0đ (Miễn phí)' : formatVnd(totalAmount)}</span>
               </div>
-              {cycle === 'YEARLY' && selectedPkg && (
+              {cycle === 'YEARLY' && selectedPkg && totalAmount > 0 && (
                 <p className="text-xs text-emerald-700 font-medium mt-1">
                   🎁 Bạn tiết kiệm được {formatVnd(selectedPkg.monthlyPrice * 2)} so với thanh toán hàng tháng!
                 </p>
@@ -481,6 +568,192 @@ export default function PackageSelectionPage() {
           Bỏ qua, chọn sau
         </button>
       </div>
+
+      {/* ── PAYMENT MODAL (HIỆN KHI GÓI > 0 ĐỒNG) ── */}
+      <AnimatePresence>
+        {showPaymentModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200"
+            >
+              {/* Header Modal */}
+              <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-blue-500/20 rounded-xl text-blue-400">
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-base">Thông Báo Thanh Toán Chuyển Khoản</h3>
+                    <p className="text-xs text-slate-400">HKD Digital Subscription Service</p>
+                  </div>
+                </div>
+                {!submitting && !paymentSuccess && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPaymentModal(false)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Body Modal */}
+              <div className="p-6 max-h-[80vh] overflow-y-auto space-y-5">
+
+                {/* State: Thành công */}
+                {paymentSuccess ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="py-8 text-center space-y-4"
+                  >
+                    <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                      <CheckCircle className="w-10 h-10" />
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-extrabold text-slate-900">Thanh toán thành công!</h4>
+                      <p className="text-sm text-slate-600 mt-1 max-w-xs mx-auto font-medium">
+                        Gói dịch vụ <strong className="text-slate-900">{selectedPkg?.name}</strong> đã được kích hoạt thành công cho tài khoản của bạn.
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 text-xs text-slate-600 animate-pulse pt-2 font-medium">
+                      <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                      <span>Đang chuyển hướng về trang tài khoản...</span>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <>
+                    {/* Notice Banner */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 text-amber-900 text-xs">
+                      <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold text-sm text-amber-950 mb-0.5">Yêu cầu thanh toán chuyển khoản</p>
+                        <p className="leading-relaxed">
+                          Vui lòng thực hiện chuyển khoản theo thông tin hoặc quét mã QR dưới đây. Sau khi hoàn tất, bấm nút <strong className="text-slate-900 font-extrabold underline">Xác nhận thanh toán</strong> để kiểm tra và kích hoạt ngay.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* QR Code Presentation Box */}
+                    <div className="bg-slate-900 text-white rounded-2xl p-5 text-center shadow-lg relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                        Quét mã QR để thanh toán nhanh
+                      </p>
+
+                      {/* Mock QR Image Container */}
+                      <div className="bg-white p-4 rounded-2xl inline-block shadow-md border-4 border-slate-800">
+                        {/* Standard QuickPay QR Representation */}
+                        <div className="w-44 h-44 bg-slate-100 rounded-xl flex flex-col items-center justify-center relative overflow-hidden border border-slate-200">
+                          {/* Simulated QR Pattern SVG */}
+                          <svg className="w-36 h-36 text-slate-900" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm9-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm13-2h4v2h-4v-2zm-4 0h2v4h-2v-4zm2 4h2v4h-2v-4zm2-2h4v2h-4v-2zm-2 4h4v2h-4v-2zM7 7h2v2H7V7zm10 0h2v2h-2V7zm-10 10h2v2H7v-2z" />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md border border-white">
+                              VIETQR / BANK
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3">
+                        <span className="text-xs text-slate-400 font-medium">Số tiền cần chuyển: </span>
+                        <span className="text-xl font-black text-amber-400">{formatVnd(totalAmount)}</span>
+                      </div>
+                    </div>
+
+                    {/* Bank Transfer Details */}
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 text-xs">
+                      <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                        <span className="text-slate-500 font-medium">Ngân hàng:</span>
+                        <span className="font-bold text-slate-900">{bankName}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                        <span className="text-slate-500 font-medium">Số tài khoản:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-slate-900 text-sm">{bankAccountNo}</span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(bankAccountNo, 'acc')}
+                            className="p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-200 transition-colors"
+                            title="Sao chép"
+                          >
+                            {copiedAccountNum ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                        <span className="text-slate-500 font-medium">Chủ tài khoản:</span>
+                        <span className="font-bold text-slate-900">{bankAccountName}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500 font-medium">Nội dung chuyển khoản:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">
+                            {transferSyntax}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(transferSyntax, 'syntax')}
+                            className="p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-200 transition-colors"
+                            title="Sao chép cú pháp"
+                          >
+                            {copiedSyntax ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Error display inside modal */}
+                    {error && (
+                      <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-semibold flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span>{error}</span>
+                      </div>
+                    )}
+
+                    {/* Action Test Button */}
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={handleConfirmPaymentTest}
+                        disabled={submitting}
+                        className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-sm rounded-2xl shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {submitting ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Đang kiểm tra hệ thống...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-5 h-5" />
+                            <span>Xác nhận thanh toán</span>
+                          </>
+                        )}
+                      </button>
+                      <p className="text-[11px] text-slate-600 text-center font-medium mt-2">
+                        Bấm nút này để kiểm tra và xác nhận kích hoạt gói ngay lập tức.
+                      </p>
+                    </div>
+                  </>
+                )}
+
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }
