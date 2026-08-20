@@ -27,8 +27,8 @@ interface PackageInfo {
 const FALLBACK_PACKAGES: PackageInfo[] = [
   {
     id: 'FREE',
-    name: 'Gói Dùng Thử',
-    description: 'Miễn phí trải nghiệm tính năng cơ bản',
+    name: 'Gói Miễn Phí',
+    description: 'Dùng thử cơ bản cho cửa hàng mới',
     monthlyPrice: 0,
     yearlyPrice: 0,
     recommended: false,
@@ -41,12 +41,11 @@ const FALLBACK_PACKAGES: PackageInfo[] = [
   {
     id: 'STANDARD',
     name: 'Gói Standard',
-    description: 'Cho cửa hàng bán lẻ có quản lý kho & nợ',
+    description: 'Quản lý kho, công nợ và sổ kế toán',
     monthlyPrice: 199000,
     yearlyPrice: 1990000,
     recommended: false,
     features: [
-      'Quản lý bán hàng & hóa đơn cơ bản',
       'Quản lý tồn kho & công nợ',
       'Lập sổ kế toán TT 88/2021',
       'Tối đa 3 tài khoản nhân viên',
@@ -54,15 +53,14 @@ const FALLBACK_PACKAGES: PackageInfo[] = [
   },
   {
     id: 'VIP',
-    name: 'Gói VIP (Pro)',
-    description: 'Đầy đủ sức mạnh AI & Kế toán tự động',
-    monthlyPrice: 399000,
-    yearlyPrice: 3990000,
+    name: 'Gói Cao Cấp (VIP)',
+    description: 'Đầy đủ tính năng cao cấp & Trợ lý AI',
+    monthlyPrice: 299000,
+    yearlyPrice: 2990000,
     recommended: true,
     features: [
       'Tất cả tính năng gói Standard',
-      'Trợ lý AI đọc đơn giọng nói / tin nhắn',
-      'Tự động hóa báo cáo thuế trọn gói',
+      'Trợ lý AI đọc đơn giọng nói & tin nhắn',
       'Không giới hạn nhân viên',
     ],
   },
@@ -209,7 +207,7 @@ export default function PackageSelectionPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-6 sm:py-10 px-4">
+    <div className="max-w-6xl mx-auto py-6 sm:py-10 px-4 sm:px-6">
 
       {/* ── Header ── */}
       <motion.div
@@ -218,10 +216,10 @@ export default function PackageSelectionPage() {
         transition={{ duration: 0.35 }}
         className="text-center mb-8"
       >
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2 select-none" style={{ cursor: 'default', userSelect: 'none' }}>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2 select-none">
           Chọn gói dịch vụ
         </h1>
-        <p className="text-slate-600 text-sm sm:text-base max-w-lg mx-auto font-medium select-none" style={{ cursor: 'default', userSelect: 'none' }}>
+        <p className="text-slate-600 text-sm sm:text-base max-w-lg mx-auto font-medium select-none">
           Bắt đầu sử dụng nền tảng HKD Digital. Hủy hoặc nâng cấp bất kỳ lúc nào.
         </p>
       </motion.div>
@@ -248,69 +246,48 @@ export default function PackageSelectionPage() {
         transition={{ delay: 0.1 }}
         className="flex items-center justify-center gap-3 mb-8"
       >
-        {/* Ô tích: Theo tháng */}
+        {/* Theo tháng */}
         <button
           type="button"
           onClick={() => setCycle('MONTHLY')}
-          className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl border-2 font-semibold text-sm transition-all duration-200 cursor-pointer select-none
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 font-semibold text-sm transition-all duration-200 cursor-pointer select-none
             ${cycle === 'MONTHLY'
-              ? 'bg-slate-900 border-slate-900 text-white shadow-md scale-[1.03]'
+              ? 'bg-slate-900 border-slate-900 text-white shadow-md'
               : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400 hover:bg-slate-50'
             }`}
-          style={{ userSelect: 'none' }}
-          aria-pressed={cycle === 'MONTHLY'}
         >
-          <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all
+          <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center flex-shrink-0
             ${cycle === 'MONTHLY' ? 'border-white' : 'border-slate-400'}`}>
-            {cycle === 'MONTHLY' && (
-              <span className="w-2 h-2 rounded-full bg-white" />
-            )}
+            {cycle === 'MONTHLY' && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
           </span>
           Theo tháng
         </button>
 
-        {/* Ô tích: Theo năm */}
+        {/* Theo năm */}
         <button
           type="button"
           onClick={() => setCycle('YEARLY')}
-          className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl border-2 font-semibold text-sm transition-all duration-200 cursor-pointer select-none
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 font-semibold text-sm transition-all duration-200 cursor-pointer select-none
             ${cycle === 'YEARLY'
-              ? 'text-white shadow-md scale-[1.03]'
+              ? 'text-white shadow-md'
               : 'bg-white text-slate-600'
             }`}
           style={{
-            userSelect: 'none',
             backgroundColor: cycle === 'YEARLY' ? '#B3945B' : undefined,
             borderColor: cycle === 'YEARLY' ? '#B3945B' : '#e2e8f0',
           }}
-          onMouseEnter={e => {
-            if (cycle !== 'YEARLY') {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = '#B3945B';
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#fdf6ee';
-            }
-          }}
-          onMouseLeave={e => {
-            if (cycle !== 'YEARLY') {
-              (e.currentTarget as HTMLButtonElement).style.borderColor = '#e2e8f0';
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor = '';
-            }
-          }}
-          aria-pressed={cycle === 'YEARLY'}
         >
-          <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all
+          <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center flex-shrink-0
             ${cycle === 'YEARLY' ? 'border-white' : 'border-slate-400'}`}>
-            {cycle === 'YEARLY' && (
-              <span className="w-2 h-2 rounded-full bg-white" />
-            )}
+            {cycle === 'YEARLY' && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
           </span>
           Theo năm
-          {cycle === 'YEARLY' && (
-            <span className="bg-white/25 text-white text-[10px] font-black px-2 py-0.5 rounded-full border border-white/40 select-none" style={{ userSelect: 'none' }}>
+          {cycle === 'YEARLY' ? (
+            <span className="bg-white/25 text-white text-[10px] font-black px-2 py-0.5 rounded-full border border-white/40">
               Tặng {savingMonths} tháng
             </span>
-          )}
-          {cycle !== 'YEARLY' && (
-            <span className="text-[10px] font-black px-2 py-0.5 rounded-full border select-none" style={{ userSelect: 'none', backgroundColor: '#fef3e2', color: '#B3945B', borderColor: '#e8d5b0' }}>
+          ) : (
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-full border" style={{ backgroundColor: '#fef3e2', color: '#B3945B', borderColor: '#e8d5b0' }}>
               Tiết kiệm hơn
             </span>
           )}
@@ -332,8 +309,8 @@ export default function PackageSelectionPage() {
         )}
       </AnimatePresence>
 
-      {/* ── Package Cards ── */}
-      <div className={`grid grid-cols-1 ${packages.length > 2 ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-6 mb-8`}>
+      {/* ── Package Cards Grid ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 items-stretch">
         {packages.map((pkg, idx) => {
           const isVip = pkg.id === 'VIP';
           const isSelected = selected === pkg.id;
@@ -342,27 +319,25 @@ export default function PackageSelectionPage() {
           const PkgIcon = isVip ? Crown : Zap;
 
           return (
-            <motion.button
+            <motion.div
               key={pkg.id}
-              id={`pkg-card-${pkg.id.toLowerCase()}`}
-              type="button"
-              onClick={() => setSelected(pkg.id)}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1, duration: 0.35 }}
-              className={`relative text-left rounded-3xl p-7 flex flex-col justify-between shadow-sm transition-all duration-200 cursor-pointer outline-none
+              transition={{ delay: idx * 0.08, duration: 0.3 }}
+              onClick={() => setSelected(pkg.id)}
+              className={`relative rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-sm transition-all duration-200 cursor-pointer border-2 select-none h-full min-h-[360px]
                 ${isVip
                   ? isSelected
-                    ? 'bg-zinc-950 border-2 border-white shadow-2xl scale-[1.02]'
-                    : 'bg-zinc-950 border-2 border-zinc-700 hover:border-zinc-400 hover:-translate-y-1 hover:shadow-xl'
+                    ? 'bg-zinc-950 border-white shadow-2xl scale-[1.02] text-white'
+                    : 'bg-zinc-950 border-zinc-800 text-white hover:border-zinc-500 hover:-translate-y-1 hover:shadow-xl'
                   : isSelected
-                    ? 'bg-white border-2 border-slate-900 shadow-2xl scale-[1.02]'
-                    : 'bg-white border-2 border-slate-200 hover:border-slate-500 hover:-translate-y-1 hover:shadow-xl'
+                    ? 'bg-white border-slate-900 shadow-2xl scale-[1.02] text-slate-900'
+                    : 'bg-white border-slate-200 text-slate-900 hover:border-slate-400 hover:-translate-y-1 hover:shadow-xl'
                 }`}
             >
               {/* Recommended Badge */}
               {pkg.recommended && (
-                <span className="absolute -top-3.5 right-7 bg-white text-zinc-950 text-[10px] font-black px-4 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                <span className="absolute -top-3.5 right-6 bg-amber-400 text-slate-950 text-[10px] font-black px-3.5 py-1 rounded-full uppercase tracking-wider shadow-sm">
                   ⭐ Đề xuất
                 </span>
               )}
@@ -374,69 +349,85 @@ export default function PackageSelectionPage() {
                 </span>
               )}
 
-              <div>
-                {/* Icon + Name */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`p-2.5 rounded-2xl ${isVip ? 'bg-zinc-800 text-white' : 'bg-slate-100 text-slate-900'}`}>
+              <div className="flex flex-col">
+                {/* Header: Icon + Name */}
+                <div className="flex items-start gap-3 mb-3 pr-6">
+                  <div className={`p-2.5 rounded-2xl shrink-0 ${isVip ? 'bg-zinc-800 text-white' : 'bg-slate-100 text-slate-900'}`}>
                     <PkgIcon className="w-5 h-5" />
                   </div>
-                  <div>
-                    <h3 className={`text-lg font-bold select-none ${isVip ? 'text-white' : 'text-slate-900'}`} style={{ userSelect: 'none', cursor: 'default' }}>{pkg.name}</h3>
-                    <p className={`text-xs mt-0.5 select-none ${isVip ? 'text-zinc-300' : 'text-slate-600'}`} style={{ userSelect: 'none' }}>{pkg.description}</p>
+                  <div className="min-w-0">
+                    <h3 className={`text-base sm:text-lg font-bold leading-tight truncate ${isVip ? 'text-white' : 'text-slate-900'}`}>
+                      {pkg.name}
+                    </h3>
+                    <p className={`text-xs mt-1 line-clamp-2 leading-relaxed ${isVip ? 'text-zinc-400' : 'text-slate-500'}`}>
+                      {pkg.description || 'Gói dịch vụ dành cho hộ kinh doanh'}
+                    </p>
                   </div>
                 </div>
 
-                {/* Price */}
-                <div className="mb-2 flex items-end gap-1.5">
-                  <span className={`text-3xl sm:text-4xl font-extrabold ${isVip ? 'text-white' : 'text-slate-900'}`}>
-                    {price === 0 ? 'Miễn phí' : formatVnd(price)}
-                  </span>
-                  {price > 0 && (
-                    <span className={`text-sm pb-1 ${isVip ? 'text-zinc-400' : 'text-slate-500'}`}>
-                      /{cycle === 'YEARLY' ? 'năm' : 'tháng'}
+                {/* Price Display */}
+                <div className="my-3 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                  {price === 0 ? (
+                    <span className={`text-2xl sm:text-3xl font-black tracking-tight ${isVip ? 'text-white' : 'text-slate-900'}`}>
+                      Miễn phí
                     </span>
+                  ) : (
+                    <>
+                      <span className={`text-2xl sm:text-3xl font-black tracking-tight shrink-0 ${isVip ? 'text-white' : 'text-slate-900'}`}>
+                        {formatVnd(price)}
+                      </span>
+                      <span className={`text-xs sm:text-sm font-semibold opacity-75 shrink-0 ${isVip ? 'text-zinc-400' : 'text-slate-500'}`}>
+                        /{cycle === 'YEARLY' ? 'năm' : 'tháng'}
+                      </span>
+                    </>
                   )}
                 </div>
 
                 {cycle === 'YEARLY' && price > 0 && (
-                  <p className={`text-xs mb-4 font-medium ${isVip ? 'text-zinc-400' : 'text-slate-500'}`}>
-                    ≈ {formatVnd(Math.round(price / 12))}/tháng · Tiết kiệm {formatVnd(pkg.monthlyPrice * 2)}
+                  <p className={`text-[11px] font-medium mb-3 ${isVip ? 'text-amber-300' : 'text-amber-700'}`}>
+                    ≈ {formatVnd(Math.round(price / 12))}/tháng
                   </p>
                 )}
 
-                {/* Features */}
-                <ul className="space-y-2.5 mt-4">
-                  {pkg.features.map((feature) => (
-                    <li
-                      key={feature}
-                      className={`flex items-start gap-3 text-sm ${isVip ? 'text-zinc-300' : 'text-slate-700'}`}
-                    >
-                      <CheckIcon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isVip ? 'text-zinc-400' : 'text-slate-600'}`} />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+                {/* Features List */}
+                <div className="pt-2 border-t border-slate-100 dark:border-zinc-800/60 mt-1">
+                  <ul className="space-y-2 text-xs sm:text-sm">
+                    {pkg.features && pkg.features.length > 0 ? (
+                      pkg.features.map((feature, fIdx) => (
+                        <li key={fIdx} className={`flex items-start gap-2 leading-snug ${isVip ? 'text-zinc-300' : 'text-slate-700'}`}>
+                          <CheckIcon className={`w-4 h-4 mt-0.5 shrink-0 ${isVip ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                          <span>{feature}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li className={`flex items-start gap-2 leading-snug ${isVip ? 'text-zinc-300' : 'text-slate-700'}`}>
+                        <CheckIcon className={`w-4 h-4 mt-0.5 shrink-0 ${isVip ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                        <span>Các tính năng theo cấu hình của gói</span>
+                      </li>
+                    )}
+                  </ul>
+                </div>
               </div>
 
-              {/* Select indicator */}
-              <div className={`mt-7 py-2.5 rounded-xl text-sm font-bold text-center transition-all border
+              {/* Select Indicator Button */}
+              <div className={`mt-6 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-center transition-all border
                 ${isSelected
                   ? isVip
-                    ? 'bg-white text-zinc-950 border-white'
-                    : 'bg-slate-900 text-white border-slate-900'
+                    ? 'bg-white text-zinc-950 border-white shadow-sm'
+                    : 'bg-slate-900 text-white border-slate-900 shadow-sm'
                   : isVip
-                    ? 'bg-transparent text-zinc-400 border-zinc-700'
-                    : 'bg-transparent text-slate-500 border-slate-200'
+                    ? 'bg-transparent text-zinc-400 border-zinc-700 hover:text-white hover:border-zinc-500'
+                    : 'bg-transparent text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-400'
                 }`}
               >
-                {isSelected ? '✓ Đã chọn' : 'Chọn gói này'}
+                {isSelected ? '✓ Đã chọn gói này' : 'Chọn gói này'}
               </div>
-            </motion.button>
+            </motion.div>
           );
         })}
       </div>
 
-      {/* ── Subscription Summary ── */}
+      {/* ── Subscription Summary Card ── */}
       <AnimatePresence>
         {selected && (
           <motion.div
@@ -444,26 +435,26 @@ export default function PackageSelectionPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.2 }}
-            className="bg-slate-50 border border-slate-200 rounded-2xl p-6 mb-6 shadow-xs"
+            className="bg-slate-50 border border-slate-200 rounded-2xl p-5 sm:p-6 mb-6 shadow-xs"
           >
-            <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4">
-              Tóm tắt đăng ký
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+              Tóm tắt đơn đăng ký
             </h3>
-            <div className="space-y-2.5 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500 font-medium">Gói dịch vụ</span>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 font-medium">Gói dịch vụ</span>
                 <span className="font-bold text-slate-900">{selectedPkg?.name}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 font-medium">Chu kỳ thanh toán</span>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 font-medium">Chu kỳ thanh toán</span>
                 <span className="font-bold text-slate-900">{cycle === 'YEARLY' ? 'Theo năm (12 tháng)' : 'Theo tháng'}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500 font-medium">Đơn giá</span>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-600 font-medium">Đơn giá</span>
                 <span className="font-bold text-slate-900">{unitPrice === 0 ? 'Miễn phí' : formatVnd(unitPrice)}</span>
               </div>
               <div className="h-px bg-slate-200 my-2" />
-              <div className="flex justify-between text-base">
+              <div className="flex justify-between items-center text-base">
                 <span className="font-bold text-slate-900">Tổng thanh toán</span>
                 <span className="font-extrabold text-slate-900">{totalAmount === 0 ? '0đ (Miễn phí)' : formatVnd(totalAmount)}</span>
               </div>
@@ -481,14 +472,14 @@ export default function PackageSelectionPage() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.3 }}
+        transition={{ delay: 0.2 }}
         className="flex items-start gap-3 mb-8 p-4 bg-white border border-slate-200 rounded-2xl"
       >
         <button
           type="button"
           id="chk-agreement"
           onClick={() => setAgreed(a => !a)}
-          className={`mt-0.5 w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all cursor-pointer
+          className={`mt-0.5 w-5 h-5 shrink-0 rounded-md border-2 flex items-center justify-center transition-all cursor-pointer
             ${agreed ? 'bg-slate-900 border-slate-900' : 'bg-white border-slate-300 hover:border-slate-500'}`}
           aria-checked={agreed}
         >
@@ -496,7 +487,7 @@ export default function PackageSelectionPage() {
         </button>
         <label
           onClick={() => setAgreed(a => !a)}
-          className="text-sm text-slate-600 font-medium cursor-pointer select-none"
+          className="text-xs sm:text-sm text-slate-600 font-medium cursor-pointer select-none"
         >
           Tôi đồng ý với{' '}
           <a href="#" className="text-slate-900 font-bold underline hover:text-slate-700">
@@ -514,7 +505,7 @@ export default function PackageSelectionPage() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.35 }}
+        transition={{ delay: 0.25 }}
         className="flex flex-col sm:flex-row gap-3 justify-between"
       >
         {/* Back */}
@@ -547,12 +538,12 @@ export default function PackageSelectionPage() {
 
       {/* Helper text when nothing selected */}
       {!selected && (
-        <p className="text-center text-xs text-slate-600 font-semibold mt-4 select-none" style={{ userSelect: 'none' }}>
+        <p className="text-center text-xs text-slate-500 font-semibold mt-4 select-none">
           Vui lòng chọn một gói để tiếp tục.
         </p>
       )}
       {selected && !agreed && (
-        <p className="text-center text-xs text-amber-700 font-semibold mt-4 select-none" style={{ userSelect: 'none' }}>
+        <p className="text-center text-xs text-amber-700 font-semibold mt-4 select-none">
           Vui lòng đồng ý với điều khoản dịch vụ để tiếp tục.
         </p>
       )}
@@ -563,7 +554,6 @@ export default function PackageSelectionPage() {
           type="button"
           onClick={() => router.push('/owner/account')}
           className="text-sm text-slate-500 hover:text-slate-800 font-semibold transition-colors cursor-pointer select-none"
-          style={{ userSelect: 'none' }}
         >
           Bỏ qua, chọn sau
         </button>
@@ -629,7 +619,7 @@ export default function PackageSelectionPage() {
                   <>
                     {/* Notice Banner */}
                     <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 text-amber-900 text-xs">
-                      <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                       <div>
                         <p className="font-bold text-sm text-amber-950 mb-0.5">Yêu cầu thanh toán chuyển khoản</p>
                         <p className="leading-relaxed">
@@ -648,9 +638,7 @@ export default function PackageSelectionPage() {
 
                       {/* Mock QR Image Container */}
                       <div className="bg-white p-4 rounded-2xl inline-block shadow-md border-4 border-slate-800">
-                        {/* Standard QuickPay QR Representation */}
                         <div className="w-44 h-44 bg-slate-100 rounded-xl flex flex-col items-center justify-center relative overflow-hidden border border-slate-200">
-                          {/* Simulated QR Pattern SVG */}
                           <svg className="w-36 h-36 text-slate-900" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm9-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm13-2h4v2h-4v-2zm-4 0h2v4h-2v-4zm2 4h2v4h-2v-4zm2-2h4v2h-4v-2zm-2 4h4v2h-4v-2zM7 7h2v2H7V7zm10 0h2v2h-2V7zm-10 10h2v2H7v-2z" />
                           </svg>
@@ -741,7 +729,7 @@ export default function PackageSelectionPage() {
                           </>
                         )}
                       </button>
-                      <p className="text-[11px] text-slate-600 text-center font-medium mt-2">
+                      <p className="text-[11px] text-slate-500 text-center font-medium mt-2">
                         Bấm nút này để kiểm tra và xác nhận kích hoạt gói ngay lập tức.
                       </p>
                     </div>
