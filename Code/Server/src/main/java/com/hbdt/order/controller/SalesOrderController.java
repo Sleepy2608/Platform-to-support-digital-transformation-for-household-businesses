@@ -3,6 +3,7 @@ package com.hbdt.order.controller;
 import com.hbdt.common.dto.ApiResponse;
 import com.hbdt.order.dto.CreateSalesOrderRequest;
 import com.hbdt.order.dto.SalesOrderResponse;
+import com.hbdt.order.dto.SalesOrderPageResponse;
 import com.hbdt.order.service.SalesOrderService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/sales-orders")
@@ -45,6 +47,20 @@ public class SalesOrderController {
     ) {
         return ResponseEntity.ok(ApiResponse.success(
                 salesOrderService.get(authentication.getName(), orderId)
+        ));
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<SalesOrderPageResponse>> search(
+            Authentication authentication,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String source,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                salesOrderService.search(authentication.getName(), keyword, status, source, page, size)
         ));
     }
 }

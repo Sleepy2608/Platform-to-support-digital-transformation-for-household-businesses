@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   Store, UserCircle, Lock, Mail, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
-  Shield, Users, PackageOpen,
+  Shield, Users, PackageOpen, ReceiptText, ListOrdered,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,8 +22,23 @@ const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; 
   { label: 'Vùng nguy hiểm', href: '/owner/account#danger', icon: AlertTriangle, hash: '#danger' },
 ];
 
-const MANAGE_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; path: string }> = [
+const MANAGE_NAV_ITEMS: Array<{
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  path: string;
+  children?: Array<{ label: string; href: string; icon: LucideIcon }>;
+}> = [
   { label: 'Sản phẩm & Danh mục', href: '/owner/products', icon: PackageOpen, path: '/owner/products' },
+  {
+    label: 'Đơn hàng',
+    href: '/owner/orders',
+    icon: ReceiptText,
+    path: '/owner/orders',
+    children: [
+      { label: 'Danh sách đơn hàng', href: '/owner/orders/history', icon: ListOrdered },
+    ],
+  },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
 ];
 
@@ -192,22 +207,47 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                     const Icon = item.icon;
                     const isActive = pathname.startsWith(item.path);
                     return (
-                      <Link
-                        key={item.path}
-                        href={item.href}
-                        onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
-                          ${isActive
-                            ? 'bg-slate-900 text-white shadow-sm'
-                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                          }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                          <span>{item.label}</span>
-                        </div>
-                        <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
-                      </Link>
+                      <div key={item.path}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setSidebarOpen(false)}
+                          className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
+                            ${isActive
+                              ? 'bg-slate-900 text-white shadow-sm'
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                            }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                            <span>{item.label}</span>
+                          </div>
+                          <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'rotate-90' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
+                        </Link>
+
+                        {isActive && item.children && (
+                          <div className="ml-5 mt-1 border-l border-slate-200 pl-3">
+                            {item.children.map((child) => {
+                              const ChildIcon = child.icon;
+                              const childActive = pathname === child.href;
+                              return (
+                                <Link
+                                  key={child.href}
+                                  href={child.href}
+                                  onClick={() => setSidebarOpen(false)}
+                                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                                    childActive
+                                      ? 'bg-slate-100 text-slate-950'
+                                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                                  }`}
+                                >
+                                  <ChildIcon className="h-3.5 w-3.5" />
+                                  <span>{child.label}</span>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>

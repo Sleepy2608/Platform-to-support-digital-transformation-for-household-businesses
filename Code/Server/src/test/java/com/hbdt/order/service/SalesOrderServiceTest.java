@@ -11,6 +11,8 @@ import com.hbdt.product.service.BusinessContextService;
 import com.hbdt.repository.SalesOrderItemRepository;
 import com.hbdt.repository.SalesOrderRepository;
 import com.hbdt.repository.UserRepository;
+import com.hbdt.repository.ProductRepository;
+import com.hbdt.repository.UnitRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +35,8 @@ class SalesOrderServiceTest {
     @Mock private ProductPricingService productPricingService;
     @Mock private BusinessContextService businessContextService;
     @Mock private UserRepository userRepository;
+    @Mock private ProductRepository productRepository;
+    @Mock private UnitRepository unitRepository;
 
     private SalesOrderService service;
 
@@ -40,12 +44,12 @@ class SalesOrderServiceTest {
     void setUp() {
         service = new SalesOrderService(
                 salesOrderRepository, salesOrderItemRepository, productPricingService,
-                businessContextService, userRepository
+                businessContextService, userRepository, productRepository, unitRepository
         );
     }
 
     @Test
-    void createSnapshotsResolvedPriceIntoPersistedOrderItem() {
+    void createKeepsDifferentUnitsAndMergesOnlyExactDuplicateLines() {
         when(businessContextService.requireBusinessId("owner")).thenReturn(5L);
         when(userRepository.findByUsername("owner")).thenReturn(Optional.of(User.builder().id(7L).build()));
         when(salesOrderRepository.existsByBusinessIdAndOrderCodeIgnoreCase(5L, "SO-001"))
@@ -53,12 +57,18 @@ class SalesOrderServiceTest {
         when(productPricingService.snapshotOrderItemPrice(any(), any(SalesOrderItem.class)))
                 .thenAnswer(invocation -> {
                     SalesOrderItem item = invocation.getArgument(1);
-                    item.setConversionRate(new BigDecimal("10"));
-                    item.setBaseQuantity(new BigDecimal("20.000"));
-                    item.setUnitPrice(new BigDecimal("150000.00"));
-                    item.setLineTotal(new BigDecimal("300000.00"));
+                    BigDecimal unitPrice = item.getUnitId().equals(2L)
+                            ? new BigDecimal("15000.00")
+                            : new BigDecimal("180000.00");
+                    BigDecimal rate = item.getUnitId().equals(2L)
+                            ? BigDecimal.ONE
+                            : new BigDecimal("10");
+                    item.setConversionRate(rate);
+                    item.setBaseQuantity(item.getQuantity().multiply(rate));
+                    item.setUnitPrice(unitPrice);
+                    item.setLineTotal(item.getQuantity().multiply(unitPrice));
                     item.setProductPriceId(40L);
-                    item.setPricingRuleName("Giá mặc định");
+                    item.setPricingRuleName("Giá bán");
                     return item;
                 });
         when(salesOrderRepository.save(any(SalesOrder.class))).thenAnswer(invocation -> {
@@ -68,22 +78,41 @@ class SalesOrderServiceTest {
         });
         when(salesOrderItemRepository.saveAll(any())).thenAnswer(invocation -> {
             List<SalesOrderItem> items = invocation.getArgument(0);
-            items.get(0).setId(101L);
+            for (int index = 0; index < items.size(); index++) {
+                items.get(index).setId(101L + index);
+            }
             return items;
         });
+        when(productRepository.findById(10L)).thenReturn(Optional.of(
+                com.hbdt.entity.Product.builder().id(10L).productName("Gạo").build()
+        ));
+        when(unitRepository.findById(2L)).thenReturn(Optional.of(
+                com.hbdt.entity.Unit.builder().id(2L).unitName("Cái").build()
+        ));
+        when(unitRepository.findById(3L)).thenReturn(Optional.of(
+                com.hbdt.entity.Unit.builder().id(3L).unitName("Bao").build()
+        ));
 
         SalesOrderResponse response = service.create("owner", new CreateSalesOrderRequest(
                 " SO-001 ", null, "POS", new BigDecimal("100000"), null,
-                List.of(new CreateSalesOrderItemRequest(10L, 2L, new BigDecimal("2"), null))
+                List.of(
+                        new CreateSalesOrderItemRequest(10L, 2L, BigDecimal.ONE, null),
+                        new CreateSalesOrderItemRequest(10L, 3L, new BigDecimal("10"), null),
+                        new CreateSalesOrderItemRequest(10L, 2L, BigDecimal.ONE, null)
+                )
         ));
 
         assertThat(response.id()).isEqualTo(100L);
-        assertThat(response.totalAmount()).isEqualByComparingTo("300000.00");
+        assertThat(response.totalAmount()).isEqualByComparingTo("1830000.00");
         assertThat(response.paidAmount()).isEqualByComparingTo("100000.00");
-        assertThat(response.debtAmount()).isEqualByComparingTo("200000.00");
-        assertThat(response.items()).hasSize(1);
-        assertThat(response.items().get(0).unitPrice()).isEqualByComparingTo("150000.00");
+        assertThat(response.debtAmount()).isEqualByComparingTo("1730000.00");
+        assertThat(response.items()).hasSize(2);
+        assertThat(response.items().get(0).unitId()).isEqualTo(2L);
+        assertThat(response.items().get(0).quantity()).isEqualByComparingTo("2");
+        assertThat(response.items().get(0).unitPrice()).isEqualByComparingTo("15000.00");
+        assertThat(response.items().get(1).unitId()).isEqualTo(3L);
+        assertThat(response.items().get(1).quantity()).isEqualByComparingTo("10");
         assertThat(response.items().get(0).productPriceId()).isEqualTo(40L);
-        assertThat(response.items().get(0).pricingRuleName()).isEqualTo("Giá mặc định");
+        assertThat(response.items().get(0).pricingRuleName()).isEqualTo("Giá bán");
     }
 }
