@@ -5,6 +5,7 @@ import com.hbdt.product.dto.CategoryRequest;
 import com.hbdt.product.dto.CategoryResponse;
 import com.hbdt.product.dto.PageResponse;
 import com.hbdt.product.service.CategoryService;
+import com.hbdt.entitlement.annotation.RequireFeature;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/categories")
 @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
+@RequireFeature("PRODUCT_MANAGEMENT")
 public class CategoryController {
 
     private final CategoryService categoryService;

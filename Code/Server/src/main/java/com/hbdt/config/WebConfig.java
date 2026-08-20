@@ -39,6 +39,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(featureEntitlementInterceptor)
-                .addPathPatterns("/api/owner/**", "/api/employee/**");
+                .addPathPatterns("/api/owner/**", "/api/employee/**", "/api/products/**", "/api/categories/**");
     }
 }
