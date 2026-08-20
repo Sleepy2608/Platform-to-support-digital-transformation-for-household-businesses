@@ -5,6 +5,7 @@ import com.hbdt.common.exception.ResourceNotFoundException;
 import com.hbdt.entity.Category;
 import com.hbdt.entity.InventoryBalance;
 import com.hbdt.entity.Product;
+import com.hbdt.entity.ProductUnit;
 import com.hbdt.entity.TaxActivityGroup;
 import com.hbdt.entity.Unit;
 import com.hbdt.product.dto.PageResponse;
@@ -14,6 +15,7 @@ import com.hbdt.product.dto.ReferenceOption;
 import com.hbdt.repository.CategoryRepository;
 import com.hbdt.repository.InventoryBalanceRepository;
 import com.hbdt.repository.ProductRepository;
+import com.hbdt.repository.ProductUnitRepository;
 import com.hbdt.repository.TaxActivityGroupRepository;
 import com.hbdt.repository.UnitRepository;
 import jakarta.persistence.criteria.Predicate;
@@ -28,6 +30,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -41,6 +44,7 @@ public class ProductService {
     private static final Set<String> SORTABLE_FIELDS = Set.of("productCode", "productName", "status", "createdAt", "updatedAt");
 
     private final ProductRepository productRepository;
+    private final ProductUnitRepository productUnitRepository;
     private final CategoryRepository categoryRepository;
     private final UnitRepository unitRepository;
     private final InventoryBalanceRepository inventoryBalanceRepository;
@@ -48,12 +52,14 @@ public class ProductService {
     private final BusinessContextService businessContextService;
 
     public ProductService(ProductRepository productRepository,
+                          ProductUnitRepository productUnitRepository,
                           CategoryRepository categoryRepository,
                           UnitRepository unitRepository,
                           InventoryBalanceRepository inventoryBalanceRepository,
                           TaxActivityGroupRepository taxActivityGroupRepository,
                           BusinessContextService businessContextService) {
         this.productRepository = productRepository;
+        this.productUnitRepository = productUnitRepository;
         this.categoryRepository = categoryRepository;
         this.unitRepository = unitRepository;
         this.inventoryBalanceRepository = inventoryBalanceRepository;
@@ -132,6 +138,7 @@ public class ProductService {
                 .description(cleanOptional(request.description()))
                 .status(normalizeStatus(request.status(), ACTIVE))
                 .build());
+        saveBaseUnitConfiguration(saved);
         saveQuantity(saved, quantity);
         return toResponse(saved);
     }
@@ -143,6 +150,9 @@ public class ProductService {
         String code = cleanRequired(request.productCode());
         String name = cleanRequired(request.productName());
         Long baseUnitId = request.baseUnitId() == null ? product.getBaseUnitId() : request.baseUnitId();
+        if (!Objects.equals(product.getBaseUnitId(), baseUnitId)) {
+            throw new BadRequestException("Không thể thay đổi đơn vị chuẩn sau khi tạo sản phẩm");
+        }
         validateUnique(businessId, code, name, id);
         validateReferences(businessId, request.categoryId(), baseUnitId, request.defaultTaxActivityGroupId());
 
@@ -279,15 +289,27 @@ public class ProductService {
         inventoryBalanceRepository.save(balance);
     }
 
+    private void saveBaseUnitConfiguration(Product product) {
+        ProductUnit baseUnit = ProductUnit.builder()
+                .productId(product.getId())
+                .unitId(product.getBaseUnitId())
+                .conversionRate(BigDecimal.ONE)
+                .baseUnit(true)
+                .status(ACTIVE)
+                .build();
+        productUnitRepository.save(baseUnit);
+    }
+
     private BigDecimal normalizeQuantity(BigDecimal quantity, BigDecimal fallback) {
         BigDecimal normalized = quantity == null ? fallback : quantity;
         if (normalized.signum() < 0) {
             throw new BadRequestException("Số lượng sản phẩm không được âm");
         }
-        if (normalized.stripTrailingZeros().scale() > 0) {
-            throw new BadRequestException("Số lượng sản phẩm phải là số nguyên");
+        BigDecimal stripped = normalized.stripTrailingZeros();
+        if (stripped.scale() > 3) {
+            throw new BadRequestException("Số lượng chỉ được có tối đa 3 chữ số thập phân");
         }
-        return normalized.setScale(0);
+        return stripped.scale() < 0 ? stripped.setScale(0) : stripped;
     }
 
     private String normalizeStatusFilter(String status) {

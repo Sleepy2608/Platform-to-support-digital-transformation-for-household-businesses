@@ -4,12 +4,14 @@ import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.entity.Category;
 import com.hbdt.entity.InventoryBalance;
 import com.hbdt.entity.Product;
+import com.hbdt.entity.ProductUnit;
 import com.hbdt.entity.Unit;
 import com.hbdt.product.dto.ProductRequest;
 import com.hbdt.product.dto.ProductResponse;
 import com.hbdt.repository.CategoryRepository;
 import com.hbdt.repository.InventoryBalanceRepository;
 import com.hbdt.repository.ProductRepository;
+import com.hbdt.repository.ProductUnitRepository;
 import com.hbdt.repository.TaxActivityGroupRepository;
 import com.hbdt.repository.UnitRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +38,8 @@ class ProductServiceTest {
     @Mock
     private ProductRepository productRepository;
     @Mock
+    private ProductUnitRepository productUnitRepository;
+    @Mock
     private CategoryRepository categoryRepository;
     @Mock
     private UnitRepository unitRepository;
@@ -50,7 +54,7 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
-        productService = new ProductService(productRepository, categoryRepository, unitRepository,
+        productService = new ProductService(productRepository, productUnitRepository, categoryRepository, unitRepository,
                 inventoryBalanceRepository, taxActivityGroupRepository, businessContextService);
         when(businessContextService.requireBusinessId("owner")).thenReturn(10L);
     }
@@ -81,6 +85,11 @@ class ProductServiceTest {
         ArgumentCaptor<InventoryBalance> balanceCaptor = ArgumentCaptor.forClass(InventoryBalance.class);
         verify(inventoryBalanceRepository).save(balanceCaptor.capture());
         assertEquals(new BigDecimal("25"), balanceCaptor.getValue().getQuantityOnHand());
+        ArgumentCaptor<ProductUnit> unitCaptor = ArgumentCaptor.forClass(ProductUnit.class);
+        verify(productUnitRepository).save(unitCaptor.capture());
+        assertEquals(3L, unitCaptor.getValue().getUnitId());
+        assertEquals(BigDecimal.ONE, unitCaptor.getValue().getConversionRate());
+        assertEquals(true, unitCaptor.getValue().getBaseUnit());
     }
 
     @Test
@@ -109,15 +118,24 @@ class ProductServiceTest {
     }
 
     @Test
-    void createRejectsFractionalProductQuantity() {
+    void createAcceptsFractionalProductQuantity() {
         ProductRequest request = new ProductRequest(
                 "SP-03", "Nước suối", null, null, null, null, null, "ACTIVE", new BigDecimal("0.99"));
+        Unit defaultUnit = Unit.builder().id(4L).unitCode("LIT").unitName("Lít").status("ACTIVE").build();
+        when(unitRepository.findAllByStatusOrderByUnitNameAsc("ACTIVE")).thenReturn(List.of(defaultUnit));
+        when(unitRepository.findByIdAndStatus(4L, "ACTIVE")).thenReturn(Optional.of(defaultUnit));
+        when(unitRepository.findById(4L)).thenReturn(Optional.of(defaultUnit));
+        when(productRepository.save(any(Product.class))).thenAnswer(invocation -> {
+            Product value = invocation.getArgument(0);
+            value.setId(10L);
+            return value;
+        });
 
-        BadRequestException error = assertThrows(BadRequestException.class,
-                () -> productService.create("owner", request));
+        productService.create("owner", request);
 
-        assertEquals("Số lượng sản phẩm phải là số nguyên", error.getMessage());
-        verify(productRepository, never()).save(any(Product.class));
+        ArgumentCaptor<InventoryBalance> balanceCaptor = ArgumentCaptor.forClass(InventoryBalance.class);
+        verify(inventoryBalanceRepository).save(balanceCaptor.capture());
+        assertEquals(new BigDecimal("0.99"), balanceCaptor.getValue().getQuantityOnHand());
     }
 
     @Test
