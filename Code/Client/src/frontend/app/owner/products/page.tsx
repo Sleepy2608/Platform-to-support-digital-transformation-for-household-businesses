@@ -6,6 +6,7 @@ import {
   RefreshCw, Search, X,
 } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
+import { FeatureGate } from '@/app/components/FeatureGate';
 
 type Status = 'ACTIVE' | 'INACTIVE';
 
@@ -207,7 +208,8 @@ export default function ProductManagementPage() {
   });
 
   return (
-    <div className="min-h-screen p-5 sm:p-8 lg:p-10">
+    <FeatureGate feature="PRODUCT_MANAGEMENT" fallback="locked">
+      <div className="min-h-screen p-5 sm:p-8 lg:p-10">
       <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -300,7 +302,8 @@ export default function ProductManagementPage() {
           </form>
         </Modal>
       )}
-    </div>
+      </div>
+    </FeatureGate>
   );
 }
 
