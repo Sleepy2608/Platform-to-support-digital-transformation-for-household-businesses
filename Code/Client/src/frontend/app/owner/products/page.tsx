@@ -1,11 +1,18 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Archive, Boxes, ChevronDown, ChevronLeft, ChevronRight, CircleDollarSign, FolderTree,
-  History, Pencil, Plus, RefreshCw, Ruler, Search, X,
+  History, Pencil, Plus, RefreshCw, Ruler, Search, ShoppingBag, ShoppingCart, X,
 } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
+import {
+  CartItem,
+  CartResolvedPrice,
+  CartUnit,
+  CheckoutData,
+  OrderCartDrawer,
+} from '@/app/components/OrderCartDrawer';
 
 type Status = 'ACTIVE' | 'INACTIVE';
 
@@ -73,6 +80,10 @@ interface ProductPrice {
   changedBy?: number;
 }
 
+interface SalesOrderResponse {
+  orderCode: string;
+}
+
 const EMPTY_CATEGORY = { categoryCode: '', categoryName: '', description: '', status: 'ACTIVE' as Status };
 const EMPTY_PRODUCT = {
   productCode: '', productName: '', categoryId: '', baseUnitId: '', quantityOnHand: '0', defaultTaxActivityGroupId: '',
@@ -80,6 +91,8 @@ const EMPTY_PRODUCT = {
 };
 
 export default function ProductManagementPage() {
+  const nextCartKey = useRef(1);
+  const cartResolveTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const [tab, setTab] = useState<'products' | 'categories'>('products');
   const [products, setProducts] = useState<PageResponse<Product> | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -111,6 +124,13 @@ export default function ProductManagementPage() {
   const [categoryForm, setCategoryForm] = useState(EMPTY_CATEGORY);
   const [productForm, setProductForm] = useState(EMPTY_PRODUCT);
   const [saving, setSaving] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartOpen, setCartOpen] = useState(false);
+
+  const cartQuantity = useMemo(
+    () => cartItems.reduce((sum, item) => sum + parseQuantity(item.quantity), 0),
+    [cartItems],
+  );
 
   const loadCategories = useCallback(async () => {
     const result = await apiClient.get<PageResponse<Category>>('/api/categories?size=100&sortBy=categoryName&direction=asc');
@@ -149,9 +169,13 @@ export default function ProductManagementPage() {
 
   useEffect(() => {
     // Data is loaded when filters or the current page change.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void reload();
   }, [reload]);
+
+  useEffect(() => {
+    const timers = cartResolveTimers.current;
+    return () => Object.values(timers).forEach(clearTimeout);
+  }, []);
 
   const showNotice = (message: string) => {
     setNotice(message);
@@ -402,6 +426,205 @@ export default function ProductManagementPage() {
     }
   };
 
+  const patchCartItem = (key: number, patch: Partial<CartItem>) => {
+    setCartItems((current) => current.map((item) => item.key === key ? { ...item, ...patch } : item));
+  };
+
+  const resolveCartItem = async (
+    key: number,
+    productId: number,
+    unitId: number,
+    quantity: string,
+  ) => {
+    const parsedQuantity = parseQuantity(quantity);
+    if (!parsedQuantity) {
+      patchCartItem(key, { resolving: false, resolved: undefined, error: 'Số lượng phải lớn hơn 0' });
+      return;
+    }
+
+    patchCartItem(key, { resolving: true, resolved: undefined, error: undefined });
+    try {
+      const resolved = await apiClient.post<CartResolvedPrice>('/api/product-prices/resolve', {
+        productId,
+        unitId,
+        quantity: parsedQuantity,
+      });
+      setCartItems((current) => current.map((item) => {
+        const unchanged = item.key === key
+          && item.productId === productId
+          && item.unitId === unitId
+          && item.quantity === quantity;
+        return unchanged ? { ...item, resolving: false, resolved, error: undefined } : item;
+      }));
+    } catch (err) {
+      setCartItems((current) => current.map((item) => {
+        const unchanged = item.key === key
+          && item.productId === productId
+          && item.unitId === unitId
+          && item.quantity === quantity;
+        return unchanged ? {
+          ...item,
+          resolving: false,
+          resolved: undefined,
+          error: err instanceof Error ? err.message : 'Không thể tính giá',
+        } : item;
+      }));
+    }
+  };
+
+  const scheduleCartResolve = (
+    key: number,
+    productId: number,
+    unitId: number,
+    quantity: string,
+  ) => {
+    clearTimeout(cartResolveTimers.current[key]);
+    cartResolveTimers.current[key] = setTimeout(
+      () => void resolveCartItem(key, productId, unitId, quantity),
+      300,
+    );
+  };
+
+  const maximumCartQuantity = (item: CartItem, unitId: number) => {
+    const selectedUnit = item.units.find((unit) => unit.unitId === unitId);
+    const selectedRate = Number(selectedUnit?.conversionRate || 0);
+    if (selectedRate <= 0) return 0;
+
+    const usedByOtherLines = cartItems
+      .filter((candidate) => candidate.productId === item.productId && candidate.key !== item.key)
+      .reduce((total, candidate) => {
+        const candidateUnit = candidate.units.find((unit) => unit.unitId === candidate.unitId);
+        return total + parseQuantity(candidate.quantity) * Number(candidateUnit?.conversionRate || 0);
+      }, 0);
+    const remainingBaseQuantity = Math.max(0, Number(item.quantityOnHand || 0) - usedByOtherLines);
+    return remainingBaseQuantity / selectedRate;
+  };
+
+  const changeCartQuantity = (key: number, quantity: string) => {
+    if (!/^\d*(?:[.,]\d{0,3})?$/.test(quantity)) return;
+    const item = cartItems.find((candidate) => candidate.key === key);
+    if (!item) return;
+    const maximum = maximumCartQuantity(item, item.unitId);
+    if (parseQuantity(quantity) > maximum + 0.000001) {
+      const unitName = item.units.find((unit) => unit.unitId === item.unitId)?.unitName || 'đơn vị';
+      patchCartItem(key, {
+        stockWarning: `Chỉ còn tối đa ${formatQuantity(maximum)} ${unitName} trong kho`,
+      });
+      return;
+    }
+    patchCartItem(key, { quantity, resolving: true, resolved: undefined, error: undefined, stockWarning: undefined });
+    scheduleCartResolve(key, item.productId, item.unitId, quantity);
+  };
+
+  const addProductToCart = async (product: Product) => {
+    if (product.status !== 'ACTIVE') return;
+    setError('');
+    if (Number(product.quantityOnHand || 0) <= 0) {
+      setError(`Sản phẩm ${product.productName} đã hết hàng`);
+      return;
+    }
+    setCartOpen(true);
+
+    const existingBaseItem = cartItems.find(
+      (item) => item.productId === product.id && item.unitId === product.baseUnitId,
+    );
+    if (existingBaseItem) {
+      const nextQuantity = String(
+        Math.round((parseQuantity(existingBaseItem.quantity) + 1) * 1000) / 1000,
+      );
+      changeCartQuantity(existingBaseItem.key, nextQuantity);
+      return;
+    }
+
+    try {
+      const configuredUnits = await apiClient.get<CartUnit[]>(`/api/products/${product.id}/units`);
+      const preferredUnit = configuredUnits.find((unit) => unit.unitId === product.baseUnitId)
+        || configuredUnits.find((unit) => unit.baseUnit)
+        || configuredUnits[0];
+      if (!preferredUnit) throw new Error('Sản phẩm chưa được cấu hình đơn vị tính');
+
+      const key = nextCartKey.current++;
+      const item: CartItem = {
+        key,
+        productId: product.id,
+        productCode: product.productCode,
+        productName: product.productName,
+        imageUrl: product.imageUrl,
+        baseUnitName: product.baseUnitName,
+        quantityOnHand: product.quantityOnHand,
+        unitId: preferredUnit.unitId,
+        quantity: '1',
+        units: configuredUnits,
+        resolving: true,
+      };
+      setCartItems((current) => [...current, item]);
+      void resolveCartItem(key, product.id, preferredUnit.unitId, '1');
+    } catch (err) {
+      setCartOpen(false);
+      setError(err instanceof Error ? err.message : 'Không thể thêm sản phẩm vào đơn');
+    }
+  };
+
+  const changeCartUnit = (key: number, unitId: number) => {
+    const item = cartItems.find((candidate) => candidate.key === key);
+    if (!item) return;
+    const maximum = maximumCartQuantity(item, unitId);
+    const currentQuantity = parseQuantity(item.quantity);
+    const nextQuantity = currentQuantity > maximum
+      ? formatQuantityInput(maximum)
+      : item.quantity;
+    const unitName = item.units.find((unit) => unit.unitId === unitId)?.unitName || 'đơn vị';
+    if (maximum <= 0) {
+      patchCartItem(key, {
+        unitId,
+        quantity: '',
+        resolving: false,
+        resolved: undefined,
+        error: 'Không đủ tồn kho cho đơn vị đã chọn',
+        stockWarning: undefined,
+      });
+      return;
+    }
+    patchCartItem(key, {
+      unitId,
+      quantity: nextQuantity,
+      resolving: true,
+      resolved: undefined,
+      error: undefined,
+      stockWarning: currentQuantity > maximum
+        ? `Số lượng đã được điều chỉnh còn ${formatQuantity(maximum)} ${unitName}`
+        : undefined,
+    });
+    scheduleCartResolve(key, item.productId, unitId, nextQuantity);
+  };
+
+  const removeCartItem = (key: number) => {
+    clearTimeout(cartResolveTimers.current[key]);
+    setCartItems((current) => current.filter((item) => item.key !== key));
+  };
+
+  const clearCart = () => {
+    Object.values(cartResolveTimers.current).forEach(clearTimeout);
+    cartResolveTimers.current = {};
+    setCartItems([]);
+  };
+
+  const checkoutCart = async (data: CheckoutData) => {
+    const result = await apiClient.post<SalesOrderResponse>('/api/sales-orders', {
+      orderCode: data.orderCode,
+      source: data.source,
+      paidAmount: data.paidAmount,
+      note: data.note,
+      items: cartItems.map((item) => ({
+        productId: item.productId,
+        unitId: item.unitId,
+        quantity: parseQuantity(item.quantity),
+      })),
+    });
+    await loadProducts();
+    return { orderCode: result.orderCode };
+  };
+
   const visibleCategories = categories.filter((item) => {
     const matchesKeyword = !keyword.trim() || `${item.categoryCode} ${item.categoryName}`.toLowerCase().includes(keyword.toLowerCase());
     return matchesKeyword && (!status || item.status === status);
@@ -456,7 +679,7 @@ export default function ProductManagementPage() {
           {loading ? (
             <div className="flex h-64 items-center justify-center text-sm text-slate-500"><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Đang tải...</div>
           ) : tab === 'products' ? (
-            <ProductTable items={products?.content || []} onEdit={openProduct} onUnits={(item) => void openUnits(item)} onPrices={(item) => void openPrices(item)} onDeactivate={(id) => void deactivate('product', id)} />
+            <ProductTable items={products?.content || []} onAddToOrder={(item) => void addProductToCart(item)} onEdit={openProduct} onUnits={(item) => void openUnits(item)} onPrices={(item) => void openPrices(item)} onDeactivate={(id) => void deactivate('product', id)} />
           ) : (
             <CategoryTable items={visibleCategories} onEdit={openCategory} onDeactivate={(id) => void deactivate('category', id)} />
           )}
@@ -558,6 +781,29 @@ export default function ProductManagementPage() {
           </div>
         </Modal>
       )}
+
+      <button
+        type="button"
+        onClick={() => setCartOpen(true)}
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-bold text-slate-900 shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl"
+      >
+        <ShoppingBag className="h-5 w-5 text-emerald-600" />
+        <span>Đơn hàng</span>
+        <span className="min-w-7 rounded-full bg-emerald-600 px-2 py-1 text-center text-xs text-white">
+          {formatQuantity(cartQuantity)}
+        </span>
+      </button>
+
+      <OrderCartDrawer
+        isOpen={cartOpen}
+        onClose={() => setCartOpen(false)}
+        items={cartItems}
+        onChangeUnit={changeCartUnit}
+        onChangeQuantity={changeCartQuantity}
+        onRemoveItem={removeCartItem}
+        onClearCart={clearCart}
+        onCheckout={checkoutCart}
+      />
     </div>
   );
 }
@@ -566,9 +812,9 @@ function TabButton({ active, onClick, icon, label }: { active: boolean; onClick:
   return <button onClick={onClick} className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold ${active ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>{icon}{label}</button>;
 }
 
-function ProductTable({ items, onEdit, onUnits, onPrices, onDeactivate }: { items: Product[]; onEdit: (item: Product) => void; onUnits: (item: Product) => void; onPrices: (item: Product) => void; onDeactivate: (id: number) => void }) {
+function ProductTable({ items, onAddToOrder, onEdit, onUnits, onPrices, onDeactivate }: { items: Product[]; onAddToOrder: (item: Product) => void; onEdit: (item: Product) => void; onUnits: (item: Product) => void; onPrices: (item: Product) => void; onDeactivate: (id: number) => void }) {
   if (!items.length) return <EmptyState label="Chưa có sản phẩm phù hợp" />;
-  return <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-400"><tr><th className="px-5 py-3">Sản phẩm</th><th className="px-5 py-3">Danh mục</th><th className="px-5 py-3">Số lượng</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3 text-right">Thao tác</th></tr></thead><tbody className="divide-y divide-slate-100">{items.map((item) => <tr key={item.id} className="hover:bg-slate-50/70"><td className="px-5 py-4"><p className="font-bold text-slate-900">{item.productName}</p><p className="text-xs text-slate-400">{item.productCode}</p></td><td className="px-5 py-4 text-slate-600">{item.categoryName || 'Chưa phân loại'}</td><td className="px-5 py-4 font-semibold text-slate-700">{Number(item.quantityOnHand || 0).toLocaleString('vi-VN')} {item.baseUnitName || 'đơn vị'}</td><td className="px-5 py-4"><StatusBadge status={item.status} /></td><td className="px-5 py-4"><div className="flex justify-end gap-2"><button onClick={() => onPrices(item)} className="rounded-lg border border-slate-200 p-2 text-emerald-600 hover:bg-emerald-50" title="Quản lý giá bán"><CircleDollarSign className="h-4 w-4" /></button><button onClick={() => onUnits(item)} className="rounded-lg border border-slate-200 p-2 text-indigo-600 hover:bg-indigo-50" title="Quản lý đơn vị tính"><Ruler className="h-4 w-4" /></button><RowActions inactive={item.status === 'INACTIVE'} onEdit={() => onEdit(item)} onDeactivate={() => onDeactivate(item.id)} /></div></td></tr>)}</tbody></table></div>;
+  return <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-400"><tr><th className="px-5 py-3">Sản phẩm</th><th className="px-5 py-3">Danh mục</th><th className="px-5 py-3">Số lượng</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3 text-right">Thao tác</th></tr></thead><tbody className="divide-y divide-slate-100">{items.map((item) => <tr key={item.id} className="hover:bg-slate-50/70"><td className="px-5 py-4"><p className="font-bold text-slate-900">{item.productName}</p><p className="text-xs text-slate-400">{item.productCode}</p></td><td className="px-5 py-4 text-slate-600">{item.categoryName || 'Chưa phân loại'}</td><td className="px-5 py-4 font-semibold text-slate-700">{Number(item.quantityOnHand || 0).toLocaleString('vi-VN')} {item.baseUnitName || 'đơn vị'}</td><td className="px-5 py-4"><StatusBadge status={item.status} /></td><td className="px-5 py-4"><div className="flex justify-end gap-2"><button disabled={item.status !== 'ACTIVE'} onClick={() => onAddToOrder(item)} className="rounded-lg border border-slate-200 p-2 text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30" title="Thêm vào đơn hàng"><ShoppingCart className="h-4 w-4" /></button><button onClick={() => onPrices(item)} className="rounded-lg border border-slate-200 p-2 text-emerald-600 hover:bg-emerald-50" title="Quản lý giá bán"><CircleDollarSign className="h-4 w-4" /></button><button onClick={() => onUnits(item)} className="rounded-lg border border-slate-200 p-2 text-indigo-600 hover:bg-indigo-50" title="Quản lý đơn vị tính"><Ruler className="h-4 w-4" /></button><RowActions inactive={item.status === 'INACTIVE'} onEdit={() => onEdit(item)} onDeactivate={() => onDeactivate(item.id)} /></div></td></tr>)}</tbody></table></div>;
 }
 
 function CategoryTable({ items, onEdit, onDeactivate }: { items: Category[]; onEdit: (item: Category) => void; onDeactivate: (id: number) => void }) {
@@ -617,4 +863,17 @@ function formatDateTime(value: string) {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(new Date(value));
+}
+
+function parseQuantity(value: string) {
+  const parsed = Number(value.replace(',', '.'));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+function formatQuantity(value: number) {
+  return Number(value || 0).toLocaleString('vi-VN', { maximumFractionDigits: 3 });
+}
+
+function formatQuantityInput(value: number) {
+  return String(Math.floor(Math.max(0, value) * 1000) / 1000);
 }

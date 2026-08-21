@@ -32,7 +32,7 @@ const MANAGE_NAV_ITEMS: Array<{
   { label: 'Sản phẩm & Danh mục', href: '/owner/products', icon: PackageOpen, path: '/owner/products' },
   {
     label: 'Đơn hàng',
-    href: '/owner/orders',
+    href: '/owner/orders/history',
     icon: ReceiptText,
     path: '/owner/orders',
     children: [

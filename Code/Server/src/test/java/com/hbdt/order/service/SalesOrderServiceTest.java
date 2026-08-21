@@ -3,6 +3,7 @@ package com.hbdt.order.service;
 import com.hbdt.entity.SalesOrder;
 import com.hbdt.entity.SalesOrderItem;
 import com.hbdt.entity.User;
+import com.hbdt.inventory.service.InventoryMovementService;
 import com.hbdt.order.dto.CreateSalesOrderItemRequest;
 import com.hbdt.order.dto.CreateSalesOrderRequest;
 import com.hbdt.order.dto.SalesOrderResponse;
@@ -25,6 +26,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,6 +41,7 @@ class SalesOrderServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private ProductRepository productRepository;
     @Mock private UnitRepository unitRepository;
+    @Mock private InventoryMovementService inventoryMovementService;
 
     private SalesOrderService service;
 
@@ -44,7 +49,8 @@ class SalesOrderServiceTest {
     void setUp() {
         service = new SalesOrderService(
                 salesOrderRepository, salesOrderItemRepository, productPricingService,
-                businessContextService, userRepository, productRepository, unitRepository
+                businessContextService, userRepository, productRepository, unitRepository,
+                inventoryMovementService
         );
     }
 
@@ -107,6 +113,7 @@ class SalesOrderServiceTest {
         assertThat(response.paidAmount()).isEqualByComparingTo("100000.00");
         assertThat(response.debtAmount()).isEqualByComparingTo("1730000.00");
         assertThat(response.items()).hasSize(2);
+        verify(inventoryMovementService, times(2)).stockOut(eq("owner"), any());
         assertThat(response.items().get(0).unitId()).isEqualTo(2L);
         assertThat(response.items().get(0).quantity()).isEqualByComparingTo("2");
         assertThat(response.items().get(0).unitPrice()).isEqualByComparingTo("15000.00");

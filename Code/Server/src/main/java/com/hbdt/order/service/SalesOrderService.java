@@ -7,6 +7,8 @@ import com.hbdt.entity.SalesOrderItem;
 import com.hbdt.entity.Product;
 import com.hbdt.entity.Unit;
 import com.hbdt.entity.User;
+import com.hbdt.inventory.dto.InventoryMovementRequest;
+import com.hbdt.inventory.service.InventoryMovementService;
 import com.hbdt.order.dto.CreateSalesOrderItemRequest;
 import com.hbdt.order.dto.CreateSalesOrderRequest;
 import com.hbdt.order.dto.SalesOrderItemResponse;
@@ -42,6 +44,7 @@ public class SalesOrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final UnitRepository unitRepository;
+    private final InventoryMovementService inventoryMovementService;
 
     public SalesOrderService(
             SalesOrderRepository salesOrderRepository,
@@ -50,7 +53,8 @@ public class SalesOrderService {
             BusinessContextService businessContextService,
             UserRepository userRepository,
             ProductRepository productRepository,
-            UnitRepository unitRepository
+            UnitRepository unitRepository,
+            InventoryMovementService inventoryMovementService
     ) {
         this.salesOrderRepository = salesOrderRepository;
         this.salesOrderItemRepository = salesOrderItemRepository;
@@ -59,6 +63,7 @@ public class SalesOrderService {
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.unitRepository = unitRepository;
+        this.inventoryMovementService = inventoryMovementService;
     }
 
     @Transactional
@@ -109,6 +114,14 @@ public class SalesOrderService {
                 .build());
         for (SalesOrderItem item : pricedItems) {
             item.setSalesOrderId(order.getId());
+            inventoryMovementService.stockOut(actorUsername, new InventoryMovementRequest(
+                    item.getProductId(),
+                    item.getUnitId(),
+                    item.getQuantity(),
+                    null,
+                    order.getId(),
+                    "Xuất kho cho đơn hàng " + order.getOrderCode()
+            ));
         }
         List<SalesOrderItem> savedItems = salesOrderItemRepository.saveAll(pricedItems);
         return toResponse(order, savedItems);

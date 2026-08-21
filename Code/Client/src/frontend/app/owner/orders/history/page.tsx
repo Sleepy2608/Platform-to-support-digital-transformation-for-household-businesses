@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Eye, Plus, RefreshCw, Search, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, RefreshCw, Search, X } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
 
 interface PageResponse<T> {
@@ -97,7 +96,6 @@ export default function SalesOrderHistoryPage() {
             <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">Danh sách đơn hàng</h1>
             <p className="mt-2 text-sm text-slate-500">Tra cứu các đơn đã tạo và xem lại giá được lưu tại thời điểm bán.</p>
           </div>
-          <Link href="/owner/orders" className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white hover:bg-slate-800"><Plus className="h-4 w-4" /> Tạo đơn hàng</Link>
         </header>
 
         {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</div>}
@@ -110,7 +108,7 @@ export default function SalesOrderHistoryPage() {
             <button onClick={() => void loadOrders()} className="rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50" title="Tải lại"><RefreshCw className="h-4 w-4" /></button>
           </div>
 
-          {loading ? <div className="flex h-64 items-center justify-center text-sm text-slate-500"><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Đang tải đơn hàng...</div> : !orders?.content.length ? <div className="flex h-64 flex-col items-center justify-center gap-3 text-slate-400"><p className="font-semibold">Chưa có đơn hàng phù hợp</p><Link href="/owner/orders" className="text-sm font-bold text-slate-900 underline">Tạo đơn đầu tiên</Link></div> : (
+          {loading ? <div className="flex h-64 items-center justify-center text-sm text-slate-500"><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Đang tải đơn hàng...</div> : !orders?.content.length ? <div className="flex h-64 flex-col items-center justify-center gap-3 text-slate-400"><p className="font-semibold">Chưa có đơn hàng phù hợp</p></div> : (
             <div className="overflow-x-auto"><table className="min-w-[900px] w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-400"><tr><th className="px-5 py-3">Mã đơn</th><th className="px-5 py-3">Ngày tạo</th><th className="px-5 py-3">Nguồn đơn</th><th className="px-5 py-3">Tổng tiền</th><th className="px-5 py-3">Đã trả</th><th className="px-5 py-3">Còn nợ</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3 text-right">Chi tiết</th></tr></thead><tbody className="divide-y divide-slate-100">{orders.content.map((order) => <tr key={order.id} className="hover:bg-slate-50/70"><td className="px-5 py-4 font-black text-slate-900">{order.orderCode}</td><td className="px-5 py-4 text-slate-500">{formatDateTime(order.createdAt)}</td><td className="px-5 py-4 text-slate-600">{sourceLabel(order.source)}</td><td className="px-5 py-4 font-bold">{formatVnd(order.totalAmount)}</td><td className="px-5 py-4 text-emerald-700">{formatVnd(order.paidAmount)}</td><td className="px-5 py-4 font-semibold text-amber-700">{formatVnd(order.debtAmount)}</td><td className="px-5 py-4"><OrderStatus status={order.status} /></td><td className="px-5 py-4 text-right"><button disabled={detailLoading} onClick={() => void openDetail(order.id)} className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-100" title="Xem chi tiết"><Eye className="h-4 w-4" /></button></td></tr>)}</tbody></table></div>
           )}
 
