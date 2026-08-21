@@ -7,6 +7,10 @@ import com.hbdt.common.service.OtpService;
 import com.hbdt.entity.Subscription;
 import com.hbdt.entity.SubscriptionPlan;
 import com.hbdt.entity.User;
+import com.hbdt.entity.PaymentHistory;
+import com.hbdt.entity.ServiceInvoice;
+import com.hbdt.repository.PaymentHistoryRepository;
+import com.hbdt.repository.ServiceInvoiceRepository;
 import com.hbdt.entity.enums.OtpType;
 import com.hbdt.entity.enums.UserStatus;
 import com.hbdt.owner.dto.*;
@@ -42,19 +46,25 @@ public class OwnerService {
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
     private final ImageStorageService imageStorageService;
+    private final PaymentHistoryRepository paymentHistoryRepository;
+    private final ServiceInvoiceRepository serviceInvoiceRepository;
 
     public OwnerService(UserRepository userRepository,
                         SubscriptionRepository subscriptionRepository,
                         SubscriptionPlanRepository subscriptionPlanRepository,
                         PasswordEncoder passwordEncoder,
                         OtpService otpService,
-                        ImageStorageService imageStorageService) {
+                        ImageStorageService imageStorageService,
+                        PaymentHistoryRepository paymentHistoryRepository,
+                        ServiceInvoiceRepository serviceInvoiceRepository) {
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.subscriptionPlanRepository = subscriptionPlanRepository;
         this.passwordEncoder = passwordEncoder;
         this.otpService = otpService;
         this.imageStorageService = imageStorageService;
+        this.paymentHistoryRepository = paymentHistoryRepository;
+        this.serviceInvoiceRepository = serviceInvoiceRepository;
     }
 
     // =========================================================
@@ -236,6 +246,30 @@ public class OwnerService {
 
         subscription.setEndDate(baseDate.plusMonths(months));
         subscriptionRepository.save(subscription);
+
+        java.math.BigDecimal amount = subscription.getPlan().getMonthlyPrice().multiply(java.math.BigDecimal.valueOf(months));
+
+        PaymentHistory paymentHistory = PaymentHistory.builder()
+                .transactionId(java.util.UUID.randomUUID().toString())
+                .subscriptionId(subscription.getId())
+                .amount(amount)
+                .paymentMethod("BANK_TRANSFER")
+                .paidAt(LocalDateTime.now())
+                .status("COMPLETED")
+                .build();
+        paymentHistoryRepository.save(paymentHistory);
+
+        ServiceInvoice serviceInvoice = ServiceInvoice.builder()
+                .invoiceNo("INV-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                .businessId(user.getBusinessId())
+                .subscriptionId(subscription.getId())
+                .amount(amount)
+                .status("PAID")
+                .dueDate(LocalDateTime.now())
+                .build();
+        serviceInvoiceRepository.save(serviceInvoice);
+
+        logger.info("Subscription renewed: businessId={}, months={}, amount={}", user.getBusinessId(), months, amount);
         return toProfileResponse(user);
     }
 
