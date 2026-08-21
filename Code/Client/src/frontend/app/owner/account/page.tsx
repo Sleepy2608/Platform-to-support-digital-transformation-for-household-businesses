@@ -38,6 +38,16 @@ interface OwnerProfile {
 type Tab = 'profile' | 'business-profile' | 'password' | 'contact' | 'subscription' | 'consent' | 'danger';
 type OtpTarget = 'email' | 'phone' | null;
 
+interface SubscriptionHistory {
+  id: number;
+  subscriptionId: number;
+  oldPlan: string;
+  newPlan: string;
+  action: string;
+  changedBy: string;
+  changedAt: string;
+}
+
 function syncOwnerSummary(data: { fullName?: string; avatarUrl?: string | null }) {
   if (typeof window === 'undefined') return;
   if (data.fullName !== undefined) {
@@ -749,6 +759,27 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  const [histories, setHistories] = useState<SubscriptionHistory[]>([]);
+  const [historiesLoading, setHistoriesLoading] = useState(true);
+  const [historiesError, setHistoriesError] = useState('');
+
+  const loadHistories = useCallback(async () => {
+    setHistoriesLoading(true);
+    try {
+      const data = await apiClient.get<SubscriptionHistory[]>('/api/owner/subscription/history');
+      setHistories(data || []);
+      setHistoriesError('');
+    } catch (err: unknown) {
+      setHistoriesError((err as Error).message || 'Lỗi khi tải lịch sử');
+    } finally {
+      setHistoriesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadHistories();
+  }, [loadHistories]);
+
   const expiresAt = profile?.subscriptionExpiresAt;
   const isActive = expiresAt && new Date(expiresAt) > new Date();
   const packageType = profile?.packageType;
@@ -768,6 +799,7 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
       await apiClient.post<OwnerProfile>(`/api/owner/subscription/renew?months=${months}`);
       setMsg({ type: 'success', text: `Gia hạn dịch vụ thành công thêm ${months} tháng!` });
       onUpdated();
+      loadHistories();
     } catch (err: unknown) {
       setMsg({ type: 'error', text: (err as Error).message });
     } finally {
@@ -837,7 +869,10 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
         <PlanChangeSection
           packageType={packageType}
           isActive={!!isActive}
-          onUpdated={onUpdated}
+          onUpdated={() => {
+            onUpdated();
+            loadHistories();
+          }}
           setMsg={setMsg}
         />
       )}
@@ -871,6 +906,52 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
           {loading ? 'Đang gia hạn...' : `Xác nhận gia hạn ${months} tháng`}
         </button>
+      </div>
+
+      {/* Subscription History */}
+      <div className="pt-6 border-t border-slate-100">
+        <h3 className="text-sm font-bold text-slate-900 mb-4">Lịch sử gói dịch vụ</h3>
+        {historiesLoading ? (
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Loader2 className="w-4 h-4 animate-spin" /> Đang tải lịch sử...
+          </div>
+        ) : historiesError ? (
+          <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm font-medium">
+            {historiesError}
+          </div>
+        ) : histories.length === 0 ? (
+          <div className="p-6 bg-slate-50 border border-slate-100 text-slate-500 rounded-2xl text-sm text-center italic font-medium">
+            Chưa có lịch sử thay đổi gói dịch vụ
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {histories.map((item) => (
+              <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl gap-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      item.action === 'UPGRADE' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                      item.action === 'DOWNGRADE' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                      'bg-blue-100 text-blue-800 border border-blue-200'
+                    }`}>
+                      {item.action}
+                    </span>
+                    <span className="text-xs text-slate-400 font-medium">
+                      {new Date(item.changedAt).toLocaleString('vi-VN')}
+                    </span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-700">
+                    {item.oldPlan === item.newPlan ? item.oldPlan : `${item.oldPlan} → ${item.newPlan}`}
+                  </p>
+                </div>
+                <div className="text-xs text-slate-500 font-medium sm:text-right">
+                  Người thực hiện:<br/>
+                  <span className="text-slate-700 font-bold">{item.changedBy}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
