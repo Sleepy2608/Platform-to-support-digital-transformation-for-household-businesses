@@ -1,6 +1,6 @@
 {
   "table" : "audit_logs",
-  "version" : 9,
+  "version" : 10,
   "rows" : [ {
     "id" : 1,
     "action" : "POST /api/owner/business-profile",
@@ -421,5 +421,125 @@
     "old_data" : null,
     "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
     "user_id" : 3
+  }, {
+    "id" : 36,
+    "action" : "POST /api/admin/accounts",
+    "business_id" : null,
+    "created_at" : "2026-08-16T05:09:52.493543",
+    "entity_id" : null,
+    "entity_type" : "USER",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "user_id" : 1
+  }, {
+    "id" : 37,
+    "action" : "POST /api/owner/business-profile",
+    "business_id" : null,
+    "created_at" : "2026-08-18T09:11:58.795225",
+    "entity_id" : null,
+    "entity_type" : "BUSINESS",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "user_id" : 4
+  }, {
+    "id" : 38,
+    "action" : "POST /api/owner/subscription/select-package",
+    "business_id" : 5,
+    "created_at" : "2026-08-18T09:12:10.946869",
+    "entity_id" : null,
+    "entity_type" : "SUBSCRIPTION",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "user_id" : 4
+  }, {
+    "id" : 39,
+    "action" : "POST /api/owner/employees",
+    "business_id" : 5,
+    "created_at" : "2026-08-18T09:13:01.934111",
+    "entity_id" : null,
+    "entity_type" : "API_REQUEST",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "user_id" : 4
+  }, {
+    "id" : 40,
+    "action" : "POST /api/employee/avatar",
+    "business_id" : 5,
+    "created_at" : "2026-08-18T09:13:34.500486",
+    "entity_id" : null,
+    "entity_type" : "API_REQUEST",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "user_id" : 5
+  }, {
+    "id" : 41,
+    "action" : "POST /api/admin/accounts",
+    "business_id" : null,
+    "created_at" : "2026-08-18T09:32:41.11141",
+    "entity_id" : null,
+    "entity_type" : "USER",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "user_id" : 1
+  }, {
+    "id" : 42,
+    "action" : "PUT /api/manager/business-owners/{id}/status",
+    "business_id" : null,
+    "created_at" : "2026-08-18T09:46:04.692369",
+    "entity_id" : 2,
+    "entity_type" : "API_REQUEST",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "user_id" : 6
+  }, {
+    "id" : 43,
+    "action" : "PUT /api/manager/business-owners/{id}/status",
+    "business_id" : null,
+    "created_at" : "2026-08-18T09:46:18.723272",
+    "entity_id" : 2,
+    "entity_type" : "API_REQUEST",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "user_id" : 6
+  }, {
+    "id" : 44,
+    "action" : "PUT /api/manager/business-owners/{id}/status",
+    "business_id" : null,
+    "created_at" : "2026-08-18T09:46:19.861156",
+    "entity_id" : 4,
+    "entity_type" : "API_REQUEST",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "user_id" : 6
+  }, {
+    "id" : 45,
+    "action" : "PUT /api/manager/business-owners/{id}/status",
+    "business_id" : null,
+    "created_at" : "2026-08-18T09:46:33.536856",
+    "entity_id" : 4,
+    "entity_type" : "API_REQUEST",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "user_id" : 6
   } ]
 }

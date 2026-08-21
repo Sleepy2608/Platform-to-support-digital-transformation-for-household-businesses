@@ -11,7 +11,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AdminCreateRequest {
+public class ManagerCreateRequest {
 
     @NotBlank(message = "Tên đăng nhập không được để trống")
     @Size(min = 4, max = 50, message = "Tên đăng nhập phải từ 4-50 ký tự")

@@ -1,6 +1,6 @@
 {
   "table" : "terms_consents",
-  "version" : 8,
+  "version" : 9,
   "rows" : [ {
     "id" : 1,
     "accepted_at" : "2026-08-09T17:26:49.815945",
@@ -31,7 +31,7 @@
     "user_id" : 4
   }, {
     "id" : 3,
-    "accepted_at" : "2026-08-11T03:34:21.74231",
+    "accepted_at" : "2026-08-18T09:11:27.770095",
     "circular88_accepted" : true,
     "data_processing_accepted" : true,
     "inaccuracy_understood" : true,
@@ -42,7 +42,7 @@
     "terms_accepted" : true,
     "terms_version" : "1.0",
     "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
-    "user_id" : 7
+    "user_id" : 4
   }, {
     "id" : 4,
     "accepted_at" : "2026-08-11T04:12:12.227794",

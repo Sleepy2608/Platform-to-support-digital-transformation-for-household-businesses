@@ -291,7 +291,7 @@ export default function AdminAccountsPage() {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Quản lý Tài khoản Admin</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Quản lý Tài khoản Manager</h1>
           <p className="text-zinc-400 text-sm mt-1">
             Xem danh sách, thêm mới, điều chỉnh quyền lực hoặc vô hiệu hóa các tài khoản quản trị viên.
           </p>
@@ -303,7 +303,7 @@ export default function AdminAccountsPage() {
           }}
           className="bg-white hover:bg-zinc-200 text-zinc-950 font-bold px-5 py-3 rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-lg flex-shrink-0"
         >
-          <UserPlus className="w-4 h-4" /> Thêm Admin
+          <UserPlus className="w-4 h-4" /> Thêm Manager
         </button>
       </div>
 

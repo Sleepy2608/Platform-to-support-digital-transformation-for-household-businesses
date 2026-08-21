@@ -101,6 +101,8 @@ public class User implements UserDetails {
     @Transient
     private LocalDateTime deletedAt;
 
+    // ===== Audit =====
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

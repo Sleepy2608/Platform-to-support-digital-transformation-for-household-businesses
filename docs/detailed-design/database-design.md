@@ -745,7 +745,7 @@ Danh sách file seed (`Code/Server/seed/`, bản plaintext chạy thực tế):
 | File | Bảng | Số record | Ghi chú |
 |---|---|---:|---|
 | `subscription_plans.json` | subscription_plans | 4 | FREE/BASIC/PREMIUM/STANDARD |
-| `roles.json` | roles | 4 | HEAD_ADMIN/ADMIN/BUSINESS_OWNER/EMPLOYEE |
+| `roles.json` | roles | 4 | ADMIN/MANAGER/BUSINESS_OWNER/EMPLOYEE |
 | `users.json` | users | 5 | headadmin + admin + owner + demo |
 | `businesses.json` | businesses | 2 | hộ kinh doanh demo |
 | `subscriptions.json` | subscriptions | 1 | đăng ký gói |
@@ -838,8 +838,8 @@ COMMIT
 
 - Employee: bán hàng và nghiệp vụ được cấp;
 - Owner: quản lý dữ liệu của hộ kinh doanh;
-- Administrator: quản trị vận hành toàn nền tảng (Owner, thuê bao, cấu hình, AI, biểu mẫu);
-- Head Admin: quản trị viên cấp cao nhất, quản lý tài khoản Admin và khởi tạo/seed data hệ thống.
+- Manager: quản trị vận hành toàn nền tảng (Owner, thuê bao, phản hồi, phân tích);
+- Administrator (Admin): quản trị viên cấp cao nhất, quản lý tài khoản Manager, cấu hình hệ thống, AI, seed data.
 
 Backend phải kiểm tra quyền tại service/controller, không chỉ ẩn chức năng trên giao diện.
 

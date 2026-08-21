@@ -13,8 +13,8 @@
 |---|---|
 | Tên tài liệu | Tài liệu đặc tả yêu cầu người dùng – Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | Tên tiếng Anh | User Requirements Document – Platform to Support Digital Transformation for Household Businesses |
-| Mã tài liệu | URD-HKD-v1.1.0 |
-| Phiên bản | 1.1.0 |
+| Mã tài liệu | URD-HKD-v1.2.0 |  
+| Phiên bản | 1.2.0 |
 | Người lập | Nguyễn Ngọc Gia Bảo |
 | Ngày lập ban đầu | 25/07/2026 |
 | Ngày cập nhật | 30/07/2026 |
@@ -26,6 +26,7 @@
 |---|---|---|---|
 | 1.0.0 | 25/07/2026 | Hoàn thiện tài liệu yêu cầu người dùng ban đầu | Nguyễn Ngọc Gia Bảo |
 | 1.1.0 | 30/07/2026 | Làm rõ phạm vi học thuật theo Thông tư 88: triển khai S1-HKD, S2-HKD và S4-HKD; bổ sung yêu cầu về phân loại doanh thu, giá trị nhập–xuất–tồn, nghĩa vụ thuế, nộp thuế và kiểm soát báo cáo | Nguyễn Ngọc Gia Bảo |
+| 1.2.0 | 18/08/2026 | Cập nhật phân quyền RBAC 4 tầng (Admin -> Manager -> Owner -> Employee); phân định rõ phạm vi trách nhiệm giữa Manager (vận hành) và Administrator (hệ thống) | Nguyễn Ngọc Gia Bảo |
 
 ---
 
@@ -47,8 +48,9 @@
 - [3. Yêu cầu chức năng](#3-yêu-cầu-chức-năng)
   - [3.1. Yêu cầu đối với Employee](#31-yêu-cầu-đối-với-employee)
   - [3.2. Yêu cầu đối với Owner](#32-yêu-cầu-đối-với-owner)
-  - [3.3. Chức năng tự động của hệ thống và AI](#33-chức-năng-tự-động-của-hệ-thống-và-ai)
+  - [3.3. Yêu cầu đối với Manager](#33-yêu-cầu-đối-với-manager)
   - [3.4. Yêu cầu đối với Administrator](#34-yêu-cầu-đối-với-administrator)
+  - [3.5. Chức năng tự động của hệ thống và AI](#35-chức-năng-tự-động-của-hệ-thống-và-ai)
 - [4. Yêu cầu phi chức năng](#4-yêu-cầu-phi-chức-năng)
 - [5. Tiêu chí nghiệm thu ở mức người dùng](#5-tiêu-chí-nghiệm-thu-ở-mức-người-dùng)
 
@@ -73,11 +75,12 @@ Các yêu cầu trong tài liệu được sử dụng làm đầu vào cho SRS,
 
 ## 1.2. Phạm vi tài liệu
 
-Tài liệu mô tả yêu cầu của ba nhóm người sử dụng trực tiếp:
+Tài liệu mô tả yêu cầu của bốn nhóm người sử dụng trực tiếp theo phân quyền RBAC 4 tầng:
 
-- Employee;
-- Owner;
-- Administrator.
+- Employee (Nhân viên);
+- Owner (Chủ hộ kinh doanh);
+- Manager (Quản lý vận hành nền tảng);
+- Administrator / Admin (Quản trị viên hệ thống).
 
 Ngoài các thao tác do người dùng thực hiện, tài liệu xác định các chức năng tự động của hệ thống và AI, gồm:
 
@@ -103,9 +106,9 @@ Ngoài các thao tác do người dùng thực hiện, tài liệu xác định 
 |---|---|
 | URD | Tài liệu đặc tả yêu cầu người dùng (User Requirements Document) |
 | Employee | Người trực tiếp xử lý đơn bán hàng và các nghiệp vụ được Owner giao quyền |
-| Owner | Chủ hộ hoặc người quản lý hộ kinh doanh; có toàn bộ chức năng của Employee và các quyền quản lý |
-| Administrator | Người quản trị tài khoản Owner, gói thuê bao, cấu hình và hoạt động của toàn nền tảng |
-| Head Admin | Quản trị viên cấp cao nhất trên toàn nền tảng; có toàn bộ quyền của Administrator và độc quyền khởi tạo dữ liệu (seed data), tạo/xóa/quản lý tài khoản Administrator khác |
+| Owner | Chủ hộ hoặc người quản lý hộ kinh doanh; có toàn bộ chức năng của Employee và các quyền quản lý hộ kinh doanh |
+| Manager | Quản lý vận hành nền tảng (quản lý tài khoản Owner, theo dõi số liệu hoạt động, xử lý phản hồi, theo dõi thuê bao) |
+| Administrator (Admin) | Quản trị viên hệ thống (cấu hình hệ thống, AI, gói thuê bao/bảng giá, biểu mẫu kế toán/thuế, tài khoản Manager, thông báo hệ thống và audit log) |
 | Draft Order | Đơn hàng nháp do hệ thống tạo từ yêu cầu bằng văn bản hoặc giọng nói; phải được người dùng kiểm tra trước khi xác nhận |
 | Trợ lý AI | Thành phần phân tích ngôn ngữ tự nhiên và hỗ trợ tạo Draft Order |
 | POS | Hệ thống bán hàng tại điểm bán (Point of Sale) |
@@ -187,10 +190,10 @@ Hệ thống phải cho phép:
 ### 2.4.1. Tài khoản và phân quyền
 
 - Đăng nhập.
-- Phân quyền Employee, Owner, Administrator và Head Admin.
+- Phân quyền theo 4 tầng RBAC: Employee, Owner, Manager và Administrator (Admin).
 - Owner quản lý tài khoản Employee thuộc hộ kinh doanh của mình.
-- Administrator quản lý tài khoản Owner trên toàn nền tảng.
-- Head Admin quản lý tài khoản Administrator và có quyền khởi tạo/seed dữ liệu hệ thống.
+- Manager quản lý tài khoản Owner, theo dõi số liệu hoạt động và xử lý phản hồi trên nền tảng.
+- Administrator quản lý cấu hình hệ thống, AI, gói thuê bao, biểu mẫu kế toán/thuế, tài khoản Manager và audit log.
 
 ### 2.4.2. Sản phẩm và giá bán
 
@@ -274,8 +277,8 @@ Trong phạm vi hiện tại, “nhật ký thanh toán” bao gồm:
 |---|---|
 | Employee | Đăng nhập, lập đơn, ghi nhận công nợ, in đơn, nhận thông báo và xử lý Draft Order |
 | Owner | Có toàn bộ quyền của Employee; quản lý sản phẩm, kho, khách hàng, công nợ, nghĩa vụ thuế, sổ, báo cáo và tài khoản Employee |
-| Administrator | Quản lý Owner, thuê bao, số liệu nền tảng, phản hồi, cấu hình hệ thống, AI, nhóm hoạt động tính thuế, biểu mẫu và thông báo |
-| Head Admin | Có toàn bộ quyền của Administrator; quản lý (thêm/sửa/xóa/vô hiệu hóa) các tài khoản Administrator và khởi tạo/seed dữ liệu toàn hệ thống |
+| Manager | Quản lý vận hành nền tảng: quản lý tài khoản Owner, theo dõi chỉ số hoạt động, xem/xử lý phản hồi, theo dõi trạng thái gói thuê bao |
+| Administrator (Admin) | Quản trị viên hệ thống: cấu hình hệ thống, tham số AI, bảng giá/gói thuê bao, biểu mẫu kế toán/thuế, quản lý tài khoản Manager, phát thông báo toàn hệ thống, xem nhật ký truy vết (Audit log) |
 
 ---
 
@@ -310,7 +313,27 @@ Owner có toàn bộ chức năng của Employee và các yêu cầu bổ sung s
 | FR-CH-08 | **Quản lý nghĩa vụ thuế và S4-HKD.** Owner xem nghĩa vụ phát sinh, từng lần nộp, số đã nộp và số còn phải nộp hoặc nộp thừa. | Số đã nộp bằng tổng các lần nộp; số còn phải nộp được tính đúng và có thể âm khi nộp thừa. |
 | FR-CH-09 | **Kiểm tra và phê duyệt sổ/báo cáo.** Owner xem, chỉnh sửa dữ liệu được phép chỉnh sửa, xác nhận hoặc từ chối kết quả trước khi sử dụng. | Hệ thống lưu trạng thái, người kiểm tra, thời gian và lý do từ chối khi có. |
 
-## 3.3. Chức năng tự động của hệ thống và AI
+## 3.3. Yêu cầu đối với Manager
+
+| Mã | Tên và nội dung yêu cầu | Tiêu chí chấp nhận |
+|---|---|---|
+| FR-QL-01 | **Quản lý tài khoản Owner.** Manager xem, tìm kiếm, kích hoạt hoặc vô hiệu hóa tài khoản Owner. | Trạng thái tài khoản được cập nhật đúng và có thể tra cứu. |
+| FR-QL-02 | **Theo dõi chỉ số nền tảng.** Manager xem số người dùng hoạt động, số lượng Owner/Employee mới, doanh thu gói đăng ký toàn nền tảng. | Báo cáo và Dashboard hiển thị đúng số liệu thống kê. |
+| FR-QL-03 | **Xử lý phản hồi từ người dùng.** Manager xem danh sách phản hồi từ Owner và Employee, cập nhật trạng thái xử lý phản hồi. | Trạng thái được cập nhật đúng và gửi thông báo phản hồi nếu cần. |
+| FR-QL-04 | **Theo dõi trạng thái gói thuê bao.** Manager theo dõi lịch sử đăng ký, thời gian hết hạn và tình trạng thanh toán thuê bao của các hộ kinh doanh. | Hiển thị đúng danh sách và trạng thái thuê bao của từng Owner. |
+
+## 3.4. Yêu cầu đối với Administrator (Admin)
+
+| Mã | Tên và nội dung yêu cầu | Tiêu chí chấp nhận |
+|---|---|---|
+| FR-AD-01 | **Quản lý tài khoản Manager.** Admin thêm mới, cập nhật thông tin, kích hoạt hoặc vô hiệu hóa tài khoản Manager. | Danh sách Manager được cập nhật chính xác và đúng phân quyền. |
+| FR-AD-02 | **Quản lý gói thuê bao và bảng giá.** Admin định nghĩa gói thuê bao, cập nhật giá tiền theo tháng/năm, và các giới hạn tài nguyên của gói. | Gói thuê bao mới và giá tiền được cập nhật hiển thị chính xác trên toàn hệ thống. |
+| FR-AD-03 | **Quản lý cấu hình hệ thống và AI.** Admin cập nhật cấu hình chung của hệ thống, điều chỉnh tham số mô hình AI. | Cấu hình được áp dụng ngay lập tức và ghi nhận Audit log. |
+| FR-AD-04 | **Quản lý biểu mẫu kế toán và thuế.** Admin quản lý phiên bản biểu mẫu S1-HKD, S2-HKD, S4-HKD và cấu hình tỷ lệ thuế, nhóm hoạt động tính thuế. | Phiên bản biểu mẫu mới được thiết lập thời gian hiệu lực và lưu trữ lịch sử các phiên bản cũ. |
+| FR-AD-05 | **Phát thông báo hệ thống.** Admin gửi thông báo toàn hệ thống hoặc theo nhóm vai trò cụ thể. | Người dùng nhận được thông báo đúng hạn và đúng đối tượng mục tiêu. |
+| FR-AD-06 | **Xem nhật ký hệ thống (Audit log).** Admin xem toàn bộ nhật ký truy vết các thao tác thay đổi cấu hình, vai trò, bảo mật trên nền tảng. | Nhật ký hiển thị đầy đủ thông tin thời gian, tác nhân, hành động và nội dung thay đổi. |
+
+## 3.5. Chức năng tự động của hệ thống và AI
 
 | Mã | Tên và nội dung yêu cầu | Tiêu chí chấp nhận |
 |---|---|---|
@@ -323,20 +346,6 @@ Owner có toàn bộ chức năng của Employee và các yêu cầu bổ sung s
 | FR-HT-07 | **Quản lý phiên bản và lịch sử.** Hệ thống sử dụng đúng phiên bản biểu mẫu và cấu hình có hiệu lực tại thời điểm lập sổ/báo cáo. | Báo cáo cũ giữ nguyên phiên bản đã sử dụng; phiên bản mới chỉ áp dụng từ thời điểm có hiệu lực. |
 | FR-HT-08 | **Thông báo kết quả cần xử lý.** Hệ thống thông báo cho Owner khi có Draft Order, sổ hoặc báo cáo cần kiểm tra. | Owner nhận được thông báo phù hợp và mở được đối tượng cần xử lý. |
 
-## 3.4. Yêu cầu đối với Administrator
-
-| Mã | Tên và nội dung yêu cầu | Tiêu chí chấp nhận |
-|---|---|---|
-| FR-QT-01 | **Quản lý tài khoản Owner.** Administrator xem, tìm kiếm, kích hoạt hoặc vô hiệu hóa tài khoản Owner. | Trạng thái tài khoản được cập nhật đúng và có thể tra cứu. |
-| FR-QT-02 | **Quản lý gói thuê bao.** Administrator định nghĩa và cập nhật giá theo tháng/năm. | Mức giá mới được lưu và hiển thị đúng. |
-| FR-QT-03 | **Theo dõi nền tảng và phản hồi.** Administrator xem số người dùng hoạt động, thuê bao mới, doanh thu nền tảng và phản hồi. | Dashboard và nội dung phản hồi hiển thị đúng dữ liệu. |
-| FR-QT-04 | **Quản lý cấu hình hệ thống và AI.** Administrator cập nhật cấu hình chung và các thiết lập AI. | Cấu hình được lưu, áp dụng và ghi nhận người thay đổi. |
-| FR-QT-05 | **Quản lý nhóm hoạt động và tỷ lệ tính thuế.** Administrator tạo phiên bản mới, thiết lập thời gian hiệu lực và ngừng sử dụng phiên bản cũ. | Không có hai phiên bản đang hoạt động bị chồng thời gian; giao dịch cũ không bị thay đổi. |
-| FR-QT-06 | **Quản lý biểu mẫu S1-HKD, S2-HKD và S4-HKD.** Administrator quản lý cấu trúc, phiên bản và thời gian áp dụng. | Hệ thống sử dụng đúng phiên bản có hiệu lực và giữ được lịch sử phiên bản cũ. |
-| FR-QT-07 | **Phát thông báo hệ thống.** Administrator gửi thông báo toàn nền tảng hoặc theo nhóm người dùng. | Thông báo đến đúng đối tượng và đúng khoảng thời gian cấu hình. |
-| FR-QT-08 | **Quản lý tài khoản Administrator (Độc quyền Head Admin).** Head Admin thêm mới, chỉnh sửa, xóa hoặc vô hiệu hóa tài khoản Administrator khác. | Danh sách Administrator được cập nhật đúng; tài khoản Head Admin mặc định được bảo vệ không thể bị xóa. |
-| FR-QT-09 | **Khởi tạo dữ liệu nền tảng / Seed data (Độc quyền Head Admin).** Head Admin thực hiện kích hoạt seed data ban đầu, snapshot hoặc restore dữ liệu hệ thống. | Dữ liệu khởi tạo chính xác theo cấu hình seed và ghi nhật ký kiểm toán. |
-
 ---
 
 # 4. YÊU CẦU PHI CHỨC NĂNG
@@ -344,7 +353,7 @@ Owner có toàn bộ chức năng của Employee và các yêu cầu bổ sung s
 | Mã | Tên và nội dung yêu cầu | Tiêu chí chấp nhận |
 |---|---|---|
 | NFR-BM-01 | **Bảo vệ dữ liệu hộ kinh doanh.** Đơn hàng, sản phẩm, khách hàng, kho, công nợ, thuế và báo cáo của từng hộ phải được tách biệt. | Người dùng không truy cập được dữ liệu của hộ khác. |
-| NFR-BM-02 | **Phân quyền theo vai trò.** Employee, Owner, Administrator và Head Admin chỉ được thực hiện chức năng thuộc quyền. | Yêu cầu ngoài quyền hạn bị từ chối ở backend. |
+| NFR-BM-02 | **Phân quyền theo vai trò.** Employee, Owner, Manager và Administrator chỉ được thực hiện chức năng thuộc quyền. | Yêu cầu ngoài quyền hạn bị từ chối ở backend. |
 | NFR-BM-03 | **Bảo vệ thông tin xác thực.** Mật khẩu không được lưu ở dạng rõ; thông tin kết nối và khóa bí mật không xuất hiện trong mã nguồn công khai. | Kiểm tra hệ thống không phát hiện mật khẩu rõ hoặc secret bị commit. |
 | NFR-BM-04 | **Truy vết thay đổi.** Thao tác quan trọng phải ghi người thực hiện, thời điểm và nội dung thay đổi. | Audit log có đủ thông tin để truy vết. |
 | NFR-HN-01 | **Thời gian phản hồi.** Các thao tác cốt lõi phải phản hồi dưới 2.000 ms trong môi trường kiểm thử được xác định. | Kết quả đo đạt giới hạn yêu cầu. |
@@ -376,7 +385,7 @@ Owner có toàn bộ chức năng của Employee và các yêu cầu bổ sung s
 | NT-05 | S2-HKD thể hiện đúng đơn vị, đơn giá, số lượng và thành tiền nhập–xuất–tồn; số liệu khớp dữ liệu kho. |
 | NT-06 | S4-HKD thể hiện đúng nghĩa vụ, số đã nộp, số còn phải nộp hoặc nộp thừa theo từng loại thuế. |
 | NT-07 | Owner xem, kiểm tra, xác nhận hoặc từ chối sổ/báo cáo; lịch sử duyệt được lưu. |
-| NT-08 | Administrator và Head Admin quản lý được Owner, thuê bao, cấu hình, nhóm hoạt động tính thuế, biểu mẫu S1/S2/S4, phản hồi và thông báo. Head Admin quản lý bổ sung tài khoản Admin và Seed data. |
+| NT-08 | Manager quản lý Owner, theo dõi chỉ số nền tảng, xử lý phản hồi và theo dõi thuê bao. Administrator quản lý Manager, định nghĩa gói thuê bao/bảng giá, cấu hình hệ thống, AI, biểu mẫu kế toán/thuế, thông báo hệ thống và xem nhật ký truy vết. |
 | NT-09 | Phân quyền và tách biệt dữ liệu bảo đảm người dùng chỉ truy cập đúng hộ kinh doanh và chức năng được cấp. |
 | NT-10 | Các thao tác cốt lõi đáp ứng thời gian phản hồi dưới 2.000 ms trong môi trường kiểm thử. |
 | NT-11 | Giao diện hiển thị tiếng Việt, bảo toàn Unicode và cung cấp thông báo thời gian thực. |
