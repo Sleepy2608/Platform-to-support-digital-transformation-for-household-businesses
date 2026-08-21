@@ -73,7 +73,7 @@ function formatVnd(amount: number): string {
 
 function getToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return sessionStorage.getItem('accessToken');
+  return sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken');
 }
 
 async function fetchPackages(): Promise<PackageInfo[]> {
@@ -82,7 +82,8 @@ async function fetchPackages(): Promise<PackageInfo[]> {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) throw new Error('Cannot fetch packages');
-  const json = await res.json();
+  const text = await res.text();
+  const json = text ? JSON.parse(text) : {};
   return json.data as PackageInfo[];
 }
 
@@ -98,10 +99,20 @@ async function selectPackageApi(packageType: PackageId, billingCycle: BillingCyc
       },
     }
   );
-  const json = await res.json();
+  
+  const text = await res.text();
+  let json: any = {};
+  try {
+    json = text ? JSON.parse(text) : {};
+  } catch (e) {
+    // Avoid throwing JSON parse exception on non-JSON/empty responses
+  }
+
   if (!res.ok) {
-    if (res.status === 403) throw new Error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!');
-    throw new Error(json.message || `Lỗi ${res.status}`);
+    if (res.status === 403 || res.status === 401) {
+      throw new Error('Phiên đăng nhập hết hạn hoặc không có quyền. Vui lòng đăng nhập lại!');
+    }
+    throw new Error(json.message || `Lỗi hệ thống (Mã lỗi: ${res.status})`);
   }
 }
 
@@ -190,10 +201,10 @@ export default function PackageSelectionPage() {
     }
   };
 
-  const transferSyntax = `HKD ${selectedPkg?.id || 'SUB'} ${cycle}`;
-  const bankAccountNo = '0388999888';
-  const bankAccountName = 'HE THONG HKD DIGITAL';
-  const bankName = 'MBBank (Ngan hang Quan doi)';
+  const bankAccountNo = '108871728162';
+  const bankAccountName = 'NGUYEN LE HUY TAM';
+  const bankName = 'VietinBank';
+  const transferSyntax = `${selectedPkg?.id || 'SUB'}-${cycle}`;
 
   const copyToClipboard = (text: string, type: 'acc' | 'syntax') => {
     navigator.clipboard.writeText(text);
@@ -325,7 +336,7 @@ export default function PackageSelectionPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.08, duration: 0.3 }}
               onClick={() => setSelected(pkg.id)}
-              className={`relative rounded-3xl p-6 sm:p-7 flex flex-col justify-between shadow-sm transition-all duration-200 cursor-pointer border-2 select-none h-full min-h-[360px]
+              className={`relative rounded-3xl p-5 flex flex-col justify-between shadow-sm transition-all duration-200 cursor-pointer border-2 select-none h-full min-h-[350px]
                 ${isVip
                   ? isSelected
                     ? 'bg-zinc-950 border-white shadow-2xl scale-[1.02] text-white'
@@ -352,31 +363,31 @@ export default function PackageSelectionPage() {
               <div className="flex flex-col">
                 {/* Header: Icon + Name */}
                 <div className="flex items-start gap-3 mb-3 pr-6">
-                  <div className={`p-2.5 rounded-2xl shrink-0 ${isVip ? 'bg-zinc-800 text-white' : 'bg-slate-100 text-slate-900'}`}>
+                  <div className={`p-2 rounded-2xl shrink-0 ${isVip ? 'bg-zinc-800 text-white' : 'bg-slate-100 text-slate-900'}`}>
                     <PkgIcon className="w-5 h-5" />
                   </div>
-                  <div className="min-w-0">
-                    <h3 className={`text-base sm:text-lg font-bold leading-tight truncate ${isVip ? 'text-white' : 'text-slate-900'}`}>
+                  <div className="min-w-0 flex-1">
+                    <h3 className={`text-base sm:text-lg font-black leading-tight break-words ${isVip ? 'text-white' : 'text-slate-900'}`}>
                       {pkg.name}
                     </h3>
-                    <p className={`text-xs mt-1 line-clamp-2 leading-relaxed ${isVip ? 'text-zinc-400' : 'text-slate-500'}`}>
+                    <p className={`text-xs mt-1 line-clamp-2 leading-snug ${isVip ? 'text-zinc-400' : 'text-slate-500'}`}>
                       {pkg.description || 'Gói dịch vụ dành cho hộ kinh doanh'}
                     </p>
                   </div>
                 </div>
 
                 {/* Price Display */}
-                <div className="my-3 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                <div className="my-3 flex items-baseline gap-1 flex-nowrap whitespace-nowrap">
                   {price === 0 ? (
-                    <span className={`text-2xl sm:text-3xl font-black tracking-tight ${isVip ? 'text-white' : 'text-slate-900'}`}>
+                    <span className={`text-xl sm:text-2xl font-black ${isVip ? 'text-white' : 'text-slate-900'}`}>
                       Miễn phí
                     </span>
                   ) : (
                     <>
-                      <span className={`text-2xl sm:text-3xl font-black tracking-tight shrink-0 ${isVip ? 'text-white' : 'text-slate-900'}`}>
+                      <span className={`text-xl sm:text-2xl font-black tracking-tight shrink-0 ${isVip ? 'text-white' : 'text-slate-900'}`}>
                         {formatVnd(price)}
                       </span>
-                      <span className={`text-xs sm:text-sm font-semibold opacity-75 shrink-0 ${isVip ? 'text-zinc-400' : 'text-slate-500'}`}>
+                      <span className={`text-xs font-semibold opacity-75 shrink-0 ${isVip ? 'text-zinc-400' : 'text-slate-500'}`}>
                         /{cycle === 'YEARLY' ? 'năm' : 'tháng'}
                       </span>
                     </>
@@ -559,7 +570,7 @@ export default function PackageSelectionPage() {
         </button>
       </div>
 
-      {/* ── PAYMENT MODAL (HIỆN KHI GÓI > 0 ĐỒNG) ── */}
+      {/* ── PAYMENT MODAL ── */}
       <AnimatePresence>
         {showPaymentModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
@@ -639,9 +650,19 @@ export default function PackageSelectionPage() {
                       {/* Real QR Image Container */}
                       <div className="bg-white p-2 rounded-2xl inline-block shadow-md border-4 border-slate-800">
                         <img
-                          src="/qr-coded.jpg"
+                          src="/images/qr-code.jpg"
                           alt="Mã QR Chuyển Khoản"
-                          className="w-48 h-48 object-contain rounded-xl"
+                          className="w-76 h-76 object-contain rounded-xl"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (!target.dataset.triedBackup1) {
+                              target.dataset.triedBackup1 = 'true';
+                              target.src = '/qr-coded.jpg';
+                            } else if (!target.dataset.triedBackup2) {
+                              target.dataset.triedBackup2 = 'true';
+                              target.src = '/qr-code.jpg';
+                            }
+                          }}
                         />
                       </div>
 
