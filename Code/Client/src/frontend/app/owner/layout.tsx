@@ -13,7 +13,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
 import { isOwner } from '../lib/roles';
 
-const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash?: string; path?: string }> = [
+function getCleanHash(rawHash?: string): string {
+  if (!rawHash) return 'profile';
+  const clean = rawHash.replace(/^#+/, '').split('#')[0].toLowerCase().trim();
+  if (clean === 'email' || clean === 'phone') return 'contact';
+  if (clean === 'plans' || clean === 'package') return 'subscription';
+  if (clean === 'danger-zone') return 'danger';
+  if (clean === 'business') return 'business-profile';
+  return clean || 'profile';
+}
+
+const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash: string }> = [
   { label: 'Hồ sơ cá nhân', href: '/owner/account#profile', icon: UserCircle, hash: '#profile' },
   { label: 'Đổi mật khẩu', href: '/owner/account#password', icon: Lock, hash: '#password' },
   { label: 'Email & Số điện thoại', href: '/owner/account#contact', icon: Mail, hash: '#contact' },
@@ -80,16 +90,40 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   // Keep track of current URL hash to highlight active nav item
   useEffect(() => {
     const syncHash = () => {
-      setCurrentHash(window.location.hash || '#profile');
+      if (typeof window === 'undefined') return;
+      const clean = getCleanHash(window.location.hash);
+      setCurrentHash(`#${clean}`);
     };
     syncHash();
     window.addEventListener('hashchange', syncHash);
-    const interval = setInterval(syncHash, 250);
+    const handleCustomTab = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) {
+        setCurrentHash(`#${getCleanHash(detail)}`);
+      }
+    };
+    window.addEventListener('owner-tab-change', handleCustomTab);
+
     return () => {
       window.removeEventListener('hashchange', syncHash);
-      clearInterval(interval);
+      window.removeEventListener('owner-tab-change', handleCustomTab);
     };
   }, []);
+
+  const handleNavAccount = (e: React.MouseEvent, href: string, hash: string) => {
+    e.preventDefault();
+    const clean = getCleanHash(hash);
+    setCurrentHash(`#${clean}`);
+    setSidebarOpen(false);
+
+    if (pathname === '/owner/account') {
+      window.history.replaceState(null, '', `/owner/account#${clean}`);
+      window.dispatchEvent(new CustomEvent('owner-tab-change', { detail: clean }));
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    } else {
+      router.push(href);
+    }
+  };
 
   const handleLogout = () => {
     clearAuth();
@@ -238,14 +272,16 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                     {ACCOUNT_NAV_ITEMS.map((item) => {
                       const Icon = item.icon;
                       const isDanger = item.hash === '#danger';
-                      const isActive = pathname === '/owner/account' && currentHash === item.hash;
+                      const cleanCurrent = getCleanHash(currentHash);
+                      const cleanItem = getCleanHash(item.hash);
+                      const isActive = pathname === '/owner/account' && cleanCurrent === cleanItem;
 
                       return (
-                        <Link
+                        <button
                           key={item.hash}
-                          href={item.href}
-                          onClick={() => setSidebarOpen(false)}
-                          className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
+                          type="button"
+                          onClick={(e) => handleNavAccount(e, item.href, item.hash)}
+                          className={`flex items-center justify-between w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer text-left
                             ${isActive
                               ? isDanger
                                 ? 'bg-red-50 text-red-700 border border-red-200/80 shadow-2xs'
@@ -260,7 +296,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                             <span>{item.label}</span>
                           </div>
                           <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
-                        </Link>
+                        </button>
                       );
                     })}
                   </div>
@@ -367,13 +403,16 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
               {ACCOUNT_NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const isDanger = item.hash === '#danger';
-                const isActive = pathname === '/owner/account' && currentHash === item.hash;
+                const cleanCurrent = getCleanHash(currentHash);
+                const cleanItem = getCleanHash(item.hash);
+                const isActive = pathname === '/owner/account' && cleanCurrent === cleanItem;
 
                 return (
-                  <Link
+                  <button
                     key={item.hash}
-                    href={item.href}
-                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
+                    type="button"
+                    onClick={(e) => handleNavAccount(e, item.href, item.hash)}
+                    className={`flex items-center justify-between w-full px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer text-left
                       ${isActive
                         ? isDanger
                           ? 'bg-red-50 text-red-700 border border-red-200/80 shadow-2xs'
@@ -388,7 +427,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                       <span>{item.label}</span>
                     </div>
                     <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
-                  </Link>
+                  </button>
                 );
               })}
             </div>
