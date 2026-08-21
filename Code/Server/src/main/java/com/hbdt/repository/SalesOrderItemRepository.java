@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface SalesOrderItemRepository extends JpaRepository<SalesOrderItem, Long> {
     List<SalesOrderItem> findAllBySalesOrderIdOrderByIdAsc(Long salesOrderId);
+    List<SalesOrderItem> findAllBySalesOrderId(Long salesOrderId);
 }

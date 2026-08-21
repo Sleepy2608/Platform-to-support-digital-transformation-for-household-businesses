@@ -1,6 +1,7 @@
 package com.hbdt.product.service;
 
 import com.hbdt.common.exception.BadRequestException;
+import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.entity.Category;
 import com.hbdt.entity.InventoryBalance;
 import com.hbdt.entity.Product;
@@ -49,13 +50,18 @@ class ProductServiceTest {
     private TaxActivityGroupRepository taxActivityGroupRepository;
     @Mock
     private BusinessContextService businessContextService;
+    @Mock
+    private ProductImageService productImageService;
+    @Mock
+    private ImageStorageService imageStorageService;
 
     private ProductService productService;
 
     @BeforeEach
     void setUp() {
         productService = new ProductService(productRepository, productUnitRepository, categoryRepository, unitRepository,
-                inventoryBalanceRepository, taxActivityGroupRepository, businessContextService);
+                inventoryBalanceRepository, taxActivityGroupRepository, businessContextService,
+                productImageService, imageStorageService);
         when(businessContextService.requireBusinessId("owner")).thenReturn(10L);
     }
 

@@ -13,8 +13,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
 import { isOwner } from '../lib/roles';
 
+function getCleanHash(rawHash?: string): string {
+  if (!rawHash) return 'profile';
+  const clean = rawHash.replace(/^#+/, '').split('#')[0].toLowerCase().trim();
+  if (clean === 'email' || clean === 'phone') return 'contact';
+  if (clean === 'plans' || clean === 'package') return 'subscription';
+  if (clean === 'danger-zone') return 'danger';
+  if (clean === 'business') return 'business-profile';
+  return clean || 'profile';
+}
 
-const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash?: string; path?: string }> = [
+const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash: string }> = [
   { label: 'Hồ sơ cá nhân', href: '/owner/account#profile', icon: UserCircle, hash: '#profile' },
   { label: 'Đổi mật khẩu', href: '/owner/account#password', icon: Lock, hash: '#password' },
   { label: 'Email & Số điện thoại', href: '/owner/account#contact', icon: Mail, hash: '#contact' },
@@ -53,29 +62,31 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   const [currentHash, setCurrentHash] = useState('#profile');
 
   useEffect(() => {
-    const token = getAccessToken();
-    const rolesRaw = getAuthItem('roles');
+    const timer = window.setTimeout(() => {
+      const token = getAccessToken();
+      const rolesRaw = getAuthItem('roles');
 
-    if (!token || !rolesRaw) {
-      router.push('/login');
-      return;
-    }
-
-    try {
-      const roles: string[] = JSON.parse(rolesRaw);
-      // Route Guard: chỉ BUSINESS_OWNER được vào /owner
-      if (!isOwner(roles as never)) {
+      if (!token || !rolesRaw) {
         router.push('/login');
         return;
       }
 
-      setFullName(getAuthItem('fullName') || 'Chủ hộ kinh doanh');
-      setUsername(getAuthItem('username') || '');
-      setAvatarUrl(getAuthItem('avatarUrl') || '');
-      setLoading(false);
-    } catch {
-      router.push('/login');
-    }
+      try {
+        const roles: string[] = JSON.parse(rolesRaw);
+        if (!isOwner(roles as never)) {
+          router.push('/login');
+          return;
+        }
+
+        setFullName(getAuthItem('fullName') || 'Chủ hộ kinh doanh');
+        setUsername(getAuthItem('username') || '');
+        setAvatarUrl(getAuthItem('avatarUrl') || '');
+        setLoading(false);
+      } catch {
+        router.push('/login');
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [router]);
 
   useEffect(() => {
@@ -96,16 +107,40 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   // Keep track of current URL hash to highlight active nav item
   useEffect(() => {
     const syncHash = () => {
-      setCurrentHash(window.location.hash || '#profile');
+      if (typeof window === 'undefined') return;
+      const clean = getCleanHash(window.location.hash);
+      setCurrentHash(`#${clean}`);
     };
     syncHash();
     window.addEventListener('hashchange', syncHash);
-    const interval = setInterval(syncHash, 250);
+    const handleCustomTab = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) {
+        setCurrentHash(`#${getCleanHash(detail)}`);
+      }
+    };
+    window.addEventListener('owner-tab-change', handleCustomTab);
+
     return () => {
       window.removeEventListener('hashchange', syncHash);
-      clearInterval(interval);
+      window.removeEventListener('owner-tab-change', handleCustomTab);
     };
   }, []);
+
+  const handleNavAccount = (e: React.MouseEvent, href: string, hash: string) => {
+    e.preventDefault();
+    const clean = getCleanHash(hash);
+    setCurrentHash(`#${clean}`);
+    setSidebarOpen(false);
+
+    if (pathname === '/owner/account') {
+      window.history.replaceState(null, '', `/owner/account#${clean}`);
+      window.dispatchEvent(new CustomEvent('owner-tab-change', { detail: clean }));
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    } else {
+      router.push(href);
+    }
+  };
 
   const handleLogout = () => {
     clearAuth();
@@ -266,7 +301,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                       <Link
                         key={item.hash}
                         href={item.href}
-                        onClick={() => setSidebarOpen(false)}
+                        onClick={(event) => handleNavAccount(event, item.href, item.hash || '#profile')}
                         className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
                           ${isActive
                             ? isDanger
