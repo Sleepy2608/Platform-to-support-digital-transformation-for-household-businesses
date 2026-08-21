@@ -253,6 +253,12 @@ public class OwnerService {
         User user = findActiveUser(username);
         Subscription subscription = findActiveSubscription(user);
 
+        // Kiểm tra subscription chưa hết hạn
+        LocalDate today = LocalDate.now();
+        if (subscription.getEndDate() == null || !subscription.getEndDate().isAfter(today)) {
+            throw new BadRequestException("Gói dịch vụ đã hết hạn, không thể nâng cấp. Vui lòng gia hạn trước.");
+        }
+
         String currentPlanCode = subscription.getPlan().getPlanCode();
         if ("VIP".equalsIgnoreCase(currentPlanCode)) {
             throw new BadRequestException("Tài khoản đã ở gói VIP, không thể nâng cấp thêm");

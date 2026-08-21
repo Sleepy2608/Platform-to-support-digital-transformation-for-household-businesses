@@ -893,7 +893,7 @@ function PlanChangeSection({
   const isVip = packageType === 'VIP';
   const isStandard = packageType === 'STANDARD';
 
-  const upgradeDisabled = isVip;
+  const upgradeDisabled = isVip || !isActive;
   const downgradeDisabled = !isActive || isStandard;
 
   const handleConfirm = async () => {
@@ -926,7 +926,13 @@ function PlanChangeSection({
             id="btn-upgrade-vip"
             onClick={() => setDialog('upgrade')}
             disabled={upgradeDisabled}
-            title={upgradeDisabled ? 'Bạn đang ở gói VIP, không thể nâng cấp thêm' : 'Nâng cấp lên gói VIP'}
+            title={
+              isVip
+                ? 'Bạn đang ở gói VIP, không thể nâng cấp thêm'
+                : !isActive
+                ? 'Gói đã hết hạn, vui lòng gia hạn trước khi nâng cấp'
+                : 'Nâng cấp lên gói VIP'
+            }
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all
               ${upgradeDisabled
                 ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
@@ -960,12 +966,17 @@ function PlanChangeSection({
           </button>
         </div>
 
-        {upgradeDisabled && isVip && (
+        {isVip && isActive && (
           <p className="text-[11px] text-slate-400 mt-2">✓ Bạn đang dùng gói cao nhất (VIP)</p>
         )}
         {!isActive && isVip && (
           <p className="text-[11px] text-amber-600 mt-2 font-medium">
-            ⚠ Gói đã hết hạn — hãy gia hạn trước khi hạ cấp
+            ⚠ Gói đã hết hạn — hãy gia hạn trước khi thay đổi gói
+          </p>
+        )}
+        {!isActive && isStandard && (
+          <p className="text-[11px] text-amber-600 mt-2 font-medium">
+            ⚠ Gói đã hết hạn — hãy gia hạn trước khi nâng cấp
           </p>
         )}
       </div>
