@@ -227,6 +227,17 @@ public class OwnerController {
     }
 
     /**
+     * GET /api/owner/subscription/history
+     * Lấy lịch sử thay đổi gói dịch vụ
+     */
+    @GetMapping("/subscription/history")
+    public ResponseEntity<ApiResponse<java.util.List<SubscriptionHistoryDto>>> getSubscriptionHistory(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Lịch sử gói dịch vụ", ownerService.getSubscriptionHistory(userDetails.getUsername())));
+    }
+
+    /**
      * POST /api/owner/subscription/select-package?packageType=STANDARD|VIP&billingCycle=MONTHLY|YEARLY
      * Chọn gói dịch vụ lần đầu hoặc đổi gói.
      */

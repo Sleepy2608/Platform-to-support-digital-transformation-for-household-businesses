@@ -9,8 +9,10 @@ import com.hbdt.entity.SubscriptionPlan;
 import com.hbdt.entity.User;
 import com.hbdt.entity.PaymentHistory;
 import com.hbdt.entity.ServiceInvoice;
+import com.hbdt.entity.SubscriptionHistory;
 import com.hbdt.repository.PaymentHistoryRepository;
 import com.hbdt.repository.ServiceInvoiceRepository;
+import com.hbdt.repository.SubscriptionHistoryRepository;
 import com.hbdt.entity.enums.OtpType;
 import com.hbdt.entity.enums.UserStatus;
 import com.hbdt.owner.dto.*;
@@ -48,6 +50,7 @@ public class OwnerService {
     private final ImageStorageService imageStorageService;
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final ServiceInvoiceRepository serviceInvoiceRepository;
+    private final SubscriptionHistoryRepository subscriptionHistoryRepository;
 
     public OwnerService(UserRepository userRepository,
                         SubscriptionRepository subscriptionRepository,
@@ -56,7 +59,8 @@ public class OwnerService {
                         OtpService otpService,
                         ImageStorageService imageStorageService,
                         PaymentHistoryRepository paymentHistoryRepository,
-                        ServiceInvoiceRepository serviceInvoiceRepository) {
+                        ServiceInvoiceRepository serviceInvoiceRepository,
+                        SubscriptionHistoryRepository subscriptionHistoryRepository) {
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.subscriptionPlanRepository = subscriptionPlanRepository;
@@ -65,6 +69,7 @@ public class OwnerService {
         this.imageStorageService = imageStorageService;
         this.paymentHistoryRepository = paymentHistoryRepository;
         this.serviceInvoiceRepository = serviceInvoiceRepository;
+        this.subscriptionHistoryRepository = subscriptionHistoryRepository;
     }
 
     // =========================================================
@@ -269,6 +274,16 @@ public class OwnerService {
                 .build();
         serviceInvoiceRepository.save(serviceInvoice);
 
+        SubscriptionHistory history = SubscriptionHistory.builder()
+                .subscriptionId(subscription.getId())
+                .oldPlan(subscription.getPlan().getPlanCode())
+                .newPlan(subscription.getPlan().getPlanCode())
+                .action("RENEWAL")
+                .changedBy(username)
+                .changedAt(LocalDateTime.now())
+                .build();
+        subscriptionHistoryRepository.save(history);
+
         logger.info("Subscription renewed: businessId={}, months={}, amount={}", user.getBusinessId(), months, amount);
         return toProfileResponse(user);
     }
@@ -304,6 +319,16 @@ public class OwnerService {
         SubscriptionPlan vipPlan = findActivePlan("VIP");
         subscription.setPlan(vipPlan);
         subscriptionRepository.save(subscription);
+
+        SubscriptionHistory history = SubscriptionHistory.builder()
+                .subscriptionId(subscription.getId())
+                .oldPlan(currentPlanCode)
+                .newPlan(vipPlan.getPlanCode())
+                .action("UPGRADE")
+                .changedBy(username)
+                .changedAt(LocalDateTime.now())
+                .build();
+        subscriptionHistoryRepository.save(history);
 
         logger.info("Subscription upgraded: businessId={} STANDARD -> VIP", user.getBusinessId());
         return toProfileResponse(user);
@@ -343,8 +368,36 @@ public class OwnerService {
         // Giữ nguyên endDate và billingCycle — không xóa dữ liệu cũ
         subscriptionRepository.save(subscription);
 
+        SubscriptionHistory history = SubscriptionHistory.builder()
+                .subscriptionId(subscription.getId())
+                .oldPlan(currentPlanCode)
+                .newPlan(standardPlan.getPlanCode())
+                .action("DOWNGRADE")
+                .changedBy(username)
+                .changedAt(LocalDateTime.now())
+                .build();
+        subscriptionHistoryRepository.save(history);
+
         logger.info("Subscription downgraded: businessId={} VIP -> STANDARD", user.getBusinessId());
         return toProfileResponse(user);
+    }
+
+    public List<SubscriptionHistoryDto> getSubscriptionHistory(String username) {
+        User user = findActiveUser(username);
+        Subscription subscription = findActiveSubscription(user);
+        
+        return subscriptionHistoryRepository.findAllBySubscriptionIdOrderByChangedAtDesc(subscription.getId())
+                .stream()
+                .map(h -> SubscriptionHistoryDto.builder()
+                        .id(h.getId())
+                        .subscriptionId(h.getSubscriptionId())
+                        .oldPlan(h.getOldPlan())
+                        .newPlan(h.getNewPlan())
+                        .action(h.getAction())
+                        .changedBy(h.getChangedBy())
+                        .changedAt(h.getChangedAt())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     public OwnerProfileResponse selectPackage(String username, String packageType, String billingCycle) {
