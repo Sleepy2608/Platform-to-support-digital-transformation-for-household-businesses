@@ -3,8 +3,8 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle, Archive, Boxes, Check, ChevronDown, ChevronLeft, ChevronRight,
-  CircleDollarSign, FileImage, FolderTree, History, Image as ImageIcon, Link,
-  Loader2, Pencil, Plus, RefreshCw, Ruler, Search, ShoppingBag, ShoppingCart,
+  CircleDollarSign, FolderTree, History, Image as ImageIcon, Link,
+  Loader2, Pencil, Plus, RefreshCw, Ruler, Search, ShoppingCart,
   Trash2, Upload, X,
 } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
@@ -96,7 +96,7 @@ interface SalesOrderResponse {
 
 const EMPTY_CATEGORY = { categoryCode: '', categoryName: '', description: '', status: 'ACTIVE' as Status };
 const EMPTY_PRODUCT = {
-  productCode: '', productName: '', categoryId: '', baseUnitId: '', quantityOnHand: '0', defaultTaxActivityGroupId: '',
+  productCode: '', productName: '', categoryId: '', quantityOnHand: '0', defaultTaxActivityGroupId: '',
   imageUrl: '', description: '', status: 'ACTIVE' as Status,
 };
 
@@ -217,7 +217,6 @@ export default function ProductManagementPage() {
       productCode: product.productCode,
       productName: product.productName,
       categoryId: product.categoryId ? String(product.categoryId) : '',
-      baseUnitId: String(product.baseUnitId),
       quantityOnHand: String(product.quantityOnHand ?? 0),
       defaultTaxActivityGroupId: product.defaultTaxActivityGroupId ? String(product.defaultTaxActivityGroupId) : '',
       imageUrl: product.imageUrl || '',
@@ -302,7 +301,6 @@ export default function ProductManagementPage() {
     const payload = {
       ...productForm,
       categoryId: productForm.categoryId ? Number(productForm.categoryId) : null,
-      baseUnitId: productForm.baseUnitId ? Number(productForm.baseUnitId) : null,
       quantityOnHand: Number(productForm.quantityOnHand),
       defaultTaxActivityGroupId: productForm.defaultTaxActivityGroupId
         ? Number(productForm.defaultTaxActivityGroupId) : null,
@@ -585,30 +583,31 @@ export default function ProductManagementPage() {
         return total + parseQuantity(candidate.quantity) * Number(candidateUnit?.conversionRate || 0);
       }, 0);
     const remainingBaseQuantity = Math.max(0, Number(item.quantityOnHand || 0) - usedByOtherLines);
-    return remainingBaseQuantity / selectedRate;
+    return Math.max(0, Math.floor((remainingBaseQuantity / selectedRate) + Number.EPSILON));
   };
 
   const changeCartQuantity = (key: number, quantity: string) => {
-    if (!/^\d*(?:[.,]\d{0,3})?$/.test(quantity)) return;
+    const normalizedQuantity = normalizeIntegerQuantityInput(quantity);
+    if (normalizedQuantity === null) return;
     const item = cartItems.find((candidate) => candidate.key === key);
     if (!item) return;
     const maximum = maximumCartQuantity(item, item.unitId);
-    if (parseQuantity(quantity) > maximum + 0.000001) {
+    if (parseQuantity(normalizedQuantity) > maximum) {
       const unitName = item.units.find((unit) => unit.unitId === item.unitId)?.unitName || 'đơn vị';
       patchCartItem(key, {
         stockWarning: `Chỉ còn tối đa ${formatQuantity(maximum)} ${unitName} trong kho`,
       });
       return;
     }
-    patchCartItem(key, { quantity, resolving: true, resolved: undefined, error: undefined, stockWarning: undefined });
-    scheduleCartResolve(key, item.productId, item.unitId, quantity);
+    patchCartItem(key, { quantity: normalizedQuantity, resolving: true, resolved: undefined, error: undefined, stockWarning: undefined });
+    scheduleCartResolve(key, item.productId, item.unitId, normalizedQuantity);
   };
 
   const addProductToCart = async (product: Product) => {
     if (product.status !== 'ACTIVE') return;
     setError('');
-    if (Number(product.quantityOnHand || 0) <= 0) {
-      setError(`Sản phẩm ${product.productName} đã hết hàng`);
+    if (Math.floor(Number(product.quantityOnHand || 0)) < 1) {
+      setError(`Sản phẩm ${product.productName} không còn đủ 1 đơn vị trong kho`);
       return;
     }
     setCartOpen(true);
@@ -617,9 +616,7 @@ export default function ProductManagementPage() {
       (item) => item.productId === product.id && item.unitId === product.baseUnitId,
     );
     if (existingBaseItem) {
-      const nextQuantity = String(
-        Math.round((parseQuantity(existingBaseItem.quantity) + 1) * 1000) / 1000,
-      );
+      const nextQuantity = String(Math.round(parseQuantity(existingBaseItem.quantity)) + 1);
       changeCartQuantity(existingBaseItem.key, nextQuantity);
       return;
     }
@@ -816,8 +813,7 @@ export default function ProductManagementPage() {
             <FormField label="Mã sản phẩm"><input required maxLength={50} value={productForm.productCode} onChange={(e) => setProductForm({ ...productForm, productCode: e.target.value })} className="form-input" /></FormField>
             <FormField label="Tên sản phẩm"><input required maxLength={255} value={productForm.productName} onChange={(e) => setProductForm({ ...productForm, productName: e.target.value })} className="form-input" /></FormField>
             <FormField label="Danh mục"><SelectControl value={productForm.categoryId} onChange={(value) => setProductForm({ ...productForm, categoryId: value })}><option value="">Chưa phân loại</option>{categories.filter((c) => c.status === 'ACTIVE').map((c) => <option key={c.id} value={c.id}>{c.categoryName}</option>)}</SelectControl></FormField>
-            <FormField label="Đơn vị tính chuẩn" hint={editingProduct ? 'Không thể đổi sau khi đã tạo sản phẩm' : 'Tồn kho sẽ được lưu theo đơn vị này'}><SelectControl value={productForm.baseUnitId} onChange={(value) => setProductForm({ ...productForm, baseUnitId: value })}><option value="">Chọn đơn vị tính</option>{units.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}</SelectControl></FormField>
-            <FormField label="Số lượng ban đầu" hint="Cho phép tối đa 3 chữ số thập phân"><div className="relative"><input required min="0" step="0.001" inputMode="decimal" type="number" value={productForm.quantityOnHand} onChange={(e) => setProductForm({ ...productForm, quantityOnHand: e.target.value })} className="form-input pr-24" /><span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-slate-400">{units.find((unit) => String(unit.id) === productForm.baseUnitId)?.name || editingProduct?.baseUnitName || 'đơn vị'}</span></div></FormField>
+            <FormField label={editingProduct ? 'Số lượng tồn kho' : 'Số lượng ban đầu'} hint="Chỉ nhập số nguyên, tối đa 15 chữ số"><div className="relative"><input required inputMode="numeric" type="text" pattern="\d+" maxLength={15} value={productForm.quantityOnHand} onChange={(e) => { if (/^\d{0,15}$/.test(e.target.value)) setProductForm({ ...productForm, quantityOnHand: e.target.value }); }} className="form-input pr-24" /><span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-slate-400">{editingProduct?.baseUnitName || 'Sản phẩm'}</span></div></FormField>
             <FormField label="Nhóm hoạt động tính thuế"><SelectControl value={productForm.defaultTaxActivityGroupId} onChange={(value) => setProductForm({ ...productForm, defaultTaxActivityGroupId: value })}><option value="">Không chọn</option>{taxGroups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</SelectControl></FormField>
             <FormField label="Trạng thái"><StatusSelect value={productForm.status} onChange={(value) => setProductForm({ ...productForm, status: value })} /></FormField>
 
@@ -1194,7 +1190,7 @@ function formatDateTime(value: string) {
 
 function parseQuantity(value: string) {
   const parsed = Number(value.replace(',', '.'));
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : 0;
 }
 
 function formatQuantity(value: number) {
@@ -1202,5 +1198,16 @@ function formatQuantity(value: number) {
 }
 
 function formatQuantityInput(value: number) {
-  return String(Math.floor(Math.max(0, value) * 1000) / 1000);
+  return String(Math.floor(Math.max(0, value)));
+}
+
+function normalizeIntegerQuantityInput(value: string): string | null {
+  const normalized = value.trim().replace(',', '.');
+  if (!normalized) return '';
+  if (!/^\d+(?:\.\d*)?$/.test(normalized)) return null;
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  const rounded = Math.round(parsed);
+  if (rounded > 999_999_999_999_999) return null;
+  return String(rounded);
 }

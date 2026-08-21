@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -121,5 +122,22 @@ class SalesOrderServiceTest {
         assertThat(response.items().get(1).quantity()).isEqualByComparingTo("10");
         assertThat(response.items().get(0).productPriceId()).isEqualTo(40L);
         assertThat(response.items().get(0).pricingRuleName()).isEqualTo("Giá bán");
+    }
+
+    @Test
+    void createRejectsFractionalQuantityBeforeMergingLines() {
+        when(businessContextService.requireBusinessId("owner")).thenReturn(5L);
+        when(userRepository.findByUsername("owner")).thenReturn(Optional.of(User.builder().id(7L).build()));
+
+        CreateSalesOrderRequest request = new CreateSalesOrderRequest(
+                "SO-002", null, "POS", BigDecimal.ZERO, null,
+                List.of(new CreateSalesOrderItemRequest(
+                        10L, 2L, new BigDecimal("19.001"), null
+                ))
+        );
+
+        assertThatThrownBy(() -> service.create("owner", request))
+                .isInstanceOf(com.hbdt.common.exception.BadRequestException.class)
+                .hasMessage("Số lượng đặt hàng phải là số nguyên");
     }
 }

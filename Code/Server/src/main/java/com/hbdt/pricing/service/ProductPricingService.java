@@ -37,6 +37,7 @@ public class ProductPricingService {
     private static final String INACTIVE = "INACTIVE";
     private static final int MONEY_SCALE = 2;
     private static final int QUANTITY_SCALE = 3;
+    private static final BigDecimal MAX_ORDER_QUANTITY = new BigDecimal("999999999999999");
     private static final BigDecimal ONE_UNIT = new BigDecimal("1.000");
 
     private final ProductRepository productRepository;
@@ -185,7 +186,7 @@ public class ProductPricingService {
 
         Unit unit = requireUnit(selectedUnit.getUnitId());
         BigDecimal lineTotal = request.quantity().multiply(unitPrice)
-                .setScale(MONEY_SCALE, RoundingMode.HALF_UP);
+                .setScale(0, RoundingMode.HALF_UP);
         return new ResolvedPriceResponse(
                 product.getId(), selectedUnit.getId(), selectedUnit.getUnitId(), unit.getUnitName(),
                 request.quantity(), rate, baseQuantity, unitPrice, lineTotal,
@@ -356,6 +357,12 @@ public class ProductPricingService {
     private void validateOrderQuantity(BigDecimal quantity) {
         if (quantity == null || quantity.signum() <= 0) {
             throw new BadRequestException("Số lượng đặt hàng phải lớn hơn 0");
+        }
+        if (quantity.stripTrailingZeros().scale() > 0) {
+            throw new BadRequestException("Số lượng đặt hàng phải là số nguyên");
+        }
+        if (quantity.compareTo(MAX_ORDER_QUANTITY) > 0) {
+            throw new BadRequestException("Số lượng đặt hàng không được vượt quá 15 chữ số");
         }
     }
 }

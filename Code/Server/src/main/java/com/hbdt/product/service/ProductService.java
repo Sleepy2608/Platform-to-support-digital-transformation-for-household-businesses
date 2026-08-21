@@ -32,7 +32,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -43,6 +42,7 @@ public class ProductService {
     private static final String INACTIVE = "INACTIVE";
     private static final String DEFAULT_UNIT_CODE = "SAN_PHAM";
     private static final String DEFAULT_UNIT_NAME = "Sản phẩm";
+    private static final BigDecimal MAX_PRODUCT_QUANTITY = new BigDecimal("999999999999999");
     private static final Set<String> SORTABLE_FIELDS = Set.of("productCode", "productName", "status", "createdAt", "updatedAt");
 
     private final ProductRepository productRepository;
@@ -136,7 +136,7 @@ public class ProductService {
             throw new BadRequestException("Đơn giá sản phẩm không được âm");
         }
         validateUnique(businessId, code, name, null);
-        Long baseUnitId = resolveBaseUnitId(request.baseUnitId());
+        Long baseUnitId = activateOrCreateDefaultUnit().getId();
         validateReferences(businessId, request.categoryId(), baseUnitId, request.defaultTaxActivityGroupId());
 
         Product saved = productRepository.save(Product.builder()
@@ -162,10 +162,7 @@ public class ProductService {
         Product product = findOwned(id, businessId);
         String code = cleanRequired(request.productCode());
         String name = cleanRequired(request.productName());
-        Long baseUnitId = request.baseUnitId() == null ? product.getBaseUnitId() : request.baseUnitId();
-        if (!Objects.equals(product.getBaseUnitId(), baseUnitId)) {
-            throw new BadRequestException("Không thể thay đổi đơn vị chuẩn sau khi tạo sản phẩm");
-        }
+        Long baseUnitId = product.getBaseUnitId();
         validateUnique(businessId, code, name, id);
         validateReferences(businessId, request.categoryId(), baseUnitId, request.defaultTaxActivityGroupId());
 
@@ -273,20 +270,12 @@ public class ProductService {
         );
     }
 
-    private Long resolveBaseUnitId(Long requestedUnitId) {
-        if (requestedUnitId != null) {
-            return requestedUnitId;
-        }
-
-        return unitRepository.findAllByStatusOrderByUnitNameAsc(ACTIVE).stream()
-                .findFirst()
-                .orElseGet(this::activateOrCreateDefaultUnit)
-                .getId();
-    }
-
     private Unit activateOrCreateDefaultUnit() {
         return unitRepository.findFirstByUnitCodeIgnoreCase(DEFAULT_UNIT_CODE)
                 .map(unit -> {
+                    if (ACTIVE.equals(unit.getStatus())) {
+                        return unit;
+                    }
                     unit.setStatus(ACTIVE);
                     return unitRepository.save(unit);
                 })
@@ -331,10 +320,13 @@ public class ProductService {
             throw new BadRequestException("Số lượng sản phẩm không được âm");
         }
         BigDecimal stripped = normalized.stripTrailingZeros();
-        if (stripped.scale() > 3) {
-            throw new BadRequestException("Số lượng chỉ được có tối đa 3 chữ số thập phân");
+        if (stripped.scale() > 0) {
+            throw new BadRequestException("Số lượng sản phẩm phải là số nguyên");
         }
-        return stripped.scale() < 0 ? stripped.setScale(0) : stripped;
+        if (normalized.compareTo(MAX_PRODUCT_QUANTITY) > 0) {
+            throw new BadRequestException("Số lượng sản phẩm không được vượt quá 15 chữ số");
+        }
+        return stripped.setScale(0);
     }
 
     private String normalizeStatusFilter(String status) {

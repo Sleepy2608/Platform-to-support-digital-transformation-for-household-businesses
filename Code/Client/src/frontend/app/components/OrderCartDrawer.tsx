@@ -84,15 +84,16 @@ export function OrderCartDrawer({
   const [successMessage, setSuccessMessage] = useState('');
 
   const totalAmount = useMemo(
-    () => items.reduce((sum, item) => sum + Number(item.resolved?.lineTotal || 0), 0),
+    () => Math.round(items.reduce((sum, item) => sum + Number(item.resolved?.lineTotal || 0), 0)),
     [items],
   );
   const totalQuantity = useMemo(
     () => items.reduce((sum, item) => sum + parseQuantity(item.quantity), 0),
     [items],
   );
-  const paid = Number(paidAmount.replace(',', '.'));
-  const debtAmount = Math.max(0, totalAmount - (Number.isFinite(paid) ? paid : 0));
+  const parsedPaid = Number(paidAmount);
+  const paid = Number.isFinite(parsedPaid) ? Math.round(parsedPaid) : Number.NaN;
+  const debtAmount = Math.max(0, Math.round(totalAmount - (Number.isFinite(paid) ? paid : 0)));
   const hasInvalidItem = items.some((item) => !item.resolved || item.resolving || Boolean(item.error));
 
   const handleCheckout = async (event: React.FormEvent) => {
@@ -198,7 +199,7 @@ export function OrderCartDrawer({
                       const stockInSelectedUnit = selectedUnit && selectedUnit.conversionRate > 0
                         ? Number(item.quantityOnHand || 0) / Number(selectedUnit.conversionRate)
                         : Number(item.quantityOnHand || 0);
-                      const reachedStockLimit = parseQuantity(item.quantity) >= stockInSelectedUnit;
+                      const reachedStockLimit = parseQuantity(item.quantity) >= Math.floor(stockInSelectedUnit);
                       return (
                         <article key={item.key} className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
                           <div className="flex items-start gap-3">
@@ -233,7 +234,7 @@ export function OrderCartDrawer({
                                   <span className="mb-1 block text-[10px] font-bold uppercase text-slate-400">Số lượng</span>
                                   <div className="flex rounded-lg border border-slate-200 bg-white">
                                     <button type="button" onClick={() => onChangeQuantity(item.key, steppedQuantity(item.quantity, -1))} className="px-2 text-slate-500 hover:bg-slate-100" aria-label="Giảm số lượng"><Minus className="h-3.5 w-3.5" /></button>
-                                    <input value={item.quantity} onChange={(event) => onChangeQuantity(item.key, event.target.value)} inputMode="decimal" className="min-w-0 flex-1 bg-transparent px-1 py-2 text-center text-xs font-bold outline-none" />
+                                    <input value={item.quantity} onChange={(event) => onChangeQuantity(item.key, event.target.value)} inputMode="numeric" type="text" pattern="\d*" className="min-w-0 flex-1 bg-transparent px-1 py-2 text-center text-xs font-bold outline-none" />
                                     <button type="button" disabled={reachedStockLimit} onClick={() => onChangeQuantity(item.key, steppedQuantity(item.quantity, 1))} className="px-2 text-slate-500 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30" aria-label="Tăng số lượng"><Plus className="h-3.5 w-3.5" /></button>
                                   </div>
                                 </label>
@@ -278,7 +279,7 @@ export function OrderCartDrawer({
                   </label>
                   <label>
                     <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Khách đã trả</span>
-                    <input value={paidAmount} onChange={(event) => { if (/^\d*(?:[.,]\d{0,2})?$/.test(event.target.value)) setPaidAmount(event.target.value); }} inputMode="decimal" className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-slate-500" />
+                    <input value={paidAmount} onChange={(event) => { if (/^\d*$/.test(event.target.value)) setPaidAmount(event.target.value); }} inputMode="numeric" type="text" pattern="\d*" className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-slate-500" />
                   </label>
                   <label>
                     <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Ghi chú</span>
@@ -308,12 +309,12 @@ export function OrderCartDrawer({
 
 function parseQuantity(value: string) {
   const parsed = Number(value.replace(',', '.'));
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : 0;
 }
 
 function steppedQuantity(value: string, direction: -1 | 1) {
   const current = parseQuantity(value) || 1;
-  return String(Math.max(0.001, Math.round((current + direction) * 1000) / 1000));
+  return String(Math.max(1, Math.round(current) + direction));
 }
 
 function formatVnd(value: number) {

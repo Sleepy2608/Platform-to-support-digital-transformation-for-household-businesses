@@ -2,6 +2,7 @@ package com.hbdt.product.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -18,8 +19,6 @@ public record ProductRequest(
 
         Long categoryId,
 
-        Long baseUnitId,
-
         Long defaultTaxActivityGroupId,
 
         @DecimalMin(value = "0.0", inclusive = true, message = "Đơn giá không được âm")
@@ -34,19 +33,19 @@ public record ProductRequest(
         String status,
 
         @DecimalMin(value = "0.0", inclusive = true, message = "Số lượng sản phẩm không được âm")
+        @Digits(integer = 15, fraction = 0, message = "Số lượng sản phẩm phải là số nguyên và không vượt quá 15 chữ số")
         BigDecimal quantityOnHand
 ) {
     public ProductRequest(
             String productCode,
             String productName,
             Long categoryId,
-            Long baseUnitId,
             Long defaultTaxActivityGroupId,
             String imageUrl,
             String description,
             String status,
             BigDecimal quantityOnHand
     ) {
-        this(productCode, productName, categoryId, baseUnitId, defaultTaxActivityGroupId, BigDecimal.ZERO, imageUrl, description, status, quantityOnHand);
+        this(productCode, productName, categoryId, defaultTaxActivityGroupId, BigDecimal.ZERO, imageUrl, description, status, quantityOnHand);
     }
 }

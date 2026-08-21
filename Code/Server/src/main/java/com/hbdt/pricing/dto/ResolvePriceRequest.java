@@ -10,8 +10,8 @@ public record ResolvePriceRequest(
         @NotNull(message = "Sản phẩm không được để trống") Long productId,
         @NotNull(message = "Đơn vị tính không được để trống") Long unitId,
         @NotNull(message = "Số lượng không được để trống")
-        @DecimalMin(value = "0.001", message = "Số lượng phải lớn hơn 0")
-        @Digits(integer = 15, fraction = 3, message = "Số lượng không hợp lệ")
+        @DecimalMin(value = "1", message = "Số lượng phải lớn hơn hoặc bằng 1")
+        @Digits(integer = 15, fraction = 0, message = "Số lượng phải là số nguyên")
         BigDecimal quantity
 ) {
 }

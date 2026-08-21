@@ -151,6 +151,17 @@ class ProductPricingServiceTest {
     }
 
     @Test
+    void resolveRejectsFractionalOrderQuantity() {
+        mockOwnedProduct();
+
+        assertThatThrownBy(() -> service.resolve(
+                "owner", new ResolvePriceRequest(10L, 2L, new BigDecimal("19.001"))
+        ))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Số lượng đặt hàng phải là số nguyên");
+    }
+
+    @Test
     void updateCreatesNewVersionAndClosesOldPrice() {
         mockOwnedProduct();
         ProductUnit baseUnit = productUnit(20L, 1L, "1");

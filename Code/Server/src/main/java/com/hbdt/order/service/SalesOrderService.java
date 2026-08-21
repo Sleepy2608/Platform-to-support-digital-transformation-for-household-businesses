@@ -37,6 +37,8 @@ import java.util.Map;
 @Service
 public class SalesOrderService {
 
+    private static final BigDecimal MAX_ORDER_QUANTITY = new BigDecimal("999999999999999");
+
     private final SalesOrderRepository salesOrderRepository;
     private final SalesOrderItemRepository salesOrderItemRepository;
     private final ProductPricingService productPricingService;
@@ -91,10 +93,10 @@ public class SalesOrderService {
         BigDecimal totalAmount = pricedItems.stream()
                 .map(SalesOrderItem::getLineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(2, RoundingMode.HALF_UP);
+                .setScale(0, RoundingMode.HALF_UP);
         BigDecimal paidAmount = request.paidAmount() == null
-                ? BigDecimal.ZERO.setScale(2)
-                : request.paidAmount().setScale(2, RoundingMode.HALF_UP);
+                ? BigDecimal.ZERO
+                : request.paidAmount().setScale(0, RoundingMode.HALF_UP);
         if (paidAmount.compareTo(totalAmount) > 0) {
             throw new BadRequestException("Số tiền đã trả không được lớn hơn tổng tiền đơn hàng");
         }
@@ -160,6 +162,7 @@ public class SalesOrderService {
     private List<CreateSalesOrderItemRequest> mergeDuplicateLines(List<CreateSalesOrderItemRequest> items) {
         Map<String, CreateSalesOrderItemRequest> merged = new LinkedHashMap<>();
         for (CreateSalesOrderItemRequest item : items) {
+            validateIntegerQuantity(item.quantity());
             String key = item.productId() + ":" + item.unitId();
             merged.merge(key, item, (current, duplicate) -> new CreateSalesOrderItemRequest(
                     current.productId(),
@@ -171,6 +174,18 @@ public class SalesOrderService {
             ));
         }
         return List.copyOf(merged.values());
+    }
+
+    private void validateIntegerQuantity(BigDecimal quantity) {
+        if (quantity == null || quantity.signum() <= 0) {
+            throw new BadRequestException("Số lượng đặt hàng phải lớn hơn 0");
+        }
+        if (quantity.stripTrailingZeros().scale() > 0) {
+            throw new BadRequestException("Số lượng đặt hàng phải là số nguyên");
+        }
+        if (quantity.compareTo(MAX_ORDER_QUANTITY) > 0) {
+            throw new BadRequestException("Số lượng đặt hàng không được vượt quá 15 chữ số");
+        }
     }
 
     private SalesOrderResponse toResponse(SalesOrder order, List<SalesOrderItem> items) {
