@@ -240,6 +240,34 @@ public class OwnerController {
                 "Đã chọn gói " + packageType + " (" + billingCycle + ") thành công!", profile));
     }
 
+    /**
+     * POST /api/owner/subscription/upgrade?targetPlan=VIP
+     * Nâng cấp gói từ STANDARD lên VIP.
+     * Business rules: chỉ cho phép STANDARD → VIP; nếu đã VIP thì reject.
+     */
+    @PostMapping("/subscription/upgrade")
+    public ResponseEntity<ApiResponse<OwnerProfileResponse>> upgradeSubscription(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = "VIP") String targetPlan) {
+        OwnerProfileResponse profile = ownerService.upgradeSubscription(userDetails.getUsername(), targetPlan);
+        return ResponseEntity.ok(ApiResponse.success(
+                "Nâng cấp lên gói VIP thành công!", profile));
+    }
+
+    /**
+     * POST /api/owner/subscription/downgrade?targetPlan=STANDARD
+     * Hạ cấp gói từ VIP xuống STANDARD.
+     * Business rules: chỉ cho phép VIP → STANDARD; nếu hết hạn thì reject; không xóa dữ liệu cũ.
+     */
+    @PostMapping("/subscription/downgrade")
+    public ResponseEntity<ApiResponse<OwnerProfileResponse>> downgradeSubscription(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(defaultValue = "STANDARD") String targetPlan) {
+        OwnerProfileResponse profile = ownerService.downgradeSubscription(userDetails.getUsername(), targetPlan);
+        return ResponseEntity.ok(ApiResponse.success(
+                "Hạ cấp về gói Standard thành công!", profile));
+    }
+
     // =========================================================
     // Business Profile
     // =========================================================

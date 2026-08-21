@@ -239,6 +239,74 @@ public class OwnerService {
         return toProfileResponse(user);
     }
 
+    /**
+     * POST /api/owner/subscription/upgrade?targetPlan=VIP
+     * Business rules:
+     *   - Chỉ cho phép STANDARD → VIP
+     *   - Nếu đã VIP thì reject
+     *   - Cập nhật plan sang VIP, giữ nguyên billingCycle và endDate (không reset thời hạn)
+     */
+    public OwnerProfileResponse upgradeSubscription(String username, String targetPlan) {
+        if (!"VIP".equalsIgnoreCase(targetPlan)) {
+            throw new BadRequestException("Upgrade chỉ hỗ trợ nâng lên gói VIP");
+        }
+        User user = findActiveUser(username);
+        Subscription subscription = findActiveSubscription(user);
+
+        String currentPlanCode = subscription.getPlan().getPlanCode();
+        if ("VIP".equalsIgnoreCase(currentPlanCode)) {
+            throw new BadRequestException("Tài khoản đã ở gói VIP, không thể nâng cấp thêm");
+        }
+        if (!"STANDARD".equalsIgnoreCase(currentPlanCode)) {
+            throw new BadRequestException("Chỉ có thể nâng cấp từ gói STANDARD lên VIP");
+        }
+
+        SubscriptionPlan vipPlan = findActivePlan("VIP");
+        subscription.setPlan(vipPlan);
+        subscriptionRepository.save(subscription);
+
+        logger.info("Subscription upgraded: businessId={} STANDARD -> VIP", user.getBusinessId());
+        return toProfileResponse(user);
+    }
+
+    /**
+     * POST /api/owner/subscription/downgrade?targetPlan=STANDARD
+     * Business rules:
+     *   - Chỉ cho phép VIP → STANDARD
+     *   - Nếu subscription đã hết hạn thì reject
+     *   - Cập nhật plan sang STANDARD, giữ nguyên billingCycle và endDate
+     *   - Không xóa bất kỳ dữ liệu cũ nào
+     */
+    public OwnerProfileResponse downgradeSubscription(String username, String targetPlan) {
+        if (!"STANDARD".equalsIgnoreCase(targetPlan)) {
+            throw new BadRequestException("Downgrade chỉ hỗ trợ hạ về gói STANDARD");
+        }
+        User user = findActiveUser(username);
+        Subscription subscription = findActiveSubscription(user);
+
+        // Kiểm tra subscription chưa hết hạn
+        LocalDate today = LocalDate.now();
+        if (subscription.getEndDate() == null || !subscription.getEndDate().isAfter(today)) {
+            throw new BadRequestException("Gói dịch vụ đã hết hạn, không thể thực hiện downgrade. Vui lòng gia hạn trước.");
+        }
+
+        String currentPlanCode = subscription.getPlan().getPlanCode();
+        if ("STANDARD".equalsIgnoreCase(currentPlanCode)) {
+            throw new BadRequestException("Tài khoản đã ở gói Standard, không thể hạ cấp thêm");
+        }
+        if (!"VIP".equalsIgnoreCase(currentPlanCode)) {
+            throw new BadRequestException("Chỉ có thể hạ cấp từ gói VIP xuống STANDARD");
+        }
+
+        SubscriptionPlan standardPlan = findActivePlan("STANDARD");
+        subscription.setPlan(standardPlan);
+        // Giữ nguyên endDate và billingCycle — không xóa dữ liệu cũ
+        subscriptionRepository.save(subscription);
+
+        logger.info("Subscription downgraded: businessId={} VIP -> STANDARD", user.getBusinessId());
+        return toProfileResponse(user);
+    }
+
     public OwnerProfileResponse selectPackage(String username, String packageType, String billingCycle) {
         if (packageType == null || packageType.isBlank()) {
             throw new BadRequestException("Mã gói thuê bao không được để trống");
