@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle, ShieldCheck, Zap, Crown, Loader2, AlertCircle,
@@ -114,11 +114,24 @@ async function selectPackageApi(packageType: PackageId, billingCycle: BillingCyc
     }
     throw new Error(json.message || `Lỗi hệ thống (Mã lỗi: ${res.status})`);
   }
+
+  // Đánh dấu hoàn tất Onboarding khi chọn gói thành công
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('onboardingCompleted', 'true');
+  }
 }
 
-// ─── Page Component ───────────────────────────────────────────────────────────
-export default function PackageSelectionPage() {
+// ─── Content Component ────────────────────────────────────────────────────────
+function PackageSelectionContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromParam = searchParams.get('from');
+
+  // Kiểm tra xem người dùng đang trong luồng Đăng ký mới (chưa xong tài khoản) hay Đã đăng nhập tài khoản trước đó
+  const isRegistrationFlow =
+    fromParam !== 'account' &&
+    fromParam !== 'dashboard' &&
+    (typeof window !== 'undefined' && sessionStorage.getItem('isRegisteringOnboarding') === 'true');
 
   // State
   const [packages, setPackages] = useState<PackageInfo[]>(FALLBACK_PACKAGES);
@@ -155,6 +168,16 @@ export default function PackageSelectionPage() {
   const savingMonths = 2; // YEARLY = 10 tháng giá, tặng 2 tháng
 
   const canSubmit = selected !== null && agreed && !submitting;
+
+  const handleBack = () => {
+    if (isRegistrationFlow) {
+      // Đang trong quá trình đăng ký mới -> Quay lại mục số 2 hồ sơ doanh nghiệp để chỉnh sửa
+      router.push('/onboarding/business-profile');
+    } else {
+      // Đã đăng nhập trước đó -> Quay về Dashboard của tài khoản hiện tại
+      router.push('/owner/account');
+    }
+  };
 
   const handleActivate = async () => {
     if (!selected || !selectedPkg) return;
@@ -522,7 +545,7 @@ export default function PackageSelectionPage() {
         {/* Back */}
         <button
           type="button"
-          onClick={() => router.push('/onboarding/business-profile')}
+          onClick={handleBack}
           className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 text-sm font-bold rounded-xl hover:bg-slate-50 hover:border-slate-400 active:scale-95 transition-all cursor-pointer shadow-xs"
         >
           <ArrowLeft className="w-4 h-4" /> Quay lại
@@ -570,7 +593,7 @@ export default function PackageSelectionPage() {
         </button>
       </div>
 
-      {/* ── PAYMENT MODAL ── */}
+      {/* ── PAYMENT MODAL (HIỆN KHI GÓI > 0 ĐỒNG) ── */}
       <AnimatePresence>
         {showPaymentModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
@@ -759,5 +782,20 @@ export default function PackageSelectionPage() {
       </AnimatePresence>
 
     </div>
+  );
+}
+
+// ─── Exported Main Page ───────────────────────────────────────────────────────
+export default function PackageSelectionPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+        </div>
+      }
+    >
+      <PackageSelectionContent />
+    </Suspense>
   );
 }
