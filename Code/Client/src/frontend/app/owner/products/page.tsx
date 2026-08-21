@@ -2,8 +2,10 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Archive, Boxes, ChevronDown, ChevronLeft, ChevronRight, CircleDollarSign, FolderTree,
-  History, Pencil, Plus, RefreshCw, Ruler, Search, ShoppingBag, ShoppingCart, X,
+  AlertCircle, Archive, Boxes, Check, ChevronDown, ChevronLeft, ChevronRight,
+  CircleDollarSign, FileImage, FolderTree, History, Image as ImageIcon, Link,
+  Loader2, Pencil, Plus, RefreshCw, Ruler, Search, ShoppingBag, ShoppingCart,
+  Trash2, Upload, X,
 } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
 import {
@@ -15,6 +17,14 @@ import {
 } from '@/app/components/OrderCartDrawer';
 
 type Status = 'ACTIVE' | 'INACTIVE';
+
+interface ProductImageResponse {
+  id: number;
+  productId: number;
+  imageUrl: string;
+  isPrimary: boolean;
+  createdAt: string;
+}
 
 interface PageResponse<T> {
   content: T[];
@@ -127,6 +137,14 @@ export default function ProductManagementPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
 
+  // Image Upload State
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [imageInputTab, setImageInputTab] = useState<'upload' | 'url'>('upload');
+  const [isDragging, setIsDragging] = useState(false);
+  const [imageError, setImageError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const cartQuantity = useMemo(
     () => cartItems.reduce((sum, item) => sum + parseQuantity(item.quantity), 0),
     [cartItems],
@@ -206,7 +224,53 @@ export default function ProductManagementPage() {
       description: product.description || '',
       status: product.status,
     } : EMPTY_PRODUCT);
+    setSelectedImageFile(null);
+    setImagePreview(product?.imageUrl || '');
+    setImageInputTab(product?.imageUrl ? 'url' : 'upload');
+    setImageError('');
+    setIsDragging(false);
     setProductModal(true);
+  };
+
+  const handleImageFileSelected = (file: File | null) => {
+    if (!file) return;
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+      setImageError('Chỉ hỗ trợ tệp ảnh định dạng PNG, JPG, JPEG, WEBP hoặc GIF');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError('Dung lượng tệp ảnh không được vượt quá 5MB');
+      return;
+    }
+
+    setImageError('');
+    setSelectedImageFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setImagePreview(objectUrl);
+    setProductForm((prev) => ({ ...prev, imageUrl: '' }));
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImageFile(null);
+    setImagePreview('');
+    setProductForm((prev) => ({ ...prev, imageUrl: '' }));
+    setImageError('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleUrlChange = (url: string) => {
+    setImageError('');
+    setSelectedImageFile(null);
+    setProductForm((prev) => ({ ...prev, imageUrl: url }));
+    setImagePreview(url.trim());
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const saveCategory = async (event: FormEvent) => {
@@ -233,6 +297,8 @@ export default function ProductManagementPage() {
     event.preventDefault();
     setSaving(true);
     setError('');
+    setImageError('');
+
     const payload = {
       ...productForm,
       categoryId: productForm.categoryId ? Number(productForm.categoryId) : null,
@@ -240,15 +306,37 @@ export default function ProductManagementPage() {
       quantityOnHand: Number(productForm.quantityOnHand),
       defaultTaxActivityGroupId: productForm.defaultTaxActivityGroupId
         ? Number(productForm.defaultTaxActivityGroupId) : null,
+      imageUrl: selectedImageFile ? '' : productForm.imageUrl.trim(),
     };
+
     try {
+      let savedProduct: Product;
       if (editingProduct) {
-        await apiClient.put(`/api/products/${editingProduct.id}`, payload);
+        savedProduct = await apiClient.put<Product>(`/api/products/${editingProduct.id}`, payload);
       } else {
-        await apiClient.post('/api/products', payload);
+        savedProduct = await apiClient.post<Product>('/api/products', payload);
       }
+
+      // If user selected a local image file to upload
+      if (selectedImageFile && savedProduct?.id) {
+        const formData = new FormData();
+        formData.append('files', selectedImageFile);
+        const uploadedImages = await apiClient.upload<ProductImageResponse[]>(
+          `/api/products/${savedProduct.id}/images`,
+          formData,
+        );
+        if (uploadedImages && uploadedImages.length > 0) {
+          const firstImg = uploadedImages[0];
+          if (!firstImg.isPrimary) {
+            await apiClient.put(`/api/products/${savedProduct.id}/images/${firstImg.id}/primary`);
+          }
+        }
+      }
+
       setProductModal(false);
-      showNotice(editingProduct ? 'Đã cập nhật sản phẩm' : 'Đã tạo sản phẩm');
+      setSelectedImageFile(null);
+      setImagePreview('');
+      showNotice(editingProduct ? 'Đã cập nhật sản phẩm' : 'Đã tạo sản phẩm thành công');
       await reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể lưu sản phẩm');
@@ -635,16 +723,29 @@ export default function ProductManagementPage() {
       <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">HBDT-25</p>
             <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">Sản phẩm & Danh mục</h1>
             <p className="mt-2 text-sm text-slate-500">Quản lý danh mục hàng hóa riêng của hộ kinh doanh.</p>
           </div>
-          <button
-            onClick={() => tab === 'products' ? openProduct() : openCategory()}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-slate-800"
-          >
-            <Plus className="h-4 w-4" /> Thêm {tab === 'products' ? 'sản phẩm' : 'danh mục'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setCartOpen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 shadow-xs hover:bg-slate-50 hover:border-slate-300 transition"
+              title="Xem đơn hàng đang tạo"
+            >
+              <ShoppingCart className="h-4 w-4 text-emerald-600" />
+              <span>Đơn hàng</span>
+              <span className="inline-flex items-center justify-center min-w-5 h-5 rounded-full bg-emerald-600 px-1.5 text-center text-xs font-bold text-white">
+                {formatQuantity(cartQuantity)}
+              </span>
+            </button>
+            <button
+              onClick={() => tab === 'products' ? openProduct() : openCategory()}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-slate-800 transition"
+            >
+              <Plus className="h-4 w-4" /> Thêm {tab === 'products' ? 'sản phẩm' : 'danh mục'}
+            </button>
+          </div>
         </header>
 
         {(error || notice) && (
@@ -719,9 +820,193 @@ export default function ProductManagementPage() {
             <FormField label="Số lượng ban đầu" hint="Cho phép tối đa 3 chữ số thập phân"><div className="relative"><input required min="0" step="0.001" inputMode="decimal" type="number" value={productForm.quantityOnHand} onChange={(e) => setProductForm({ ...productForm, quantityOnHand: e.target.value })} className="form-input pr-24" /><span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-sm font-semibold text-slate-400">{units.find((unit) => String(unit.id) === productForm.baseUnitId)?.name || editingProduct?.baseUnitName || 'đơn vị'}</span></div></FormField>
             <FormField label="Nhóm hoạt động tính thuế"><SelectControl value={productForm.defaultTaxActivityGroupId} onChange={(value) => setProductForm({ ...productForm, defaultTaxActivityGroupId: value })}><option value="">Không chọn</option>{taxGroups.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</SelectControl></FormField>
             <FormField label="Trạng thái"><StatusSelect value={productForm.status} onChange={(value) => setProductForm({ ...productForm, status: value })} /></FormField>
-            <div className="sm:col-span-2"><FormField label="Đường dẫn ảnh"><input maxLength={500} type="url" value={productForm.imageUrl} onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })} className="form-input" /></FormField></div>
+
+            {/* PRODUCT IMAGE SECTION */}
+            <div className="sm:col-span-2 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="block text-xs font-bold uppercase tracking-wide text-slate-500">
+                  Hình ảnh sản phẩm
+                </span>
+                {/* Switcher Tab */}
+                <div className="flex items-center rounded-lg bg-slate-100 p-0.5 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setImageInputTab('upload')}
+                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 transition ${
+                      imageInputTab === 'upload'
+                        ? 'bg-white text-slate-900 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    Tải tệp ảnh
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageInputTab('url')}
+                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 transition ${
+                      imageInputTab === 'url'
+                        ? 'bg-white text-slate-900 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Link className="h-3.5 w-3.5" />
+                    Dán URL ảnh
+                  </button>
+                </div>
+              </div>
+
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                onChange={(e) => handleImageFileSelected(e.target.files?.[0] || null)}
+                className="hidden"
+              />
+
+              {imageError && (
+                <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{imageError}</span>
+                </div>
+              )}
+
+              {imagePreview ? (
+                /* PREVIEW CARD */
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 transition">
+                  <div className="relative group">
+                    <img
+                      src={imagePreview}
+                      alt="Xem trước ảnh sản phẩm"
+                      className="h-28 w-28 rounded-xl border border-slate-200 bg-white object-cover shadow-xs"
+                      onError={() => {
+                        setImageError('Không thể tải hình ảnh từ đường dẫn này. Vui lòng kiểm tra lại URL.');
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full bg-rose-600 text-white shadow-md hover:bg-rose-700 hover:scale-110 active:scale-95 transition-transform"
+                      title="Xóa ảnh này"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="flex-1 space-y-1.5 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200/60">
+                        <Check className="h-3 w-3" />
+                        {selectedImageFile ? 'Tệp ảnh sẵn sàng tải lên' : 'Đường dẫn ảnh trực tuyến'}
+                      </span>
+                    </div>
+                    {selectedImageFile ? (
+                      <p className="text-xs text-slate-700 font-medium truncate">
+                        {selectedImageFile.name} ({(selectedImageFile.size / 1024).toFixed(1)} KB)
+                      </p>
+                    ) : (
+                      <p className="text-xs text-slate-500 font-mono truncate">
+                        {imagePreview}
+                      </p>
+                    )}
+                    <p className="text-xs text-slate-400">
+                      Hình ảnh sẽ hiển thị làm ảnh đại diện trên danh mục và hóa đơn bán hàng.
+                    </p>
+
+                    <div className="pt-1 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (imageInputTab === 'upload') {
+                            fileInputRef.current?.click();
+                          } else {
+                            setImageInputTab('upload');
+                            fileInputRef.current?.click();
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                      >
+                        <Upload className="h-3.5 w-3.5 text-slate-500" />
+                        Đổi ảnh khác
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRemoveImage}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Gỡ ảnh
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : imageInputTab === 'upload' ? (
+                /* DRAG & DROP ZONE */
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) handleImageFileSelected(file);
+                  }}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`group relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center cursor-pointer transition-all ${
+                    isDragging
+                      ? 'border-slate-950 bg-slate-100 scale-[0.99]'
+                      : 'border-slate-300 hover:border-slate-400 bg-slate-50/50 hover:bg-slate-50'
+                  }`}
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white border border-slate-200 shadow-2xs group-hover:scale-105 transition-transform">
+                    <ImageIcon className="h-6 w-6 text-slate-500 group-hover:text-slate-900 transition-colors" />
+                  </div>
+                  <p className="mt-3 text-xs sm:text-sm font-bold text-slate-800">
+                    Kéo & thả ảnh vào đây, hoặc <span className="text-slate-950 underline underline-offset-2">chọn tệp từ máy tính</span>
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    PNG, JPG, JPEG, WEBP hoặc GIF (Dung lượng tối đa 5MB)
+                  </p>
+                </div>
+              ) : (
+                /* URL INPUT */
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Link className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      maxLength={500}
+                      type="url"
+                      placeholder="https://example.com/hinh-anh-san-pham.jpg"
+                      value={productForm.imageUrl}
+                      onChange={(e) => handleUrlChange(e.target.value)}
+                      className="form-input pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Dán đường dẫn trực tiếp đến ảnh sản phẩm (bắt đầu bằng https:// hoặc http://).
+                  </p>
+                </div>
+              )}
+            </div>
+
             <div className="sm:col-span-2"><FormField label="Mô tả"><textarea rows={3} value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} className="form-input" /></FormField></div>
-            <div className="sm:col-span-2"><SubmitButton saving={saving} /></div>
+            <div className="sm:col-span-2">
+              <button
+                disabled={saving}
+                type="submit"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white hover:bg-slate-800 disabled:opacity-50 transition"
+              >
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                {saving ? 'Đang lưu sản phẩm & ảnh...' : 'Lưu thay đổi'}
+              </button>
+            </div>
           </form>
         </Modal>
       )}
@@ -782,17 +1067,6 @@ export default function ProductManagementPage() {
         </Modal>
       )}
 
-      <button
-        type="button"
-        onClick={() => setCartOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-bold text-slate-900 shadow-xl transition hover:-translate-y-0.5 hover:shadow-2xl"
-      >
-        <ShoppingBag className="h-5 w-5 text-emerald-600" />
-        <span>Đơn hàng</span>
-        <span className="min-w-7 rounded-full bg-emerald-600 px-2 py-1 text-center text-xs text-white">
-          {formatQuantity(cartQuantity)}
-        </span>
-      </button>
 
       <OrderCartDrawer
         isOpen={cartOpen}
@@ -814,7 +1088,60 @@ function TabButton({ active, onClick, icon, label }: { active: boolean; onClick:
 
 function ProductTable({ items, onAddToOrder, onEdit, onUnits, onPrices, onDeactivate }: { items: Product[]; onAddToOrder: (item: Product) => void; onEdit: (item: Product) => void; onUnits: (item: Product) => void; onPrices: (item: Product) => void; onDeactivate: (id: number) => void }) {
   if (!items.length) return <EmptyState label="Chưa có sản phẩm phù hợp" />;
-  return <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-400"><tr><th className="px-5 py-3">Sản phẩm</th><th className="px-5 py-3">Danh mục</th><th className="px-5 py-3">Số lượng</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3 text-right">Thao tác</th></tr></thead><tbody className="divide-y divide-slate-100">{items.map((item) => <tr key={item.id} className="hover:bg-slate-50/70"><td className="px-5 py-4"><p className="font-bold text-slate-900">{item.productName}</p><p className="text-xs text-slate-400">{item.productCode}</p></td><td className="px-5 py-4 text-slate-600">{item.categoryName || 'Chưa phân loại'}</td><td className="px-5 py-4 font-semibold text-slate-700">{Number(item.quantityOnHand || 0).toLocaleString('vi-VN')} {item.baseUnitName || 'đơn vị'}</td><td className="px-5 py-4"><StatusBadge status={item.status} /></td><td className="px-5 py-4"><div className="flex justify-end gap-2"><button disabled={item.status !== 'ACTIVE'} onClick={() => onAddToOrder(item)} className="rounded-lg border border-slate-200 p-2 text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30" title="Thêm vào đơn hàng"><ShoppingCart className="h-4 w-4" /></button><button onClick={() => onPrices(item)} className="rounded-lg border border-slate-200 p-2 text-emerald-600 hover:bg-emerald-50" title="Quản lý giá bán"><CircleDollarSign className="h-4 w-4" /></button><button onClick={() => onUnits(item)} className="rounded-lg border border-slate-200 p-2 text-indigo-600 hover:bg-indigo-50" title="Quản lý đơn vị tính"><Ruler className="h-4 w-4" /></button><RowActions inactive={item.status === 'INACTIVE'} onEdit={() => onEdit(item)} onDeactivate={() => onDeactivate(item.id)} /></div></td></tr>)}</tbody></table></div>;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left text-sm">
+        <thead className="bg-slate-50 text-xs uppercase text-slate-400">
+          <tr>
+            <th className="px-5 py-3">Sản phẩm</th>
+            <th className="px-5 py-3">Danh mục</th>
+            <th className="px-5 py-3">Số lượng</th>
+            <th className="px-5 py-3">Trạng thái</th>
+            <th className="px-5 py-3 text-right">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {items.map((item) => (
+            <tr key={item.id} className="hover:bg-slate-50/70">
+              <td className="px-5 py-4">
+                <div className="flex items-center gap-3">
+                  {item.imageUrl ? (
+                    <img
+                      src={item.imageUrl}
+                      alt={item.productName}
+                      className="h-10 w-10 rounded-xl object-cover border border-slate-200 bg-white flex-shrink-0 shadow-2xs"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 border border-slate-200 text-slate-400 flex-shrink-0">
+                      <Boxes className="h-5 w-5" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-bold text-slate-900">{item.productName}</p>
+                    <p className="text-xs text-slate-400 font-mono">{item.productCode}</p>
+                  </div>
+                </div>
+              </td>
+              <td className="px-5 py-4 text-slate-600">{item.categoryName || 'Chưa phân loại'}</td>
+              <td className="px-5 py-4 font-semibold text-slate-700">{Number(item.quantityOnHand || 0).toLocaleString('vi-VN')} {item.baseUnitName || 'đơn vị'}</td>
+              <td className="px-5 py-4"><StatusBadge status={item.status} /></td>
+              <td className="px-5 py-4">
+                <div className="flex justify-end gap-2">
+                  <button disabled={item.status !== 'ACTIVE'} onClick={() => onAddToOrder(item)} className="rounded-lg border border-slate-200 p-2 text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30" title="Thêm vào đơn hàng"><ShoppingCart className="h-4 w-4" /></button>
+                  <button onClick={() => onPrices(item)} className="rounded-lg border border-slate-200 p-2 text-emerald-600 hover:bg-emerald-50" title="Quản lý giá bán"><CircleDollarSign className="h-4 w-4" /></button>
+                  <button onClick={() => onUnits(item)} className="rounded-lg border border-slate-200 p-2 text-indigo-600 hover:bg-indigo-50" title="Quản lý đơn vị tính"><Ruler className="h-4 w-4" /></button>
+                  <RowActions inactive={item.status === 'INACTIVE'} onEdit={() => onEdit(item)} onDeactivate={() => onDeactivate(item.id)} />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
 function CategoryTable({ items, onEdit, onDeactivate }: { items: Category[]; onEdit: (item: Category) => void; onDeactivate: (id: number) => void }) {
