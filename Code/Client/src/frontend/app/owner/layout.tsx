@@ -6,15 +6,24 @@ import Link from 'next/link';
 import {
   Store, UserCircle, Lock, Mail, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
-  Shield, Users, PackageOpen,
+  Shield, Users, PackageOpen, ReceiptText, ListOrdered,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
 import { isOwner } from '../lib/roles';
 
+function getCleanHash(rawHash?: string): string {
+  if (!rawHash) return 'profile';
+  const clean = rawHash.replace(/^#+/, '').split('#')[0].toLowerCase().trim();
+  if (clean === 'email' || clean === 'phone') return 'contact';
+  if (clean === 'plans' || clean === 'package') return 'subscription';
+  if (clean === 'danger-zone') return 'danger';
+  if (clean === 'business') return 'business-profile';
+  return clean || 'profile';
+}
 
-const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash?: string; path?: string }> = [
+const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash: string }> = [
   { label: 'Hồ sơ cá nhân', href: '/owner/account#profile', icon: UserCircle, hash: '#profile' },
   { label: 'Đổi mật khẩu', href: '/owner/account#password', icon: Lock, hash: '#password' },
   { label: 'Email & Số điện thoại', href: '/owner/account#contact', icon: Mail, hash: '#contact' },
@@ -22,8 +31,23 @@ const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; 
   { label: 'Vùng nguy hiểm', href: '/owner/account#danger', icon: AlertTriangle, hash: '#danger' },
 ];
 
-const MANAGE_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; path: string }> = [
+const MANAGE_NAV_ITEMS: Array<{
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  path: string;
+  children?: Array<{ label: string; href: string; icon: LucideIcon }>;
+}> = [
   { label: 'Sản phẩm & Danh mục', href: '/owner/products', icon: PackageOpen, path: '/owner/products' },
+  {
+    label: 'Đơn hàng',
+    href: '/owner/orders/history',
+    icon: ReceiptText,
+    path: '/owner/orders',
+    children: [
+      { label: 'Danh sách đơn hàng', href: '/owner/orders/history', icon: ListOrdered },
+    ],
+  },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
 ];
 
@@ -38,29 +62,31 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   const [currentHash, setCurrentHash] = useState('#profile');
 
   useEffect(() => {
-    const token = getAccessToken();
-    const rolesRaw = getAuthItem('roles');
+    const timer = window.setTimeout(() => {
+      const token = getAccessToken();
+      const rolesRaw = getAuthItem('roles');
 
-    if (!token || !rolesRaw) {
-      router.push('/login');
-      return;
-    }
-
-    try {
-      const roles: string[] = JSON.parse(rolesRaw);
-      // Route Guard: chỉ BUSINESS_OWNER được vào /owner
-      if (!isOwner(roles as never)) {
+      if (!token || !rolesRaw) {
         router.push('/login');
         return;
       }
 
-      setFullName(getAuthItem('fullName') || 'Chủ hộ kinh doanh');
-      setUsername(getAuthItem('username') || '');
-      setAvatarUrl(getAuthItem('avatarUrl') || '');
-      setLoading(false);
-    } catch {
-      router.push('/login');
-    }
+      try {
+        const roles: string[] = JSON.parse(rolesRaw);
+        if (!isOwner(roles as never)) {
+          router.push('/login');
+          return;
+        }
+
+        setFullName(getAuthItem('fullName') || 'Chủ hộ kinh doanh');
+        setUsername(getAuthItem('username') || '');
+        setAvatarUrl(getAuthItem('avatarUrl') || '');
+        setLoading(false);
+      } catch {
+        router.push('/login');
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [router]);
 
   useEffect(() => {
@@ -81,16 +107,40 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   // Keep track of current URL hash to highlight active nav item
   useEffect(() => {
     const syncHash = () => {
-      setCurrentHash(window.location.hash || '#profile');
+      if (typeof window === 'undefined') return;
+      const clean = getCleanHash(window.location.hash);
+      setCurrentHash(`#${clean}`);
     };
     syncHash();
     window.addEventListener('hashchange', syncHash);
-    const interval = setInterval(syncHash, 250);
+    const handleCustomTab = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) {
+        setCurrentHash(`#${getCleanHash(detail)}`);
+      }
+    };
+    window.addEventListener('owner-tab-change', handleCustomTab);
+
     return () => {
       window.removeEventListener('hashchange', syncHash);
-      clearInterval(interval);
+      window.removeEventListener('owner-tab-change', handleCustomTab);
     };
   }, []);
+
+  const handleNavAccount = (e: React.MouseEvent, href: string, hash: string) => {
+    e.preventDefault();
+    const clean = getCleanHash(hash);
+    setCurrentHash(`#${clean}`);
+    setSidebarOpen(false);
+
+    if (pathname === '/owner/account') {
+      window.history.replaceState(null, '', `/owner/account#${clean}`);
+      window.dispatchEvent(new CustomEvent('owner-tab-change', { detail: clean }));
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    } else {
+      router.push(href);
+    }
+  };
 
   const handleLogout = () => {
     clearAuth();
@@ -192,22 +242,47 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                     const Icon = item.icon;
                     const isActive = pathname.startsWith(item.path);
                     return (
-                      <Link
-                        key={item.path}
-                        href={item.href}
-                        onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
-                          ${isActive
-                            ? 'bg-slate-900 text-white shadow-sm'
-                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                          }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                          <span>{item.label}</span>
-                        </div>
-                        <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
-                      </Link>
+                      <div key={item.path}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setSidebarOpen(false)}
+                          className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
+                            ${isActive
+                              ? 'bg-slate-900 text-white shadow-sm'
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                            }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                            <span>{item.label}</span>
+                          </div>
+                          <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'rotate-90' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
+                        </Link>
+
+                        {isActive && item.children && (
+                          <div className="ml-5 mt-1 border-l border-slate-200 pl-3">
+                            {item.children.map((child) => {
+                              const ChildIcon = child.icon;
+                              const childActive = pathname === child.href;
+                              return (
+                                <Link
+                                  key={child.href}
+                                  href={child.href}
+                                  onClick={() => setSidebarOpen(false)}
+                                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                                    childActive
+                                      ? 'bg-slate-100 text-slate-950'
+                                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                                  }`}
+                                >
+                                  <ChildIcon className="h-3.5 w-3.5" />
+                                  <span>{child.label}</span>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -226,7 +301,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                       <Link
                         key={item.hash}
                         href={item.href}
-                        onClick={() => setSidebarOpen(false)}
+                        onClick={(event) => handleNavAccount(event, item.href, item.hash || '#profile')}
                         className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
                           ${isActive
                             ? isDanger

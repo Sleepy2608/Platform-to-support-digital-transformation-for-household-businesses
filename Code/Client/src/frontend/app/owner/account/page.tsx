@@ -38,6 +38,18 @@ interface OwnerProfile {
 type Tab = 'profile' | 'business-profile' | 'password' | 'contact' | 'subscription' | 'consent' | 'danger';
 type OtpTarget = 'email' | 'phone' | null;
 
+function resolveTabFromHash(hashString?: string): Tab {
+  if (!hashString) return 'profile';
+  const clean = hashString.replace(/^#+/, '').split('#')[0].toLowerCase().trim();
+  if (clean === 'email' || clean === 'phone' || clean === 'contact') return 'contact';
+  if (clean === 'plans' || clean === 'package' || clean === 'subscription') return 'subscription';
+  if (clean === 'danger-zone' || clean === 'danger') return 'danger';
+  if (clean === 'business-profile' || clean === 'business') return 'business-profile';
+  if (clean === 'password') return 'password';
+  if (clean === 'consent') return 'consent';
+  return 'profile';
+}
+
 interface SubscriptionHistory {
   id: number;
   subscriptionId: number;
@@ -174,9 +186,12 @@ export default function OwnerAccountPage() {
   // ── Sync Active Tab with URL Hash (Immediate Response to Sidebar Clicks) ──────
   useEffect(() => {
     const handleHash = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (['profile', 'business-profile', 'password', 'contact', 'subscription', 'consent', 'danger'].includes(hash)) {
-        setActiveTab(hash as Tab);
+      if (typeof window === 'undefined') return;
+      const targetTab = resolveTabFromHash(window.location.hash);
+      setActiveTab(targetTab);
+      // Clean up duplicated/dirty hash in browser address bar (e.g. #profile#profile -> #profile)
+      if (window.location.hash !== `#${targetTab}`) {
+        window.history.replaceState(null, '', `/owner/account#${targetTab}`);
       }
     };
 
@@ -184,13 +199,20 @@ export default function OwnerAccountPage() {
     window.addEventListener('hashchange', handleHash);
     window.addEventListener('popstate', handleHash);
 
-    // Polling interval to catch Next.js client soft navigation hash updates
-    const interval = setInterval(handleHash, 200);
+    const handleCustomTab = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) {
+        const targetTab = resolveTabFromHash(detail);
+        setActiveTab(targetTab);
+        window.history.replaceState(null, '', `/owner/account#${targetTab}`);
+      }
+    };
+    window.addEventListener('owner-tab-change', handleCustomTab);
 
     return () => {
       window.removeEventListener('hashchange', handleHash);
       window.removeEventListener('popstate', handleHash);
-      clearInterval(interval);
+      window.removeEventListener('owner-tab-change', handleCustomTab);
     };
   }, []);
 
@@ -259,6 +281,7 @@ export default function OwnerAccountPage() {
                 onClick={() => {
                   setActiveTab(tab.id);
                   window.history.replaceState(null, '', `/owner/account#${tab.id}`);
+                  window.dispatchEvent(new CustomEvent('owner-tab-change', { detail: tab.id }));
                 }}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 cursor-pointer
                   ${isActive
@@ -266,8 +289,8 @@ export default function OwnerAccountPage() {
                       ? 'bg-rose-600 text-white shadow-xs'
                       : 'bg-slate-900 text-white shadow-xs'
                     : isDanger
-                    ? 'text-rose-600 hover:bg-rose-50'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                      ? 'text-rose-600 hover:bg-rose-50'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                   }`}
               >
                 <Icon className="w-4 h-4" />
@@ -490,13 +513,12 @@ function ProfileTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
 
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Trạng thái tài khoản</label>
-          <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border ${
-            profile?.status === 'ACTIVE'
+          <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border ${profile?.status === 'ACTIVE'
               ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
               : profile?.status === 'LOCKED'
-              ? 'bg-amber-50 border-amber-200 text-amber-700'
-              : 'bg-rose-50 border-rose-200 text-rose-700'
-          }`}>
+                ? 'bg-amber-50 border-amber-200 text-amber-700'
+                : 'bg-rose-50 border-rose-200 text-rose-700'
+            }`}>
             <div className={`w-2 h-2 rounded-full ${profile?.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
             {profile?.status === 'ACTIVE' ? 'Đang hoạt động' : profile?.status === 'LOCKED' ? 'Đã khóa' : 'Vô hiệu hóa'}
           </div>
@@ -657,7 +679,7 @@ function ContactTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
       const code = emailOtp.join('');
       await apiClient.post(`/api/owner/email/confirm?newEmail=${encodeURIComponent(newEmail)}`, { otp: code });
       setMsg({ type: 'success', text: 'Đổi địa chỉ Email thành công!' });
-      setOtpTarget(null); setEmailPwd(''); setNewEmail(''); setEmailOtp(['','','','','','']);
+      setOtpTarget(null); setEmailPwd(''); setNewEmail(''); setEmailOtp(['', '', '', '', '', '']);
       onUpdated();
     } catch (err: unknown) { setMsg({ type: 'error', text: (err as Error).message }); }
     finally { setLoading(false); }
@@ -679,7 +701,7 @@ function ContactTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
       const code = phoneOtp.join('');
       await apiClient.post(`/api/owner/phone/confirm?newPhone=${encodeURIComponent(newPhone)}`, { otp: code });
       setMsg({ type: 'success', text: 'Đổi số điện thoại thành công!' });
-      setOtpTarget(null); setPhonePwd(''); setNewPhone(''); setPhoneOtp(['','','','','','']);
+      setOtpTarget(null); setPhonePwd(''); setNewPhone(''); setPhoneOtp(['', '', '', '', '', '']);
       onUpdated();
     } catch (err: unknown) { setMsg({ type: 'error', text: (err as Error).message }); }
     finally { setLoading(false); }
@@ -811,8 +833,8 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
   const packageBadgeClass = packageType === 'VIP'
     ? 'bg-zinc-900 text-white border-zinc-700'
     : packageType === 'STANDARD'
-    ? 'bg-blue-50 text-blue-800 border-blue-200'
-    : '';
+      ? 'bg-blue-50 text-blue-800 border-blue-200'
+      : '';
 
   return (
     <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
@@ -887,11 +909,10 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
             <button
               key={m}
               onClick={() => setMonths(m)}
-              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                months === m
+              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${months === m
                   ? 'bg-slate-900 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
-              }`}
+                }`}
             >
               {m} tháng
             </button>
@@ -929,11 +950,10 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
               <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl gap-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      item.action === 'UPGRADE' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
-                      item.action === 'DOWNGRADE' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
-                      'bg-blue-100 text-blue-800 border border-blue-200'
-                    }`}>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${item.action === 'UPGRADE' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                        item.action === 'DOWNGRADE' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                          'bg-blue-100 text-blue-800 border border-blue-200'
+                      }`}>
                       {item.action}
                     </span>
                     <span className="text-xs text-slate-400 font-medium">
@@ -945,7 +965,7 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
                   </p>
                 </div>
                 <div className="text-xs text-slate-500 font-medium sm:text-right">
-                  Người thực hiện:<br/>
+                  Người thực hiện:<br />
                   <span className="text-slate-700 font-bold">{item.changedBy}</span>
                 </div>
               </div>
@@ -1011,8 +1031,8 @@ function PlanChangeSection({
               isVip
                 ? 'Bạn đang ở gói VIP, không thể nâng cấp thêm'
                 : !isActive
-                ? 'Gói đã hết hạn, vui lòng gia hạn trước khi nâng cấp'
-                : 'Nâng cấp lên gói VIP'
+                  ? 'Gói đã hết hạn, vui lòng gia hạn trước khi nâng cấp'
+                  : 'Nâng cấp lên gói VIP'
             }
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all
               ${upgradeDisabled
@@ -1033,8 +1053,8 @@ function PlanChangeSection({
               isStandard
                 ? 'Bạn đang ở gói Standard'
                 : !isActive
-                ? 'Gói đã hết hạn, vui lòng gia hạn trước khi hạ cấp'
-                : 'Hạ về gói Standard'
+                  ? 'Gói đã hết hạn, vui lòng gia hạn trước khi hạ cấp'
+                  : 'Hạ về gói Standard'
             }
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all
               ${downgradeDisabled
@@ -1093,9 +1113,8 @@ function PlanChangeSection({
                 </div>
               </div>
 
-              <div className={`p-4 rounded-xl text-xs leading-relaxed ${
-                dialog === 'upgrade' ? 'bg-zinc-50 border border-zinc-200 text-zinc-700' : 'bg-slate-50 border border-slate-200 text-slate-600'
-              }`}>
+              <div className={`p-4 rounded-xl text-xs leading-relaxed ${dialog === 'upgrade' ? 'bg-zinc-50 border border-zinc-200 text-zinc-700' : 'bg-slate-50 border border-slate-200 text-slate-600'
+                }`}>
                 {dialog === 'upgrade' ? (
                   <ul className="space-y-1.5">
                     <li>✦ Gói VIP bổ sung: Trợ lý AI, báo cáo thuế tự động, không giới hạn nhân viên</li>
