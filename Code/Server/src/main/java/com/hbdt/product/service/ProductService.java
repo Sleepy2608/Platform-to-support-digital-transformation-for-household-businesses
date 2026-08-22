@@ -2,18 +2,22 @@ package com.hbdt.product.service;
 
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
+import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.entity.Category;
 import com.hbdt.entity.InventoryBalance;
 import com.hbdt.entity.Product;
+import com.hbdt.entity.ProductUnit;
 import com.hbdt.entity.TaxActivityGroup;
 import com.hbdt.entity.Unit;
 import com.hbdt.product.dto.PageResponse;
+import com.hbdt.product.dto.ProductImageResponse;
 import com.hbdt.product.dto.ProductRequest;
 import com.hbdt.product.dto.ProductResponse;
 import com.hbdt.product.dto.ReferenceOption;
 import com.hbdt.repository.CategoryRepository;
 import com.hbdt.repository.InventoryBalanceRepository;
 import com.hbdt.repository.ProductRepository;
+import com.hbdt.repository.ProductUnitRepository;
 import com.hbdt.repository.TaxActivityGroupRepository;
 import com.hbdt.repository.UnitRepository;
 import jakarta.persistence.criteria.Predicate;
@@ -38,27 +42,37 @@ public class ProductService {
     private static final String INACTIVE = "INACTIVE";
     private static final String DEFAULT_UNIT_CODE = "SAN_PHAM";
     private static final String DEFAULT_UNIT_NAME = "Sản phẩm";
+    private static final BigDecimal MAX_PRODUCT_QUANTITY = new BigDecimal("999999999999999");
     private static final Set<String> SORTABLE_FIELDS = Set.of("productCode", "productName", "status", "createdAt", "updatedAt");
 
     private final ProductRepository productRepository;
+    private final ProductUnitRepository productUnitRepository;
     private final CategoryRepository categoryRepository;
     private final UnitRepository unitRepository;
     private final InventoryBalanceRepository inventoryBalanceRepository;
     private final TaxActivityGroupRepository taxActivityGroupRepository;
     private final BusinessContextService businessContextService;
+    private final ProductImageService productImageService;
+    private final ImageStorageService imageStorageService;
 
     public ProductService(ProductRepository productRepository,
+                          ProductUnitRepository productUnitRepository,
                           CategoryRepository categoryRepository,
                           UnitRepository unitRepository,
                           InventoryBalanceRepository inventoryBalanceRepository,
                           TaxActivityGroupRepository taxActivityGroupRepository,
-                          BusinessContextService businessContextService) {
+                          BusinessContextService businessContextService,
+                          ProductImageService productImageService,
+                          ImageStorageService imageStorageService) {
         this.productRepository = productRepository;
+        this.productUnitRepository = productUnitRepository;
         this.categoryRepository = categoryRepository;
         this.unitRepository = unitRepository;
         this.inventoryBalanceRepository = inventoryBalanceRepository;
         this.taxActivityGroupRepository = taxActivityGroupRepository;
         this.businessContextService = businessContextService;
+        this.productImageService = productImageService;
+        this.imageStorageService = imageStorageService;
     }
 
     public PageResponse<ProductResponse> search(String username, String keyword, String status, Long categoryId,
@@ -117,8 +131,12 @@ public class ProductService {
         String code = cleanRequired(request.productCode());
         String name = cleanRequired(request.productName());
         BigDecimal quantity = normalizeQuantity(request.quantityOnHand(), BigDecimal.ZERO);
+        BigDecimal salePrice = request.salePrice() == null ? BigDecimal.ZERO : request.salePrice();
+        if (salePrice.signum() < 0) {
+            throw new BadRequestException("Đơn giá sản phẩm không được âm");
+        }
         validateUnique(businessId, code, name, null);
-        Long baseUnitId = resolveBaseUnitId(request.baseUnitId());
+        Long baseUnitId = activateOrCreateDefaultUnit().getId();
         validateReferences(businessId, request.categoryId(), baseUnitId, request.defaultTaxActivityGroupId());
 
         Product saved = productRepository.save(Product.builder()
@@ -127,11 +145,13 @@ public class ProductService {
                 .productName(name)
                 .categoryId(request.categoryId())
                 .baseUnitId(baseUnitId)
+                .salePrice(salePrice)
                 .defaultTaxActivityGroupId(request.defaultTaxActivityGroupId())
                 .imageUrl(cleanOptional(request.imageUrl()))
                 .description(cleanOptional(request.description()))
                 .status(normalizeStatus(request.status(), ACTIVE))
                 .build());
+        saveBaseUnitConfiguration(saved);
         saveQuantity(saved, quantity);
         return toResponse(saved);
     }
@@ -142,7 +162,7 @@ public class ProductService {
         Product product = findOwned(id, businessId);
         String code = cleanRequired(request.productCode());
         String name = cleanRequired(request.productName());
-        Long baseUnitId = request.baseUnitId() == null ? product.getBaseUnitId() : request.baseUnitId();
+        Long baseUnitId = product.getBaseUnitId();
         validateUnique(businessId, code, name, id);
         validateReferences(businessId, request.categoryId(), baseUnitId, request.defaultTaxActivityGroupId());
 
@@ -150,6 +170,12 @@ public class ProductService {
         product.setProductName(name);
         product.setCategoryId(request.categoryId());
         product.setBaseUnitId(baseUnitId);
+        if (request.salePrice() != null) {
+            if (request.salePrice().signum() < 0) {
+                throw new BadRequestException("Đơn giá sản phẩm không được âm");
+            }
+            product.setSalePrice(request.salePrice());
+        }
         product.setDefaultTaxActivityGroupId(request.defaultTaxActivityGroupId());
         product.setImageUrl(cleanOptional(request.imageUrl()));
         product.setDescription(cleanOptional(request.description()));
@@ -219,6 +245,10 @@ public class ProductService {
                 .map(InventoryBalance::getQuantityOnHand)
                 .orElse(BigDecimal.ZERO);
 
+        List<ProductImageResponse> images = productImageService.getImagesByProductId(product.getId());
+        String publicImageUrl = imageStorageService.toPublicUrl(product.getImageUrl());
+        BigDecimal salePrice = product.getSalePrice() != null ? product.getSalePrice() : BigDecimal.ZERO;
+
         return new ProductResponse(
                 product.getId(),
                 product.getProductCode(),
@@ -227,9 +257,11 @@ public class ProductService {
                 category == null ? null : category.getCategoryName(),
                 product.getBaseUnitId(),
                 unit == null ? null : unit.getUnitName(),
+                salePrice,
                 product.getDefaultTaxActivityGroupId(),
                 taxGroup == null ? null : taxGroup.getActivityName(),
-                product.getImageUrl(),
+                publicImageUrl,
+                images,
                 product.getDescription(),
                 product.getStatus(),
                 quantityOnHand,
@@ -238,20 +270,12 @@ public class ProductService {
         );
     }
 
-    private Long resolveBaseUnitId(Long requestedUnitId) {
-        if (requestedUnitId != null) {
-            return requestedUnitId;
-        }
-
-        return unitRepository.findAllByStatusOrderByUnitNameAsc(ACTIVE).stream()
-                .findFirst()
-                .orElseGet(this::activateOrCreateDefaultUnit)
-                .getId();
-    }
-
     private Unit activateOrCreateDefaultUnit() {
         return unitRepository.findFirstByUnitCodeIgnoreCase(DEFAULT_UNIT_CODE)
                 .map(unit -> {
+                    if (ACTIVE.equals(unit.getStatus())) {
+                        return unit;
+                    }
                     unit.setStatus(ACTIVE);
                     return unitRepository.save(unit);
                 })
@@ -279,15 +303,30 @@ public class ProductService {
         inventoryBalanceRepository.save(balance);
     }
 
+    private void saveBaseUnitConfiguration(Product product) {
+        ProductUnit baseUnit = ProductUnit.builder()
+                .productId(product.getId())
+                .unitId(product.getBaseUnitId())
+                .conversionRate(BigDecimal.ONE)
+                .baseUnit(true)
+                .status(ACTIVE)
+                .build();
+        productUnitRepository.save(baseUnit);
+    }
+
     private BigDecimal normalizeQuantity(BigDecimal quantity, BigDecimal fallback) {
         BigDecimal normalized = quantity == null ? fallback : quantity;
         if (normalized.signum() < 0) {
             throw new BadRequestException("Số lượng sản phẩm không được âm");
         }
-        if (normalized.stripTrailingZeros().scale() > 0) {
+        BigDecimal stripped = normalized.stripTrailingZeros();
+        if (stripped.scale() > 0) {
             throw new BadRequestException("Số lượng sản phẩm phải là số nguyên");
         }
-        return normalized.setScale(0);
+        if (normalized.compareTo(MAX_PRODUCT_QUANTITY) > 0) {
+            throw new BadRequestException("Số lượng sản phẩm không được vượt quá 15 chữ số");
+        }
+        return stripped.setScale(0);
     }
 
     private String normalizeStatusFilter(String status) {

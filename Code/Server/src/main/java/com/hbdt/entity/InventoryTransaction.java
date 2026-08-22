@@ -26,6 +26,15 @@ public class InventoryTransaction {
     @Column(name = "product_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
     private Long productId;
 
+    @Column(name = "unit_id", columnDefinition = "BIGINT UNSIGNED")
+    private Long unitId;
+
+    @Column(name = "entered_quantity", precision = 18, scale = 3)
+    private BigDecimal enteredQuantity;
+
+    @Column(name = "conversion_rate", precision = 18, scale = 6)
+    private BigDecimal conversionRate;
+
     @Column(name = "created_by", columnDefinition = "BIGINT UNSIGNED")
     private Long createdBy;
 
@@ -62,6 +71,13 @@ public class InventoryTransaction {
     @Column(name = "note", length = 500)
     private String note;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }
