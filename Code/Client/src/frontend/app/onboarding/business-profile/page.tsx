@@ -304,6 +304,7 @@ export default function BusinessProfilePage() {
       const response = await saveBusinessProfile(data as any);
       // Lưu businessId vào sessionStorage
       sessionStorage.setItem('businessId', String(response.id));
+      sessionStorage.setItem('isRegisteringOnboarding', 'true');
       // Redirect theo nextStep từ BE
       if (response.nextStep === 'PACKAGE_SELECTION') {
         router.push('/onboarding/package-selection');

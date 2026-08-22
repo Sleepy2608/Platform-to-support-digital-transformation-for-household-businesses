@@ -804,7 +804,7 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
             <p className="text-xs text-amber-700 mt-0.5">Vui lòng chọn gói để sử dụng đầy đủ tính năng nền tảng.</p>
             <div className="flex gap-2 mt-3">
               <button
-                onClick={() => router.push('/onboarding/package-selection')}
+                onClick={() => router.push('/onboarding/package-selection?from=account')}
                 className="px-4 py-2 bg-amber-600 text-white text-xs font-bold rounded-xl hover:bg-amber-700 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
               >
                 <Crown className="w-3.5 h-3.5" /> Chọn gói ngay

@@ -85,6 +85,7 @@ export default function LoginPage() {
           businessId,
           avatarUrl,
         });
+        sessionStorage.removeItem('isRegisteringOnboarding');
 
         const redirectPath = getLoginRedirectPath(rolesArr, businessId);
         router.push(redirectPath);
