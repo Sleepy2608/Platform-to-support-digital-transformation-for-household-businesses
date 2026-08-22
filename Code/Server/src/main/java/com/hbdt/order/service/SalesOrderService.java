@@ -137,6 +137,32 @@ public class SalesOrderService {
         return toResponse(order, salesOrderItemRepository.findAllBySalesOrderIdOrderByIdAsc(orderId));
     }
 
+    @Transactional
+    public SalesOrderResponse makePayment(String actorUsername, Long orderId, BigDecimal paymentAmount) {
+        Long businessId = businessContextService.requireBusinessId(actorUsername);
+        SalesOrder order = salesOrderRepository.findByIdAndBusinessId(orderId, businessId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn hàng"));
+        if ("CANCELLED".equals(order.getStatus())) {
+            throw new BadRequestException("Không thể thanh toán đơn hàng đã hủy");
+        }
+        if (paymentAmount == null || paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException("Số tiền thanh toán phải lớn hơn 0");
+        }
+        BigDecimal newPaid = order.getPaidAmount().add(paymentAmount).setScale(0, RoundingMode.HALF_UP);
+        if (newPaid.compareTo(order.getTotalAmount()) > 0) {
+            throw new BadRequestException("Tổng tiền đã trả không được vượt quá tổng tiền đơn hàng ("
+                    + order.getTotalAmount().toPlainString() + " ₫)");
+        }
+        BigDecimal newDebt = order.getTotalAmount().subtract(newPaid).setScale(0, RoundingMode.HALF_UP);
+        order.setPaidAmount(newPaid);
+        order.setDebtAmount(newDebt);
+        if (newDebt.compareTo(BigDecimal.ZERO) == 0) {
+            order.setStatus("CONFIRMED");
+        }
+        salesOrderRepository.save(order);
+        return toResponse(order, salesOrderItemRepository.findAllBySalesOrderIdOrderByIdAsc(orderId));
+    }
+
     @Transactional(readOnly = true)
     public SalesOrderPageResponse search(
             String actorUsername,

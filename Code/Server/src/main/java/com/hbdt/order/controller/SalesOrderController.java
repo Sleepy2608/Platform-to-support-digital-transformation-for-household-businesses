@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import org.springframework.web.bind.annotation.PatchMapping;
+import java.math.BigDecimal;
+
 @RestController
 @RequestMapping("/api/sales-orders")
 @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'EMPLOYEE')")
@@ -63,4 +66,23 @@ public class SalesOrderController {
                 salesOrderService.search(authentication.getName(), keyword, status, source, page, size)
         ));
     }
+
+    /**
+     * PATCH /api/sales-orders/{orderId}/payment?amount=N
+     * Cộng dồn tiền thanh toán vào đơn hàng.
+     * - Nếu trả đủ: status → CONFIRMED, debtAmount = 0
+     * - Nếu trả chưa đủ: status giữ nguyên, debtAmount = totalAmount - paidAmount
+     */
+    @PatchMapping("/{orderId}/payment")
+    public ResponseEntity<ApiResponse<SalesOrderResponse>> makePayment(
+            Authentication authentication,
+            @PathVariable Long orderId,
+            @RequestParam BigDecimal amount
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "Thanh toán ghi nhận thành công",
+                salesOrderService.makePayment(authentication.getName(), orderId, amount)
+        ));
+    }
 }
+
