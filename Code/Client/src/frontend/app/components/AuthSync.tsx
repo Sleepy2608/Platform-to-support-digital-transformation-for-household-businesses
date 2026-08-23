@@ -44,7 +44,7 @@ function getLandingPath() {
   if (roles.includes('BUSINESS_OWNER')) {
     return getAuthItem('businessId') ? '/owner/account' : '/onboarding/business-profile';
   }
-  if (roles.includes('EMPLOYEE')) return '/employee/account';
+  if (roles.includes('EMPLOYEE')) return '/employee/orders/new';
   return '/login';
 }
 

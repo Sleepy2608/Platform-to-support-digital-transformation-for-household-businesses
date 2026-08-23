@@ -49,7 +49,7 @@
 │                                                                             │
 │  ⑪ OWNER: Theo dõi & thu hồi công nợ                                        │
 │     └──► Reporting & Analytics hiển thị doanh thu, tồn kho thấp, công nợ    │
-│     └──► Khi khách trả nợ ──► Customer & Debt ghi DebtPayment, cập nhật     │ 
+│     └──► Khi khách trả nợ ──► Customer & Debt ghi DebtPayment, cập nhật     │
 │          số dư, đồng bộ Accounting Entry tương ứng                          │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```

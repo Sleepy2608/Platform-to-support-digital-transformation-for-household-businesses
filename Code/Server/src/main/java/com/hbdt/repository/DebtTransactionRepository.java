@@ -75,4 +75,6 @@ public interface DebtTransactionRepository extends JpaRepository<DebtTransaction
 
     /** Đếm giao dịch theo salesOrderId (dùng để sinh transaction_code) */
     long countBySalesOrderId(Long salesOrderId);
+
+    Optional<DebtTransaction> findFirstByBusinessIdAndCustomerIdOrderByIdDesc(Long businessId, Long customerId);
 }

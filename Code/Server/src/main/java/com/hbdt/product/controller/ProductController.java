@@ -76,6 +76,7 @@ public class ProductController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
     public ResponseEntity<ApiResponse<ProductResponse>> create(
             Authentication authentication,
             @Valid @RequestBody ProductRequest request) {
@@ -84,6 +85,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
     public ResponseEntity<ApiResponse<ProductResponse>> update(
             Authentication authentication,
             @PathVariable Long id,
@@ -93,6 +95,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
     public ResponseEntity<ApiResponse<ProductResponse>> deactivate(
             Authentication authentication,
             @PathVariable Long id) {
@@ -105,6 +108,7 @@ public class ProductController {
     // =========================================================
 
     @PostMapping("/{id}/images")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
     public ResponseEntity<ApiResponse<List<ProductImageResponse>>> uploadImages(
             Authentication authentication,
             @PathVariable Long id,
@@ -124,6 +128,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/images/{imageId}")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
     public ResponseEntity<ApiResponse<Void>> deleteImage(
             Authentication authentication,
             @PathVariable Long imageId) {
@@ -132,6 +137,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}/images/{imageId}/primary")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
     public ResponseEntity<ApiResponse<ProductImageResponse>> setPrimaryImage(
             Authentication authentication,
             @PathVariable Long id,
@@ -141,4 +147,3 @@ public class ProductController {
                 productImageService.setPrimary(authentication.getName(), id, imageId)));
     }
 }
-

@@ -66,6 +66,15 @@ public class SalesOrder {
     @Column(name = "last_payment_at")
     private LocalDateTime lastPaymentAt;
 
+    @Column(name = "cancel_requested_by", columnDefinition = "BIGINT UNSIGNED")
+    private Long cancelRequestedBy;
+
+    @Column(name = "cancel_request_reason", length = 500)
+    private String cancelRequestReason;
+
+    @Column(name = "cancel_requested_at")
+    private LocalDateTime cancelRequestedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -86,4 +95,3 @@ public class SalesOrder {
         updatedAt = LocalDateTime.now();
     }
 }
-

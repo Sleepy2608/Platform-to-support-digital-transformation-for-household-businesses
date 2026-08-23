@@ -54,7 +54,7 @@ public class PaymentService {
         Long businessId = user.getBusinessId();
 
         // 1. Validate order
-        SalesOrder order = salesOrderRepository.findByIdAndBusinessId(request.salesOrderId(), businessId)
+        SalesOrder order = salesOrderRepository.findForUpdateByIdAndBusinessId(request.salesOrderId(), businessId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Không tìm thấy đơn hàng hoặc đơn hàng không thuộc cửa hàng của bạn"));
 
@@ -100,6 +100,7 @@ public class PaymentService {
                 .amount(request.amount())
                 .paymentMethod(method.name())
                 .referenceNumber(request.referenceNumber())
+                .transactionDate(paymentDate)
                 .balanceAfter(balanceAfter)
                 .description(request.note())
                 .status(DebtTransactionStatus.ACTIVE)
@@ -207,7 +208,9 @@ public class PaymentService {
                 .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.DEBT_INCREASE.name());
         BigDecimal totalPaid = debtTransactionRepository
                 .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.PAYMENT.name());
-        BigDecimal currentBalance = totalDebt.subtract(totalPaid);
+        BigDecimal totalVoided = debtTransactionRepository
+                .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.VOID.name());
+        BigDecimal currentBalance = totalDebt.subtract(totalPaid).subtract(totalVoided);
 
         return new CustomerDebtSummaryResponse(
                 customer.getId(),
@@ -229,7 +232,7 @@ public class PaymentService {
     private void validateOrderForPayment(SalesOrder order) {
         // Chỉ cho thanh toán đơn đã xác nhận (CONFIRMED) hoặc đang hoạt động
         String status = order.getStatus();
-        if ("DRAFT".equalsIgnoreCase(status) || "CANCELLED".equalsIgnoreCase(status)) {
+        if (!"CONFIRMED".equalsIgnoreCase(status)) {
             throw new IllegalArgumentException(
                     "Không thể ghi nhận thanh toán cho đơn hàng ở trạng thái: " + status);
         }
@@ -253,7 +256,7 @@ public class PaymentService {
                     "Khách hàng trong yêu cầu thanh toán không khớp với khách hàng của đơn hàng");
         }
 
-        return customerRepository.findByIdAndBusinessId(customerId, businessId)
+        return customerRepository.findActiveForUpdate(customerId, businessId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Không tìm thấy khách hàng hoặc khách hàng không thuộc cửa hàng của bạn"));
     }
@@ -273,7 +276,9 @@ public class PaymentService {
                 .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.DEBT_INCREASE.name());
         BigDecimal totalPaid = debtTransactionRepository
                 .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.PAYMENT.name());
-        return totalDebt.subtract(totalPaid);
+        BigDecimal totalVoided = debtTransactionRepository
+                .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.VOID.name());
+        return totalDebt.subtract(totalPaid).subtract(totalVoided);
     }
 
     private PaymentStatus determinePaymentStatus(BigDecimal paidAmount, BigDecimal totalAmount) {

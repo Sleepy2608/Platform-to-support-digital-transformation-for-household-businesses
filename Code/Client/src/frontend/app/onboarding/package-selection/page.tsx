@@ -100,7 +100,7 @@ async function selectPackageApi(packageType: PackageId, billingCycle: BillingCyc
       },
     }
   );
-  
+
   const text = await res.text();
   let json: any = {};
   try {
