@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import PaymentQrModal from '../../components/payment/PaymentQrModal';
 import {
   CheckCircle, ShieldCheck, Zap, Crown, Loader2, AlertCircle,
   ArrowLeft, ArrowRight, BadgeCheck, QrCode, Building2, Copy,
@@ -595,7 +596,7 @@ function PackageSelectionContent() {
 
       {/* ── PAYMENT MODAL (HIỆN KHI GÓI > 0 ĐỒNG) ── */}
       <AnimatePresence>
-        {showPaymentModal && (
+        {showPaymentModal && false && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -780,6 +781,19 @@ function PackageSelectionContent() {
           </div>
         )}
       </AnimatePresence>
+
+      <PaymentQrModal
+        isOpen={showPaymentModal}
+        amount={totalAmount}
+        transferSyntax={transferSyntax}
+        title="Thông Báo Thanh Toán Chuyển Khoản"
+        successTitle={paymentSuccess ? 'Thanh toán thành công!' : ''}
+        successMessage={`Gói dịch vụ ${selectedPkg?.name || ''} đã được kích hoạt thành công cho tài khoản của bạn.`}
+        loading={submitting}
+        error={error}
+        onClose={() => setShowPaymentModal(false)}
+        onConfirm={handleConfirmPaymentTest}
+      />
 
     </div>
   );
