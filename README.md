@@ -30,7 +30,7 @@
 
 ## Tiến độ triển khai dự án (Project Deployment Progress)
 
-*Tiến độ: Sprint 3*
+*Tiến độ: Sprint 3 + 4*
 
 | Issue | Frontend | Backend | Data Base | Status |
 |:--------|:---------|:----------|:----------------|:------------:|
@@ -47,7 +47,7 @@
 | Tìm kiếm sản phẩm | Searching Engine | Đang triển khai | Đang triển khai | Đang triển khai |
 
 > Các issue sẽ được test trước khi merge vào nhánh chính và sẽ cập nhật theo tiến độ triển khai thực tế
-> Ngày cập nhật lần cuối: 19/08/2026
+> Ngày cập nhật lần cuối: 23/08/2026
 
 ---
 
