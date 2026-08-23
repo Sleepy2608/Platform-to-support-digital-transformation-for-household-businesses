@@ -31,7 +31,13 @@ public class ProductPrice {
     @Column(name = "sale_price", nullable = false, precision = 18, scale = 2)
     private BigDecimal salePrice;
 
-    @Column(name = "effective_from", nullable = false, insertable = false, updatable = false)
+    @Column(name = "rule_name", length = 150)
+    private String ruleName;
+
+    @Column(name = "changed_by", columnDefinition = "BIGINT UNSIGNED")
+    private Long changedBy;
+
+    @Column(name = "effective_from", nullable = false, updatable = false)
     private LocalDateTime effectiveFrom;
 
     @Column(name = "effective_to")
@@ -40,9 +46,26 @@ public class ProductPrice {
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (effectiveFrom == null) {
+            effectiveFrom = now;
+        }
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

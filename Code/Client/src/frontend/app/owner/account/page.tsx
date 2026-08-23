@@ -38,6 +38,18 @@ interface OwnerProfile {
 type Tab = 'profile' | 'business-profile' | 'password' | 'contact' | 'subscription' | 'consent' | 'danger';
 type OtpTarget = 'email' | 'phone' | null;
 
+function resolveTabFromHash(hashString?: string): Tab {
+  if (!hashString) return 'profile';
+  const clean = hashString.replace(/^#+/, '').split('#')[0].toLowerCase().trim();
+  if (clean === 'email' || clean === 'phone' || clean === 'contact') return 'contact';
+  if (clean === 'plans' || clean === 'package' || clean === 'subscription') return 'subscription';
+  if (clean === 'danger-zone' || clean === 'danger') return 'danger';
+  if (clean === 'business-profile' || clean === 'business') return 'business-profile';
+  if (clean === 'password') return 'password';
+  if (clean === 'consent') return 'consent';
+  return 'profile';
+}
+
 function syncOwnerSummary(data: { fullName?: string; avatarUrl?: string | null }) {
   if (typeof window === 'undefined') return;
   if (data.fullName !== undefined) {
@@ -164,9 +176,12 @@ export default function OwnerAccountPage() {
   // ── Sync Active Tab with URL Hash (Immediate Response to Sidebar Clicks) ──────
   useEffect(() => {
     const handleHash = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (['profile', 'business-profile', 'password', 'contact', 'subscription', 'consent', 'danger'].includes(hash)) {
-        setActiveTab(hash as Tab);
+      if (typeof window === 'undefined') return;
+      const targetTab = resolveTabFromHash(window.location.hash);
+      setActiveTab(targetTab);
+      // Clean up duplicated/dirty hash in browser address bar (e.g. #profile#profile -> #profile)
+      if (window.location.hash !== `#${targetTab}`) {
+        window.history.replaceState(null, '', `/owner/account#${targetTab}`);
       }
     };
 
@@ -174,13 +189,20 @@ export default function OwnerAccountPage() {
     window.addEventListener('hashchange', handleHash);
     window.addEventListener('popstate', handleHash);
 
-    // Polling interval to catch Next.js client soft navigation hash updates
-    const interval = setInterval(handleHash, 200);
+    const handleCustomTab = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) {
+        const targetTab = resolveTabFromHash(detail);
+        setActiveTab(targetTab);
+        window.history.replaceState(null, '', `/owner/account#${targetTab}`);
+      }
+    };
+    window.addEventListener('owner-tab-change', handleCustomTab);
 
     return () => {
       window.removeEventListener('hashchange', handleHash);
       window.removeEventListener('popstate', handleHash);
-      clearInterval(interval);
+      window.removeEventListener('owner-tab-change', handleCustomTab);
     };
   }, []);
 
@@ -249,6 +271,7 @@ export default function OwnerAccountPage() {
                 onClick={() => {
                   setActiveTab(tab.id);
                   window.history.replaceState(null, '', `/owner/account#${tab.id}`);
+                  window.dispatchEvent(new CustomEvent('owner-tab-change', { detail: tab.id }));
                 }}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 cursor-pointer
                   ${isActive

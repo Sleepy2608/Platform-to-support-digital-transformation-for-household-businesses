@@ -95,7 +95,7 @@ class SubscriptionPlanServiceTest {
         List<SubscriptionPlanResponse> result = subscriptionPlanService.getPublicPlans();
 
         assertEquals(2, result.size());
-        assertEquals("STANDARD", result.getFirst().planCode());
+        assertEquals("STANDARD", result.get(0).planCode());
     }
 
     private SubscriptionPlanRequest request(String code, String name, String monthly, String annual, String status) {

@@ -36,17 +36,23 @@ class CatalogReferenceDataSeederTest {
     }
 
     @Test
-    void seedsProductUnitAndFourTaxGroupsWhenReferenceDataIsMissing() {
-        when(unitRepository.findFirstByUnitCodeIgnoreCase("SAN_PHAM")).thenReturn(Optional.empty());
+    void seedsProductUnitsAndFourTaxGroupsWhenReferenceDataIsMissing() {
+        when(unitRepository.findFirstByUnitCodeIgnoreCase(org.mockito.ArgumentMatchers.anyString()))
+                .thenReturn(Optional.empty());
         when(taxActivityGroupRepository.findFirstByActivityCodeIgnoreCase(org.mockito.ArgumentMatchers.anyString()))
                 .thenReturn(Optional.empty());
 
         seeder.run();
 
         ArgumentCaptor<Unit> unitCaptor = ArgumentCaptor.forClass(Unit.class);
-        verify(unitRepository).save(unitCaptor.capture());
-        assertThat(unitCaptor.getValue().getUnitCode()).isEqualTo("SAN_PHAM");
-        assertThat(unitCaptor.getValue().getStatus()).isEqualTo("ACTIVE");
+        verify(unitRepository, times(10)).save(unitCaptor.capture());
+        assertThat(unitCaptor.getAllValues()).extracting(Unit::getUnitCode)
+                .containsExactly(
+                        "SAN_PHAM", "CAI", "BAO", "KG", "VIEN",
+                        "THUNG", "HOP", "CHAI", "LIT", "MET"
+                );
+        assertThat(unitCaptor.getAllValues())
+                .allSatisfy(unit -> assertThat(unit.getStatus()).isEqualTo("ACTIVE"));
 
         ArgumentCaptor<TaxActivityGroup> groupCaptor = ArgumentCaptor.forClass(TaxActivityGroup.class);
         verify(taxActivityGroupRepository, times(4)).save(groupCaptor.capture());
