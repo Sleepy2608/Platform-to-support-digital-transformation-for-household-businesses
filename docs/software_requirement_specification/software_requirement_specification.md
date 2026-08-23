@@ -3191,7 +3191,7 @@ Bảng sau tổng hợp các điểm cuối REST API chính của hệ thống.
 | Tồn kho | `/api/inventory/*` | 8 |
 | Khách hàng | `/api/customers/*` | 8 |
 | Công nợ | `/api/debts/*` | 6 |
-| Đơn bán hàng | `/api/orders/*` | 8 |
+| Đơn bán hàng | `/api/sales-orders/*` | 8 |
 | Đơn hàng AI | `/api/ai/*` | 6 |
 | Gói thuê bao | `/api/subscriptions/*` | 8 |
 | Ghi sổ kế toán | `/api/accounting/*` | 8 |

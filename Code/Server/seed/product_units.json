@@ -1,0 +1,86 @@
+{
+  "table" : "product_units",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "is_base_unit" : false,
+    "conversion_rate" : 10.000000,
+    "created_at" : "2026-08-20T18:12:22.595016",
+    "product_id" : 13,
+    "status" : "ACTIVE",
+    "unit_id" : 3,
+    "updated_at" : "2026-08-20T18:12:22.595016"
+  }, {
+    "id" : 2,
+    "is_base_unit" : false,
+    "conversion_rate" : 1.000000,
+    "created_at" : "2026-08-20T18:29:09.187889",
+    "product_id" : 13,
+    "status" : "ACTIVE",
+    "unit_id" : 2,
+    "updated_at" : "2026-08-20T18:29:09.187889"
+  }, {
+    "id" : 3,
+    "is_base_unit" : false,
+    "conversion_rate" : 1.000000,
+    "created_at" : "2026-08-21T16:01:01.32133",
+    "product_id" : 11,
+    "status" : "ACTIVE",
+    "unit_id" : 2,
+    "updated_at" : "2026-08-21T16:01:01.32133"
+  }, {
+    "id" : 4,
+    "is_base_unit" : false,
+    "conversion_rate" : 10.000000,
+    "created_at" : "2026-08-21T16:06:45.420019",
+    "product_id" : 11,
+    "status" : "ACTIVE",
+    "unit_id" : 3,
+    "updated_at" : "2026-08-21T16:06:45.420019"
+  }, {
+    "id" : 5,
+    "is_base_unit" : true,
+    "conversion_rate" : 1.000000,
+    "created_at" : "2026-08-21T17:07:46.201601",
+    "product_id" : 14,
+    "status" : "ACTIVE",
+    "unit_id" : 2,
+    "updated_at" : "2026-08-21T17:07:46.201601"
+  }, {
+    "id" : 6,
+    "is_base_unit" : true,
+    "conversion_rate" : 1.000000,
+    "created_at" : "2026-08-21T17:23:01.723826",
+    "product_id" : 15,
+    "status" : "ACTIVE",
+    "unit_id" : 1,
+    "updated_at" : "2026-08-21T17:23:01.723826"
+  }, {
+    "id" : 7,
+    "is_base_unit" : false,
+    "conversion_rate" : 5.000000,
+    "created_at" : "2026-08-21T17:30:18.423973",
+    "product_id" : 15,
+    "status" : "ACTIVE",
+    "unit_id" : 3,
+    "updated_at" : "2026-08-21T17:30:18.423973"
+  }, {
+    "id" : 8,
+    "is_base_unit" : true,
+    "conversion_rate" : 1.000000,
+    "created_at" : "2026-08-23T12:31:10.231517",
+    "product_id" : 16,
+    "status" : "ACTIVE",
+    "unit_id" : 1,
+    "updated_at" : "2026-08-23T12:31:10.231517"
+  }, {
+    "id" : 9,
+    "is_base_unit" : false,
+    "conversion_rate" : 1.500000,
+    "created_at" : "2026-08-23T12:34:37.52411",
+    "product_id" : 15,
+    "status" : "INACTIVE",
+    "unit_id" : 2,
+    "updated_at" : "2026-08-23T12:34:49.603647"
+  } ]
+}

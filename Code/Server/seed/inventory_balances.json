@@ -1,6 +1,6 @@
 {
   "table" : "inventory_balances",
-  "version" : 2,
+  "version" : 3,
   "rows" : [ {
     "id" : 1,
     "average_unit_cost" : 0.00,
@@ -9,5 +9,93 @@
     "product_id" : 5,
     "quantity_on_hand" : 43.000,
     "updated_at" : "2026-08-11T19:20:12.191733"
+  }, {
+    "id" : 2,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 6,
+    "quantity_on_hand" : 10.000,
+    "updated_at" : "2026-08-20T03:54:53.184601"
+  }, {
+    "id" : 3,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 7,
+    "quantity_on_hand" : 5.000,
+    "updated_at" : "2026-08-20T03:59:05.872975"
+  }, {
+    "id" : 4,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 8,
+    "quantity_on_hand" : 6.000,
+    "updated_at" : "2026-08-20T03:59:22.298499"
+  }, {
+    "id" : 5,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 9,
+    "quantity_on_hand" : 5.000,
+    "updated_at" : "2026-08-20T03:59:37.651"
+  }, {
+    "id" : 6,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 10,
+    "quantity_on_hand" : 5.000,
+    "updated_at" : "2026-08-20T03:59:54.975916"
+  }, {
+    "id" : 7,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 11,
+    "quantity_on_hand" : 20.000,
+    "updated_at" : "2026-08-20T04:00:34.303788"
+  }, {
+    "id" : 8,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 12,
+    "quantity_on_hand" : 1.000,
+    "updated_at" : "2026-08-20T04:02:18.823077"
+  }, {
+    "id" : 9,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 13,
+    "quantity_on_hand" : 0.000,
+    "updated_at" : "2026-08-21T17:36:20.000899"
+  }, {
+    "id" : 10,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 14,
+    "quantity_on_hand" : 0.000,
+    "updated_at" : "2026-08-21T17:39:32.904575"
+  }, {
+    "id" : 11,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 15,
+    "quantity_on_hand" : 0.000,
+    "updated_at" : "2026-08-21T17:36:19.993791"
+  }, {
+    "id" : 12,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 16,
+    "quantity_on_hand" : 11.000,
+    "updated_at" : "2026-08-23T12:54:27.82256"
   } ]
 }

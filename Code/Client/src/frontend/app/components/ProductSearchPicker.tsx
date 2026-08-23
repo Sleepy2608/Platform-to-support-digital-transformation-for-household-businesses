@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Plus, Check, Loader2, Package, Tag, Filter } from 'lucide-react';
+import { Search, Plus, Check, Package } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
 import { useDebounce } from '@/app/lib/useDebounce';
 
@@ -84,7 +84,8 @@ export function ProductSearchPicker({
   }, [debouncedSearch, categoryId, statusFilter, page]);
 
   useEffect(() => {
-    void fetchProducts();
+    const timer = window.setTimeout(() => void fetchProducts(), 0);
+    return () => window.clearTimeout(timer);
   }, [fetchProducts]);
 
   return (

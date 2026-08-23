@@ -49,7 +49,7 @@ public class DebtTransaction {
     @Column(name = "reference_number", length = 100)
     private String referenceNumber;
 
-    @Column(name = "transaction_date", nullable = false, insertable = false, updatable = false)
+    @Column(name = "transaction_date", nullable = false, updatable = false)
     private LocalDateTime transactionDate;
 
     @Column(name = "balance_after", nullable = false, precision = 18, scale = 2)
@@ -58,6 +58,17 @@ public class DebtTransaction {
     @Column(name = "description", length = 500)
     private String description;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (transactionDate == null) {
+            transactionDate = now;
+        }
+        if (createdAt == null) {
+            createdAt = now;
+        }
+    }
 }

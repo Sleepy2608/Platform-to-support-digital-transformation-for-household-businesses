@@ -14,6 +14,9 @@ public record SalesOrderResponse(
         BigDecimal paidAmount,
         BigDecimal debtAmount,
         String note,
+        Long cancelRequestedBy,
+        String cancelRequestReason,
+        LocalDateTime cancelRequestedAt,
         LocalDateTime createdAt,
         List<SalesOrderItemResponse> items
 ) {

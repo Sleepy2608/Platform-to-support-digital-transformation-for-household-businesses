@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ChevronLeft, ChevronRight, Eye, RefreshCw, Search, X } from 'lucide-react';
+import { Ban, Banknote, ChevronLeft, ChevronRight, Eye, RefreshCw, Search, X } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
+import { usePathname } from 'next/navigation';
 
 interface PageResponse<T> {
   content: T[];
@@ -40,10 +41,15 @@ interface SalesOrderItem {
 interface SalesOrderDetail extends SalesOrderSummary {
   customerId?: number;
   note?: string;
+  cancelRequestedBy?: number;
+  cancelRequestReason?: string;
+  cancelRequestedAt?: string;
   items: SalesOrderItem[];
 }
 
 export default function SalesOrderHistoryPage() {
+  const pathname = usePathname();
+  const canManageConfirmedOrder = pathname.startsWith('/owner/');
   const [orders, setOrders] = useState<PageResponse<SalesOrderSummary> | null>(null);
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState('');
@@ -53,6 +59,9 @@ export default function SalesOrderHistoryPage() {
   const [error, setError] = useState('');
   const [detail, setDetail] = useState<SalesOrderDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [cancelReason, setCancelReason] = useState('');
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -87,6 +96,67 @@ export default function SalesOrderHistoryPage() {
     }
   };
 
+  const recordPayment = async () => {
+    if (!detail) return;
+    const amount = Number(paymentAmount);
+    if (!Number.isFinite(amount) || amount <= 0 || amount > detail.debtAmount) {
+      setError('Số tiền thanh toán phải lớn hơn 0 và không vượt quá số còn nợ');
+      return;
+    }
+    setActionLoading(true);
+    setError('');
+    try {
+      const updated = await apiClient.patch<SalesOrderDetail>(
+        `/api/sales-orders/${detail.id}/payment?amount=${encodeURIComponent(String(Math.round(amount)))}`,
+      );
+      setDetail(updated);
+      setPaymentAmount('');
+      await loadOrders();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể ghi nhận thanh toán');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const cancelOrder = async () => {
+    if (!detail || !window.confirm(`Xác nhận hủy đơn ${detail.orderCode} và hoàn toàn bộ hàng về kho?`)) return;
+    setActionLoading(true);
+    setError('');
+    try {
+      const updated = await apiClient.post<SalesOrderDetail>(`/api/sales-orders/${detail.id}/cancel`);
+      setDetail(updated);
+      await loadOrders();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể hủy đơn hàng');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const requestCancellation = async () => {
+    if (!detail) return;
+    if (!cancelReason.trim()) {
+      setError('Vui lòng nhập lý do yêu cầu hủy đơn');
+      return;
+    }
+    setActionLoading(true);
+    setError('');
+    try {
+      const updated = await apiClient.post<SalesOrderDetail>(
+        `/api/sales-orders/${detail.id}/cancel-request`,
+        { reason: cancelReason.trim() },
+      );
+      setDetail(updated);
+      setCancelReason('');
+      await loadOrders();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể gửi yêu cầu hủy đơn');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen p-5 sm:p-8 lg:p-10">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -104,7 +174,7 @@ export default function SalesOrderHistoryPage() {
           <div className="grid gap-3 border-b border-slate-200 p-4 md:grid-cols-[1fr_190px_190px_auto]">
             <label className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><input value={keyword} onChange={(event) => { setKeyword(event.target.value); setPage(0); }} placeholder="Tìm theo mã đơn hàng..." className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-slate-500" /></label>
             <select value={source} onChange={(event) => { setSource(event.target.value); setPage(0); }} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><option value="">Tất cả nguồn đơn</option><option value="POS">Bán tại quầy</option><option value="ONLINE">Đơn trực tuyến</option></select>
-            <select value={status} onChange={(event) => { setStatus(event.target.value); setPage(0); }} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><option value="">Tất cả trạng thái</option><option value="DRAFT">Nháp</option><option value="CONFIRMED">Đã xác nhận</option><option value="CANCELLED">Đã hủy</option></select>
+            <select value={status} onChange={(event) => { setStatus(event.target.value); setPage(0); }} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><option value="">Tất cả trạng thái</option><option value="DRAFT">Nháp</option><option value="CONFIRMED">Đã xác nhận</option><option value="CANCEL_REQUESTED">Chờ Owner duyệt hủy</option><option value="CANCELLED">Đã hủy</option></select>
             <button onClick={() => void loadOrders()} className="rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50" title="Tải lại"><RefreshCw className="h-4 w-4" /></button>
           </div>
 
@@ -116,7 +186,46 @@ export default function SalesOrderHistoryPage() {
         </section>
       </div>
 
-      {detail && <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"><div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white shadow-2xl"><div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4"><div><h2 className="text-lg font-black text-slate-950">Đơn hàng {detail.orderCode}</h2><p className="mt-1 text-xs text-slate-400">{formatDateTime(detail.createdAt)} · {sourceLabel(detail.source)}</p></div><button onClick={() => setDetail(null)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button></div><div className="space-y-5 p-6"><div className="grid gap-3 sm:grid-cols-4"><Summary label="Tổng tiền" value={formatVnd(detail.totalAmount)} /><Summary label="Đã trả" value={formatVnd(detail.paidAmount)} /><Summary label="Còn nợ" value={formatVnd(detail.debtAmount)} /><Summary label="Trạng thái" value={statusLabel(detail.status)} /></div><div className="overflow-hidden rounded-xl border border-slate-200"><table className="w-full table-fixed text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-400"><tr><th className="px-4 py-3">Sản phẩm</th><th className="px-4 py-3">Đơn vị</th><th className="px-4 py-3">Số lượng</th><th className="px-4 py-3">Đơn giá</th><th className="px-4 py-3 text-right">Thành tiền</th></tr></thead><tbody className="divide-y divide-slate-100">{detail.items.map((item) => <tr key={item.id}><td className="break-words px-4 py-4 font-bold text-slate-900">{item.productName}</td><td className="px-4 py-4 text-slate-600">{item.unitName}</td><td className="px-4 py-4">{formatNumber(item.quantity)}</td><td className="px-4 py-4">{formatVnd(item.unitPrice)}</td><td className="px-4 py-4 text-right font-black">{formatVnd(item.lineTotal)}</td></tr>)}</tbody></table></div>{detail.note && <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600"><strong>Ghi chú:</strong> {detail.note}</div>}</div></div></div>}
+      {detail && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4">
+              <div><h2 className="text-lg font-black text-slate-950">Đơn hàng {detail.orderCode}</h2><p className="mt-1 text-xs text-slate-400">{formatDateTime(detail.createdAt)} · {sourceLabel(detail.source)}</p></div>
+              <button onClick={() => setDetail(null)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="space-y-5 p-6">
+              <div className="grid gap-3 sm:grid-cols-4"><Summary label="Tổng tiền" value={formatVnd(detail.totalAmount)} /><Summary label="Đã trả" value={formatVnd(detail.paidAmount)} /><Summary label="Còn nợ" value={formatVnd(detail.debtAmount)} /><Summary label="Trạng thái" value={statusLabel(detail.status)} /></div>
+
+              {detail.status === 'CONFIRMED' && (
+                <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-end">
+                  <label className="flex-1"><span className="mb-1 block text-xs font-bold uppercase text-slate-500">Thanh toán thêm</span><input disabled={actionLoading || detail.debtAmount <= 0} value={formatMoneyInput(paymentAmount)} onChange={(event) => setPaymentAmount(event.target.value.replace(/\D/g, '').slice(0, 16))} inputMode="numeric" placeholder={detail.debtAmount > 0 ? `Tối đa ${formatVnd(detail.debtAmount)}` : 'Đơn đã thanh toán đủ'} className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none disabled:bg-slate-100" /></label>
+                  <button disabled={actionLoading || detail.debtAmount <= 0} onClick={() => void recordPayment()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40"><Banknote className="h-4 w-4" /> Ghi nhận trả nợ</button>
+                  {canManageConfirmedOrder && <button disabled={actionLoading} onClick={() => void cancelOrder()} className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-300 bg-white px-4 py-2.5 text-sm font-bold text-red-700 disabled:opacity-40"><Ban className="h-4 w-4" /> Hủy & hoàn kho</button>}
+                </div>
+              )}
+
+              {!canManageConfirmedOrder && detail.status === 'CONFIRMED' && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <label><span className="mb-1 block text-xs font-bold uppercase text-amber-800">Lý do yêu cầu hủy đơn</span><textarea maxLength={500} rows={2} value={cancelReason} onChange={(event) => setCancelReason(event.target.value)} placeholder="Ví dụ: Khách đổi ý, đặt nhầm sản phẩm..." className="w-full rounded-xl border border-amber-200 bg-white px-3 py-2.5 text-sm outline-none" /></label>
+                  <button disabled={actionLoading || !cancelReason.trim()} onClick={() => void requestCancellation()} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40"><Ban className="h-4 w-4" /> Gửi Owner duyệt hủy</button>
+                </div>
+              )}
+
+              {detail.status === 'CANCEL_REQUESTED' && (
+                <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                  <p className="font-black">Yêu cầu hủy đang chờ Owner xử lý</p>
+                  <p className="mt-1"><strong>Lý do:</strong> {detail.cancelRequestReason}</p>
+                  {detail.cancelRequestedAt && <p className="mt-1 text-xs text-amber-700">Gửi lúc {formatDateTime(detail.cancelRequestedAt)}</p>}
+                  {canManageConfirmedOrder && <button disabled={actionLoading} onClick={() => void cancelOrder()} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-red-700 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40"><Ban className="h-4 w-4" /> Xác nhận hủy & hoàn kho</button>}
+                </div>
+              )}
+
+              <div className="overflow-hidden rounded-xl border border-slate-200"><table className="w-full table-fixed text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-400"><tr><th className="px-4 py-3">Sản phẩm</th><th className="px-4 py-3">Đơn vị</th><th className="px-4 py-3">Số lượng</th><th className="px-4 py-3">Đơn giá</th><th className="px-4 py-3 text-right">Thành tiền</th></tr></thead><tbody className="divide-y divide-slate-100">{detail.items.map((item) => <tr key={item.id}><td className="break-words px-4 py-4 font-bold text-slate-900">{item.productName}</td><td className="px-4 py-4 text-slate-600">{item.unitName}</td><td className="px-4 py-4">{formatNumber(item.quantity)}</td><td className="px-4 py-4">{formatVnd(item.unitPrice)}</td><td className="px-4 py-4 text-right font-black">{formatVnd(item.lineTotal)}</td></tr>)}</tbody></table></div>
+              {detail.note && <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600"><strong>Ghi chú:</strong> {detail.note}</div>}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -132,6 +241,7 @@ function OrderStatus({ status }: { status: string }) {
 
 function statusLabel(status: string) {
   if (status === 'CONFIRMED') return 'Đã xác nhận';
+  if (status === 'CANCEL_REQUESTED') return 'Chờ Owner duyệt hủy';
   if (status === 'CANCELLED') return 'Đã hủy';
   return 'Nháp';
 }
@@ -142,6 +252,11 @@ function sourceLabel(source: string) {
 
 function formatVnd(value: number) {
   return `${Number(value || 0).toLocaleString('vi-VN')} ₫`;
+}
+
+function formatMoneyInput(value: string) {
+  if (!value) return '';
+  return value.replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 function formatNumber(value: number) {

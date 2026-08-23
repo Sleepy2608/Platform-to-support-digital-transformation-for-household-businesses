@@ -57,6 +57,15 @@ public class SalesOrder {
     @Column(name = "confirmed_at")
     private LocalDateTime confirmedAt;
 
+    @Column(name = "cancel_requested_by", columnDefinition = "BIGINT UNSIGNED")
+    private Long cancelRequestedBy;
+
+    @Column(name = "cancel_request_reason", length = 500)
+    private String cancelRequestReason;
+
+    @Column(name = "cancel_requested_at")
+    private LocalDateTime cancelRequestedAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

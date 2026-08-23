@@ -1,0 +1,113 @@
+{
+  "table" : "product_prices",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "created_at" : "2026-08-20T18:29:29.809075",
+    "effective_from" : "2026-08-20T18:29:29.809075",
+    "effective_to" : null,
+    "minimum_quantity" : 2.000,
+    "product_unit_id" : 2,
+    "sale_price" : 15000.00,
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-20T18:29:29.809075",
+    "changed_by" : 4,
+    "rule_name" : "giá sỉ"
+  }, {
+    "id" : 2,
+    "created_at" : "2026-08-20T18:45:43.845914",
+    "effective_from" : "2026-08-20T18:45:43.845914",
+    "effective_to" : null,
+    "minimum_quantity" : 1.000,
+    "product_unit_id" : 1,
+    "sale_price" : 180000.00,
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-20T18:45:43.845914",
+    "changed_by" : 4,
+    "rule_name" : "giá sỉ"
+  }, {
+    "id" : 3,
+    "created_at" : "2026-08-21T16:01:29.729869",
+    "effective_from" : "2026-08-21T16:01:29.729869",
+    "effective_to" : null,
+    "minimum_quantity" : 1.000,
+    "product_unit_id" : 3,
+    "sale_price" : 15000.00,
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-21T16:01:29.729869",
+    "changed_by" : 4,
+    "rule_name" : "Ban si"
+  }, {
+    "id" : 4,
+    "created_at" : "2026-08-21T16:07:31.769956",
+    "effective_from" : "2026-08-21T16:07:31.769956",
+    "effective_to" : null,
+    "minimum_quantity" : 1.000,
+    "product_unit_id" : 4,
+    "sale_price" : 150000.00,
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-21T16:07:31.769956",
+    "changed_by" : 4,
+    "rule_name" : "Gia si"
+  }, {
+    "id" : 5,
+    "created_at" : "2026-08-21T17:23:21.633901",
+    "effective_from" : "2026-08-21T17:23:21.633901",
+    "effective_to" : null,
+    "minimum_quantity" : 1.000,
+    "product_unit_id" : 6,
+    "sale_price" : 15000.00,
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-21T17:23:21.633901",
+    "changed_by" : 4,
+    "rule_name" : "Gia co ban"
+  }, {
+    "id" : 6,
+    "created_at" : "2026-08-21T17:30:33.908541",
+    "effective_from" : "2026-08-21T17:30:33.908541",
+    "effective_to" : "2026-08-21T17:34:19.991947",
+    "minimum_quantity" : 1.000,
+    "product_unit_id" : 7,
+    "sale_price" : 150000.00,
+    "status" : "INACTIVE",
+    "updated_at" : "2026-08-21T17:34:19.995376",
+    "changed_by" : 4,
+    "rule_name" : "Mac dinh"
+  }, {
+    "id" : 7,
+    "created_at" : "2026-08-21T17:34:19.992956",
+    "effective_from" : "2026-08-21T17:34:19.991947",
+    "effective_to" : null,
+    "minimum_quantity" : 1.000,
+    "product_unit_id" : 7,
+    "sale_price" : 75000.00,
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-21T17:34:19.992956",
+    "changed_by" : 4,
+    "rule_name" : "Mac dinh"
+  }, {
+    "id" : 8,
+    "created_at" : "2026-08-21T17:38:23.128048",
+    "effective_from" : "2026-08-21T17:38:23.128048",
+    "effective_to" : null,
+    "minimum_quantity" : 1.000,
+    "product_unit_id" : 5,
+    "sale_price" : 100000.00,
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-21T17:38:23.128048",
+    "changed_by" : 4,
+    "rule_name" : "le"
+  }, {
+    "id" : 9,
+    "created_at" : "2026-08-23T12:31:41.475834",
+    "effective_from" : "2026-08-23T12:31:41.475834",
+    "effective_to" : null,
+    "minimum_quantity" : 1.000,
+    "product_unit_id" : 8,
+    "sale_price" : 30000000.00,
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-23T12:31:41.475834",
+    "changed_by" : 4,
+    "rule_name" : "Bán sỉ"
+  } ]
+}

@@ -18,6 +18,7 @@ import com.hbdt.repository.ProductRepository;
 import com.hbdt.repository.ProductUnitRepository;
 import com.hbdt.repository.UnitRepository;
 import com.hbdt.repository.UserRepository;
+import com.hbdt.repository.TaxActivityGroupRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -45,6 +47,7 @@ class ProductPricingServiceTest {
     @Mock private UnitRepository unitRepository;
     @Mock private UserRepository userRepository;
     @Mock private BusinessContextService businessContextService;
+    @Mock private TaxActivityGroupRepository taxActivityGroupRepository;
 
     private ProductPricingService service;
 
@@ -52,7 +55,7 @@ class ProductPricingServiceTest {
     void setUp() {
         service = new ProductPricingService(
                 productRepository, productUnitRepository, productPriceRepository,
-                unitRepository, userRepository, businessContextService
+                unitRepository, userRepository, businessContextService, taxActivityGroupRepository
         );
     }
 
@@ -106,7 +109,6 @@ class ProductPricingServiceTest {
         when(productPriceRepository.findAllByProductUnitIdAndStatusOrderByEffectiveFromDesc(21L, "ACTIVE"))
                 .thenReturn(List.of(wholesale));
         when(unitRepository.findById(2L)).thenReturn(Optional.of(unit(2L, "Thùng")));
-
         ResolvedPriceResponse response = service.resolve(
                 "owner", new ResolvePriceRequest(10L, 2L, new BigDecimal("6"))
         );
@@ -134,6 +136,14 @@ class ProductPricingServiceTest {
         when(productPriceRepository.findAllByProductUnitIdAndStatusOrderByEffectiveFromDesc(20L, "ACTIVE"))
                 .thenReturn(List.of(basePrice));
         when(unitRepository.findById(2L)).thenReturn(Optional.of(unit(2L, "Thùng")));
+        when(taxActivityGroupRepository.findByIdAndStatus(50L, "ACTIVE"))
+                .thenReturn(Optional.of(com.hbdt.entity.TaxActivityGroup.builder()
+                        .id(50L)
+                        .vatCalculationRate(new BigDecimal("0.0100"))
+                        .pitCalculationRate(new BigDecimal("0.0050"))
+                        .effectiveFrom(LocalDate.now().minusDays(1))
+                        .status("ACTIVE")
+                        .build()));
 
         SalesOrderItem item = SalesOrderItem.builder()
                 .productId(10L)
@@ -148,17 +158,52 @@ class ProductPricingServiceTest {
         assertThat(item.getLineTotal()).isEqualByComparingTo("300000.00");
         assertThat(item.getProductPriceId()).isEqualTo(40L);
         assertThat(item.getPricingRuleName()).isEqualTo("Giá mặc định");
+        assertThat(item.getTaxActivityGroupId()).isEqualTo(50L);
+        assertThat(item.getVatCalculationRate()).isEqualByComparingTo("0.0100");
+        assertThat(item.getPitCalculationRate()).isEqualByComparingTo("0.0050");
     }
 
     @Test
-    void resolveRejectsFractionalOrderQuantity() {
+    void resolveRejectsMoreThanThreeFractionDigits() {
         mockOwnedProduct();
 
         assertThatThrownBy(() -> service.resolve(
-                "owner", new ResolvePriceRequest(10L, 2L, new BigDecimal("19.001"))
+                "owner", new ResolvePriceRequest(10L, 2L, new BigDecimal("19.0001"))
         ))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessage("Số lượng đặt hàng phải là số nguyên");
+                .hasMessage("Số lượng đặt hàng chỉ được có tối đa 3 chữ số thập phân");
+    }
+
+    @Test
+    void resolveAllowsFractionalQuantityForKg() {
+        mockOwnedProduct();
+        ProductUnit kgUnit = productUnit(20L, 1L, "1");
+        when(productUnitRepository.findByProductIdAndUnitIdAndStatus(10L, 1L, "ACTIVE"))
+                .thenReturn(Optional.of(kgUnit));
+        when(unitRepository.findById(1L)).thenReturn(Optional.of(
+                Unit.builder().id(1L).unitCode("KG").unitName("Kg").status("ACTIVE").build()));
+        when(productPriceRepository.findAllByProductUnitIdAndStatusOrderByEffectiveFromDesc(20L, "ACTIVE"))
+                .thenReturn(List.of(price(40L, 20L, "15000")));
+
+        ResolvedPriceResponse response = service.resolve(
+                "owner", new ResolvePriceRequest(10L, 1L, new BigDecimal("1.250")));
+
+        assertThat(response.quantity()).isEqualByComparingTo("1.250");
+        assertThat(response.lineTotal()).isEqualByComparingTo("18750");
+    }
+
+    @Test
+    void resolveRejectsFractionalQuantityForNonKgAndNonLiterUnit() {
+        mockOwnedProduct();
+        when(productUnitRepository.findByProductIdAndUnitIdAndStatus(10L, 2L, "ACTIVE"))
+                .thenReturn(Optional.of(productUnit(21L, 2L, "10")));
+        when(unitRepository.findById(2L)).thenReturn(Optional.of(
+                Unit.builder().id(2L).unitCode("BAO").unitName("Bao").status("ACTIVE").build()));
+
+        assertThatThrownBy(() -> service.resolve(
+                "owner", new ResolvePriceRequest(10L, 2L, new BigDecimal("1.5"))))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Chỉ đơn vị kg và lít được phép nhập số lượng thập phân");
     }
 
     @Test
@@ -217,7 +262,8 @@ class ProductPricingServiceTest {
     private void mockOwnedProduct() {
         when(businessContextService.requireBusinessId("owner")).thenReturn(5L);
         when(productRepository.findByIdAndBusinessId(10L, 5L)).thenReturn(Optional.of(
-                Product.builder().id(10L).businessId(5L).baseUnitId(1L).build()
+                Product.builder().id(10L).businessId(5L).baseUnitId(1L)
+                        .defaultTaxActivityGroupId(50L).build()
         ));
     }
 
