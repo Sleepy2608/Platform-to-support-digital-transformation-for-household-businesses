@@ -2247,9 +2247,9 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │            SEQUENCE DIAGRAM: CHECKOUT & CÔNG NỢ (XÁC NHẬN ĐƠN)               │
 │                                                                              │
-│  Client     OrderCtrl(*)    OrderService(*)  Inventory     Debt              │
+│  Client   SalesOrderCtrl  SalesOrderService  Inventory     Debt              │
 │    │             │                │             │           │                 │
-│    │ POST /api/orders            │             │           │                 │
+│    │ POST /api/sales-orders      │             │           │                 │
 │    │  (items, customer, debt)    │             │           │                 │
 │    │────────────►│               │             │           │                 │
 │    │             │ createOrder(businessId, items)          │                 │
@@ -2265,11 +2265,10 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 │    │             │                │────────────►│           │                 │
 │    │             │                │ ④ Sinh AccountingEntry │                 │
 │    │             │                │  (cùng 1 transaction)  │                 │
-│    │◄─ 201 ──────│◄─ OrderResponse─│             │           │                 │
+│    │◄─ 201 ──────│◄ SalesOrderResponse           │           │                 │
 │    │             │                │             │           │                 │
-│    │ (*) Ghi chú: module Order đang ở giai đoạn KẾ HOẠCH.                    │
-│    │     Entity SalesOrder/SalesOrderItem/DebtTransaction/                    │
-│    │     InventoryTransaction đã có trong database.                           │
+│    │ Module bán hàng dùng duy nhất SalesOrder/SalesOrderItem và endpoint      │
+│    │ /api/sales-orders; luồng /api/orders cũ đã được loại bỏ.                 │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 

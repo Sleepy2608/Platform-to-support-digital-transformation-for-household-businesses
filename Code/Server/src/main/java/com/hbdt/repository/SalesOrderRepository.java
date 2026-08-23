@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 
 import java.util.Optional;
 
@@ -17,6 +19,16 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long>, J
     boolean existsByBusinessIdAndOrderCode(Long businessId, String orderCode);
 
     Optional<SalesOrder> findByIdAndBusinessId(Long id, Long businessId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select salesOrder from SalesOrder salesOrder
+            where salesOrder.id = :id and salesOrder.businessId = :businessId
+            """)
+    Optional<SalesOrder> findForUpdateByIdAndBusinessId(
+            @Param("id") Long id,
+            @Param("businessId") Long businessId
+    );
 
     Page<SalesOrder> findAllByBusinessIdOrderByCreatedAtDesc(Long businessId, Pageable pageable);
 

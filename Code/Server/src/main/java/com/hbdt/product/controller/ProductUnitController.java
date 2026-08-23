@@ -23,7 +23,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/products/{productId}/units")
-@PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
+@PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER', 'EMPLOYEE')")
 public class ProductUnitController {
 
     private final ProductUnitService productUnitService;
@@ -44,6 +44,7 @@ public class ProductUnitController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
     public ResponseEntity<ApiResponse<ProductUnitResponse>> addUnit(
             Authentication authentication,
             @PathVariable Long productId,
@@ -56,6 +57,7 @@ public class ProductUnitController {
     }
 
     @PutMapping("/{productUnitId}")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
     public ResponseEntity<ApiResponse<ProductUnitResponse>> updateRate(
             Authentication authentication,
             @PathVariable Long productId,
@@ -69,6 +71,7 @@ public class ProductUnitController {
     }
 
     @DeleteMapping("/{productUnitId}")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
     public ResponseEntity<ApiResponse<Void>> deactivate(
             Authentication authentication,
             @PathVariable Long productId,

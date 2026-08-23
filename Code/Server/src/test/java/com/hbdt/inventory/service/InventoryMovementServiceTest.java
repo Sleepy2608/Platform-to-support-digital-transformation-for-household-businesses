@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -28,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class InventoryMovementServiceTest {
@@ -94,6 +96,54 @@ class InventoryMovementServiceTest {
                 new InventoryMovementRequest(11L, 2L, new BigDecimal("3"), null, null, null)
         )).isInstanceOf(BadRequestException.class)
                 .hasMessage("Số lượng xuất vượt quá số lượng tồn kho");
+    }
+
+    @Test
+    void stockMovementRejectsFractionForNonKgAndNonLiterUnit() {
+        BigDecimal quantity = new BigDecimal("1.5");
+        Product product = Product.builder().id(11L).businessId(7L).baseUnitId(1L).build();
+        User user = User.builder().id(3L).businessId(7L).username("owner").build();
+        Unit bagUnit = Unit.builder().id(2L).unitCode("BAO").unitName("Bao").status("ACTIVE").build();
+        when(businessContextService.requireBusinessId("owner")).thenReturn(7L);
+        when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
+        when(userRepository.findByUsername("owner")).thenReturn(Optional.of(user));
+        when(unitRepository.findByIdAndStatus(2L, "ACTIVE")).thenReturn(Optional.of(bagUnit));
+
+        assertThatThrownBy(() -> service.stockOut(
+                "owner", new InventoryMovementRequest(11L, 2L, quantity, null, null, null)))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("Chỉ đơn vị kg và lít được phép nhập số lượng thập phân");
+    }
+
+    @Test
+    void restoreCancelledSaleReturnsQuantityAndOriginalCostToInventory() {
+        Product product = Product.builder().id(11L).businessId(7L).baseUnitId(1L).build();
+        User user = User.builder().id(3L).businessId(7L).username("owner").build();
+        InventoryBalance balance = InventoryBalance.builder()
+                .businessId(7L).productId(11L)
+                .quantityOnHand(new BigDecimal("8.000"))
+                .averageUnitCost(new BigDecimal("10.00"))
+                .inventoryValue(new BigDecimal("80.00"))
+                .build();
+        when(businessContextService.requireBusinessId("owner")).thenReturn(7L);
+        when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
+        when(userRepository.findByUsername("owner")).thenReturn(Optional.of(user));
+        when(balanceRepository.findForUpdate(7L, 11L)).thenReturn(Optional.of(balance));
+        when(transactionRepository
+                .findFirstByBusinessIdAndProductIdAndReferenceTypeAndReferenceIdAndQuantityChangeLessThanOrderByIdDesc(
+                        7L, 11L, "SALES_ORDER", 100L, BigDecimal.ZERO))
+                .thenReturn(Optional.of(InventoryTransaction.builder()
+                        .unitCost(new BigDecimal("10.00")).build()));
+
+        service.restoreCancelledSale("owner", 11L, new BigDecimal("2.000"), 100L, "SO-004");
+
+        assertThat(balance.getQuantityOnHand()).isEqualByComparingTo("10.000");
+        assertThat(balance.getInventoryValue()).isEqualByComparingTo("100.00");
+        ArgumentCaptor<InventoryTransaction> captor = ArgumentCaptor.forClass(InventoryTransaction.class);
+        verify(transactionRepository).save(captor.capture());
+        assertThat(captor.getValue().getTransactionType()).isEqualTo("CANCEL_SALE");
+        assertThat(captor.getValue().getQuantityChange()).isEqualByComparingTo("2.000");
+        assertThat(captor.getValue().getBalanceAfter()).isEqualByComparingTo("10.000");
     }
 
     private void mockContextAndConversion(BigDecimal quantity, BigDecimal rate, BigDecimal baseQuantity) {
