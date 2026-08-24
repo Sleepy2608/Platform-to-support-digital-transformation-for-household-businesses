@@ -853,12 +853,23 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
   const renewalAmount = monthlyPrice * months;
   const transferSyntax = `${packageType || 'SUB'}-RENEW-${months}M`;
 
-  const packageLabel = packageType === 'VIP' ? 'Gói VIP (Pro)' : packageType === 'STANDARD' ? 'Gói Standard' : null;
+  const packageLabel = packageType === 'VIP'
+    ? 'Gói VIP (Pro)'
+    : packageType === 'STANDARD'
+      ? 'Gói Standard'
+      : packageType === 'FREE'
+        ? 'Gói Miễn Phí'
+        : packageType
+          ? `Gói ${packageType}`
+          : null;
+
   const packageBadgeClass = packageType === 'VIP'
     ? 'bg-zinc-900 text-white border-zinc-700'
     : packageType === 'STANDARD'
       ? 'bg-blue-50 text-blue-800 border-blue-200'
-      : '';
+      : packageType === 'FREE'
+        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+        : 'bg-slate-100 text-slate-800 border-slate-200';
 
   return (
     <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
@@ -866,7 +877,7 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
         <div className="min-w-0 flex-1">
           <SectionHeader icon={CreditCard} title="Gói dịch vụ &amp; Gia hạn" subtitle="Quản lý thời hạn truy cập nền tảng HKD Digital" />
         </div>
-        {hasActiveSubscription && (
+        {(hasActiveSubscription || packageType) && (
           <button
             type="button"
             onClick={() => router.push('/onboarding/package-selection?from=account')}
@@ -880,7 +891,7 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
       {msg && <Alert type={msg.type} message={msg.text} />}
 
       {/* Package Name Badge */}
-      {hasActiveSubscription && packageLabel ? (
+      {packageType && packageLabel ? (
         <div className="flex items-center gap-3">
           <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${packageBadgeClass}`}>
             <Crown className="w-3.5 h-3.5" />
