@@ -1,6 +1,6 @@
 {
   "table" : "subscription_plans",
-  "version" : 12,
+  "version" : 13,
   "rows" : [ {
     "id" : 1,
     "annual_price" : 0.00,
@@ -49,8 +49,8 @@
     "monthly_price" : 1000.00,
     "plan_code" : "1",
     "plan_name" : "12",
-    "status" : "ACTIVE",
-    "updated_at" : "2026-08-11T05:30:00.300988"
+    "status" : "INACTIVE",
+    "updated_at" : "2026-08-23T14:41:44.14638"
   }, {
     "id" : 6,
     "annual_price" : 4990000.00,

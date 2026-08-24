@@ -129,7 +129,7 @@ export default function OnboardingLayout({ children }: { children: React.ReactNo
       </header>
 
       {/* ── Main Content ── */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12" style={{ cursor: 'default' }}>
+      <main className={`${pathname.includes('package-selection') ? 'max-w-6xl' : 'max-w-3xl'} mx-auto px-4 sm:px-6 py-8 sm:py-12`} style={{ cursor: 'default' }}>
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient, clearAuth } from '../../lib/apiClient';
+import PaymentQrModal from '../../components/payment/PaymentQrModal';
 import {
   type BusinessProfileResponse, type BusinessProfileRequest, type BusinessType,
   type ProvinceDto, type DistrictDto, type WardDto,
@@ -780,6 +781,9 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
   const [months, setMonths] = useState(1);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [monthlyPrice, setMonthlyPrice] = useState(0);
+  const [showRenewPaymentModal, setShowRenewPaymentModal] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   const [histories, setHistories] = useState<SubscriptionHistory[]>([]);
   const [historiesLoading, setHistoriesLoading] = useState(true);
@@ -803,7 +807,6 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
   }, [loadHistories]);
 
   const expiresAt = profile?.subscriptionExpiresAt;
-  const isActive = expiresAt && new Date(expiresAt) > new Date();
   const packageType = profile?.packageType;
 
   const formatExpiry = (dt: string | null) => {
@@ -814,20 +817,41 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
   const daysRemaining = expiresAt
     ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000))
     : 0;
+  const hasActiveSubscription = daysRemaining > 0;
+
+  useEffect(() => {
+    if (!packageType) return;
+    apiClient.get<Array<{ id: string; monthlyPrice: number }>>('/api/owner/subscription/packages')
+      .then((packages) => {
+        const currentPackage = packages.find((item) => item.id === packageType);
+        setMonthlyPrice(currentPackage?.monthlyPrice ?? 0);
+      })
+      .catch(() => setMonthlyPrice(0));
+  }, [packageType]);
 
   const handleRenew = async () => {
+    setMsg(null);
+    setPaymentSuccess(false);
+    setShowRenewPaymentModal(true);
+  };
+
+  const handleConfirmRenewalPayment = async () => {
     setLoading(true); setMsg(null);
     try {
       await apiClient.post<OwnerProfile>(`/api/owner/subscription/renew?months=${months}`);
-      setMsg({ type: 'success', text: `Gia hạn dịch vụ thành công thêm ${months} tháng!` });
+      setPaymentSuccess(true);
       onUpdated();
       loadHistories();
+      setTimeout(() => setShowRenewPaymentModal(false), 1800);
     } catch (err: unknown) {
       setMsg({ type: 'error', text: (err as Error).message });
     } finally {
       setLoading(false);
     }
   };
+
+  const renewalAmount = monthlyPrice * months;
+  const transferSyntax = `${packageType || 'SUB'}-RENEW-${months}M`;
 
   const packageLabel = packageType === 'VIP' ? 'Gói VIP (Pro)' : packageType === 'STANDARD' ? 'Gói Standard' : null;
   const packageBadgeClass = packageType === 'VIP'
@@ -838,11 +862,25 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
 
   return (
     <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
-      <SectionHeader icon={CreditCard} title="Gói dịch vụ &amp; Gia hạn" subtitle="Quản lý thời hạn truy cập nền tảng HKD Digital" />
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <SectionHeader icon={CreditCard} title="Gói dịch vụ &amp; Gia hạn" subtitle="Quản lý thời hạn truy cập nền tảng HKD Digital" />
+        </div>
+        {hasActiveSubscription && (
+          <button
+            type="button"
+            onClick={() => router.push('/onboarding/package-selection?from=account')}
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 active:scale-95 transition-all cursor-pointer shadow-xs"
+          >
+            <Crown className="w-3.5 h-3.5" />
+            Chọn gói dịch vụ khác
+          </button>
+        )}
+      </div>
       {msg && <Alert type={msg.type} message={msg.text} />}
 
       {/* Package Name Badge */}
-      {packageLabel ? (
+      {hasActiveSubscription && packageLabel ? (
         <div className="flex items-center gap-3">
           <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${packageBadgeClass}`}>
             <Crown className="w-3.5 h-3.5" />
@@ -858,7 +896,8 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
             <p className="text-xs text-amber-700 mt-0.5">Vui lòng chọn gói để sử dụng đầy đủ tính năng nền tảng.</p>
             <div className="flex gap-2 mt-3">
               <button
-                onClick={() => router.push('/onboarding/package-selection')}
+                type="button"
+                onClick={() => router.push('/onboarding/package-selection?from=account')}
                 className="px-4 py-2 bg-amber-600 text-white text-xs font-bold rounded-xl hover:bg-amber-700 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
               >
                 <Crown className="w-3.5 h-3.5" /> Chọn gói ngay
@@ -869,15 +908,15 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
       )}
 
       {/* Subscription Status Card */}
-      <div className={`p-6 rounded-2xl border ${isActive ? 'bg-emerald-50/60 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
+      <div className={`p-6 rounded-2xl border ${hasActiveSubscription ? 'bg-emerald-50/60 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className={`w-2.5 h-2.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-400'} animate-pulse`} />
-            <span className={`text-xs sm:text-sm font-bold ${isActive ? 'text-emerald-800' : 'text-slate-600'}`}>
-              {isActive ? 'Gói hoạt động' : 'Gói hết hạn / Chưa kích hoạt'}
+            <div className={`w-2.5 h-2.5 rounded-full ${hasActiveSubscription ? 'bg-emerald-500' : 'bg-slate-400'} animate-pulse`} />
+            <span className={`text-xs sm:text-sm font-bold ${hasActiveSubscription ? 'text-emerald-800' : 'text-slate-600'}`}>
+              {hasActiveSubscription ? 'Gói hoạt động' : 'Gói hết hạn / Chưa kích hoạt'}
             </span>
           </div>
-          {isActive && (
+          {hasActiveSubscription && (
             <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300/60">
               Còn {daysRemaining} ngày
             </span>
@@ -890,7 +929,7 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
       {packageType && (
         <PlanChangeSection
           packageType={packageType}
-          isActive={!!isActive}
+          isActive={hasActiveSubscription}
           onUpdated={() => {
             onUpdated();
             loadHistories();
@@ -973,6 +1012,19 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
           </div>
         )}
       </div>
+
+      <PaymentQrModal
+        isOpen={showRenewPaymentModal}
+        amount={renewalAmount}
+        transferSyntax={transferSyntax}
+        title="Thanh toán gia hạn dịch vụ"
+        successTitle={paymentSuccess ? 'Gia hạn thành công!' : ''}
+        successMessage={`Dịch vụ đã được gia hạn thêm ${months} tháng.`}
+        loading={loading}
+        error={msg?.type === 'error' ? msg.text : null}
+        onClose={() => setShowRenewPaymentModal(false)}
+        onConfirm={handleConfirmRenewalPayment}
+      />
     </div>
   );
 }

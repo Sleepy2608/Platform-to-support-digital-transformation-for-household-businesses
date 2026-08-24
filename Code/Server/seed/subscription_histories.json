@@ -1,0 +1,45 @@
+{
+  "table" : "subscription_histories",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "action" : "UPGRADE",
+    "changed_at" : "2026-08-23T14:15:39.105448",
+    "changed_by" : "ngocthang2405",
+    "new_plan" : "VIP",
+    "old_plan" : "STANDARD",
+    "subscription_id" : 5
+  }, {
+    "id" : 2,
+    "action" : "RENEWAL",
+    "changed_at" : "2026-08-23T14:15:54.694104",
+    "changed_by" : "ngocthang2405",
+    "new_plan" : "VIP",
+    "old_plan" : "VIP",
+    "subscription_id" : 5
+  }, {
+    "id" : 3,
+    "action" : "DOWNGRADE",
+    "changed_at" : "2026-08-23T14:16:21.63595",
+    "changed_by" : "ngocthang2405",
+    "new_plan" : "STANDARD",
+    "old_plan" : "VIP",
+    "subscription_id" : 5
+  }, {
+    "id" : 4,
+    "action" : "UPGRADE",
+    "changed_at" : "2026-08-23T14:22:01.099848",
+    "changed_by" : "ngocthang2405",
+    "new_plan" : "VIP",
+    "old_plan" : "STANDARD",
+    "subscription_id" : 5
+  }, {
+    "id" : 5,
+    "action" : "DOWNGRADE",
+    "changed_at" : "2026-08-23T14:22:31.806388",
+    "changed_by" : "ngocthang2405",
+    "new_plan" : "STANDARD",
+    "old_plan" : "VIP",
+    "subscription_id" : 5
+  } ]
+}

@@ -6,6 +6,7 @@ import com.hbdt.entity.Product;
 import com.hbdt.entity.ProductPrice;
 import com.hbdt.entity.ProductUnit;
 import com.hbdt.entity.SalesOrderItem;
+import com.hbdt.entity.TaxActivityGroup;
 import com.hbdt.entity.Unit;
 import com.hbdt.entity.User;
 import com.hbdt.pricing.dto.ProductPriceRequest;
@@ -19,12 +20,14 @@ import com.hbdt.repository.ProductRepository;
 import com.hbdt.repository.ProductUnitRepository;
 import com.hbdt.repository.UnitRepository;
 import com.hbdt.repository.UserRepository;
+import com.hbdt.repository.TaxActivityGroupRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -37,7 +40,7 @@ public class ProductPricingService {
     private static final String INACTIVE = "INACTIVE";
     private static final int MONEY_SCALE = 2;
     private static final int QUANTITY_SCALE = 3;
-    private static final BigDecimal MAX_ORDER_QUANTITY = new BigDecimal("999999999999999");
+    private static final BigDecimal MAX_ORDER_QUANTITY = new BigDecimal("999999999999999.999");
     private static final BigDecimal ONE_UNIT = new BigDecimal("1.000");
 
     private final ProductRepository productRepository;
@@ -46,6 +49,7 @@ public class ProductPricingService {
     private final UnitRepository unitRepository;
     private final UserRepository userRepository;
     private final BusinessContextService businessContextService;
+    private final TaxActivityGroupRepository taxActivityGroupRepository;
 
     public ProductPricingService(
             ProductRepository productRepository,
@@ -53,7 +57,8 @@ public class ProductPricingService {
             ProductPriceRepository productPriceRepository,
             UnitRepository unitRepository,
             UserRepository userRepository,
-            BusinessContextService businessContextService
+            BusinessContextService businessContextService,
+            TaxActivityGroupRepository taxActivityGroupRepository
     ) {
         this.productRepository = productRepository;
         this.productUnitRepository = productUnitRepository;
@@ -61,6 +66,7 @@ public class ProductPricingService {
         this.unitRepository = unitRepository;
         this.userRepository = userRepository;
         this.businessContextService = businessContextService;
+        this.taxActivityGroupRepository = taxActivityGroupRepository;
     }
 
     public List<ProductPriceResponse> getCurrentPrices(String actorUsername, Long productId) {
@@ -162,6 +168,8 @@ public class ProductPricingService {
                 .orElseThrow(() -> new BadRequestException(
                         "Đơn vị tính không được cấu hình hoặc đã bị vô hiệu hóa"
                 ));
+        Unit unit = requireUnit(selectedUnit.getUnitId());
+        validateUnitQuantity(request.quantity(), unit);
         BigDecimal rate = selectedUnit.getConversionRate();
         BigDecimal baseQuantity = request.quantity().multiply(rate)
                 .setScale(QUANTITY_SCALE, RoundingMode.HALF_UP);
@@ -184,7 +192,6 @@ public class ProductPricingService {
             convertedFromBase = !selectedUnit.getId().equals(baseUnit.getId());
         }
 
-        Unit unit = requireUnit(selectedUnit.getUnitId());
         BigDecimal lineTotal = request.quantity().multiply(unitPrice)
                 .setScale(0, RoundingMode.HALF_UP);
         return new ResolvedPriceResponse(
@@ -202,16 +209,37 @@ public class ProductPricingService {
         if (orderItem == null) {
             throw new BadRequestException("Dòng đơn hàng không được để trống");
         }
+        Product product = findOwnedProduct(actorUsername, orderItem.getProductId());
         ResolvedPriceResponse resolved = resolve(actorUsername, new ResolvePriceRequest(
                 orderItem.getProductId(), orderItem.getUnitId(), orderItem.getQuantity()
         ));
+        Long taxGroupId = orderItem.getTaxActivityGroupId() != null
+                ? orderItem.getTaxActivityGroupId()
+                : product.getDefaultTaxActivityGroupId();
+        if (taxGroupId == null) {
+            throw new BadRequestException("Sản phẩm chưa được cấu hình nhóm hoạt động tính thuế");
+        }
+        TaxActivityGroup taxGroup = taxActivityGroupRepository.findByIdAndStatus(taxGroupId, ACTIVE)
+                .filter(this::isEffectiveToday)
+                .orElseThrow(() -> new BadRequestException(
+                        "Nhóm hoạt động tính thuế không tồn tại hoặc chưa có hiệu lực"));
         orderItem.setConversionRate(resolved.conversionRate());
         orderItem.setBaseQuantity(resolved.baseQuantity());
         orderItem.setUnitPrice(resolved.unitPrice());
         orderItem.setLineTotal(resolved.lineTotal());
         orderItem.setProductPriceId(resolved.appliedPriceId());
         orderItem.setPricingRuleName(resolved.appliedRuleName());
+        orderItem.setTaxActivityGroupId(taxGroup.getId());
+        orderItem.setVatCalculationRate(taxGroup.getVatCalculationRate());
+        orderItem.setPitCalculationRate(taxGroup.getPitCalculationRate());
         return orderItem;
+    }
+
+    private boolean isEffectiveToday(TaxActivityGroup group) {
+        LocalDate today = LocalDate.now();
+        return group.getEffectiveFrom() != null
+                && !group.getEffectiveFrom().isAfter(today)
+                && (group.getEffectiveTo() == null || !group.getEffectiveTo().isBefore(today));
     }
 
     @Transactional
@@ -358,11 +386,19 @@ public class ProductPricingService {
         if (quantity == null || quantity.signum() <= 0) {
             throw new BadRequestException("Số lượng đặt hàng phải lớn hơn 0");
         }
-        if (quantity.stripTrailingZeros().scale() > 0) {
-            throw new BadRequestException("Số lượng đặt hàng phải là số nguyên");
+        if (quantity.stripTrailingZeros().scale() > QUANTITY_SCALE) {
+            throw new BadRequestException("Số lượng đặt hàng chỉ được có tối đa 3 chữ số thập phân");
         }
         if (quantity.compareTo(MAX_ORDER_QUANTITY) > 0) {
             throw new BadRequestException("Số lượng đặt hàng không được vượt quá 15 chữ số");
+        }
+    }
+
+    private void validateUnitQuantity(BigDecimal quantity, Unit unit) {
+        String unitCode = unit.getUnitCode() == null ? "" : unit.getUnitCode().trim().toUpperCase();
+        boolean allowsFraction = "KG".equals(unitCode) || "LIT".equals(unitCode);
+        if (!allowsFraction && quantity.stripTrailingZeros().scale() > 0) {
+            throw new BadRequestException("Chỉ đơn vị kg và lít được phép nhập số lượng thập phân");
         }
     }
 }

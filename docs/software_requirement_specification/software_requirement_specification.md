@@ -8,7 +8,7 @@
 
 **Viết tắt:** HBDT
 
-**Phiên bản:** 1.0
+**Phiên bản:** 1.1
 
 **Loại tài liệu:** Đặc tả yêu cầu phần mềm
 
@@ -1110,6 +1110,14 @@ P0 – Bắt buộc
 Chủ hộ kinh doanh
 
 ### Luồng chính
+
+#### FR-P-01 Hiển thị thông tin thanh toán QR
+
+Khi Chủ hộ kinh doanh chọn gói có phí, hệ thống phải mở modal thanh toán chuyển khoản và hiển thị mã QR từ `Code/Client/src/frontend/public/images/qr-code.jpg`, số tiền theo gói/chu kỳ, ngân hàng, số tài khoản, chủ tài khoản và nội dung chuyển khoản. Gói miễn phí không hiển thị modal QR.
+
+#### FR-P-02 Xác nhận kích hoạt gói sau thanh toán
+
+Sau khi chuyển khoản bên ngoài hệ thống, Chủ hộ kinh doanh có thể bấm **Xác nhận thanh toán**. Frontend gọi `POST /api/owner/subscription/select-package` với `packageType` và `billingCycle`; khi API thành công, hệ thống kích hoạt subscription và chuyển về trang tài khoản. Phiên bản hiện tại chưa có payment gateway, endpoint QR động hoặc webhook đối soát ngân hàng.
 
 1. Chủ hộ kinh doanh chọn gói thuê bao.
 2. Yêu cầu thanh toán được tạo.
@@ -3191,7 +3199,7 @@ Bảng sau tổng hợp các điểm cuối REST API chính của hệ thống.
 | Tồn kho | `/api/inventory/*` | 8 |
 | Khách hàng | `/api/customers/*` | 8 |
 | Công nợ | `/api/debts/*` | 6 |
-| Đơn bán hàng | `/api/orders/*` | 8 |
+| Đơn bán hàng | `/api/sales-orders/*` | 8 |
 | Đơn hàng AI | `/api/ai/*` | 6 |
 | Gói thuê bao | `/api/subscriptions/*` | 8 |
 | Ghi sổ kế toán | `/api/accounting/*` | 8 |

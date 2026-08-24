@@ -583,14 +583,21 @@ export default function ProductManagementPage() {
         return total + parseQuantity(candidate.quantity) * Number(candidateUnit?.conversionRate || 0);
       }, 0);
     const remainingBaseQuantity = Math.max(0, Number(item.quantityOnHand || 0) - usedByOtherLines);
-    return Math.max(0, Math.floor((remainingBaseQuantity / selectedRate) + Number.EPSILON));
+    const maximum = remainingBaseQuantity / selectedRate;
+    return allowsFractionalQuantity(selectedUnit?.unitCode)
+      ? roundDown3(maximum)
+      : Math.floor(maximum);
   };
 
   const changeCartQuantity = (key: number, quantity: string) => {
-    const normalizedQuantity = normalizeIntegerQuantityInput(quantity);
-    if (normalizedQuantity === null) return;
     const item = cartItems.find((candidate) => candidate.key === key);
     if (!item) return;
+    const selectedUnit = item.units.find((unit) => unit.unitId === item.unitId);
+    const normalizedQuantity = normalizeQuantityInput(
+      quantity,
+      allowsFractionalQuantity(selectedUnit?.unitCode),
+    );
+    if (normalizedQuantity === null) return;
     const maximum = maximumCartQuantity(item, item.unitId);
     if (parseQuantity(normalizedQuantity) > maximum) {
       const unitName = item.units.find((unit) => unit.unitId === item.unitId)?.unitName || 'đơn vị';
@@ -606,8 +613,8 @@ export default function ProductManagementPage() {
   const addProductToCart = async (product: Product) => {
     if (product.status !== 'ACTIVE') return;
     setError('');
-    if (Math.floor(Number(product.quantityOnHand || 0)) < 1) {
-      setError(`Sản phẩm ${product.productName} không còn đủ 1 đơn vị trong kho`);
+    if (Number(product.quantityOnHand || 0) < 0.001) {
+      setError(`Sản phẩm ${product.productName} đã hết tồn kho`);
       return;
     }
     setCartOpen(true);
@@ -616,7 +623,7 @@ export default function ProductManagementPage() {
       (item) => item.productId === product.id && item.unitId === product.baseUnitId,
     );
     if (existingBaseItem) {
-      const nextQuantity = String(Math.round(parseQuantity(existingBaseItem.quantity)) + 1);
+      const nextQuantity = String(Math.round((parseQuantity(existingBaseItem.quantity) + 1) * 1000) / 1000);
       changeCartQuantity(existingBaseItem.key, nextQuantity);
       return;
     }
@@ -629,6 +636,15 @@ export default function ProductManagementPage() {
       if (!preferredUnit) throw new Error('Sản phẩm chưa được cấu hình đơn vị tính');
 
       const key = nextCartKey.current++;
+      const availableInPreferredUnit = Number(product.quantityOnHand || 0)
+        / Number(preferredUnit.conversionRate || 1);
+      const preferredAllowsFraction = allowsFractionalQuantity(preferredUnit.unitCode);
+      if (!preferredAllowsFraction && Math.floor(availableInPreferredUnit) < 1) {
+        throw new Error(`Sản phẩm ${product.productName} không đủ 1 ${preferredUnit.unitName}`);
+      }
+      const initialQuantity = preferredAllowsFraction
+        ? formatQuantityInput(Math.min(1, availableInPreferredUnit))
+        : '1';
       const item: CartItem = {
         key,
         productId: product.id,
@@ -638,12 +654,12 @@ export default function ProductManagementPage() {
         baseUnitName: product.baseUnitName,
         quantityOnHand: product.quantityOnHand,
         unitId: preferredUnit.unitId,
-        quantity: '1',
+        quantity: initialQuantity,
         units: configuredUnits,
         resolving: true,
       };
       setCartItems((current) => [...current, item]);
-      void resolveCartItem(key, product.id, preferredUnit.unitId, '1');
+      void resolveCartItem(key, product.id, preferredUnit.unitId, initialQuantity);
     } catch (err) {
       setCartOpen(false);
       setError(err instanceof Error ? err.message : 'Không thể thêm sản phẩm vào đơn');
@@ -655,10 +671,13 @@ export default function ProductManagementPage() {
     if (!item) return;
     const maximum = maximumCartQuantity(item, unitId);
     const currentQuantity = parseQuantity(item.quantity);
-    const nextQuantity = currentQuantity > maximum
+    const selectedUnit = item.units.find((unit) => unit.unitId === unitId);
+    const allowsFraction = allowsFractionalQuantity(selectedUnit?.unitCode);
+    const normalizedCurrent = allowsFraction ? currentQuantity : Math.max(1, Math.floor(currentQuantity));
+    const nextQuantity = normalizedCurrent > maximum
       ? formatQuantityInput(maximum)
-      : item.quantity;
-    const unitName = item.units.find((unit) => unit.unitId === unitId)?.unitName || 'đơn vị';
+      : String(normalizedCurrent);
+    const unitName = selectedUnit?.unitName || 'đơn vị';
     if (maximum <= 0) {
       patchCartItem(key, {
         unitId,
@@ -699,6 +718,7 @@ export default function ProductManagementPage() {
       orderCode: data.orderCode,
       source: data.source,
       paidAmount: data.paidAmount,
+      customerId: data.customerId,
       note: data.note,
       items: cartItems.map((item) => ({
         productId: item.productId,
@@ -1190,7 +1210,7 @@ function formatDateTime(value: string) {
 
 function parseQuantity(value: string) {
   const parsed = Number(value.replace(',', '.'));
-  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : 0;
+  return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed * 1000) / 1000 : 0;
 }
 
 function formatQuantity(value: number) {
@@ -1198,16 +1218,25 @@ function formatQuantity(value: number) {
 }
 
 function formatQuantityInput(value: number) {
-  return String(Math.floor(Math.max(0, value)));
+  return String(roundDown3(value));
 }
 
-function normalizeIntegerQuantityInput(value: string): string | null {
+function normalizeQuantityInput(value: string, allowsFraction: boolean): string | null {
   const normalized = value.trim().replace(',', '.');
   if (!normalized) return '';
-  if (!/^\d+(?:\.\d*)?$/.test(normalized)) return null;
+  const pattern = allowsFraction ? /^\d+(?:\.\d{0,3})?$/ : /^\d+$/;
+  if (!pattern.test(normalized)) return null;
   const parsed = Number(normalized);
   if (!Number.isFinite(parsed) || parsed < 0) return null;
-  const rounded = Math.round(parsed);
-  if (rounded > 999_999_999_999_999) return null;
-  return String(rounded);
+  if (parsed > 999_999_999_999_999.999) return null;
+  return normalized;
+}
+
+function roundDown3(value: number) {
+  return Math.floor(Math.max(0, value) * 1000 + Number.EPSILON) / 1000;
+}
+
+function allowsFractionalQuantity(unitCode?: string) {
+  const code = (unitCode || '').trim().toUpperCase();
+  return code === 'KG' || code === 'LIT';
 }

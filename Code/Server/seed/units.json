@@ -1,10 +1,55 @@
 {
   "table" : "units",
-  "version" : 2,
+  "version" : 3,
   "rows" : [ {
     "id" : 1,
     "status" : "ACTIVE",
     "unit_code" : "SAN_PHAM",
     "unit_name" : "Sản phẩm"
+  }, {
+    "id" : 2,
+    "status" : "ACTIVE",
+    "unit_code" : "CAI",
+    "unit_name" : "Cái"
+  }, {
+    "id" : 3,
+    "status" : "ACTIVE",
+    "unit_code" : "BAO",
+    "unit_name" : "Bao"
+  }, {
+    "id" : 4,
+    "status" : "ACTIVE",
+    "unit_code" : "KG",
+    "unit_name" : "Kilôgam"
+  }, {
+    "id" : 5,
+    "status" : "ACTIVE",
+    "unit_code" : "VIEN",
+    "unit_name" : "Viên"
+  }, {
+    "id" : 6,
+    "status" : "ACTIVE",
+    "unit_code" : "THUNG",
+    "unit_name" : "Thùng"
+  }, {
+    "id" : 7,
+    "status" : "ACTIVE",
+    "unit_code" : "HOP",
+    "unit_name" : "Hộp"
+  }, {
+    "id" : 8,
+    "status" : "ACTIVE",
+    "unit_code" : "CHAI",
+    "unit_name" : "Chai"
+  }, {
+    "id" : 9,
+    "status" : "ACTIVE",
+    "unit_code" : "LIT",
+    "unit_name" : "Lít"
+  }, {
+    "id" : 10,
+    "status" : "ACTIVE",
+    "unit_code" : "MET",
+    "unit_name" : "Mét"
   } ]
 }

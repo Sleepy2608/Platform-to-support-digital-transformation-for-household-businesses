@@ -1,0 +1,14 @@
+{
+  "table" : "service_invoices",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "amount" : 11976000.00,
+    "business_id" : 5,
+    "created_at" : "2026-08-23T14:15:54.693098",
+    "due_date" : "2026-08-23T14:15:54.691587",
+    "invoice_no" : "INV-A4C95D12",
+    "status" : "PAID",
+    "subscription_id" : 5
+  } ]
+}

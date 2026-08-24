@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/inventory")
-@PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'EMPLOYEE')")
+@PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER', 'EMPLOYEE')")
 public class InventoryMovementController {
 
     private final InventoryMovementService inventoryMovementService;
@@ -38,6 +38,7 @@ public class InventoryMovementController {
     }
 
     @PostMapping("/stock-in")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
     public ResponseEntity<ApiResponse<InventoryMovementResponse>> stockIn(
             Authentication authentication,
             @Valid @RequestBody InventoryMovementRequest request
@@ -49,6 +50,7 @@ public class InventoryMovementController {
     }
 
     @PostMapping("/stock-out")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
     public ResponseEntity<ApiResponse<InventoryMovementResponse>> stockOut(
             Authentication authentication,
             @Valid @RequestBody InventoryMovementRequest request

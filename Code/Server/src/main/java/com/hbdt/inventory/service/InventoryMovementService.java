@@ -129,6 +129,59 @@ public class InventoryMovementService {
         return toResponse(transaction, request, conversion, context.product(), balance);
     }
 
+    @Transactional
+    public void restoreCancelledSale(
+            String actorUsername,
+            Long productId,
+            BigDecimal baseQuantity,
+            Long salesOrderId,
+            String orderCode
+    ) {
+        if (baseQuantity == null || baseQuantity.signum() <= 0) {
+            throw new BadRequestException("Số lượng hoàn kho phải lớn hơn 0");
+        }
+        Context context = requireContext(actorUsername, productId);
+        InventoryBalance balance = lockOrCreateBalance(context.businessId(), productId);
+        InventoryTransaction originalSale = transactionRepository
+                .findFirstByBusinessIdAndProductIdAndReferenceTypeAndReferenceIdAndQuantityChangeLessThanOrderByIdDesc(
+                        context.businessId(), productId, "SALES_ORDER", salesOrderId, BigDecimal.ZERO)
+                .orElseThrow(() -> new BadRequestException(
+                        "Không tìm thấy giao dịch xuất kho gốc của đơn hàng"));
+
+        BigDecimal unitCost = originalSale.getUnitCost() == null
+                ? BigDecimal.ZERO.setScale(MONEY_SCALE)
+                : originalSale.getUnitCost();
+        BigDecimal transactionValue = baseQuantity.multiply(unitCost)
+                .setScale(MONEY_SCALE, RoundingMode.HALF_UP);
+        BigDecimal balanceAfter = balance.getQuantityOnHand().add(baseQuantity);
+        BigDecimal inventoryValue = balance.getInventoryValue().add(transactionValue)
+                .setScale(MONEY_SCALE, RoundingMode.HALF_UP);
+        BigDecimal averageCost = balanceAfter.signum() == 0
+                ? BigDecimal.ZERO.setScale(MONEY_SCALE)
+                : inventoryValue.divide(balanceAfter, MONEY_SCALE, RoundingMode.HALF_UP);
+        updateBalance(balance, balanceAfter, averageCost, inventoryValue);
+
+        transactionRepository.save(InventoryTransaction.builder()
+                .businessId(context.businessId())
+                .productId(productId)
+                .unitId(context.product().getBaseUnitId())
+                .enteredQuantity(baseQuantity)
+                .conversionRate(BigDecimal.ONE)
+                .createdBy(context.actorId())
+                .transactionType("CANCEL_SALE")
+                .referenceType("SALES_ORDER")
+                .referenceId(salesOrderId)
+                .quantityChange(baseQuantity)
+                .balanceAfter(balanceAfter)
+                .unitCost(unitCost)
+                .transactionValue(transactionValue)
+                .balanceValue(inventoryValue)
+                .costStatus("COMPLETED")
+                .costedAt(LocalDateTime.now())
+                .note("Hoàn kho do hủy đơn " + orderCode)
+                .build());
+    }
+
     private Context requireContext(String actorUsername, Long productId) {
         Long businessId = businessContextService.requireBusinessId(actorUsername);
         Product product = productRepository.findByIdAndBusinessId(productId, businessId)
@@ -144,6 +197,7 @@ public class InventoryMovementService {
             Product product
     ) {
         Unit enteredUnit = requireActiveUnit(request.getUnitId());
+        validateQuantityForUnit(request.getQuantity(), enteredUnit);
         Unit baseUnit = requireActiveUnit(product.getBaseUnitId());
         BigDecimal rate = unitConversionService.getConversionRate(
                 actorUsername, product.getId(), request.getUnitId()
@@ -152,6 +206,14 @@ public class InventoryMovementService {
                 actorUsername, product.getId(), request.getUnitId(), request.getQuantity()
         );
         return new Conversion(rate, baseQuantity, enteredUnit, baseUnit);
+    }
+
+    private void validateQuantityForUnit(BigDecimal quantity, Unit unit) {
+        String unitCode = unit.getUnitCode() == null ? "" : unit.getUnitCode().trim().toUpperCase();
+        boolean allowsFraction = "KG".equals(unitCode) || "LIT".equals(unitCode);
+        if (!allowsFraction && quantity.stripTrailingZeros().scale() > 0) {
+            throw new BadRequestException("Chỉ đơn vị kg và lít được phép nhập số lượng thập phân");
+        }
     }
 
     private Unit requireActiveUnit(Long unitId) {
