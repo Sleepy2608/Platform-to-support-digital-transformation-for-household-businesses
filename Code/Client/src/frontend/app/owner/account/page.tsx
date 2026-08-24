@@ -866,7 +866,7 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
         <div className="min-w-0 flex-1">
           <SectionHeader icon={CreditCard} title="Gói dịch vụ &amp; Gia hạn" subtitle="Quản lý thời hạn truy cập nền tảng HKD Digital" />
         </div>
-        {hasActiveSubscription && (
+        {!hasActiveSubscription && (
           <button
             type="button"
             onClick={() => router.push('/onboarding/package-selection?from=account')}
