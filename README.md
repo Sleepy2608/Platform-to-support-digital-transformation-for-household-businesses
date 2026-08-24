@@ -30,7 +30,7 @@
 
 ## Tiến độ triển khai dự án (Project Deployment Progress)
 
-*Tiến độ: Sprint 3*
+*Tiến độ: Sprint 3 + 4*
 
 | Issue | Frontend | Backend | Data Base | Status |
 |:--------|:---------|:----------|:----------------|:------------:|
@@ -42,11 +42,12 @@
 | RBAC | Admin login vào trang riêng còn Manager, Owner, Employee sẽ dùng portal login chung | Log, Auth, Entity, Controller, Security, Role, Permission | — | Hoàn thành |
 | Chính sách và điều khoản | For new business (Register) | Accept all to use | terms consents | Hoàn thành |
 | Quản lý gói đăng ký | Upgrade, Downgrade, Renewal & Subscription Lifecycle | Subscription, Subscription Plan, Subscription History, Payment & Purchase History | — | Đang triển khai |
+| Thanh toán công nợ | Customer & Debt Payment/Status | Pay Debts & View Payment History | `sales_orders.paid_amount` lưu số tiền thanh toán lũy kế; `sales_orders.debt_amount` lưu số còn phải trả; `sales_orders.payment_status` lưu trạng thái thanh toán; `sales_orders.last_payment_at` lưu thời điểm thanh toán gần nhất; `debt_transactions` lưu lịch sử phát sinh nợ, trả nợ, điều chỉnh và hủy giao dịch; `transaction_code`, `payment_method`, `reference_number` và `transaction_date` hỗ trợ nhật ký thanh toán công nợ; REST API hỗ trợ ghi nhận thanh toán cho từng đơn hàng, tra cứu theo đơn và theo khách hàng | Đang triển khai |
 | Tính toán giá sản phẩm | Measurement & Product Pricing Rules | Đang triển khai | Đang triển khai | Đang triển khai |
 | Tìm kiếm sản phẩm | Searching Engine | Đang triển khai | Đang triển khai | Đang triển khai |
 
 > Các issue sẽ được test trước khi merge vào nhánh chính và sẽ cập nhật theo tiến độ triển khai thực tế
-> Ngày cập nhật lần cuối: 18/08/2026
+> Ngày cập nhật lần cuối: 23/08/2026
 
 ---
 

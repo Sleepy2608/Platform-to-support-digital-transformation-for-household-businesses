@@ -8,6 +8,7 @@ import com.hbdt.entity.Product;
 import com.hbdt.entity.Unit;
 import com.hbdt.entity.User;
 import com.hbdt.entity.DebtTransaction;
+import com.hbdt.entity.enums.PaymentStatus;
 import com.hbdt.inventory.dto.InventoryMovementRequest;
 import com.hbdt.inventory.service.InventoryMovementService;
 import com.hbdt.order.dto.CreateSalesOrderItemRequest;
@@ -142,6 +143,7 @@ public class SalesOrderService {
                 .totalAmount(totalAmount)
                 .paidAmount(paidAmount)
                 .debtAmount(debtAmount)
+                .paymentStatus(determinePaymentStatus(paidAmount, totalAmount))
                 .note(request.note())
                 .confirmedAt(confirmedAt)
                 .build());
@@ -206,9 +208,11 @@ public class SalesOrderService {
 
         order.setPaidAmount(order.getPaidAmount().add(normalizedPayment));
         order.setDebtAmount(order.getDebtAmount().subtract(normalizedPayment));
+        order.setPaymentStatus(determinePaymentStatus(order.getPaidAmount(), order.getTotalAmount()));
+        order.setLastPaymentAt(LocalDateTime.now());
         salesOrderRepository.save(order);
         recordDebtTransaction(
-                order, actor.getId(), "DEBT_PAYMENT", normalizedPayment, balanceAfter,
+                order, actor.getId(), "PAYMENT", normalizedPayment, balanceAfter,
                 "Thanh toán công nợ đơn " + order.getOrderCode(),
                 "PAY-SO-" + order.getId() + "-" + shortId());
         return toResponse(order, salesOrderItemRepository.findAllBySalesOrderIdOrderByIdAsc(orderId));
@@ -263,7 +267,7 @@ public class SalesOrderService {
                 throw new BadRequestException("Dữ liệu công nợ không nhất quán, không thể hủy đơn");
             }
             recordDebtTransaction(
-                    order, actor.getId(), "DEBT_REVERSAL", order.getDebtAmount(), balanceAfter,
+                    order, actor.getId(), "VOID", order.getDebtAmount(), balanceAfter,
                     "Đảo công nợ do hủy đơn " + order.getOrderCode(), "REV-SO-" + order.getId());
             order.setDebtAmount(BigDecimal.ZERO.setScale(0));
         }
@@ -392,5 +396,14 @@ public class SalesOrderService {
 
     private String shortId() {
         return UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private PaymentStatus determinePaymentStatus(BigDecimal paidAmount, BigDecimal totalAmount) {
+        if (paidAmount == null || paidAmount.signum() == 0) {
+            return PaymentStatus.UNPAID;
+        }
+        return paidAmount.compareTo(totalAmount) >= 0
+                ? PaymentStatus.PAID
+                : PaymentStatus.PARTIALLY_PAID;
     }
 }

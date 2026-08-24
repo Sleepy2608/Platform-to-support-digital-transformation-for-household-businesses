@@ -203,7 +203,7 @@ class SalesOrderServiceTest {
         assertThat(response.debtAmount()).isEqualByComparingTo("150000");
         ArgumentCaptor<DebtTransaction> captor = ArgumentCaptor.forClass(DebtTransaction.class);
         verify(debtTransactionRepository).save(captor.capture());
-        assertThat(captor.getValue().getTransactionType()).isEqualTo("DEBT_PAYMENT");
+        assertThat(captor.getValue().getTransactionType()).isEqualTo("PAYMENT");
         assertThat(captor.getValue().getBalanceAfter()).isEqualByComparingTo("200000");
     }
 

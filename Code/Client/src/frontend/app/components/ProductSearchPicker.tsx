@@ -90,7 +90,7 @@ export function ProductSearchPicker({
 
   return (
     <div className={`flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-xs ${className}`}>
-      
+
       {/* Search & Filter Bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100">
         <div className="relative flex-1">

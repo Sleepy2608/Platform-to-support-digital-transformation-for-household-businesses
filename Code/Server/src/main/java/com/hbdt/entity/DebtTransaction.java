@@ -1,5 +1,6 @@
 package com.hbdt.entity;
 
+import com.hbdt.entity.enums.DebtTransactionStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -55,6 +56,11 @@ public class DebtTransaction {
     @Column(name = "balance_after", nullable = false, precision = 18, scale = 2)
     private BigDecimal balanceAfter;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 30)
+    @Builder.Default
+    private DebtTransactionStatus status = DebtTransactionStatus.ACTIVE;
+
     @Column(name = "description", length = 500)
     private String description;
 
@@ -72,3 +78,4 @@ public class DebtTransaction {
         }
     }
 }
+

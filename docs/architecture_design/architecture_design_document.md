@@ -602,24 +602,28 @@ Order & Checkout module xử lý như đơn thủ công (transaction đầy đ�
                                         └──────────────────────┘
 ```
 
-### 8.2. Payment Gateway Integration (Subscription)
+### 8.2. Payment API Contract & UI Flow
 
-```
- Owner               Backend API              Payment Provider          DB
-   │  Chọn gói/thanh toán │                         │                   │
-   │─────────────────────►│                         │                   │
-   │                      │  Tạo payment order      │                   │
-   │                      │─────────────────────────┼──────────────────►│
-   │                      │  Lấy payment URL        │                   │
-   │                      │────────────────────────►│                   │
-   │  ◄── redirect ───────│                         │                   │
-   │  Thanh toán trên cổng│                         │                   │
-   │                      │  Callback/webhook       │                   │
-   │                      │◄────────────────────────│                   │
-   │                      │  Verify signature       │                   │
-   │                      │  Kích hoạt Subscription │──────────────────►│
-   │  ◄── xác nhận ───────│                         │                   │
-```
+Phiên bản hiện tại dùng QR chuyển khoản tĩnh cho luồng đăng ký subscription. Chưa có payment gateway độc lập, endpoint sinh QR hoặc webhook đối soát. Vì vậy, `GET /api/payments/qr/:orderId` và `POST /api/payments/confirm` chưa phải API được triển khai.
+
+#### API contract đang triển khai
+
+| Method | Endpoint | Mục đích | Quyền / tham số |
+|---|---|---|---|
+| `GET` | `/api/owner/subscription/packages` | Lấy danh sách gói và giá theo tháng/năm | Owner đã xác thực |
+| `POST` | `/api/owner/subscription/select-package?packageType={packageType}&billingCycle={billingCycle}` | Chọn gói và kích hoạt subscription sau bước xác nhận trên UI | Owner đã xác thực; `packageType` là mã gói; `billingCycle` là `MONTHLY` hoặc `YEARLY` |
+
+Frontend gọi API chọn gói trong cả hai trường hợp: gói miễn phí được kích hoạt trực tiếp; gói có phí gọi sau khi Owner bấm **Xác nhận thanh toán** trong modal. Nút này hiện là bước xác nhận phục vụ bản test, không thực hiện đối soát giao dịch ngân hàng tự động.
+
+#### UI flow
+
+1. Owner mở `/onboarding/package-selection`, tải danh sách gói và chọn gói cùng chu kỳ thanh toán.
+2. Với gói có phí, hệ thống mở modal **Thông Báo Thanh Toán Chuyển Khoản**.
+3. Modal hiển thị QR tĩnh tại `Code/Client/src/frontend/public/images/qr-code.jpg`, số tiền, VietinBank, số tài khoản, chủ tài khoản và cú pháp `{packageType}-{billingCycle}`; có nút sao chép số tài khoản và cú pháp.
+4. Owner chuyển khoản bên ngoài hệ thống rồi bấm **Xác nhận thanh toán**.
+5. Frontend gọi `POST /api/owner/subscription/select-package`. Khi thành công, modal hiển thị trạng thái thành công và chuyển Owner về trang tài khoản.
+
+Luồng payment gateway và webhook có thể được bổ sung ở phiên bản sau; khi đó cần thêm mã giao dịch, kiểm tra chữ ký, idempotency và trạng thái đối soát trước khi tự động kích hoạt subscription.
 
 ### 8.3. Luồng nhận tin nhắn/cuộc gọi (Messaging/Voice Channel)
 
@@ -644,7 +648,7 @@ Order & Checkout module xử lý như đơn thủ công (transaction đầy đ�
 
 | Hệ thống ngoài | Mục đích | Ghi chú bảo mật |
 |---|---|---|
-| Payment Provider/Bank | Thanh toán subscription của Owner | Idempotency key, verify HMAC signature webhook |
+| Bank / QR tĩnh | Owner chuyển khoản subscription theo thông tin hiển thị trên modal | Chưa có đối soát tự động hoặc webhook trong phiên bản hiện tại |
 | Email/SMS/Push Provider | OTP đăng ký, cảnh báo tồn thấp, thông báo đơn | Rate limit gửi OTP |
 | Messaging/Voice Channel (Zalo OA, tổng đài) | Nguồn input cho AI Order Service | Xác thực webhook, ánh xạ số điện thoại/OA → tenantId |
 | AI/Speech Provider | STT + NLP model | Adapter hoá để thay nhà cung cấp; không lưu voice thô quá thời hạn cần thiết |
