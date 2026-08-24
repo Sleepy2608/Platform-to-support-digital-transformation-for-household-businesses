@@ -15,6 +15,9 @@ ehthumbs.db
 # IDE
 ############################
 
+# Claude Code
+.claude/
+
 # VS Code
 .vscode/
 !.vscode/extensions.json
