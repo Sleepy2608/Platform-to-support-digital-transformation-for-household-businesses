@@ -3,11 +3,22 @@ package com.hbdt.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "products", uniqueConstraints = @UniqueConstraint(
-        name = "uk_products_business_code", columnNames = {"business_id", "product_code"}))
+@Table(
+        name = "products",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_products_business_code", columnNames = {"business_id", "product_code"}
+        ),
+        indexes = {
+                @Index(name = "idx_products_business_status", columnList = "business_id, status"),
+                @Index(name = "idx_products_business_category", columnList = "business_id, category_id"),
+                @Index(name = "idx_products_business_code", columnList = "business_id, product_code"),
+                @Index(name = "idx_products_business_name", columnList = "business_id, product_name")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -37,6 +48,9 @@ public class Product {
 
     @Column(name = "product_name", nullable = false, length = 255)
     private String productName;
+
+    @Column(name = "sale_price", precision = 18, scale = 2)
+    private BigDecimal salePrice;
 
     @Column(name = "image_url", length = 500)
     private String imageUrl;

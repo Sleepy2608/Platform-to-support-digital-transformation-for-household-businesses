@@ -1,5 +1,6 @@
 package com.hbdt.entity;
 
+import com.hbdt.entity.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -51,15 +52,46 @@ public class SalesOrder {
     @Column(name = "debt_amount", nullable = false, precision = 18, scale = 2)
     private BigDecimal debtAmount;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false, length = 30)
+    @Builder.Default
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
+
     @Column(name = "note", length = 500)
     private String note;
 
     @Column(name = "confirmed_at")
     private LocalDateTime confirmedAt;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "last_payment_at")
+    private LocalDateTime lastPaymentAt;
+
+    @Column(name = "cancel_requested_by", columnDefinition = "BIGINT UNSIGNED")
+    private Long cancelRequestedBy;
+
+    @Column(name = "cancel_request_reason", length = 500)
+    private String cancelRequestReason;
+
+    @Column(name = "cancel_requested_at")
+    private LocalDateTime cancelRequestedAt;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

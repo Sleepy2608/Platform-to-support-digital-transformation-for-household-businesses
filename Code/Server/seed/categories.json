@@ -1,6 +1,6 @@
 {
   "table" : "categories",
-  "version" : 2,
+  "version" : 3,
   "rows" : [ {
     "id" : 2,
     "business_id" : 1,
@@ -10,5 +10,14 @@
     "description" : "sách vở",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-11T04:46:46.679674"
+  }, {
+    "id" : 3,
+    "business_id" : 5,
+    "category_code" : "123",
+    "category_name" : "123",
+    "created_at" : "2026-08-20T03:54:11.343912",
+    "description" : "123",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-20T03:54:11.343912"
   } ]
 }

@@ -14,10 +14,10 @@
 | Tên tài liệu | Tài liệu đặc tả yêu cầu người dùng – Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | Tên tiếng Anh | User Requirements Document – Platform to Support Digital Transformation for Household Businesses |
 | Mã tài liệu | URD-HKD-v1.2.0 |  
-| Phiên bản | 1.2.0 |
+| Phiên bản | 1.3.0 |
 | Người lập | Nguyễn Ngọc Gia Bảo |
 | Ngày lập ban đầu | 25/07/2026 |
-| Ngày cập nhật | 30/07/2026 |
+| Ngày cập nhật | 23/08/2026 |
 | Trạng thái | Hoàn thiện để làm đầu vào cho SRS, thiết kế và kiểm thử |
 
 ### Lịch sử cập nhật
@@ -27,6 +27,7 @@
 | 1.0.0 | 25/07/2026 | Hoàn thiện tài liệu yêu cầu người dùng ban đầu | Nguyễn Ngọc Gia Bảo |
 | 1.1.0 | 30/07/2026 | Làm rõ phạm vi học thuật theo Thông tư 88: triển khai S1-HKD, S2-HKD và S4-HKD; bổ sung yêu cầu về phân loại doanh thu, giá trị nhập–xuất–tồn, nghĩa vụ thuế, nộp thuế và kiểm soát báo cáo | Nguyễn Ngọc Gia Bảo |
 | 1.2.0 | 18/08/2026 | Cập nhật phân quyền RBAC 4 tầng (Admin -> Manager -> Owner -> Employee); phân định rõ phạm vi trách nhiệm giữa Manager (vận hành) và Administrator (hệ thống) | Nguyễn Ngọc Gia Bảo |
+| 1.3.0 | 23/08/2026 | Thêm thanh toán gói thuê bao bằng QR và cho phép owner tải hình ảnh, thông tin, số lượng của sản phẩm lên hệ thống | Nguyễn Lê Huy Tâm |
 
 ---
 
@@ -249,6 +250,13 @@ Hệ thống phải cho phép:
 - Quản lý phiên bản biểu mẫu S1-HKD, S2-HKD và S4-HKD.
 - Phát thông báo đến người dùng.
 
+### 2.4.8. Thanh toán gói thuê bao bằng QR
+
+- Owner chọn gói dịch vụ và chu kỳ thanh toán theo tháng hoặc theo năm.
+- Với gói có phí, hệ thống hiển thị modal chuyển khoản kèm mã QR, số tiền, thông tin ngân hàng và nội dung chuyển khoản.
+- Owner thực hiện chuyển khoản bên ngoài hệ thống và bấm **Xác nhận thanh toán** để gửi yêu cầu kích hoạt gói.
+- Với gói miễn phí, hệ thống kích hoạt trực tiếp và không hiển thị modal QR.
+
 ## 2.5. Nội dung ngoài phạm vi
 
 Phiên bản hiện tại không bao gồm:
@@ -312,6 +320,7 @@ Owner có toàn bộ chức năng của Employee và các yêu cầu bổ sung s
 | FR-CH-07 | **Xem và kiểm tra S2-HKD.** Owner xem số lượng, đơn giá và thành tiền nhập–xuất–tồn. | Số liệu S2-HKD khớp với phiếu nhập, giao dịch kho và số dư tồn. |
 | FR-CH-08 | **Quản lý nghĩa vụ thuế và S4-HKD.** Owner xem nghĩa vụ phát sinh, từng lần nộp, số đã nộp và số còn phải nộp hoặc nộp thừa. | Số đã nộp bằng tổng các lần nộp; số còn phải nộp được tính đúng và có thể âm khi nộp thừa. |
 | FR-CH-09 | **Kiểm tra và phê duyệt sổ/báo cáo.** Owner xem, chỉnh sửa dữ liệu được phép chỉnh sửa, xác nhận hoặc từ chối kết quả trước khi sử dụng. | Hệ thống lưu trạng thái, người kiểm tra, thời gian và lý do từ chối khi có. |
+| FR-CH-10 | **Đăng ký và thanh toán gói thuê bao bằng QR.** Owner chọn gói, chu kỳ thanh toán, xem thông tin QR/chuyển khoản và xác nhận yêu cầu kích hoạt. | Gói có phí mở đúng modal QR; gói miễn phí kích hoạt trực tiếp; lựa chọn hợp lệ được kích hoạt sau khi xác nhận. |
 
 ## 3.3. Yêu cầu đối với Manager
 

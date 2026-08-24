@@ -46,6 +46,12 @@ public class SalesOrderItem {
     @Column(name = "unit_price", nullable = false, precision = 18, scale = 2)
     private BigDecimal unitPrice;
 
+    @Column(name = "product_price_id", columnDefinition = "BIGINT UNSIGNED")
+    private Long productPriceId;
+
+    @Column(name = "pricing_rule_name", length = 150)
+    private String pricingRuleName;
+
     @Column(name = "line_total", nullable = false, precision = 18, scale = 2)
     private BigDecimal lineTotal;
 
@@ -55,6 +61,13 @@ public class SalesOrderItem {
     @Column(name = "pit_calculation_rate", precision = 7, scale = 4)
     private BigDecimal pitCalculationRate;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }

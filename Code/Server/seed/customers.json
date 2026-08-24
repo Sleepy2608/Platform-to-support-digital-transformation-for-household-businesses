@@ -1,0 +1,27 @@
+{
+  "table" : "customers",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "address" : null,
+    "business_id" : 5,
+    "created_at" : "2026-08-23T12:32:24.357123",
+    "customer_code" : "KH-6720C69B",
+    "customer_name" : "Ngọc Thắng",
+    "note" : null,
+    "phone" : "0889181169",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-23T12:32:24.357123"
+  }, {
+    "id" : 2,
+    "address" : null,
+    "business_id" : 5,
+    "created_at" : "2026-08-23T12:49:40.921377",
+    "customer_code" : "KH-F5F06624",
+    "customer_name" : "Ngọc Tâm",
+    "note" : null,
+    "phone" : "0889182269",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-23T12:49:40.921377"
+  } ]
+}

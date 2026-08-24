@@ -32,12 +32,25 @@ public class CatalogReferenceDataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        seedDefaultProductUnit();
+        seedProductUnits();
         seedTaxActivityGroups();
     }
 
-    private void seedDefaultProductUnit() {
-        unitRepository.findFirstByUnitCodeIgnoreCase("SAN_PHAM")
+    private void seedProductUnits() {
+        seedUnit("SAN_PHAM", "Sản phẩm");
+        seedUnit("CAI", "Cái");
+        seedUnit("BAO", "Bao");
+        seedUnit("KG", "Kilôgam");
+        seedUnit("VIEN", "Viên");
+        seedUnit("THUNG", "Thùng");
+        seedUnit("HOP", "Hộp");
+        seedUnit("CHAI", "Chai");
+        seedUnit("LIT", "Lít");
+        seedUnit("MET", "Mét");
+    }
+
+    private void seedUnit(String code, String name) {
+        unitRepository.findFirstByUnitCodeIgnoreCase(code)
                 .ifPresentOrElse(unit -> {
                     if (!ACTIVE.equals(unit.getStatus())) {
                         unit.setStatus(ACTIVE);
@@ -45,11 +58,11 @@ public class CatalogReferenceDataSeeder implements CommandLineRunner {
                     }
                 }, () -> {
                     unitRepository.save(Unit.builder()
-                            .unitCode("SAN_PHAM")
-                            .unitName("Sản phẩm")
+                            .unitCode(code)
+                            .unitName(name)
                             .status(ACTIVE)
                             .build());
-                    logger.info("Seeded default product unit: SAN_PHAM");
+                    logger.info("Seeded product unit: {}", code);
                 });
     }
 

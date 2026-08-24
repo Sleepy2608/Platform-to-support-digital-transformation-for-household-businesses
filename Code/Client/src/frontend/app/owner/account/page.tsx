@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient, clearAuth } from '../../lib/apiClient';
+import PaymentQrModal from '../../components/payment/PaymentQrModal';
 import {
   type BusinessProfileResponse, type BusinessProfileRequest, type BusinessType,
   type ProvinceDto, type DistrictDto, type WardDto,
@@ -37,6 +38,28 @@ interface OwnerProfile {
 
 type Tab = 'profile' | 'business-profile' | 'password' | 'contact' | 'subscription' | 'consent' | 'danger';
 type OtpTarget = 'email' | 'phone' | null;
+
+function resolveTabFromHash(hashString?: string): Tab {
+  if (!hashString) return 'profile';
+  const clean = hashString.replace(/^#+/, '').split('#')[0].toLowerCase().trim();
+  if (clean === 'email' || clean === 'phone' || clean === 'contact') return 'contact';
+  if (clean === 'plans' || clean === 'package' || clean === 'subscription') return 'subscription';
+  if (clean === 'danger-zone' || clean === 'danger') return 'danger';
+  if (clean === 'business-profile' || clean === 'business') return 'business-profile';
+  if (clean === 'password') return 'password';
+  if (clean === 'consent') return 'consent';
+  return 'profile';
+}
+
+interface SubscriptionHistory {
+  id: number;
+  subscriptionId: number;
+  oldPlan: string;
+  newPlan: string;
+  action: string;
+  changedBy: string;
+  changedAt: string;
+}
 
 function syncOwnerSummary(data: { fullName?: string; avatarUrl?: string | null }) {
   if (typeof window === 'undefined') return;
@@ -164,9 +187,12 @@ export default function OwnerAccountPage() {
   // ── Sync Active Tab with URL Hash (Immediate Response to Sidebar Clicks) ──────
   useEffect(() => {
     const handleHash = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (['profile', 'business-profile', 'password', 'contact', 'subscription', 'consent', 'danger'].includes(hash)) {
-        setActiveTab(hash as Tab);
+      if (typeof window === 'undefined') return;
+      const targetTab = resolveTabFromHash(window.location.hash);
+      setActiveTab(targetTab);
+      // Clean up duplicated/dirty hash in browser address bar (e.g. #profile#profile -> #profile)
+      if (window.location.hash !== `#${targetTab}`) {
+        window.history.replaceState(null, '', `/owner/account#${targetTab}`);
       }
     };
 
@@ -174,13 +200,20 @@ export default function OwnerAccountPage() {
     window.addEventListener('hashchange', handleHash);
     window.addEventListener('popstate', handleHash);
 
-    // Polling interval to catch Next.js client soft navigation hash updates
-    const interval = setInterval(handleHash, 200);
+    const handleCustomTab = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) {
+        const targetTab = resolveTabFromHash(detail);
+        setActiveTab(targetTab);
+        window.history.replaceState(null, '', `/owner/account#${targetTab}`);
+      }
+    };
+    window.addEventListener('owner-tab-change', handleCustomTab);
 
     return () => {
       window.removeEventListener('hashchange', handleHash);
       window.removeEventListener('popstate', handleHash);
-      clearInterval(interval);
+      window.removeEventListener('owner-tab-change', handleCustomTab);
     };
   }, []);
 
@@ -249,6 +282,7 @@ export default function OwnerAccountPage() {
                 onClick={() => {
                   setActiveTab(tab.id);
                   window.history.replaceState(null, '', `/owner/account#${tab.id}`);
+                  window.dispatchEvent(new CustomEvent('owner-tab-change', { detail: tab.id }));
                 }}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 cursor-pointer
                   ${isActive
@@ -256,8 +290,8 @@ export default function OwnerAccountPage() {
                       ? 'bg-rose-600 text-white shadow-xs'
                       : 'bg-slate-900 text-white shadow-xs'
                     : isDanger
-                    ? 'text-rose-600 hover:bg-rose-50'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                      ? 'text-rose-600 hover:bg-rose-50'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                   }`}
               >
                 <Icon className="w-4 h-4" />
@@ -480,13 +514,12 @@ function ProfileTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
 
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Trạng thái tài khoản</label>
-          <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border ${
-            profile?.status === 'ACTIVE'
+          <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border ${profile?.status === 'ACTIVE'
               ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
               : profile?.status === 'LOCKED'
-              ? 'bg-amber-50 border-amber-200 text-amber-700'
-              : 'bg-rose-50 border-rose-200 text-rose-700'
-          }`}>
+                ? 'bg-amber-50 border-amber-200 text-amber-700'
+                : 'bg-rose-50 border-rose-200 text-rose-700'
+            }`}>
             <div className={`w-2 h-2 rounded-full ${profile?.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
             {profile?.status === 'ACTIVE' ? 'Đang hoạt động' : profile?.status === 'LOCKED' ? 'Đã khóa' : 'Vô hiệu hóa'}
           </div>
@@ -647,7 +680,7 @@ function ContactTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
       const code = emailOtp.join('');
       await apiClient.post(`/api/owner/email/confirm?newEmail=${encodeURIComponent(newEmail)}`, { otp: code });
       setMsg({ type: 'success', text: 'Đổi địa chỉ Email thành công!' });
-      setOtpTarget(null); setEmailPwd(''); setNewEmail(''); setEmailOtp(['','','','','','']);
+      setOtpTarget(null); setEmailPwd(''); setNewEmail(''); setEmailOtp(['', '', '', '', '', '']);
       onUpdated();
     } catch (err: unknown) { setMsg({ type: 'error', text: (err as Error).message }); }
     finally { setLoading(false); }
@@ -669,7 +702,7 @@ function ContactTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
       const code = phoneOtp.join('');
       await apiClient.post(`/api/owner/phone/confirm?newPhone=${encodeURIComponent(newPhone)}`, { otp: code });
       setMsg({ type: 'success', text: 'Đổi số điện thoại thành công!' });
-      setOtpTarget(null); setPhonePwd(''); setNewPhone(''); setPhoneOtp(['','','','','','']);
+      setOtpTarget(null); setPhonePwd(''); setNewPhone(''); setPhoneOtp(['', '', '', '', '', '']);
       onUpdated();
     } catch (err: unknown) { setMsg({ type: 'error', text: (err as Error).message }); }
     finally { setLoading(false); }
@@ -748,9 +781,32 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
   const [months, setMonths] = useState(1);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [monthlyPrice, setMonthlyPrice] = useState(0);
+  const [showRenewPaymentModal, setShowRenewPaymentModal] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+  const [histories, setHistories] = useState<SubscriptionHistory[]>([]);
+  const [historiesLoading, setHistoriesLoading] = useState(true);
+  const [historiesError, setHistoriesError] = useState('');
+
+  const loadHistories = useCallback(async () => {
+    setHistoriesLoading(true);
+    try {
+      const data = await apiClient.get<SubscriptionHistory[]>('/api/owner/subscription/history');
+      setHistories(data || []);
+      setHistoriesError('');
+    } catch (err: unknown) {
+      setHistoriesError((err as Error).message || 'Lỗi khi tải lịch sử');
+    } finally {
+      setHistoriesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadHistories();
+  }, [loadHistories]);
 
   const expiresAt = profile?.subscriptionExpiresAt;
-  const isActive = expiresAt && new Date(expiresAt) > new Date();
   const packageType = profile?.packageType;
 
   const formatExpiry = (dt: string | null) => {
@@ -761,13 +817,32 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
   const daysRemaining = expiresAt
     ? Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000))
     : 0;
+  const hasActiveSubscription = daysRemaining > 0;
+
+  useEffect(() => {
+    if (!packageType) return;
+    apiClient.get<Array<{ id: string; monthlyPrice: number }>>('/api/owner/subscription/packages')
+      .then((packages) => {
+        const currentPackage = packages.find((item) => item.id === packageType);
+        setMonthlyPrice(currentPackage?.monthlyPrice ?? 0);
+      })
+      .catch(() => setMonthlyPrice(0));
+  }, [packageType]);
 
   const handleRenew = async () => {
+    setMsg(null);
+    setPaymentSuccess(false);
+    setShowRenewPaymentModal(true);
+  };
+
+  const handleConfirmRenewalPayment = async () => {
     setLoading(true); setMsg(null);
     try {
       await apiClient.post<OwnerProfile>(`/api/owner/subscription/renew?months=${months}`);
-      setMsg({ type: 'success', text: `Gia hạn dịch vụ thành công thêm ${months} tháng!` });
+      setPaymentSuccess(true);
       onUpdated();
+      loadHistories();
+      setTimeout(() => setShowRenewPaymentModal(false), 1800);
     } catch (err: unknown) {
       setMsg({ type: 'error', text: (err as Error).message });
     } finally {
@@ -775,20 +850,37 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
     }
   };
 
+  const renewalAmount = monthlyPrice * months;
+  const transferSyntax = `${packageType || 'SUB'}-RENEW-${months}M`;
+
   const packageLabel = packageType === 'VIP' ? 'Gói VIP (Pro)' : packageType === 'STANDARD' ? 'Gói Standard' : null;
   const packageBadgeClass = packageType === 'VIP'
     ? 'bg-zinc-900 text-white border-zinc-700'
     : packageType === 'STANDARD'
-    ? 'bg-blue-50 text-blue-800 border-blue-200'
-    : '';
+      ? 'bg-blue-50 text-blue-800 border-blue-200'
+      : '';
 
   return (
     <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
-      <SectionHeader icon={CreditCard} title="Gói dịch vụ &amp; Gia hạn" subtitle="Quản lý thời hạn truy cập nền tảng HKD Digital" />
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <SectionHeader icon={CreditCard} title="Gói dịch vụ &amp; Gia hạn" subtitle="Quản lý thời hạn truy cập nền tảng HKD Digital" />
+        </div>
+        {hasActiveSubscription && (
+          <button
+            type="button"
+            onClick={() => router.push('/onboarding/package-selection?from=account')}
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 active:scale-95 transition-all cursor-pointer shadow-xs"
+          >
+            <Crown className="w-3.5 h-3.5" />
+            Chọn gói dịch vụ khác
+          </button>
+        )}
+      </div>
       {msg && <Alert type={msg.type} message={msg.text} />}
 
       {/* Package Name Badge */}
-      {packageLabel ? (
+      {hasActiveSubscription && packageLabel ? (
         <div className="flex items-center gap-3">
           <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${packageBadgeClass}`}>
             <Crown className="w-3.5 h-3.5" />
@@ -804,7 +896,8 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
             <p className="text-xs text-amber-700 mt-0.5">Vui lòng chọn gói để sử dụng đầy đủ tính năng nền tảng.</p>
             <div className="flex gap-2 mt-3">
               <button
-                onClick={() => router.push('/onboarding/package-selection')}
+                type="button"
+                onClick={() => router.push('/onboarding/package-selection?from=account')}
                 className="px-4 py-2 bg-amber-600 text-white text-xs font-bold rounded-xl hover:bg-amber-700 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
               >
                 <Crown className="w-3.5 h-3.5" /> Chọn gói ngay
@@ -815,15 +908,15 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
       )}
 
       {/* Subscription Status Card */}
-      <div className={`p-6 rounded-2xl border ${isActive ? 'bg-emerald-50/60 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
+      <div className={`p-6 rounded-2xl border ${hasActiveSubscription ? 'bg-emerald-50/60 border-emerald-200' : 'bg-slate-50 border-slate-200'}`}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className={`w-2.5 h-2.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-400'} animate-pulse`} />
-            <span className={`text-xs sm:text-sm font-bold ${isActive ? 'text-emerald-800' : 'text-slate-600'}`}>
-              {isActive ? 'Gói hoạt động' : 'Gói hết hạn / Chưa kích hoạt'}
+            <div className={`w-2.5 h-2.5 rounded-full ${hasActiveSubscription ? 'bg-emerald-500' : 'bg-slate-400'} animate-pulse`} />
+            <span className={`text-xs sm:text-sm font-bold ${hasActiveSubscription ? 'text-emerald-800' : 'text-slate-600'}`}>
+              {hasActiveSubscription ? 'Gói hoạt động' : 'Gói hết hạn / Chưa kích hoạt'}
             </span>
           </div>
-          {isActive && (
+          {hasActiveSubscription && (
             <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full border border-emerald-300/60">
               Còn {daysRemaining} ngày
             </span>
@@ -831,6 +924,19 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
         </div>
         <p className="text-xl sm:text-2xl font-bold text-slate-900">{formatExpiry(expiresAt || null)}</p>
       </div>
+
+      {/* Upgrade / Downgrade Plan Section */}
+      {packageType && (
+        <PlanChangeSection
+          packageType={packageType}
+          isActive={hasActiveSubscription}
+          onUpdated={() => {
+            onUpdated();
+            loadHistories();
+          }}
+          setMsg={setMsg}
+        />
+      )}
 
       {/* Renew Options */}
       <div className="space-y-4 pt-2">
@@ -842,11 +948,10 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
             <button
               key={m}
               onClick={() => setMonths(m)}
-              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                months === m
+              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${months === m
                   ? 'bg-slate-900 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
-              }`}
+                }`}
             >
               {m} tháng
             </button>
@@ -862,7 +967,249 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
           {loading ? 'Đang gia hạn...' : `Xác nhận gia hạn ${months} tháng`}
         </button>
       </div>
+
+      {/* Subscription History */}
+      <div className="pt-6 border-t border-slate-100">
+        <h3 className="text-sm font-bold text-slate-900 mb-4">Lịch sử gói dịch vụ</h3>
+        {historiesLoading ? (
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <Loader2 className="w-4 h-4 animate-spin" /> Đang tải lịch sử...
+          </div>
+        ) : historiesError ? (
+          <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm font-medium">
+            {historiesError}
+          </div>
+        ) : histories.length === 0 ? (
+          <div className="p-6 bg-slate-50 border border-slate-100 text-slate-500 rounded-2xl text-sm text-center italic font-medium">
+            Chưa có lịch sử thay đổi gói dịch vụ
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {histories.map((item) => (
+              <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl gap-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${item.action === 'UPGRADE' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                        item.action === 'DOWNGRADE' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                          'bg-blue-100 text-blue-800 border border-blue-200'
+                      }`}>
+                      {item.action}
+                    </span>
+                    <span className="text-xs text-slate-400 font-medium">
+                      {new Date(item.changedAt).toLocaleString('vi-VN')}
+                    </span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-700">
+                    {item.oldPlan === item.newPlan ? item.oldPlan : `${item.oldPlan} → ${item.newPlan}`}
+                  </p>
+                </div>
+                <div className="text-xs text-slate-500 font-medium sm:text-right">
+                  Người thực hiện:<br />
+                  <span className="text-slate-700 font-bold">{item.changedBy}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <PaymentQrModal
+        isOpen={showRenewPaymentModal}
+        amount={renewalAmount}
+        transferSyntax={transferSyntax}
+        title="Thanh toán gia hạn dịch vụ"
+        successTitle={paymentSuccess ? 'Gia hạn thành công!' : ''}
+        successMessage={`Dịch vụ đã được gia hạn thêm ${months} tháng.`}
+        loading={loading}
+        error={msg?.type === 'error' ? msg.text : null}
+        onClose={() => setShowRenewPaymentModal(false)}
+        onConfirm={handleConfirmRenewalPayment}
+      />
     </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLAN CHANGE SECTION: Upgrade / Downgrade với Confirmation Dialog
+// ═══════════════════════════════════════════════════════════════════════════════
+function PlanChangeSection({
+  packageType, isActive, onUpdated, setMsg,
+}: {
+  packageType: string;
+  isActive: boolean;
+  onUpdated: () => void;
+  setMsg: (msg: { type: 'success' | 'error'; text: string } | null) => void;
+}) {
+  const [dialog, setDialog] = useState<'upgrade' | 'downgrade' | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const isVip = packageType === 'VIP';
+  const isStandard = packageType === 'STANDARD';
+
+  const upgradeDisabled = isVip || !isActive;
+  const downgradeDisabled = !isActive || isStandard;
+
+  const handleConfirm = async () => {
+    if (!dialog) return;
+    setLoading(true);
+    try {
+      if (dialog === 'upgrade') {
+        await apiClient.post<OwnerProfile>('/api/owner/subscription/upgrade?targetPlan=VIP');
+        setMsg({ type: 'success', text: 'Nâng cấp lên gói VIP thành công! Bạn đã có quyền truy cập toàn bộ tính năng VIP.' });
+      } else {
+        await apiClient.post<OwnerProfile>('/api/owner/subscription/downgrade?targetPlan=STANDARD');
+        setMsg({ type: 'success', text: 'Hạ về gói Standard thành công. Thời hạn hiện tại vẫn được giữ nguyên.' });
+      }
+      onUpdated();
+    } catch (err: unknown) {
+      setMsg({ type: 'error', text: (err as Error).message });
+    } finally {
+      setLoading(false);
+      setDialog(null);
+    }
+  };
+
+  return (
+    <>
+      <div className="border-t border-slate-100 pt-5">
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Thay đổi gói dịch vụ</p>
+        <div className="flex flex-wrap gap-3">
+          {/* Nâng lên VIP */}
+          <button
+            id="btn-upgrade-vip"
+            onClick={() => setDialog('upgrade')}
+            disabled={upgradeDisabled}
+            title={
+              isVip
+                ? 'Bạn đang ở gói VIP, không thể nâng cấp thêm'
+                : !isActive
+                  ? 'Gói đã hết hạn, vui lòng gia hạn trước khi nâng cấp'
+                  : 'Nâng cấp lên gói VIP'
+            }
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all
+              ${upgradeDisabled
+                ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
+                : 'bg-zinc-900 text-white border-zinc-700 hover:bg-zinc-800 active:scale-95 cursor-pointer shadow-xs'
+              }`}
+          >
+            <Crown className="w-4 h-4" />
+            Nâng lên VIP
+          </button>
+
+          {/* Hạ về Standard */}
+          <button
+            id="btn-downgrade-standard"
+            onClick={() => setDialog('downgrade')}
+            disabled={downgradeDisabled}
+            title={
+              isStandard
+                ? 'Bạn đang ở gói Standard'
+                : !isActive
+                  ? 'Gói đã hết hạn, vui lòng gia hạn trước khi hạ cấp'
+                  : 'Hạ về gói Standard'
+            }
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold border transition-all
+              ${downgradeDisabled
+                ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
+                : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 hover:border-slate-400 active:scale-95 cursor-pointer'
+              }`}
+          >
+            <RefreshCw className="w-4 h-4" />
+            Hạ về Standard
+          </button>
+        </div>
+
+        {isVip && isActive && (
+          <p className="text-[11px] text-slate-400 mt-2">✓ Bạn đang dùng gói cao nhất (VIP)</p>
+        )}
+        {!isActive && isVip && (
+          <p className="text-[11px] text-amber-600 mt-2 font-medium">
+            ⚠ Gói đã hết hạn — hãy gia hạn trước khi thay đổi gói
+          </p>
+        )}
+        {!isActive && isStandard && (
+          <p className="text-[11px] text-amber-600 mt-2 font-medium">
+            ⚠ Gói đã hết hạn — hãy gia hạn trước khi nâng cấp
+          </p>
+        )}
+      </div>
+
+      {/* Confirmation Dialog */}
+      <AnimatePresence>
+        {dialog && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+            onClick={(e) => { if (e.target === e.currentTarget && !loading) setDialog(null); }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              transition={{ duration: 0.15 }}
+              className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-sm w-full p-6 space-y-4"
+            >
+              <div className="flex items-start gap-3">
+                <div className={`p-2.5 rounded-xl flex-shrink-0 ${dialog === 'upgrade' ? 'bg-zinc-900 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                  {dialog === 'upgrade' ? <Crown className="w-5 h-5" /> : <RefreshCw className="w-5 h-5" />}
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">
+                    {dialog === 'upgrade' ? 'Xác nhận nâng lên VIP' : 'Xác nhận hạ về Standard'}
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {dialog === 'upgrade' ? 'STANDARD → VIP' : 'VIP → STANDARD'}
+                  </p>
+                </div>
+              </div>
+
+              <div className={`p-4 rounded-xl text-xs leading-relaxed ${dialog === 'upgrade' ? 'bg-zinc-50 border border-zinc-200 text-zinc-700' : 'bg-slate-50 border border-slate-200 text-slate-600'
+                }`}>
+                {dialog === 'upgrade' ? (
+                  <ul className="space-y-1.5">
+                    <li>✦ Gói VIP bổ sung: Trợ lý AI, báo cáo thuế tự động, không giới hạn nhân viên</li>
+                    <li>✦ Thời hạn hiện tại <strong>giữ nguyên</strong>, không bị reset</li>
+                    <li>✦ Hiệu lực <strong>ngay lập tức</strong> sau khi xác nhận</li>
+                  </ul>
+                ) : (
+                  <ul className="space-y-1.5">
+                    <li>⚠ Các tính năng VIP sẽ bị vô hiệu hóa</li>
+                    <li>✦ Thời hạn còn lại <strong>vẫn được giữ</strong> (không mất thời gian)</li>
+                    <li>✦ Dữ liệu cũ <strong>không bị xóa</strong></li>
+                    <li>✦ Tối đa 3 tài khoản nhân viên theo Standard</li>
+                  </ul>
+                )}
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  id={`btn-confirm-${dialog}`}
+                  onClick={handleConfirm}
+                  disabled={loading}
+                  className={`flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer
+                    ${dialog === 'upgrade'
+                      ? 'bg-zinc-900 text-white hover:bg-zinc-800 active:scale-95 disabled:opacity-50'
+                      : 'bg-slate-800 text-white hover:bg-slate-700 active:scale-95 disabled:opacity-50'
+                    }`}
+                >
+                  {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {loading ? 'Đang xử lý...' : dialog === 'upgrade' ? 'Xác nhận nâng cấp' : 'Xác nhận hạ cấp'}
+                </button>
+                <button
+                  onClick={() => setDialog(null)}
+                  disabled={loading}
+                  className="px-4 py-2.5 bg-slate-100 text-slate-600 text-xs sm:text-sm font-bold rounded-xl hover:bg-slate-200 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  Hủy
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 

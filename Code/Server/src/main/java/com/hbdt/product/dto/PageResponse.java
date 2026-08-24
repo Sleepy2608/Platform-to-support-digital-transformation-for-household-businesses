@@ -13,6 +13,18 @@ public record PageResponse<T>(
         boolean first,
         boolean last
 ) {
+    public List<T> getData() {
+        return content;
+    }
+
+    public long getTotal() {
+        return totalElements;
+    }
+
+    public int getLimit() {
+        return size;
+    }
+
     public static <T> PageResponse<T> from(Page<T> source) {
         return new PageResponse<>(
                 source.getContent(),

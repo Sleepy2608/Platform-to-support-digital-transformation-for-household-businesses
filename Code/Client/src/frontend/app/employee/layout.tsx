@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  UserCircle, Lock, Mail, Phone, LogOut, Menu, X,
-  ChevronRight, Briefcase,
+  UserCircle, Lock, Mail, LogOut, Menu, X,
+  ChevronRight, Briefcase, ListOrdered, ShoppingCart,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
@@ -13,6 +13,8 @@ import { isEmployee } from '../lib/roles';
 import { EntitlementProvider } from '../lib/EntitlementContext';
 
 const NAV_ITEMS = [
+  { label: 'Bán hàng tại quầy', href: '/employee/orders/new', icon: ShoppingCart, hash: '' },
+  { label: 'Danh sách đơn hàng', href: '/employee/orders/history', icon: ListOrdered, hash: '' },
   { label: 'Hồ sơ cá nhân', href: '/employee/account#profile', icon: UserCircle, hash: '#profile' },
   { label: 'Đổi mật khẩu', href: '/employee/account#password', icon: Lock, hash: '#password' },
   { label: 'Email & Số điện thoại', href: '/employee/account#contact', icon: Mail, hash: '#contact' },
@@ -20,6 +22,7 @@ const NAV_ITEMS = [
 
 export default function EmployeeLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(true);
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
@@ -29,31 +32,35 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
   const [currentHash, setCurrentHash] = useState('#profile');
 
   useEffect(() => {
-    const token = getAccessToken();
-    const rolesRaw = getAuthItem('roles');
-    if (!token || !rolesRaw) {
-      router.push('/login');
-      return;
-    }
-    try {
-      const roles: string[] = JSON.parse(rolesRaw);
-      // Route Guard: chỉ EMPLOYEE được vào /employee
-      if (!isEmployee(roles as never)) {
+    const timer = window.setTimeout(() => {
+      const token = getAccessToken();
+      const rolesRaw = getAuthItem('roles');
+      if (!token || !rolesRaw) {
         router.push('/login');
         return;
       }
-      setFullName(getAuthItem('fullName') || 'Nhân viên');
-      setUsername(getAuthItem('username') || '');
-      setAvatarUrl(getAuthItem('avatarUrl') || '');
-      setPosition(getAuthItem('position') || 'Nhân viên');
-      setLoading(false);
-    } catch {
-      router.push('/login');
-    }
+      try {
+        const roles: string[] = JSON.parse(rolesRaw);
+        if (!isEmployee(roles as never)) {
+          router.push('/login');
+          return;
+        }
+        setFullName(getAuthItem('fullName') || 'Nhân viên');
+        setUsername(getAuthItem('username') || '');
+        setAvatarUrl(getAuthItem('avatarUrl') || '');
+        setPosition(getAuthItem('position') || 'Nhân viên');
+        setLoading(false);
+      } catch {
+        router.push('/login');
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [router]);
 
   useEffect(() => {
-    const syncHash = () => setCurrentHash(window.location.hash || '#profile');
+    const syncHash = () => {
+      setCurrentHash(window.location.hash || '#profile');
+    };
     syncHash();
     window.addEventListener('hashchange', syncHash);
     const interval = setInterval(syncHash, 250);
@@ -153,7 +160,9 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                 </p>
                 {NAV_ITEMS.map((item) => {
                   const Icon = item.icon;
-                  const isActive = currentHash === item.hash;
+                  const isActive = item.hash
+                    ? pathname === '/employee/account' && currentHash === item.hash
+                    : pathname === item.href;
                   return (
                     <Link
                       key={item.hash}

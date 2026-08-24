@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import {
   Search, Plus, MoreVertical, Lock, LockOpen, KeyRound,
@@ -49,6 +50,11 @@ interface CreateForm {
   joinDate: string;
 }
 
+interface ActionMenuState {
+  emp: Employee;
+  position: { top: number; right: number; openUpward: boolean };
+}
+
 // ─────────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────────
@@ -88,6 +94,7 @@ function formatDate(d: string | null) {
 export default function EmployeesPage() {
   const router = useRouter();
   const [token, setToken] = useState('');
+  const [mounted, setMounted] = useState(false);
 
   // List state
   const [data, setData] = useState<PagedResult | null>(null);
@@ -104,8 +111,29 @@ export default function EmployeesPage() {
   });
   const [createError, setCreateError] = useState('');
 
-  // Action menu
-  const [actionMenu, setActionMenu] = useState<number | null>(null);
+  // Action menu (Portal + Dynamic Position)
+  const [actionMenu, setActionMenu] = useState<ActionMenuState | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Close floating menu on scroll, resize or Escape key
+  useEffect(() => {
+    if (!actionMenu) return;
+    const closeMenu = () => setActionMenu(null);
+    window.addEventListener('scroll', closeMenu, true);
+    window.addEventListener('resize', closeMenu);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActionMenu(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('scroll', closeMenu, true);
+      window.removeEventListener('resize', closeMenu);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [actionMenu]);
 
   // Reset password modal
   const [resetResult, setResetResult] = useState<{ username: string; temporaryPassword: string } | null>(null);
@@ -158,6 +186,28 @@ export default function EmployeesPage() {
   function showToast(type: 'success' | 'error', message: string) {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
+  }
+
+  // ─── Action Menu Handler ───
+  function handleOpenActionMenu(e: React.MouseEvent<HTMLButtonElement>, emp: Employee) {
+    e.stopPropagation();
+    if (actionMenu?.emp.id === emp.id) {
+      setActionMenu(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const menuHeight = 190;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const openUpward = spaceBelow < menuHeight && rect.top > menuHeight;
+
+    setActionMenu({
+      emp,
+      position: {
+        top: openUpward ? Math.max(8, rect.top - menuHeight - 4) : rect.bottom + 4,
+        right: Math.max(8, window.innerWidth - rect.right),
+        openUpward,
+      },
+    });
   }
 
   // ─── Create Employee ───
@@ -418,58 +468,19 @@ export default function EmployeesPage() {
                       </span>
                     </td>
                     {/* Actions */}
-                    <td className="px-4 py-4 relative">
+                    <td className="px-4 py-4 text-right">
                       <button
                         id={`btn-action-${emp.id}`}
-                        onClick={() => setActionMenu(actionMenu === emp.id ? null : emp.id)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer opacity-0 group-hover:opacity-100"
+                        onClick={(e) => handleOpenActionMenu(e, emp)}
+                        className={`p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer ${
+                          actionMenu?.emp.id === emp.id
+                            ? 'opacity-100 bg-slate-100 text-slate-800 ring-2 ring-slate-900/10'
+                            : 'opacity-0 group-hover:opacity-100'
+                        }`}
+                        title="Thao tác"
                       >
                         <MoreVertical className="w-4 h-4" />
                       </button>
-
-                      {/* Dropdown Menu */}
-                      <AnimatePresence>
-                        {actionMenu === emp.id && (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                            transition={{ duration: 0.12 }}
-                            className="absolute right-4 top-10 z-30 bg-white border border-slate-200 rounded-xl shadow-xl w-52 py-1.5 overflow-hidden"
-                          >
-                            <button
-                              onClick={() => { router.push(`/owner/employees/${emp.id}`); setActionMenu(null); }}
-                              className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition cursor-pointer"
-                            >
-                              <Eye className="w-4 h-4 text-slate-400" /> Xem chi tiết
-                            </button>
-                            <button
-                              onClick={() => handleLock(emp.id, emp.status)}
-                              className={`flex items-center gap-2.5 w-full px-4 py-2.5 text-sm transition cursor-pointer
-                                ${emp.status === 'LOCKED'
-                                  ? 'text-emerald-700 hover:bg-emerald-50'
-                                  : 'text-amber-700 hover:bg-amber-50'}`}
-                            >
-                              {emp.status === 'LOCKED'
-                                ? <><LockOpen className="w-4 h-4" /> Mở khóa</>
-                                : <><Lock className="w-4 h-4" /> Khóa tài khoản</>}
-                            </button>
-                            <button
-                              onClick={() => handleResetPassword(emp.id)}
-                              className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-blue-700 hover:bg-blue-50 transition cursor-pointer"
-                            >
-                              <KeyRound className="w-4 h-4" /> Cấp mật khẩu cho nhân viên
-                            </button>
-                            <div className="my-1 border-t border-slate-100" />
-                            <button
-                              onClick={() => handleDelete(emp.id)}
-                              className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition cursor-pointer"
-                            >
-                              <Trash2 className="w-4 h-4" /> Xóa nhân viên
-                            </button>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
                     </td>
                   </tr>
                 ))}
@@ -732,9 +743,80 @@ export default function EmployeesPage() {
         )}
       </AnimatePresence>
 
-      {/* Backdrop for action menu */}
-      {actionMenu !== null && (
-        <div className="fixed inset-0 z-20" onClick={() => setActionMenu(null)} />
+      {/* ─── Floating Action Menu Portal (z-[9999], escapes all table overflows) ─── */}
+      {mounted && actionMenu && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[9999] pointer-events-auto">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-transparent cursor-default"
+            onClick={() => setActionMenu(null)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setActionMenu(null);
+            }}
+          />
+          <AnimatePresence>
+            <motion.div
+              key={`menu-${actionMenu.emp.id}`}
+              initial={{ opacity: 0, scale: 0.95, y: actionMenu.position.openUpward ? 6 : -6 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.12, ease: 'easeOut' }}
+              style={{
+                position: 'fixed',
+                top: `${actionMenu.position.top}px`,
+                right: `${actionMenu.position.right}px`,
+              }}
+              className="min-w-[220px] w-max rounded-xl border border-slate-200 bg-white py-1.5 shadow-2xl overflow-hidden text-slate-800 z-[10000]"
+            >
+              <button
+                onClick={() => {
+                  router.push(`/owner/employees/${actionMenu.emp.id}`);
+                  setActionMenu(null);
+                }}
+                className="flex items-center gap-2.5 w-full px-3.5 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 transition cursor-pointer whitespace-nowrap"
+              >
+                <Eye className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                <span>Xem chi tiết</span>
+              </button>
+              <button
+                onClick={() => handleLock(actionMenu.emp.id, actionMenu.emp.status)}
+                className={`flex items-center gap-2.5 w-full px-3.5 py-2 text-left text-sm font-medium transition cursor-pointer whitespace-nowrap
+                  ${actionMenu.emp.status === 'LOCKED'
+                    ? 'text-emerald-700 hover:bg-emerald-50'
+                    : 'text-amber-700 hover:bg-amber-50'}`}
+              >
+                {actionMenu.emp.status === 'LOCKED' ? (
+                  <>
+                    <LockOpen className="w-4 h-4 flex-shrink-0" />
+                    <span>Mở khóa tài khoản</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-4 h-4 flex-shrink-0" />
+                    <span>Khóa tài khoản</span>
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => handleResetPassword(actionMenu.emp.id)}
+                className="flex items-center gap-2.5 w-full px-3.5 py-2 text-left text-sm font-medium text-blue-700 hover:bg-blue-50 transition cursor-pointer whitespace-nowrap"
+              >
+                <KeyRound className="w-4 h-4 flex-shrink-0" />
+                <span>Cấp mật khẩu cho nhân viên</span>
+              </button>
+              <div className="my-1 border-t border-slate-100" />
+              <button
+                onClick={() => handleDelete(actionMenu.emp.id)}
+                className="flex items-center gap-2.5 w-full px-3.5 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 transition cursor-pointer whitespace-nowrap"
+              >
+                <Trash2 className="w-4 h-4 flex-shrink-0" />
+                <span>Xóa nhân viên</span>
+              </button>
+            </motion.div>
+          </AnimatePresence>
+        </div>,
+        document.body
       )}
       </div>
     </FeatureGate>

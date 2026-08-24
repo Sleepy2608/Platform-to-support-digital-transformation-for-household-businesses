@@ -7,8 +7,13 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProductUnitRepository extends JpaRepository<ProductUnit,Long> {
-    List<ProductUnit> findAllByProductIdAndStatus(Long productId,String status);
-    Optional<ProductUnit> findAllByIdAndProductId(Long Id,Long productId);
-    Optional<ProductUnit> findAllByProductIdAndUnitId(Long productId,Long unitId);
-    Optional<ProductUnit> findAllByProductIdAndUnitIdAndStatus(Long productId,Long unitId,String status);
+    List<ProductUnit> findAllByProductId(Long productId);
+
+    List<ProductUnit> findAllByProductIdAndStatusOrderByBaseUnitDesc(Long productId, String status);
+
+    Optional<ProductUnit> findByIdAndProductId(Long id, Long productId);
+
+    Optional<ProductUnit> findByProductIdAndUnitId(Long productId, Long unitId);
+
+    Optional<ProductUnit> findByProductIdAndUnitIdAndStatus(Long productId, Long unitId, String status);
 }
