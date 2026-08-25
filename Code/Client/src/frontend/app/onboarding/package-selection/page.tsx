@@ -88,6 +88,24 @@ async function fetchPackages(): Promise<PackageInfo[]> {
   return json.data as PackageInfo[];
 }
 
+async function fetchCurrentProfile(): Promise<{ packageType: string | null; subscriptionExpiresAt: string | null } | null> {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const res = await fetch('http://localhost:8080/api/owner/profile', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const text = await res.text();
+    const json = text ? JSON.parse(text) : {};
+    // Handle both wrapped { data: ... } and direct response formats
+    const data = json.data ?? json;
+    return { packageType: data.packageType ?? null, subscriptionExpiresAt: data.subscriptionExpiresAt ?? null };
+  } catch {
+    return null;
+  }
+}
+
 async function selectPackageApi(packageType: PackageId, billingCycle: BillingCycle): Promise<void> {
   const token = getToken();
   const res = await fetch(
@@ -143,13 +161,17 @@ function PackageSelectionContent() {
   const [error, setError] = useState<string | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
+  // Current active subscription info
+  const [currentPackageType, setCurrentPackageType] = useState<string | null>(null);
+  const [currentExpiresAt, setCurrentExpiresAt] = useState<string | null>(null);
+
   // Payment Modal State for > 0 VND packages
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [copiedAccountNum, setCopiedAccountNum] = useState(false);
   const [copiedSyntax, setCopiedSyntax] = useState(false);
 
-  // Load packages from API
+  // Load packages and current profile from API
   useEffect(() => {
     fetchPackages()
       .then((data) => {
@@ -158,6 +180,15 @@ function PackageSelectionContent() {
         }
       })
       .catch(() => { /* use fallback silently */ });
+
+    fetchCurrentProfile()
+      .then((profile) => {
+        if (profile) {
+          setCurrentPackageType(profile.packageType);
+          setCurrentExpiresAt(profile.subscriptionExpiresAt);
+        }
+      })
+      .catch(() => { /* ignore */ });
   }, []);
 
   // Derived
@@ -168,7 +199,14 @@ function PackageSelectionContent() {
   const totalAmount = unitPrice;
   const savingMonths = 2; // YEARLY = 10 tháng giá, tặng 2 tháng
 
-  const canSubmit = selected !== null && agreed && !submitting;
+  // Kiểm tra subscription hiện tại có đang hoạt động không
+  const currentSubscriptionActive = currentExpiresAt
+    ? new Date(currentExpiresAt).getTime() > Date.now()
+    : false;
+
+  // Không cho submit nếu đang chọn lại gói hiện tại đang hoạt động
+  const isSelectingCurrentPkg = selected !== null && selected === currentPackageType && currentSubscriptionActive;
+  const canSubmit = selected !== null && agreed && !submitting && !isSelectingCurrentPkg;
 
   const handleBack = () => {
     if (isRegistrationFlow) {
@@ -349,6 +387,7 @@ function PackageSelectionContent() {
         {packages.map((pkg, idx) => {
           const isVip = pkg.id === 'VIP';
           const isSelected = selected === pkg.id;
+          const isCurrentActive = pkg.id === currentPackageType && currentSubscriptionActive;
           const price = cycle === 'YEARLY' ? pkg.yearlyPrice : pkg.monthlyPrice;
           const CheckIcon = isVip ? ShieldCheck : CheckCircle;
           const PkgIcon = isVip ? Crown : Zap;
@@ -359,27 +398,40 @@ function PackageSelectionContent() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.08, duration: 0.3 }}
-              onClick={() => setSelected(pkg.id)}
-              className={`relative rounded-3xl p-5 flex flex-col justify-between shadow-sm transition-all duration-200 cursor-pointer border-2 select-none h-full min-h-[350px]
-                ${isVip
-                  ? isSelected
-                    ? 'bg-zinc-950 border-white shadow-2xl scale-[1.02] text-white'
-                    : 'bg-zinc-950 border-zinc-800 text-white hover:border-zinc-500 hover:-translate-y-1 hover:shadow-xl'
-                  : isSelected
-                    ? 'bg-white border-slate-900 shadow-2xl scale-[1.02] text-slate-900'
-                    : 'bg-white border-slate-200 text-slate-900 hover:border-slate-400 hover:-translate-y-1 hover:shadow-xl'
+              onClick={() => !isCurrentActive && setSelected(pkg.id)}
+              className={`relative rounded-3xl p-5 flex flex-col justify-between shadow-sm transition-all duration-200 border-2 select-none h-full min-h-[350px]
+                ${isCurrentActive
+                  ? isVip
+                    ? 'bg-zinc-950 border-emerald-400 shadow-2xl text-white cursor-default ring-2 ring-emerald-400/40'
+                    : 'bg-white border-emerald-500 shadow-2xl text-slate-900 cursor-default ring-2 ring-emerald-400/30'
+                  : isVip
+                    ? isSelected
+                      ? 'bg-zinc-950 border-white shadow-2xl scale-[1.02] text-white cursor-pointer'
+                      : 'bg-zinc-950 border-zinc-800 text-white hover:border-zinc-500 hover:-translate-y-1 hover:shadow-xl cursor-pointer'
+                    : isSelected
+                      ? 'bg-white border-slate-900 shadow-2xl scale-[1.02] text-slate-900 cursor-pointer'
+                      : 'bg-white border-slate-200 text-slate-900 hover:border-slate-400 hover:-translate-y-1 hover:shadow-xl cursor-pointer'
                 }`}
             >
+              {/* Currently Active Badge */}
+              {isCurrentActive && (
+                <span className={`absolute -top-3.5 left-6 text-[10px] font-black px-3.5 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1
+                  ${isVip ? 'bg-emerald-400 text-zinc-950' : 'bg-emerald-500 text-white'}`}>
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse inline-block" />
+                  Đang sử dụng
+                </span>
+              )}
+
               {/* Recommended Badge */}
-              {pkg.recommended && (
+              {pkg.recommended && !isCurrentActive && (
                 <span className="absolute -top-3.5 right-6 bg-amber-400 text-slate-950 text-[10px] font-black px-3.5 py-1 rounded-full uppercase tracking-wider shadow-sm">
                   ⭐ Đề xuất
                 </span>
               )}
 
-              {/* Selected checkmark */}
-              {isSelected && (
-                <span className={`absolute top-5 right-5 ${isVip ? 'text-white' : 'text-slate-900'}`}>
+              {/* Selected or Active checkmark */}
+              {(isSelected || isCurrentActive) && (
+                <span className={`absolute top-5 right-5 ${isVip ? 'text-emerald-400' : isCurrentActive ? 'text-emerald-600' : 'text-slate-900'}`}>
                   <BadgeCheck className="w-6 h-6" />
                 </span>
               )}
@@ -424,19 +476,28 @@ function PackageSelectionContent() {
                   </p>
                 )}
 
+                {/* Expiry info for current active package */}
+                {isCurrentActive && currentExpiresAt && (
+                  <div className={`mt-2 mb-1 px-3 py-2 rounded-xl text-xs font-medium ${
+                    isVip ? 'bg-emerald-900/30 text-emerald-300 border border-emerald-700/40' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  }`}>
+                    📅 Hết hạn: {new Date(currentExpiresAt).toLocaleDateString('vi-VN', { dateStyle: 'long' })}
+                  </div>
+                )}
+
                 {/* Features List */}
                 <div className="pt-2 border-t border-slate-100 dark:border-zinc-800/60 mt-1">
                   <ul className="space-y-2 text-xs sm:text-sm">
                     {pkg.features && pkg.features.length > 0 ? (
                       pkg.features.map((feature, fIdx) => (
                         <li key={fIdx} className={`flex items-start gap-2 leading-snug ${isVip ? 'text-zinc-300' : 'text-slate-700'}`}>
-                          <CheckIcon className={`w-4 h-4 mt-0.5 shrink-0 ${isVip ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                          <CheckIcon className={`w-4 h-4 mt-0.5 shrink-0 ${isCurrentActive ? 'text-emerald-500' : isVip ? 'text-emerald-400' : 'text-emerald-600'}`} />
                           <span>{feature}</span>
                         </li>
                       ))
                     ) : (
                       <li className={`flex items-start gap-2 leading-snug ${isVip ? 'text-zinc-300' : 'text-slate-700'}`}>
-                        <CheckIcon className={`w-4 h-4 mt-0.5 shrink-0 ${isVip ? 'text-emerald-400' : 'text-emerald-600'}`} />
+                        <CheckIcon className={`w-4 h-4 mt-0.5 shrink-0 ${isCurrentActive ? 'text-emerald-500' : isVip ? 'text-emerald-400' : 'text-emerald-600'}`} />
                         <span>Các tính năng theo cấu hình của gói</span>
                       </li>
                     )}
@@ -444,18 +505,22 @@ function PackageSelectionContent() {
                 </div>
               </div>
 
-              {/* Select Indicator Button */}
+              {/* Select / Active Indicator Button */}
               <div className={`mt-6 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-center transition-all border
-                ${isSelected
+                ${isCurrentActive
                   ? isVip
-                    ? 'bg-white text-zinc-950 border-white shadow-sm'
-                    : 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                  : isVip
-                    ? 'bg-transparent text-zinc-400 border-zinc-700 hover:text-white hover:border-zinc-500'
-                    : 'bg-transparent text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-400'
+                    ? 'bg-emerald-400 text-zinc-950 border-emerald-400 shadow-sm'
+                    : 'bg-emerald-500 text-white border-emerald-500 shadow-sm'
+                  : isSelected
+                    ? isVip
+                      ? 'bg-white text-zinc-950 border-white shadow-sm'
+                      : 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                    : isVip
+                      ? 'bg-transparent text-zinc-400 border-zinc-700 hover:text-white hover:border-zinc-500'
+                      : 'bg-transparent text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-400'
                 }`}
               >
-                {isSelected ? '✓ Đã chọn gói này' : 'Chọn gói này'}
+                {isCurrentActive ? '✓ Gói đang sử dụng' : isSelected ? '✓ Đã chọn gói này' : 'Chọn gói này'}
               </div>
             </motion.div>
           );
