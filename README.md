@@ -135,7 +135,6 @@ Platform-to-support-digital-transformation-for-household-businesses/
 ├── docs/                                      # Tài liệu dự án
 │   ├── architecture_design/                   # Thiết kế kiến trúc hệ thống
 │   ├── detailed-design/                       # Thiết kế chi tiết (database, diagrams)
-│   ├── Pipeline_design/                       # Thiết kế pipeline & CI/CD
 │   ├── requirements/                          # Yêu cầu đề tài
 │   ├── software_requirement_specification/    # Đặc tả yêu cầu phần mềm (SRS)
 │   ├── user_requirements/                     # Yêu cầu người dùng
