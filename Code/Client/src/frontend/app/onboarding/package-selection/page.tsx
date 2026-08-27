@@ -293,7 +293,7 @@ function PackageSelectionContent() {
           Chọn gói dịch vụ
         </h1>
         <p className="text-slate-600 text-sm sm:text-base max-w-lg mx-auto font-medium select-none">
-          Bắt đầu sử dụng nền tảng HKD Digital. Hủy hoặc nâng cấp bất kỳ lúc nào.
+          Bắt đầu sử dụng nền tảng HBDT Digital. Hủy hoặc nâng cấp bất kỳ lúc nào.
         </p>
       </motion.div>
 
@@ -597,7 +597,7 @@ function PackageSelectionContent() {
           <a href="#" className="text-slate-900 font-bold underline hover:text-slate-700">
             Chính sách bảo mật
           </a>{' '}
-          của HKD Digital.
+          của HBDT Digital.
         </label>
       </motion.div>
 
@@ -677,7 +677,7 @@ function PackageSelectionContent() {
                   </div>
                   <div>
                     <h3 className="font-bold text-base">Thông Báo Thanh Toán Chuyển Khoản</h3>
-                    <p className="text-xs text-slate-400">HKD Digital Subscription Service</p>
+                    <p className="text-xs text-slate-400">HBDT Digital Subscription Service</p>
                   </div>
                 </div>
                 {!submitting && !paymentSuccess && (

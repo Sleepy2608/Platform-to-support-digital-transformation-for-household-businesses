@@ -107,7 +107,7 @@ export default function AdminLoginPage() {
               <div className="inline-flex p-3 bg-white/10 rounded-2xl border border-zinc-600 mb-4 shadow-inner">
                 <ShieldCheck className="w-8 h-8 text-white" />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white select-none" style={{ userSelect: 'none' }}>Đăng Nhập Quản Trị</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white select-none" style={{ userSelect: 'none' }}>Đăng Nhập Vào Tài Khoản Quản Trị Viên</h1>
               <p className="text-zinc-400 text-sm mt-2 select-none" style={{ userSelect: 'none' }}>
                 Khu vực dành riêng cho quản trị viên hệ thống
               </p>
