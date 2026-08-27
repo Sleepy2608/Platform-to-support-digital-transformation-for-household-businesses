@@ -106,7 +106,7 @@ export default function AdminLayout({
           <div className="p-1.5 bg-white/10 rounded-lg border border-zinc-700">
             <Store className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold tracking-wider text-sm">HKD.DIGITAL</span>
+          <span className="font-bold tracking-wider text-sm">HBDT.DIGITAL</span>
         </div>
         <button 
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -134,7 +134,7 @@ export default function AdminLayout({
                 <div className="p-2 bg-white/10 rounded-xl border border-zinc-700">
                   <Store className="w-5 h-5 text-white" />
                 </div>
-                <span className="text-lg font-bold tracking-wider">HKD.DIGITAL</span>
+                <span className="text-lg font-bold tracking-wider">HBDT.DIGITAL</span>
               </div>
 
               {/* User Profile Summary */}

@@ -50,3 +50,4 @@ npm run dev
 - Web được chạy ở:
   * Local: http://localhost:3000/
   * Network: http://192.168.23.1:3000
+> Lưu ý: Trang đăng nhập vào Manager/Owner/Employee được chạy ở url `http://localhost:3000/login` còn trang Admin được chạy ở url `http://localhost:3000/admin/login`.

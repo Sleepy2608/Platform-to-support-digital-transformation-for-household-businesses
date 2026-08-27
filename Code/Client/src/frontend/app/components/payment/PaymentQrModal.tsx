@@ -60,7 +60,7 @@ export default function PaymentQrModal({
                 </div>
                 <div>
                   <h3 className="font-bold text-base">{title}</h3>
-                  <p className="text-xs text-slate-400">HKD Digital Subscription Service</p>
+                  <p className="text-xs text-slate-400">HBDT Digital Subscription Service</p>
                 </div>
               </div>
               {!loading && !successTitle && (

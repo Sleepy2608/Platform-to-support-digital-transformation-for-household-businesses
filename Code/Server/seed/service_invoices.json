@@ -1,6 +1,6 @@
 {
   "table" : "service_invoices",
-  "version" : 1,
+  "version" : 6,
   "rows" : [ {
     "id" : 1,
     "amount" : 11976000.00,

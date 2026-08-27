@@ -1,6 +1,6 @@
 {
   "table" : "roles",
-  "version" : 11,
+  "version" : 12,
   "rows" : [ {
     "id" : 1,
     "description" : "Quản trị viên hệ thống",

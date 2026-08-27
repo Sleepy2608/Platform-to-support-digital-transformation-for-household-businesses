@@ -1,6 +1,6 @@
 {
   "table" : "sales_order_items",
-  "version" : 1,
+  "version" : 6,
   "rows" : [ {
     "id" : 1,
     "base_quantity" : 2.000,

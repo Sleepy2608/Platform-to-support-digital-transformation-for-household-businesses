@@ -85,7 +85,7 @@ export default function AdminDashboard() {
             </span>
         </div>
         <p className="text-zinc-400 text-sm mt-1">
-          Bảng điều khiển quản trị trung tâm của HKD.DIGITAL
+          Bảng điều khiển quản trị trung tâm của HBDT.DIGITAL
         </p>
       </div>
 
