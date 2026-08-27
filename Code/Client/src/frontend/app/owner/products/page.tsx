@@ -15,6 +15,7 @@ import {
   CheckoutData,
   OrderCartDrawer,
 } from '@/app/components/OrderCartDrawer';
+import { ProductImportSection } from '@/app/components/ProductImportSection';
 
 type Status = 'ACTIVE' | 'INACTIVE';
 
@@ -198,6 +199,11 @@ export default function ProductManagementPage() {
   const showNotice = (message: string) => {
     setNotice(message);
     window.setTimeout(() => setNotice(''), 2500);
+  };
+
+  const refreshProductsAfterImport = async (successCount: number) => {
+    await loadProducts();
+    showNotice(`Đã cập nhật danh sách với ${successCount} sản phẩm vừa nhập`);
   };
 
   const openCategory = (category?: Category) => {
@@ -756,6 +762,9 @@ export default function ProductManagementPage() {
                 {formatQuantity(cartQuantity)}
               </span>
             </button>
+            {tab === 'products' && (
+              <ProductImportSection onImportSuccess={refreshProductsAfterImport} />
+            )}
             <button
               onClick={() => tab === 'products' ? openProduct() : openCategory()}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-slate-800 transition"
