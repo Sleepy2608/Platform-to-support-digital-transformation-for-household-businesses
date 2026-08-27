@@ -62,4 +62,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /** Đếm nhân viên đang ACTIVE của một business */
     long countByBusinessIdAndRole_NameAndStatus(Long businessId, RoleType roleType, UserStatus status);
+
+    /** Tìm chủ sở hữu của một business */
+    Optional<User> findFirstByBusinessIdAndRole_Name(Long businessId, RoleType roleType);
 }

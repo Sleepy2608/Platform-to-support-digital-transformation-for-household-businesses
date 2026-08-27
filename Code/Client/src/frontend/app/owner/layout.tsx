@@ -27,7 +27,7 @@ const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; 
   { label: 'Hồ sơ cá nhân', href: '/owner/account#profile', icon: UserCircle, hash: '#profile' },
   { label: 'Đổi mật khẩu', href: '/owner/account#password', icon: Lock, hash: '#password' },
   { label: 'Email & Số điện thoại', href: '/owner/account#contact', icon: Mail, hash: '#contact' },
-  { label: 'Gói đăng ký', href: '/owner/account#subscription', icon: CreditCard, hash: '#subscription' },
+  { label: 'Gói đăng ký', href: '/owner/account/subscription', icon: CreditCard, hash: '#subscription' },
   { label: 'Vùng nguy hiểm', href: '/owner/account#danger', icon: AlertTriangle, hash: '#danger' },
 ];
 
@@ -133,7 +133,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     setCurrentHash(`#${clean}`);
     setSidebarOpen(false);
 
-    if (pathname === '/owner/account') {
+    if (pathname === '/owner/account' && href !== '/owner/account/subscription') {
       window.history.replaceState(null, '', `/owner/account#${clean}`);
       window.dispatchEvent(new CustomEvent('owner-tab-change', { detail: clean }));
       window.dispatchEvent(new HashChangeEvent('hashchange'));
