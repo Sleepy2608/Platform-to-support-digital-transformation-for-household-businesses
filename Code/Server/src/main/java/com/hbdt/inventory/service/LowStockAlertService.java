@@ -1,6 +1,7 @@
 package com.hbdt.inventory.service;
 
 import com.hbdt.common.exception.ResourceNotFoundException;
+import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.entity.InventoryAlert;
 import com.hbdt.entity.InventoryBalance;
 import com.hbdt.entity.Product;
@@ -19,9 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class LowStockAlertService {
+
+    private static final String ACTIVE = "ACTIVE";
 
     private final BusinessContextService businessContextService;
     private final ProductRepository productRepository;
@@ -46,8 +50,14 @@ public class LowStockAlertService {
     @Transactional
     public StockThresholdResponse configureThreshold(
             String username, Long productId, BigDecimal minimumStock) {
+        if (minimumStock == null || minimumStock.signum() < 0) {
+            throw new BadRequestException("Ngưỡng tồn kho tối thiểu không được âm");
+        }
+        if (minimumStock.stripTrailingZeros().scale() > 0) {
+            throw new BadRequestException("Ngưỡng tồn kho tối thiểu phải là số nguyên");
+        }
         Long businessId = businessContextService.requireBusinessId(username);
-        Product product = requireProduct(businessId, productId);
+        Product product = requireActiveProduct(businessId, productId);
         product.setMinimumStock(minimumStock);
         productRepository.save(product);
 
@@ -59,7 +69,8 @@ public class LowStockAlertService {
     @Transactional(readOnly = true)
     public List<StockThresholdResponse> getThresholds(String username) {
         Long businessId = businessContextService.requireBusinessId(username);
-        return productRepository.findAllByBusinessIdOrderByProductNameAsc(businessId).stream()
+        return productRepository.findAllByBusinessIdAndStatusOrderByProductNameAsc(
+                        businessId, ACTIVE).stream()
                 .map(product -> toThresholdResponse(
                         product, currentQuantity(businessId, product.getId())))
                 .toList();
@@ -72,7 +83,10 @@ public class LowStockAlertService {
                 ? alertRepository.findAllByBusinessIdOrderByTriggeredAtDesc(businessId)
                 : alertRepository.findAllByBusinessIdAndStatusOrderByLastDetectedAtDesc(
                         businessId, InventoryAlertStatus.ACTIVE);
-        return alerts.stream().map(this::toAlertResponse).toList();
+        return alerts.stream()
+                .map(alert -> toAlertResponse(alert, includeResolved))
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -87,11 +101,26 @@ public class LowStockAlertService {
         return evaluate(businessId, requireProduct(businessId, productId), quantity);
     }
 
+    @Transactional
+    public EvaluationResult synchronizeProductStatus(Long businessId, Long productId) {
+        Product product = requireProduct(businessId, productId);
+        return evaluate(businessId, product, currentQuantity(businessId, productId));
+    }
+
     private EvaluationResult evaluate(Long businessId, Product product, BigDecimal quantity) {
         BigDecimal threshold = product.getMinimumStock();
         List<InventoryAlert> activeAlerts = alertRepository.findActiveForUpdate(
                 businessId, product.getId());
         LocalDateTime now = LocalDateTime.now();
+
+        if (!ACTIVE.equalsIgnoreCase(product.getStatus())) {
+            activeAlerts.forEach(alert -> resolve(alert, now));
+            return new EvaluationResult(
+                    activeAlerts.isEmpty() ? null : activeAlerts.get(0),
+                    false,
+                    !activeAlerts.isEmpty());
+        }
+
         boolean lowStock = threshold != null && quantity.compareTo(threshold) < 0;
 
         if (lowStock) {
@@ -142,6 +171,14 @@ public class LowStockAlertService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy sản phẩm"));
     }
 
+    private Product requireActiveProduct(Long businessId, Long productId) {
+        Product product = requireProduct(businessId, productId);
+        if (!ACTIVE.equalsIgnoreCase(product.getStatus())) {
+            throw new BadRequestException("Không thể cấu hình cảnh báo cho sản phẩm ngừng sử dụng");
+        }
+        return product;
+    }
+
     private BigDecimal currentQuantity(Long businessId, Long productId) {
         return balanceRepository.findByBusinessIdAndProductId(businessId, productId)
                 .map(InventoryBalance::getQuantityOnHand)
@@ -155,8 +192,11 @@ public class LowStockAlertService {
                 threshold, threshold != null, threshold != null && quantity.compareTo(threshold) < 0);
     }
 
-    private LowStockAlertResponse toAlertResponse(InventoryAlert alert) {
+    private LowStockAlertResponse toAlertResponse(InventoryAlert alert, boolean includeResolved) {
         Product product = requireProduct(alert.getBusinessId(), alert.getProductId());
+        if (!includeResolved && !ACTIVE.equalsIgnoreCase(product.getStatus())) {
+            return null;
+        }
         BigDecimal quantity = currentQuantity(alert.getBusinessId(), alert.getProductId());
         BigDecimal threshold = product.getMinimumStock() == null
                 ? alert.getThresholdSnapshot() : product.getMinimumStock();

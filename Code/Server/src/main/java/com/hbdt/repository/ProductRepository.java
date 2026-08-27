@@ -19,4 +19,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     boolean existsByBusinessIdAndProductNameIgnoreCaseAndIdNot(Long businessId, String productName, Long id);
 
     List<Product> findAllByBusinessIdOrderByProductNameAsc(Long businessId);
+
+    List<Product> findAllByBusinessIdAndStatusOrderByProductNameAsc(Long businessId, String status);
 }

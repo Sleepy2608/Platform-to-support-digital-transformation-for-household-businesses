@@ -144,13 +144,13 @@ class LowStockAlertControllerTest {
 
     @Test
     void configureThresholdReturnsUpdatedProjection() {
-        MinimumStockRequest request = new MinimumStockRequest(new BigDecimal("15.500"));
+        MinimumStockRequest request = new MinimumStockRequest(new BigDecimal("15"));
         StockThresholdResponse updated = new StockThresholdResponse(
                 11L,
                 "SP-01",
                 "Cà phê",
                 new BigDecimal("2.000"),
-                new BigDecimal("15.500"),
+                new BigDecimal("15"),
                 true,
                 true);
         when(service.configureThreshold("owner", 11L, request.minimumStock()))
@@ -163,15 +163,26 @@ class LowStockAlertControllerTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getData()).isEqualTo(updated);
         assertThat(response.getBody().getMessage()).contains("Cập nhật ngưỡng");
-        verify(service).configureThreshold("owner", 11L, new BigDecimal("15.500"));
+        verify(service).configureThreshold("owner", 11L, new BigDecimal("15"));
     }
 
     @Test
-    void minimumStockRequestAcceptsZeroAndThreeDecimalPlaces() {
+    void minimumStockRequestAcceptsNonNegativeIntegers() {
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
         assertThat(validator.validate(new MinimumStockRequest(BigDecimal.ZERO))).isEmpty();
-        assertThat(validator.validate(new MinimumStockRequest(new BigDecimal("10.125")))).isEmpty();
+        assertThat(validator.validate(new MinimumStockRequest(new BigDecimal("999999999999999")))).isEmpty();
+    }
+
+    @Test
+    void minimumStockRequestRejectsDecimalValue() {
+        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+
+        Set<ConstraintViolation<MinimumStockRequest>> violations =
+                validator.validate(new MinimumStockRequest(new BigDecimal("10.125")));
+
+        assertThat(violations).singleElement().satisfies(violation ->
+                assertThat(violation.getMessage()).containsIgnoringCase("số nguyên"));
     }
 
     @Test
@@ -190,7 +201,7 @@ class LowStockAlertControllerTest {
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
         Set<ConstraintViolation<MinimumStockRequest>> violations =
-                validator.validate(new MinimumStockRequest(new BigDecimal("-0.001")));
+                validator.validate(new MinimumStockRequest(new BigDecimal("-1")));
 
         assertThat(violations).singleElement().satisfies(violation ->
                 assertThat(violation.getMessage()).containsIgnoringCase("âm"));

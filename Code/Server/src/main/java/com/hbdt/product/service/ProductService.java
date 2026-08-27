@@ -187,6 +187,8 @@ public class ProductService {
         Product saved = productRepository.save(product);
         if (request.quantityOnHand() != null) {
             saveQuantity(saved, normalizeQuantity(request.quantityOnHand(), BigDecimal.ZERO));
+        } else {
+            lowStockAlertService.synchronizeProductStatus(saved.getBusinessId(), saved.getId());
         }
         return toResponse(saved);
     }
@@ -196,7 +198,9 @@ public class ProductService {
         Long businessId = businessContextService.requireBusinessId(username);
         Product product = findOwned(id, businessId);
         product.setStatus(INACTIVE);
-        return toResponse(productRepository.save(product));
+        Product saved = productRepository.save(product);
+        lowStockAlertService.synchronizeProductStatus(saved.getBusinessId(), saved.getId());
+        return toResponse(saved);
     }
 
     private Product findOwned(Long id, Long businessId) {
