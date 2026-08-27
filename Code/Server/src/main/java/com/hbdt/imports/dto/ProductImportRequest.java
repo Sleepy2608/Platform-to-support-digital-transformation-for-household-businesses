@@ -17,6 +17,13 @@ import java.math.BigDecimal;
 @Builder
 public class ProductImportRequest {
 
+    /** Dòng thực tế trong tệp nguồn, dùng để trả lỗi chính xác cho người dùng. */
+    private int sourceRowNumber;
+
+    /** Giá trị gốc trước khi chuyển kiểu, dùng để phân biệt ô trống với dữ liệu sai định dạng. */
+    private String salePriceRaw;
+    private String quantityOnHandRaw;
+
     @NotBlank(message = "Mã sản phẩm không được để trống")
     @Size(max = 50, message = "Mã sản phẩm không được vượt quá 50 ký tự")
     private String productCode;

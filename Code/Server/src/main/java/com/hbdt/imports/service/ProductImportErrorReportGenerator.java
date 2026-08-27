@@ -24,7 +24,7 @@ public class ProductImportErrorReportGenerator {
     public byte[] generateErrorReportBytes(List<ProductImportRowError> errors) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("BÁO CÁO LỖI NHẬP SẢN PHẨM\n");
+        sb.append("\uFEFFBÁO CÁO LỖI NHẬP SẢN PHẨM\n");
         sb.append("Thời gian: ").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))).append("\n");
         sb.append("Tổng số lỗi: ").append(errors.size()).append("\n");
         sb.append("\n");
@@ -32,7 +32,7 @@ public class ProductImportErrorReportGenerator {
 
         for (ProductImportRowError error : errors) {
             sb.append(error.getRowNumber()).append(",");
-            sb.append(escapeCsv(error.getField())).append(",");
+            sb.append(escapeCsv(toVietnameseFieldName(error.getField()))).append(",");
             sb.append(escapeCsv(error.getValue())).append(",");
             sb.append(escapeCsv(error.getErrorMessage())).append("\n");
         }
@@ -50,9 +50,28 @@ public class ProductImportErrorReportGenerator {
 
     private String escapeCsv(String value) {
         if (value == null) return "";
-        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
-            return "\"" + value.replace("\"", "\"\"") + "\"";
+        String safeValue = value;
+        if (!safeValue.isEmpty() && "=+-@".indexOf(safeValue.charAt(0)) >= 0) {
+            safeValue = "'" + safeValue;
         }
-        return value;
+        if (safeValue.contains(",") || safeValue.contains("\"") || safeValue.contains("\n")) {
+            return "\"" + safeValue.replace("\"", "\"\"") + "\"";
+        }
+        return safeValue;
+    }
+
+    private String toVietnameseFieldName(String field) {
+        if (field == null) return "";
+        return switch (field) {
+            case "productCode" -> "Mã sản phẩm";
+            case "productName" -> "Tên sản phẩm";
+            case "categoryCode" -> "Mã danh mục";
+            case "baseUnitCode" -> "Mã đơn vị tính";
+            case "salePrice" -> "Giá bán";
+            case "quantityOnHand" -> "Số lượng tồn kho";
+            case "status" -> "Trạng thái";
+            case "description" -> "Mô tả";
+            default -> field;
+        };
     }
 }

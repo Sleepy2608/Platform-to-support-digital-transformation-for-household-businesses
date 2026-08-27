@@ -77,4 +77,32 @@ class ProductImportFileParserTest {
         assertEquals("Sản phẩm tiếng Việt", rows.get(0).getProductName());
         assertEquals("ACTIVE", rows.get(0).getStatus());
     }
+
+    @Test
+    void parserPreservesInvalidNumericValuesForRowValidation() {
+        String csv = "Mã sản phẩm,Tên sản phẩm,Mã danh mục,Mã đơn vị tính,Giá bán,Số lượng tồn kho,Trạng thái,Mô tả\n"
+                + "SP300,Sản phẩm lỗi,,CAI,không-phải-số,sai,Đang hoạt động,Mô tả\n";
+
+        List<ProductImportRequest> rows = parser.parseFile(
+                csv.getBytes(StandardCharsets.UTF_8), "san-pham.csv");
+
+        assertEquals(1, rows.size());
+        assertEquals(2, rows.get(0).getSourceRowNumber());
+        assertEquals("không-phải-số", rows.get(0).getSalePriceRaw());
+        assertEquals("sai", rows.get(0).getQuantityOnHandRaw());
+        assertEquals(null, rows.get(0).getSalePrice());
+        assertEquals(null, rows.get(0).getQuantityOnHand());
+    }
+
+    @Test
+    void generatedCsvTemplateCanBeParsed() {
+        byte[] template = parser.generateCsvTemplate();
+        List<ProductImportRequest> rows = parser.parseFile(template, "mau_nhap_san_pham.csv");
+
+        assertEquals(3, rows.size());
+        assertEquals("SP001", rows.get(0).getProductCode());
+        assertEquals("ACTIVE", rows.get(0).getStatus());
+        assertEquals("HOP", rows.get(2).getBaseUnitCode());
+        assertEquals(null, rows.get(2).getCategoryCode());
+    }
 }

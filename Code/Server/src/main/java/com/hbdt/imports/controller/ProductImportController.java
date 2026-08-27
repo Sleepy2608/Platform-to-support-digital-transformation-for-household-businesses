@@ -1,6 +1,7 @@
 package com.hbdt.imports.controller;
 
 import com.hbdt.common.dto.ApiResponse;
+import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.entity.User;
 import com.hbdt.imports.dto.ProductImportResponse;
 import com.hbdt.imports.dto.ProductImportRowError;
@@ -16,12 +17,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Controller for product bulk import functionality
- * BUSINESS_OWNER, OWNER, and ADMIN roles can import products
+ * Only BUSINESS_OWNER and OWNER roles can import products
  */
 @RestController
 @RequestMapping("/api/v1/products/import")
@@ -37,14 +37,24 @@ public class ProductImportController {
      * GET /api/v1/products/import/template
      */
     @GetMapping("/template")
-    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER', 'ADMIN')")
-    public ResponseEntity<byte[]> downloadTemplate() {
-        byte[] template = productImportService.getTemplateFile();
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
+    public ResponseEntity<byte[]> downloadTemplate(
+            @RequestParam(defaultValue = "xlsx") String format) {
+        if (!"xlsx".equalsIgnoreCase(format) && !"csv".equalsIgnoreCase(format)) {
+            throw new BadRequestException("Định dạng tệp mẫu phải là xlsx hoặc csv");
+        }
+        boolean csv = "csv".equalsIgnoreCase(format);
+        byte[] template = csv
+                ? productImportService.getCsvTemplateFile()
+                : productImportService.getTemplateFile();
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
-        headers.setContentDispositionFormData("attachment", "mau_nhap_san_pham.xlsx");
+        headers.setContentType(csv
+                ? MediaType.parseMediaType("text/csv;charset=UTF-8")
+                : MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentDispositionFormData(
+                "attachment", csv ? "mau_nhap_san_pham.csv" : "mau_nhap_san_pham.xlsx");
 
         return ResponseEntity.ok().headers(headers).body(template);
     }
@@ -54,7 +64,7 @@ public class ProductImportController {
      * POST /api/v1/products/import
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
     public ResponseEntity<ApiResponse<ProductImportResponse>> importProducts(
             @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal User currentUser) {
@@ -94,31 +104,21 @@ public class ProductImportController {
 
     /**
      * Download error report for failed imports
-     * GET /api/v1/products/import/error-report
+     * POST /api/v1/products/import/error-report
      */
-    @GetMapping("/error-report")
-    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER', 'ADMIN')")
+    @PostMapping(
+            value = "/error-report",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = "text/csv;charset=UTF-8")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
     public ResponseEntity<byte[]> downloadErrorReport(
-            @RequestParam List<Integer> rowNumbers,
-            @RequestParam List<String> fields,
-            @RequestParam List<String> values,
-            @RequestParam List<String> errorMessages) {
-
-        List<ProductImportRowError> errors = new ArrayList<>();
-        for (int i = 0; i < rowNumbers.size(); i++) {
-            errors.add(ProductImportRowError.builder()
-                    .rowNumber(rowNumbers.get(i))
-                    .field(fields.get(i))
-                    .value(values.get(i))
-                    .errorMessage(errorMessages.get(i))
-                    .build());
-        }
+            @RequestBody List<ProductImportRowError> errors) {
 
         String filename = errorReportGenerator.generateErrorReportFilename();
         byte[] report = errorReportGenerator.generateErrorReportBytes(errors);
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType("text/csv"));
+        headers.setContentType(MediaType.parseMediaType("text/csv;charset=UTF-8"));
         headers.setContentDispositionFormData("attachment", filename);
 
         return ResponseEntity.ok().headers(headers).body(report);

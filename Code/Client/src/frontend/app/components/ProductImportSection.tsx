@@ -18,6 +18,7 @@ interface ProductImportResponse {
   message: string;
   totalRows: number;
   successCount: number;
+  failedCount: number;
   errorCount: number;
   skipCount: number;
   errors?: ProductImportRowError[];
@@ -25,6 +26,11 @@ interface ProductImportResponse {
 
 interface ProductImportSectionProps {
   onImportSuccess?: (successCount: number) => void | Promise<void>;
+}
+
+interface ApiResponseBody<T> {
+  message?: string;
+  data?: T;
 }
 
 const IMPORT_FIELD_LABELS: Record<string, string> = {
@@ -42,14 +48,17 @@ export function ProductImportSection({ onImportSuccess }: ProductImportSectionPr
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDownloadingReport, setIsDownloadingReport] = useState(false);
   const [result, setResult] = useState<ProductImportResponse | null>(null);
   const [error, setError] = useState('');
 
   const resultErrors = result?.errors ?? [];
+  const failedRowCount = result?.failedCount
+    ?? new Set(resultErrors.map((rowError) => rowError.rowNumber)).size;
   const hasResultErrors = Boolean(result && result.errorCount > 0);
   const isCompleteFailure = Boolean(result && result.successCount === 0 && result.errorCount > 0);
 
-  const handleDownloadTemplate = async () => {
+  const handleDownloadTemplate = async (format: 'xlsx' | 'csv') => {
     setError('');
     try {
       const token = getAccessToken();
@@ -57,24 +66,14 @@ export function ProductImportSection({ onImportSuccess }: ProductImportSectionPr
         throw new Error('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
       }
 
-      const response = await fetch(`${API_BASE}/api/v1/products/import/template`, {
+      const response = await fetch(`${API_BASE}/api/v1/products/import/template?format=${format}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error('Bạn không có quyền tải tệp mẫu.');
-        }
-        throw new Error(`Không thể tải tệp mẫu (HTTP ${response.status}).`);
+        throw new Error(await readApiError(response, 'Không thể tải tệp mẫu.'));
       }
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'mau_nhap_san_pham.xlsx';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      downloadBlob(blob, `mau_nhap_san_pham.${format}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể tải tệp mẫu.');
     }
@@ -115,11 +114,11 @@ export function ProductImportSection({ onImportSuccess }: ProductImportSectionPr
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
-      const json = await response.json();
-      if (!response.ok) {
-        throw new Error(json.message || `HTTP ${response.status}`);
+      const json = await readApiResponse<ProductImportResponse>(response);
+      if (!json.data) {
+        throw new Error('Máy chủ không trả về kết quả nhập sản phẩm.');
       }
-      const importResult = json.data as ProductImportResponse;
+      const importResult = json.data;
       setResult(importResult);
 
       if (importResult.successCount > 0) {
@@ -133,6 +132,35 @@ export function ProductImportSection({ onImportSuccess }: ProductImportSectionPr
       setError(err instanceof Error ? err.message : 'Lỗi khi nhập dữ liệu');
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleDownloadErrorReport = async () => {
+    if (!resultErrors.length) return;
+    setIsDownloadingReport(true);
+    setError('');
+    try {
+      const token = getAccessToken();
+      if (!token) {
+        throw new Error('Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.');
+      }
+
+      const response = await fetch(`${API_BASE}/api/v1/products/import/error-report`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(resultErrors),
+      });
+      if (!response.ok) {
+        throw new Error(await readApiError(response, 'Không thể tải báo cáo lỗi.'));
+      }
+      downloadBlob(await response.blob(), 'bao_cao_loi_nhap_san_pham.csv');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể tải báo cáo lỗi.');
+    } finally {
+      setIsDownloadingReport(false);
     }
   };
 
@@ -180,14 +208,24 @@ export function ProductImportSection({ onImportSuccess }: ProductImportSectionPr
                   <li>2. Nhập dữ liệu sản phẩm vào tệp</li>
                   <li>3. Tải lên tệp đã điền đầy đủ thông tin</li>
                 </ol>
-                <button
-                  type="button"
-                  onClick={handleDownloadTemplate}
-                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-xs font-bold text-white hover:bg-slate-700"
-                >
-                  <Download className="h-4 w-4" />
-                  Tải tệp mẫu
-                </button>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleDownloadTemplate('xlsx')}
+                    className="inline-flex items-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-xs font-bold text-white hover:bg-slate-700"
+                  >
+                    <Download className="h-4 w-4" />
+                    Tải mẫu Excel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleDownloadTemplate('csv')}
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100"
+                  >
+                    <Download className="h-4 w-4" />
+                    Tải mẫu CSV
+                  </button>
+                </div>
               </div>
 
               <div>
@@ -244,7 +282,7 @@ export function ProductImportSection({ onImportSuccess }: ProductImportSectionPr
                       {isCompleteFailure
                         ? `Không thể nhập ${result.totalRows} dòng dữ liệu`
                         : hasResultErrors
-                          ? `Nhập hoàn tất: ${result.successCount} thành công, ${result.errorCount} lỗi`
+                          ? `Nhập hoàn tất: ${result.successCount} thành công, ${failedRowCount} thất bại`
                           : `Nhập thành công ${result.successCount} sản phẩm`}
                     </span>
                   </div>
@@ -258,8 +296,8 @@ export function ProductImportSection({ onImportSuccess }: ProductImportSectionPr
                       <p className="text-xs text-slate-500">Thành công</p>
                     </div>
                     <div className="rounded-lg bg-white p-3 text-center border border-rose-200">
-                      <p className="text-lg font-black text-rose-600">{result.errorCount}</p>
-                      <p className="text-xs text-slate-500">Lỗi</p>
+                      <p className="text-lg font-black text-rose-600">{failedRowCount}</p>
+                      <p className="text-xs text-slate-500">Thất bại</p>
                     </div>
                   </div>
 
@@ -272,9 +310,19 @@ export function ProductImportSection({ onImportSuccess }: ProductImportSectionPr
                             Chi tiết {resultErrors.length} lỗi
                           </h3>
                         </div>
-                        <span className="text-xs font-medium text-rose-600">
-                          Kiểm tra và sửa tệp trước khi nhập lại
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => void handleDownloadErrorReport()}
+                          disabled={isDownloadingReport}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100 disabled:opacity-50"
+                        >
+                          {isDownloadingReport ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Download className="h-3.5 w-3.5" />
+                          )}
+                          Tải báo cáo lỗi
+                        </button>
                       </div>
 
                       <ol className="max-h-64 divide-y divide-slate-100 overflow-y-auto">
@@ -285,7 +333,7 @@ export function ProductImportSection({ onImportSuccess }: ProductImportSectionPr
                                 Lỗi {index + 1}
                               </span>
                               <span className="font-semibold text-slate-700">
-                                Dòng dữ liệu {rowError.rowNumber}
+                                Dòng trong tệp {rowError.rowNumber}
                               </span>
                               <span className="text-slate-300">•</span>
                               <span className="font-semibold text-slate-700">
@@ -333,4 +381,55 @@ export function ProductImportSection({ onImportSuccess }: ProductImportSectionPr
       )}
     </>
   );
+}
+
+async function readApiResponse<T>(response: Response): Promise<ApiResponseBody<T>> {
+  const text = await response.text();
+  if (!text.trim()) {
+    throw new Error(httpStatusMessage(response.status));
+  }
+
+  let body: ApiResponseBody<T>;
+  try {
+    body = JSON.parse(text) as ApiResponseBody<T>;
+  } catch {
+    throw new Error('Máy chủ trả về dữ liệu không hợp lệ.');
+  }
+
+  if (!response.ok) {
+    throw new Error(body.message || httpStatusMessage(response.status));
+  }
+  return body;
+}
+
+async function readApiError(response: Response, fallback: string): Promise<string> {
+  const text = await response.text();
+  if (text.trim()) {
+    try {
+      const body = JSON.parse(text) as ApiResponseBody<unknown>;
+      if (body.message) return body.message;
+    } catch {
+      // Phản hồi lỗi có thể là văn bản thuần.
+      return text;
+    }
+  }
+  return response.status ? httpStatusMessage(response.status) : fallback;
+}
+
+function httpStatusMessage(status: number) {
+  if (status === 401) return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+  if (status === 403) return 'Bạn không có quyền thực hiện thao tác này.';
+  if (status >= 500) return 'Máy chủ đang gặp lỗi. Vui lòng thử lại sau.';
+  return `Yêu cầu không thành công (HTTP ${status}).`;
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = window.URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  window.URL.revokeObjectURL(url);
+  document.body.removeChild(anchor);
 }

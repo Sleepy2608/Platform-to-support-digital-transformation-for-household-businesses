@@ -9,6 +9,8 @@ import com.hbdt.repository.CategoryRepository;
 import com.hbdt.repository.InventoryBalanceRepository;
 import com.hbdt.repository.ProductRepository;
 import com.hbdt.repository.UnitRepository;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ public class ProductImportService {
     private final InventoryBalanceRepository inventoryBalanceRepository;
     private final ProductImportFileParser fileParser;
     private final ProductImportErrorReportGenerator errorReportGenerator;
+    private final Validator validator;
 
     /**
      * Process product import from file
@@ -83,82 +86,98 @@ public class ProductImportService {
         Set<String> usedCodes = new HashSet<>();
 
         for (int i = 0; i < rows.size(); i++) {
-            int rowNumber = i + 1;
             ProductImportRequest row = rows.get(i);
-            boolean rowValid = true;
+            int rowNumber = row.getSourceRowNumber() > 0 ? row.getSourceRowNumber() : i + 1;
+            Set<String> invalidFields = validateRowFields(row, rowNumber, result);
 
             // Validate product code
-            if (row.getProductCode() == null || row.getProductCode().trim().isEmpty()) {
-                result.addError(rowNumber, "productCode", null, "Mã sản phẩm không được để trống");
-                rowValid = false;
-            } else {
+            if (!invalidFields.contains("productCode")) {
                 String code = row.getProductCode().trim().toUpperCase();
                 if (usedCodes.contains(code)) {
                     result.addError(rowNumber, "productCode", code, "Mã sản phẩm bị trùng trong tệp nhập dữ liệu");
-                    rowValid = false;
+                    invalidFields.add("productCode");
                 }
                 usedCodes.add(code);
                 if (productRepository.existsByBusinessIdAndProductCodeIgnoreCase(businessId, code)) {
                     result.addError(rowNumber, "productCode", code, "Mã sản phẩm đã tồn tại trong hệ thống");
-                    rowValid = false;
+                    invalidFields.add("productCode");
                 }
             }
 
-            // Validate product name
-            if (row.getProductName() == null || row.getProductName().trim().isEmpty()) {
-                result.addError(rowNumber, "productName", null, "Tên sản phẩm không được để trống");
-                rowValid = false;
-            }
-
             // Validate unit (required)
-            if (row.getBaseUnitCode() == null || row.getBaseUnitCode().trim().isEmpty()) {
-                result.addError(rowNumber, "baseUnitCode", null, "Mã đơn vị tính không được để trống");
-                rowValid = false;
-            } else {
+            if (!invalidFields.contains("baseUnitCode")) {
                 String unitCode = row.getBaseUnitCode().trim().toUpperCase();
                 if (!unitMap.containsKey(unitCode)) {
                     result.addError(rowNumber, "baseUnitCode", unitCode, "Đơn vị tính không tồn tại trong hệ thống");
-                    rowValid = false;
+                    invalidFields.add("baseUnitCode");
                 }
             }
 
             // Validate category (optional but must be valid if provided)
-            if (row.getCategoryCode() != null && !row.getCategoryCode().trim().isEmpty()) {
+            if (!invalidFields.contains("categoryCode")
+                    && row.getCategoryCode() != null && !row.getCategoryCode().trim().isEmpty()) {
                 String catCode = row.getCategoryCode().trim().toUpperCase();
                 if (!categoryMap.containsKey(catCode)) {
                     result.addError(rowNumber, "categoryCode", catCode, "Danh mục không tồn tại trong hệ thống");
-                    rowValid = false;
+                    invalidFields.add("categoryCode");
                 }
             }
 
-            // Validate price >= 0
-            if (row.getSalePrice() != null && row.getSalePrice().compareTo(BigDecimal.ZERO) < 0) {
-                result.addError(rowNumber, "salePrice", row.getSalePrice().toString(), "Giá bán không được âm");
-                rowValid = false;
-            }
-
-            // Validate quantity >= 0
-            if (row.getQuantityOnHand() != null && row.getQuantityOnHand().compareTo(BigDecimal.ZERO) < 0) {
-                result.addError(rowNumber, "quantityOnHand", row.getQuantityOnHand().toString(), "Tồn kho không được âm");
-                rowValid = false;
-            }
-
-            // Validate status
-            if (row.getStatus() != null && !row.getStatus().trim().isEmpty()) {
-                String status = row.getStatus().trim().toUpperCase();
-                if (!status.equals("ACTIVE") && !status.equals("INACTIVE")) {
-                    result.addError(rowNumber, "status", status, "Trạng thái phải là ACTIVE hoặc INACTIVE");
-                    rowValid = false;
-                }
-            }
-
-            if (rowValid) {
+            if (invalidFields.isEmpty()) {
                 normalizeRow(row);
                 result.addSuccess(row);
             }
         }
 
         return result;
+    }
+
+    private Set<String> validateRowFields(
+            ProductImportRequest row, int rowNumber, ProductImportResult result) {
+        Set<String> invalidFields = new HashSet<>();
+
+        addInvalidNumberError(
+                rowNumber, "salePrice", row.getSalePriceRaw(), row.getSalePrice(),
+                "Giá bán phải là số hợp lệ", invalidFields, result);
+        addInvalidNumberError(
+                rowNumber, "quantityOnHand", row.getQuantityOnHandRaw(), row.getQuantityOnHand(),
+                "Tồn kho ban đầu phải là số hợp lệ", invalidFields, result);
+
+        for (ConstraintViolation<ProductImportRequest> violation : validator.validate(row)) {
+            String field = violation.getPropertyPath().toString();
+            if (invalidFields.add(field)) {
+                result.addError(
+                        rowNumber, field, getFieldValue(row, field), violation.getMessage());
+            }
+        }
+        return invalidFields;
+    }
+
+    private void addInvalidNumberError(
+            int rowNumber,
+            String field,
+            String rawValue,
+            BigDecimal parsedValue,
+            String message,
+            Set<String> invalidFields,
+            ProductImportResult result) {
+        if (rawValue != null && !rawValue.isBlank() && parsedValue == null && invalidFields.add(field)) {
+            result.addError(rowNumber, field, rawValue, message);
+        }
+    }
+
+    private String getFieldValue(ProductImportRequest row, String field) {
+        return switch (field) {
+            case "productCode" -> row.getProductCode();
+            case "productName" -> row.getProductName();
+            case "categoryCode" -> row.getCategoryCode();
+            case "baseUnitCode" -> row.getBaseUnitCode();
+            case "salePrice" -> row.getSalePriceRaw();
+            case "quantityOnHand" -> row.getQuantityOnHandRaw();
+            case "status" -> row.getStatus();
+            case "description" -> row.getDescription();
+            default -> null;
+        };
     }
 
     /**
@@ -261,6 +280,10 @@ public class ProductImportService {
      */
     public byte[] getTemplateFile() {
         return fileParser.generateTemplate();
+    }
+
+    public byte[] getCsvTemplateFile() {
+        return fileParser.generateCsvTemplate();
     }
 
     /**

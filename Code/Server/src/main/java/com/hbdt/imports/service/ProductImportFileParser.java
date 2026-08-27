@@ -67,13 +67,7 @@ public class ProductImportFileParser {
         for (int i = headerRowIndex + 1; i < lines.length; i++) {
             String line = lines[i].trim();
             if (line.isEmpty() || line.startsWith("#")) continue;
-
-            try {
-                ProductImportRequest row = parseCsvLine(line);
-                rows.add(row);
-            } catch (Exception e) {
-                log.warn("Failed to parse CSV line {}: {}", i + 1, e.getMessage());
-            }
+            rows.add(parseCsvLine(line, i + 1));
         }
 
         return rows;
@@ -118,7 +112,7 @@ public class ProductImportFileParser {
 
                 String firstValue = values.get(0);
                 if (firstValue.isEmpty() || firstValue.startsWith("#")) continue;
-                rows.add(toImportRequest(values));
+                rows.add(toImportRequest(values, rowIndex + 1));
             }
             return rows;
         } catch (BadRequestException e) {
@@ -146,7 +140,7 @@ public class ProductImportFileParser {
     /**
      * Parse single CSV line (handles quoted values)
      */
-    private ProductImportRequest parseCsvLine(String line) {
+    private ProductImportRequest parseCsvLine(String line, int sourceRowNumber) {
         List<String> values = new ArrayList<>();
         StringBuilder current = new StringBuilder();
         boolean inQuotes = false;
@@ -170,22 +164,32 @@ public class ProductImportFileParser {
         }
         values.add(current.toString().trim());
 
+        if (inQuotes) {
+            throw new BadRequestException("Dòng " + sourceRowNumber + " có dấu ngoặc kép không hợp lệ");
+        }
+
         // Pad with empty strings if needed
         while (values.size() < 8) {
             values.add("");
         }
 
-        return toImportRequest(values);
+        return toImportRequest(values, sourceRowNumber);
     }
 
-    private ProductImportRequest toImportRequest(List<String> values) {
+    private ProductImportRequest toImportRequest(List<String> values, int sourceRowNumber) {
+        String salePriceRaw = getOrNull(values, 4);
+        String quantityOnHandRaw = getOrNull(values, 5);
+
         return ProductImportRequest.builder()
+                .sourceRowNumber(sourceRowNumber)
                 .productCode(getOrNull(values, 0))
                 .productName(getOrNull(values, 1))
                 .categoryCode(getOrNull(values, 2))
                 .baseUnitCode(getOrNull(values, 3))
-                .salePrice(parseDecimal(getOrNull(values, 4)))
-                .quantityOnHand(parseDecimal(getOrNull(values, 5)))
+                .salePriceRaw(salePriceRaw)
+                .quantityOnHandRaw(quantityOnHandRaw)
+                .salePrice(parseDecimal(salePriceRaw))
+                .quantityOnHand(parseDecimal(quantityOnHandRaw))
                 .status(normalizeStatus(getOrNull(values, 6)))
                 .description(getOrNull(values, 7))
                 .build();
@@ -213,7 +217,7 @@ public class ProductImportFileParser {
                     "Đang hoạt động", "Rong biển ăn liền vị cay");
             writeRow(sheet, 10, "SP002", "Nước Ngọt Cola", null, "CHAI", 12000, 50,
                     "Đang hoạt động", "Nước giải khát có ga");
-            writeRow(sheet, 11, "SP003", "Bánh Gạo", "THUC_PHAM", "GOI", 25000, 200,
+            writeRow(sheet, 11, "SP003", "Bánh Gạo", null, "HOP", 25000, 200,
                     "Đang hoạt động", "Bánh gạo Hàn Quốc");
 
             int[] columnWidths = {55, 32, 32, 18, 16, 20, 16, 40};
@@ -226,6 +230,21 @@ public class ProductImportFileParser {
         } catch (IOException e) {
             throw new IllegalStateException("Không thể tạo tệp mẫu", e);
         }
+    }
+
+    /**
+     * Generate a UTF-8 CSV template with Vietnamese headers.
+     */
+    public byte[] generateCsvTemplate() {
+        String content = "\uFEFF# TỆP MẪU NHẬP SẢN PHẨM\r\n"
+                + "# Hướng dẫn: xóa các dòng ví dụ trước khi nhập dữ liệu\r\n"
+                + "# Mã danh mục, Trạng thái và Mô tả là các cột tùy chọn\r\n"
+                + VIETNAMESE_CSV_HEADER + "\r\n"
+                + "# Ví dụ:\r\n"
+                + "SP001,Rong Biển Ăn Liền,,CAI,15000,100,Đang hoạt động,Rong biển ăn liền vị cay\r\n"
+                + "SP002,Nước Ngọt Cola,,CHAI,12000,50,Đang hoạt động,Nước giải khát có ga\r\n"
+                + "SP003,Bánh Gạo,,HOP,25000,200,Đang hoạt động,Bánh gạo Hàn Quốc\r\n";
+        return content.getBytes(StandardCharsets.UTF_8);
     }
 
     private void writeRow(Sheet sheet, int rowIndex, Object... values) {
