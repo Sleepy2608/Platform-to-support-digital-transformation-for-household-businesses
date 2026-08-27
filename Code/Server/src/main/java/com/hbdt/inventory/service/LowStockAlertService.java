@@ -9,6 +9,7 @@ import com.hbdt.inventory.dto.LowStockAlertResponse;
 import com.hbdt.inventory.dto.LowStockSummaryResponse;
 import com.hbdt.inventory.dto.StockThresholdResponse;
 import com.hbdt.product.service.BusinessContextService;
+import com.hbdt.notification.service.NotificationService;
 import com.hbdt.repository.InventoryAlertRepository;
 import com.hbdt.repository.InventoryBalanceRepository;
 import com.hbdt.repository.ProductRepository;
@@ -26,17 +27,20 @@ public class LowStockAlertService {
     private final ProductRepository productRepository;
     private final InventoryBalanceRepository balanceRepository;
     private final InventoryAlertRepository alertRepository;
+    private final NotificationService notificationService;
 
     public LowStockAlertService(
             BusinessContextService businessContextService,
             ProductRepository productRepository,
             InventoryBalanceRepository balanceRepository,
-            InventoryAlertRepository alertRepository
+            InventoryAlertRepository alertRepository,
+            NotificationService notificationService
     ) {
         this.businessContextService = businessContextService;
         this.productRepository = productRepository;
         this.balanceRepository = balanceRepository;
         this.alertRepository = alertRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -113,11 +117,18 @@ public class LowStockAlertService {
                 activeAlerts.stream().skip(1).forEach(duplicate -> resolve(duplicate, now));
             }
             alertRepository.save(alert);
+            if (created) {
+                notificationService.notifyLowStock(businessId, product, quantity, threshold);
+            }
             return new EvaluationResult(alert, created, false);
         }
 
         activeAlerts.forEach(alert -> resolve(alert, now));
-        return new EvaluationResult(null, false, !activeAlerts.isEmpty());
+        boolean resolved = !activeAlerts.isEmpty();
+        if (resolved) {
+            notificationService.notifyStockRecovered(businessId, product, quantity);
+        }
+        return new EvaluationResult(resolved ? activeAlerts.get(0) : null, false, resolved);
     }
 
     private void resolve(InventoryAlert alert, LocalDateTime resolvedAt) {
