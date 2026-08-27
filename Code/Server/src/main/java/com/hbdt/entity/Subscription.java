@@ -4,7 +4,6 @@ import com.hbdt.entity.enums.SubscriptionStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -32,10 +31,10 @@ public class Subscription {
     private String billingCycle;
 
     @Column(name = "start_date", nullable = false)
-    private LocalDate startDate;
+    private LocalDateTime startDate;
 
     @Column(name = "end_date")
-    private LocalDate endDate;
+    private LocalDateTime endDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
@@ -69,6 +68,12 @@ public class Subscription {
 
     @PrePersist
     protected void onCreate() {
+        if (this.status == null) {
+            this.status = SubscriptionStatus.PENDING_PAYMENT;
+        }
+        if (this.status == SubscriptionStatus.ACTIVE) {
+            throw new IllegalStateException("Cannot create a subscription directly in ACTIVE status");
+        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }

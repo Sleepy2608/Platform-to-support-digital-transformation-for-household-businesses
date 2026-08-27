@@ -244,11 +244,11 @@ public class OwnerService {
         }
         User user = findActiveUser(username);
         Subscription subscription = findActiveSubscription(user);
-        LocalDate today = LocalDate.now();
-        LocalDate baseDate = subscription.getEndDate() != null
-                && subscription.getEndDate().isAfter(today)
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime baseDate = subscription.getEndDate() != null
+                && subscription.getEndDate().isAfter(now)
                 ? subscription.getEndDate()
-                : today;
+                : now;
 
         subscription.setEndDate(baseDate.plusMonths(months));
         subscriptionRepository.save(subscription);
@@ -304,8 +304,8 @@ public class OwnerService {
         Subscription subscription = findActiveSubscription(user);
 
         // Kiểm tra subscription chưa hết hạn
-        LocalDate today = LocalDate.now();
-        if (subscription.getEndDate() == null || !subscription.getEndDate().isAfter(today)) {
+        LocalDateTime now = LocalDateTime.now();
+        if (subscription.getEndDate() == null || !subscription.getEndDate().isAfter(now)) {
             throw new BadRequestException("Gói dịch vụ đã hết hạn, không thể nâng cấp. Vui lòng gia hạn trước.");
         }
 
@@ -351,8 +351,8 @@ public class OwnerService {
         Subscription subscription = findActiveSubscription(user);
 
         // Kiểm tra subscription chưa hết hạn
-        LocalDate today = LocalDate.now();
-        if (subscription.getEndDate() == null || !subscription.getEndDate().isAfter(today)) {
+        LocalDateTime now = LocalDateTime.now();
+        if (subscription.getEndDate() == null || !subscription.getEndDate().isAfter(now)) {
             throw new BadRequestException("Gói dịch vụ đã hết hạn, không thể thực hiện downgrade. Vui lòng gia hạn trước.");
         }
 
@@ -414,19 +414,19 @@ public class OwnerService {
         }
 
         SubscriptionPlan plan = findActivePlan(packageType);
-        LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
         Subscription subscription = subscriptionRepository
                 .findTopByOwnerIdAndStatusOrderByCreatedAtDesc(user.getId(), SubscriptionStatus.ACTIVE)
                 .orElseGet(() -> Subscription.builder()
                         .owner(user)
-                        .startDate(today)
-                        .status(SubscriptionStatus.ACTIVE)
+                        .startDate(now)
+                        .status(SubscriptionStatus.PENDING_PAYMENT)
                         .build());
 
-        LocalDate baseDate = subscription.getEndDate() != null
-                && subscription.getEndDate().isAfter(today)
+        LocalDateTime baseDate = subscription.getEndDate() != null
+                && subscription.getEndDate().isAfter(now)
                 ? subscription.getEndDate()
-                : today;
+                : now;
         subscription.setPlan(plan);
         subscription.setBillingCycle(billingCycle);
         subscription.setEndDate(baseDate.plusMonths("YEARLY".equals(billingCycle) ? 12 : 1));
@@ -511,9 +511,9 @@ public class OwnerService {
         Subscription subscription = subscriptionRepository
                 .findTopByOwnerIdAndStatusOrderByCreatedAtDesc(user.getId(), SubscriptionStatus.ACTIVE)
                 .orElse(null);
-        LocalDateTime subscriptionExpiresAt = subscription == null || subscription.getEndDate() == null
+        LocalDateTime subscriptionExpiresAt = subscription == null
                 ? null
-                : subscription.getEndDate().atTime(23, 59, 59);
+                : subscription.getEndDate();
         String packageType = subscription == null ? null : subscription.getPlan().getPlanCode();
 
         return OwnerProfileResponse.builder()

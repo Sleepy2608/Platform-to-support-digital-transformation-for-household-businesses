@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,9 +23,8 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     // Query các subscription ACTIVE
     List<Subscription> findAllByStatus(SubscriptionStatus status);
 
-    // Query các subscription đã hết hạn
     @Query("SELECT s FROM Subscription s WHERE s.status = :status OR (s.endDate IS NOT NULL AND s.endDate < :today)")
-    List<Subscription> findAllExpired(@Param("status") SubscriptionStatus status, @Param("today") LocalDate today);
+    List<Subscription> findAllExpired(@Param("status") SubscriptionStatus status, @Param("today") LocalDateTime today);
 
     // Hỗ trợ query cho service hiện tại
     Optional<Subscription> findTopByOwnerIdAndStatusOrderByCreatedAtDesc(Long ownerId, SubscriptionStatus status);
