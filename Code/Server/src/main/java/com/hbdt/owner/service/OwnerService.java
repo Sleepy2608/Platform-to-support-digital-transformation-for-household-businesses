@@ -14,6 +14,7 @@ import com.hbdt.repository.PaymentHistoryRepository;
 import com.hbdt.repository.ServiceInvoiceRepository;
 import com.hbdt.repository.SubscriptionHistoryRepository;
 import com.hbdt.entity.enums.OtpType;
+import com.hbdt.entity.enums.SubscriptionStatus;
 import com.hbdt.entity.enums.UserStatus;
 import com.hbdt.owner.dto.*;
 import com.hbdt.repository.SubscriptionPlanRepository;
@@ -415,11 +416,11 @@ public class OwnerService {
         SubscriptionPlan plan = findActivePlan(packageType);
         LocalDate today = LocalDate.now();
         Subscription subscription = subscriptionRepository
-                .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(user.getBusinessId(), "ACTIVE")
+                .findTopByOwnerIdAndStatusOrderByCreatedAtDesc(user.getId(), SubscriptionStatus.ACTIVE)
                 .orElseGet(() -> Subscription.builder()
-                        .businessId(user.getBusinessId())
+                        .owner(user)
                         .startDate(today)
-                        .status("ACTIVE")
+                        .status(SubscriptionStatus.ACTIVE)
                         .build());
 
         LocalDate baseDate = subscription.getEndDate() != null
@@ -474,7 +475,7 @@ public class OwnerService {
             throw new BadRequestException("Tài khoản chưa có hồ sơ hộ kinh doanh");
         }
         return subscriptionRepository
-                .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(user.getBusinessId(), "ACTIVE")
+                .findTopByOwnerIdAndStatusOrderByCreatedAtDesc(user.getId(), SubscriptionStatus.ACTIVE)
                 .orElseThrow(() -> new BadRequestException("Chưa có gói dịch vụ đang hoạt động"));
     }
 
@@ -507,11 +508,9 @@ public class OwnerService {
         Set<String> roleNames = user.getRoles().stream()
                 .map(r -> r.getName().name())
                 .collect(Collectors.toSet());
-        Subscription subscription = user.getBusinessId() == null
-                ? null
-                : subscriptionRepository
-                        .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(user.getBusinessId(), "ACTIVE")
-                        .orElse(null);
+        Subscription subscription = subscriptionRepository
+                .findTopByOwnerIdAndStatusOrderByCreatedAtDesc(user.getId(), SubscriptionStatus.ACTIVE)
+                .orElse(null);
         LocalDateTime subscriptionExpiresAt = subscription == null || subscription.getEndDate() == null
                 ? null
                 : subscription.getEndDate().atTime(23, 59, 59);
