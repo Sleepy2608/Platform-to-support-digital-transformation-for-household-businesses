@@ -1,6 +1,6 @@
 {
   "table" : "audit_logs",
-  "version" : 11,
+  "version" : 12,
   "rows" : [ {
     "id" : 1,
     "action" : "POST /api/owner/business-profile",
@@ -3253,5 +3253,101 @@
     "old_data" : null,
     "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
     "user_id" : 14
+  }, {
+    "id" : 272,
+    "action" : "POST /api/owner/subscription/renew",
+    "business_id" : 5,
+    "created_at" : "2026-08-24T15:14:45.527334",
+    "entity_id" : null,
+    "entity_type" : "SUBSCRIPTION",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "user_id" : 4
+  }, {
+    "id" : 273,
+    "action" : "POST /api/owner/subscription/select-package",
+    "business_id" : 5,
+    "created_at" : "2026-08-24T15:16:00.97283",
+    "entity_id" : null,
+    "entity_type" : "SUBSCRIPTION",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "user_id" : 4
+  }, {
+    "id" : 274,
+    "action" : "POST /api/seed/snapshot-all",
+    "business_id" : null,
+    "created_at" : "2026-08-24T15:16:36.353695",
+    "entity_id" : null,
+    "entity_type" : "SEED_DATA",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "user_id" : 1
+  }, {
+    "id" : 275,
+    "action" : "POST /api/seed/snapshot-all",
+    "business_id" : null,
+    "created_at" : "2026-08-24T15:16:40.402464",
+    "entity_id" : null,
+    "entity_type" : "SEED_DATA",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "user_id" : 1
+  }, {
+    "id" : 276,
+    "action" : "POST /api/seed/snapshot-all",
+    "business_id" : null,
+    "created_at" : "2026-08-24T15:28:50.591606",
+    "entity_id" : null,
+    "entity_type" : "SEED_DATA",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "user_id" : 1
+  }, {
+    "id" : 277,
+    "action" : "POST /api/seed/snapshot-all",
+    "business_id" : null,
+    "created_at" : "2026-08-24T15:28:53.892397",
+    "entity_id" : null,
+    "entity_type" : "SEED_DATA",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "user_id" : 1
+  }, {
+    "id" : 278,
+    "action" : "POST /api/owner/subscription/select-package",
+    "business_id" : 5,
+    "created_at" : "2026-08-26T09:04:15.713557",
+    "entity_id" : null,
+    "entity_type" : "SUBSCRIPTION",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "user_id" : 4
+  }, {
+    "id" : 279,
+    "action" : "POST /api/admin/accounts",
+    "business_id" : null,
+    "created_at" : "2026-08-27T08:56:54.811017",
+    "entity_id" : null,
+    "entity_type" : "USER",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36 Edg/151.0.0.0",
+    "user_id" : 1
   } ]
 }

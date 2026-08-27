@@ -17,7 +17,7 @@ export default function Navbar() {
               <Store className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <span className="text-lg sm:text-xl font-bold tracking-wider text-white transition-opacity duration-200 group-hover:opacity-80">
-              HKD.DIGITAL
+              HBDT.DIGITAL
             </span>
           </Link>
           

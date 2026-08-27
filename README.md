@@ -15,12 +15,12 @@
 
 | STT | Họ và Tên | MSSV | Vai trò | Nhiệm vụ được giao |
 | :---: | :--- | :---: | :---: | :--- |
-| 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Leader | Repository & Git Management, Authorization, Password Encoder and Security, RBAC |
-| 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer | Register/Login web, Owner Account Management, Searching Engine |
-| 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger | Database Management, Audit Log, Measurement & Product Pricing Rules |
-| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager | Database Management, CRUD (Product, Category, Subcription) |
+| 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Leader | Repository & Git Management, Authorization, Password Encoder and Security |
+| 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer | Register/Login web, Owner Account Management, Searching Engine, Image, CRUD (Customer, Owner Employee, Product) |
+| 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger | Database Management, Audit Log, Measurement & Product Pricing Rules, Service Invoice Management |
+| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager | Database Management, CRUD (Category, Product, Subcription) |
 | 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Feature Developer | Employee Account Management, Subcription Management |
-| 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer | Manage purchase package payments, Admin Account Management, Subcription Management |
+| 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer | Manage purchase package payments, Admin Account Management, Subcription Management, RBAC, Service Invoice Management |
 
 > **Ghi chú:**
 > - Mọi người đều được giao task có backend code bằng Java (Vai trò trên chỉ bao gồm các vai trò khác ngoài Backend Developer)
@@ -30,24 +30,11 @@
 
 ## Tiến độ triển khai dự án (Project Deployment Progress)
 
-*Tiến độ: Sprint 3 + 4*
+*Tiến độ: Sprint 4 + 5*
 
-| Issue | Frontend | Backend | Data Base | Status |
-|:--------|:---------|:----------|:----------------|:------------:|
-| Đăng nhập/Đăng ký | Login, Register | Log, Auth, Entity, Controller, Security | — | Hoàn thành |
-| Trang Admin | Login, Register | Seed data, CRUD Manager, System Management, Log, Auth, Entity, Controller, Security | — | Hoàn thành |
-| Trang Manager | Login, Register | System Management, Log, Auth, Entity, Controller, Security | — | Hoàn thành |
-| Trang Owner | Login, Register | Log, Auth, Entity, Controller, Security | — | Hoàn thành |
-| Trang Employee | Login, Register | Log, Auth, Entity, Controller, Security | — | Hoàn thành |
-| RBAC | Admin login vào trang riêng còn Manager, Owner, Employee sẽ dùng portal login chung | Log, Auth, Entity, Controller, Security, Role, Permission | — | Hoàn thành |
-| Chính sách và điều khoản | For new business (Register) | Accept all to use | terms consents | Hoàn thành |
-| Quản lý gói đăng ký | Upgrade, Downgrade, Renewal & Subscription Lifecycle | Subscription, Subscription Plan, Subscription History, Payment & Purchase History | — | Đang triển khai |
-| Thanh toán công nợ | Customer & Debt Payment/Status | Pay Debts & View Payment History | `sales_orders.paid_amount` lưu số tiền thanh toán lũy kế; `sales_orders.debt_amount` lưu số còn phải trả; `sales_orders.payment_status` lưu trạng thái thanh toán; `sales_orders.last_payment_at` lưu thời điểm thanh toán gần nhất; `debt_transactions` lưu lịch sử phát sinh nợ, trả nợ, điều chỉnh và hủy giao dịch; `transaction_code`, `payment_method`, `reference_number` và `transaction_date` hỗ trợ nhật ký thanh toán công nợ; REST API hỗ trợ ghi nhận thanh toán cho từng đơn hàng, tra cứu theo đơn và theo khách hàng | Đang triển khai |
-| Tính toán giá sản phẩm | Measurement & Product Pricing Rules | Đang triển khai | Đang triển khai | Đang triển khai |
-| Tìm kiếm sản phẩm | Searching Engine | Đang triển khai | Đang triển khai | Đang triển khai |
-
-> Các issue sẽ được test trước khi merge vào nhánh chính và sẽ cập nhật theo tiến độ triển khai thực tế
-> Ngày cập nhật lần cuối: 23/08/2026
+> Các issue cần chỉnh sửa/cập nhật/phát triển/sửa lỗi sẽ được cập nhật ở phần [Issue](https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/issues) trên Github<br>
+> Các issue trên Github sẽ được cập nhật theo tiến độ của Jira và sẽ được test trước khi merge vào nhánh chính<br>
+> Ngày cập nhật lần cuối: 27/08/2026<br>
 
 ---
 
@@ -195,3 +182,4 @@ npm run dev
 - Web được chạy ở:
   * Local: http://localhost:3000/
   * Network: http://[IP_ADDRESS]/
+> Lưu ý: Trang đăng nhập vào Manager/Owner/Employee được chạy ở url `http://localhost:3000/login` còn trang Admin được chạy ở url `http://localhost:3000/admin/login`.

@@ -128,7 +128,7 @@ export default function LoginPage() {
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-white">Đăng Nhập</h1>
               <p className="text-zinc-400 text-sm mt-2">
-                Hệ thống Quản lý &amp; AI Kế toán HKD.DIGITAL
+                Hệ thống Quản lý &amp; AI Kế toán HBDT.DIGITAL
               </p>
             </div>
 
