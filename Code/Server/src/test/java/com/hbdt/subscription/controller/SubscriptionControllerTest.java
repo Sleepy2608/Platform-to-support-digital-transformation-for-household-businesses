@@ -48,12 +48,13 @@ class SubscriptionControllerTest {
     void setUp() {
         testUser = User.builder()
                 .id(1L)
+                .businessId(100L)
                 .username("owner1")
                 .build();
 
         testSubscription = Subscription.builder()
                 .id(10L)
-                .owner(testUser)
+                .businessId(100L)
                 .status(SubscriptionStatus.ACTIVE)
                 .build();
 
@@ -116,7 +117,7 @@ class SubscriptionControllerTest {
         CancelSubscriptionRequest request = new CancelSubscriptionRequest("User requested cancellation");
         Subscription cancelledSub = Subscription.builder()
                 .id(10L)
-                .owner(testUser)
+                .businessId(100L)
                 .status(SubscriptionStatus.CANCELLED)
                 .cancellationReason("User requested cancellation")
                 .build();

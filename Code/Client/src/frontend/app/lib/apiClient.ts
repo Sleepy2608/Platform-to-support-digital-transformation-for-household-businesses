@@ -250,7 +250,9 @@ async function request<T = unknown>(
 
   let response = await doFetch(skipAuth ? null : getAccessToken());
 
-  if ((response.status === 401 || response.status === 403) && !skipAuth && getRefreshToken()) {
+  // 401 means the access token may be expired. A 403 is an authorization or
+  // subscription denial and must be shown to the user, not treated as a bad token.
+  if (response.status === 401 && !skipAuth && getRefreshToken()) {
     if (isRefreshing) {
       const newToken = await new Promise<string>((resolve, reject) => {
         pendingRequests.push((token) => resolve(token));
@@ -290,9 +292,6 @@ async function request<T = unknown>(
   const json = await response.json();
 
   if (!response.ok) {
-    if (response.status === 403) {
-      throw new Error('Phiên đăng nhập hết hạn hoặc bạn không có quyền thực hiện. Vui lòng đăng nhập lại!');
-    }
     throw new Error(json.message || `HTTP ${response.status}`);
   }
 

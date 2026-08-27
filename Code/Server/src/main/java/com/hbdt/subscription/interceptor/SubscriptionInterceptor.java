@@ -33,14 +33,15 @@ public class SubscriptionInterceptor implements HandlerInterceptor {
             String username = auth.getName();
             User user = userRepository.findByUsername(username).orElse(null);
             if (user != null) {
+                if (user.getRole() == null) {
+                    throw new AccessDeniedException("Tài khoản chưa được gán vai trò.");
+                }
                 RoleType roleType = user.getRole().getName();
                 if (roleType == RoleType.BUSINESS_OWNER) {
-                    validateOwnerSubscription(user);
+                    validateBusinessSubscription(user);
                 } else if (roleType == RoleType.EMPLOYEE) {
                     if (user.getBusinessId() != null) {
-                        User owner = userRepository.findFirstByBusinessIdAndRole_Name(user.getBusinessId(), RoleType.BUSINESS_OWNER)
-                                .orElseThrow(() -> new AccessDeniedException("Không tìm thấy chủ cửa hàng của nhân viên này."));
-                        validateOwnerSubscription(owner);
+                        validateBusinessSubscription(user);
                     } else {
                         throw new AccessDeniedException("Nhân viên chưa được liên kết với hộ kinh doanh.");
                     }
@@ -50,9 +51,9 @@ public class SubscriptionInterceptor implements HandlerInterceptor {
         return true;
     }
 
-    private void validateOwnerSubscription(User owner) {
+    private void validateBusinessSubscription(User user) {
         try {
-            Subscription subscription = subscriptionService.getCurrentSubscription(owner);
+            Subscription subscription = subscriptionService.getCurrentSubscription(user);
             subscriptionService.validateSubscriptionUsage(subscription);
         } catch (ResourceNotFoundException e) {
             throw new AccessDeniedException("Hộ kinh doanh chưa đăng ký gói dịch vụ.");

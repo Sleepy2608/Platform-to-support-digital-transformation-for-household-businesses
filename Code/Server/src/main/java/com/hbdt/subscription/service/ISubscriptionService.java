@@ -6,13 +6,13 @@ import com.hbdt.entity.SubscriptionPlan;
 import com.hbdt.entity.User;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.time.LocalDate;
 
 public interface ISubscriptionService {
 
     Subscription createPendingPaymentSubscription(User owner, SubscriptionPlan plan, String billingCycle,
-                                                   java.time.LocalDateTime startDate,
-                                                   java.time.LocalDateTime endDate);
+                                                   LocalDate startDate,
+                                                   LocalDate endDate);
 
     Subscription activateSubscription(Long id);
 
@@ -29,8 +29,6 @@ public interface ISubscriptionService {
     Subscription getSubscriptionById(Long id, User owner);
 
     Subscription cancelSubscription(Long id, User owner, String reason);
-
-    Subscription cancelSubscription(Long id, String reason);
 
     void checkAndExpireSubscriptions();
 }

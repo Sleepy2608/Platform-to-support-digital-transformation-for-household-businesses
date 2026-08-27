@@ -6,8 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import PaymentQrModal from '../../components/payment/PaymentQrModal';
 import {
   CheckCircle, ShieldCheck, Zap, Crown, Loader2, AlertCircle,
-  ArrowLeft, ArrowRight, BadgeCheck, QrCode, Building2, Copy,
-  Check, X, CreditCard, Sparkles, AlertTriangle
+  ArrowLeft, ArrowRight, BadgeCheck, Copy,
+  Check, X, CreditCard, AlertTriangle
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -120,10 +120,10 @@ async function selectPackageApi(packageType: PackageId, billingCycle: BillingCyc
   );
 
   const text = await res.text();
-  let json: any = {};
+  let json: { message?: string } = {};
   try {
     json = text ? JSON.parse(text) : {};
-  } catch (e) {
+  } catch {
     // Avoid throwing JSON parse exception on non-JSON/empty responses
   }
 
@@ -164,6 +164,7 @@ function PackageSelectionContent() {
   // Current active subscription info
   const [currentPackageType, setCurrentPackageType] = useState<string | null>(null);
   const [currentExpiresAt, setCurrentExpiresAt] = useState<string | null>(null);
+  const [currentSubscriptionActive, setCurrentSubscriptionActive] = useState(false);
 
   // Payment Modal State for > 0 VND packages
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -186,6 +187,10 @@ function PackageSelectionContent() {
         if (profile) {
           setCurrentPackageType(profile.packageType);
           setCurrentExpiresAt(profile.subscriptionExpiresAt);
+          setCurrentSubscriptionActive(Boolean(
+            profile.subscriptionExpiresAt
+            && new Date(profile.subscriptionExpiresAt).getTime() > Date.now()
+          ));
         }
       })
       .catch(() => { /* ignore */ });
@@ -198,11 +203,6 @@ function PackageSelectionContent() {
     : 0;
   const totalAmount = unitPrice;
   const savingMonths = 2; // YEARLY = 10 tháng giá, tặng 2 tháng
-
-  // Kiểm tra subscription hiện tại có đang hoạt động không
-  const currentSubscriptionActive = currentExpiresAt
-    ? new Date(currentExpiresAt).getTime() > Date.now()
-    : false;
 
   // Không cho submit nếu đang chọn lại gói hiện tại đang hoạt động
   const isSelectingCurrentPkg = selected !== null && selected === currentPackageType && currentSubscriptionActive;

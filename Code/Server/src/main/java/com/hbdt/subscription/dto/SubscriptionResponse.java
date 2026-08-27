@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -14,14 +15,13 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class SubscriptionResponse {
     private Long id;
-    private Long ownerId;
-    private String ownerUsername;
+    private Long businessId;
     private Long planId;
     private String planCode;
     private String planName;
     private String billingCycle;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
+    private LocalDate startDate;
+    private LocalDate endDate;
     private String status;
     private LocalDateTime cancelledAt;
     private String cancellationReason;
@@ -34,8 +34,7 @@ public class SubscriptionResponse {
         }
         return SubscriptionResponse.builder()
                 .id(subscription.getId())
-                .ownerId(subscription.getOwner() != null ? subscription.getOwner().getId() : null)
-                .ownerUsername(subscription.getOwner() != null ? subscription.getOwner().getUsername() : null)
+                .businessId(subscription.getBusinessId())
                 .planId(subscription.getPlan() != null ? subscription.getPlan().getId() : null)
                 .planCode(subscription.getPlan() != null ? subscription.getPlan().getPlanCode() : null)
                 .planName(subscription.getPlan() != null ? subscription.getPlan().getPlanName() : null)

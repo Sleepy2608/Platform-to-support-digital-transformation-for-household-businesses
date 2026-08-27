@@ -11,8 +11,7 @@ import { apiClient } from '../../../lib/apiClient';
 
 interface SubscriptionResponse {
   id: number;
-  ownerId: number;
-  ownerUsername: string;
+  businessId: number;
   planId: number;
   planCode: string;
   planName: string;
@@ -24,6 +23,10 @@ interface SubscriptionResponse {
   cancellationReason: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback;
 }
 
 export default function SubscriptionManagementPage() {
@@ -42,15 +45,28 @@ export default function SubscriptionManagementPage() {
     try {
       const data = await apiClient.get<SubscriptionResponse>('/api/owner/subscriptions/current');
       setSubscription(data);
-    } catch (err: any) {
-      setError(err.message || 'Không thể tải thông tin gói dịch vụ.');
+    } catch (err: unknown) {
+      setError(errorMessage(err, 'Không thể tải thông tin gói dịch vụ.'));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSubscription();
+    let cancelled = false;
+    apiClient.get<SubscriptionResponse>('/api/owner/subscriptions/current')
+      .then((data) => {
+        if (!cancelled) setSubscription(data);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(errorMessage(err, 'Không thể tải thông tin gói dịch vụ.'));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleCancelSubscription = async () => {
@@ -68,8 +84,8 @@ export default function SubscriptionManagementPage() {
       setSubscription(updated);
       setShowCancelModal(false);
       setCancelReason('');
-    } catch (err: any) {
-      setCancelError(err.message || 'Lỗi khi hủy gói dịch vụ.');
+    } catch (err: unknown) {
+      setCancelError(errorMessage(err, 'Lỗi khi hủy gói dịch vụ.'));
     } finally {
       setCancelling(false);
     }
@@ -113,9 +129,7 @@ export default function SubscriptionManagementPage() {
       return d.toLocaleDateString('vi-VN', {
         year: 'numeric',
         month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        day: 'numeric'
       });
     } catch {
       return dateStr;
@@ -315,9 +329,18 @@ export default function SubscriptionManagementPage() {
                 </button>
               )}
 
-              {subscription.status !== 'ACTIVE' && (
-                <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl text-center text-xs text-slate-500 font-medium">
-                  Không có thao tác nào khả dụng cho trạng thái hiện tại.
+              {(subscription.status === 'EXPIRED' || subscription.status === 'CANCELLED') && (
+                <button
+                  onClick={() => router.push('/onboarding/package-selection?from=account')}
+                  className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
+                >
+                  Chọn gói mới
+                </button>
+              )}
+
+              {subscription.status === 'PENDING_PAYMENT' && (
+                <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl text-center text-xs text-amber-700 font-medium">
+                  Vui lòng chờ hệ thống xác nhận giao dịch thanh toán.
                 </div>
               )}
             </div>

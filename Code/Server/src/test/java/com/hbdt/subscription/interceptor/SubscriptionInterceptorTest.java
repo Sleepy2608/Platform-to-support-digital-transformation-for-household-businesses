@@ -79,7 +79,7 @@ class SubscriptionInterceptorTest {
 
         subscription = Subscription.builder()
                 .id(50L)
-                .owner(owner)
+                .businessId(100L)
                 .status(SubscriptionStatus.ACTIVE)
                 .build();
     }
@@ -169,8 +169,7 @@ class SubscriptionInterceptorTest {
         SecurityContextHolder.setContext(context);
 
         when(userRepository.findByUsername("employee1")).thenReturn(Optional.of(employee));
-        when(userRepository.findFirstByBusinessIdAndRole_Name(100L, RoleType.BUSINESS_OWNER)).thenReturn(Optional.of(owner));
-        when(subscriptionService.getCurrentSubscription(owner)).thenReturn(subscription);
+        when(subscriptionService.getCurrentSubscription(employee)).thenReturn(subscription);
 
         boolean result = interceptor.preHandle(request, response, new Object());
 
@@ -186,8 +185,7 @@ class SubscriptionInterceptorTest {
         SecurityContextHolder.setContext(context);
 
         when(userRepository.findByUsername("employee1")).thenReturn(Optional.of(employee));
-        when(userRepository.findFirstByBusinessIdAndRole_Name(100L, RoleType.BUSINESS_OWNER)).thenReturn(Optional.of(owner));
-        when(subscriptionService.getCurrentSubscription(owner)).thenReturn(subscription);
+        when(subscriptionService.getCurrentSubscription(employee)).thenReturn(subscription);
         doThrow(new IllegalStateException("Subscription has expired."))
                 .when(subscriptionService).validateSubscriptionUsage(subscription);
 
