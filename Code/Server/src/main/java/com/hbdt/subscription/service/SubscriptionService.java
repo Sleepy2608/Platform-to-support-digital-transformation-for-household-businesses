@@ -21,7 +21,7 @@ import java.util.UUID;
 
 @Service
 @Transactional
-public class SubscriptionService {
+public class SubscriptionService implements ISubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
@@ -183,6 +183,47 @@ public class SubscriptionService {
         if (!isSubscriptionValid(subscription)) {
             throw new IllegalStateException("Subscription is invalid or outside active dates. Service access rejected.");
         }
+    }
+
+    /**
+     * Lấy Subscription hiện tại của User (Owner).
+     */
+    public Subscription getCurrentSubscription(User owner) {
+        return subscriptionRepository.findTopByOwnerOrderByCreatedAtDesc(owner)
+                .orElseThrow(() -> new ResourceNotFoundException("No subscription found for the current owner"));
+    }
+
+    /**
+     * Lấy Subscription theo ID và kiểm tra quyền sở hữu của Owner.
+     */
+    public Subscription getSubscriptionById(Long id, User owner) {
+        Subscription subscription = subscriptionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Subscription not found with id: " + id));
+
+        if (!subscription.getOwner().getId().equals(owner.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("You do not own this subscription");
+        }
+
+        return subscription;
+    }
+
+    /**
+     * Xử lý cancellation với kiểm tra quyền sở hữu.
+     * Chỉ cho phép ACTIVE -> CANCELLED.
+     */
+    public Subscription cancelSubscription(Long id, User owner, String reason) {
+        Subscription subscription = getSubscriptionById(id, owner);
+
+        // Enforce only ACTIVE can be cancelled
+        if (subscription.getStatus() != SubscriptionStatus.ACTIVE) {
+            throw new IllegalStateException("Only ACTIVE subscriptions can be cancelled. Current status: " + subscription.getStatus());
+        }
+
+        subscription.setStatus(SubscriptionStatus.CANCELLED);
+        subscription.setCancelledAt(LocalDateTime.now());
+        subscription.setCancellationReason(reason);
+
+        return subscriptionRepository.save(subscription);
     }
 
     /**
