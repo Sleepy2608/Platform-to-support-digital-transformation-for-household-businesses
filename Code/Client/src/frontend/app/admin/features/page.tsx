@@ -537,25 +537,24 @@ function MatrixTab() {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap items-center gap-6 mt-4 p-3.5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl text-xs text-zinc-400">
-        <span className="font-semibold text-zinc-300">Chú thích ma trận:</span>
-        <span className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-900/50 text-emerald-400 border border-emerald-700/50 font-semibold">
-            <Link2 className="w-3.5 h-3.5" /> ∞
+      <div className="flex flex-wrap gap-4 mt-4 text-xs text-zinc-400">
+        <span className="flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-900/50 text-emerald-400 border border-emerald-700/50">
+            <Link2 className="w-3 h-3" /> ∞
           </span>
-          = Đã kích hoạt (Không giới hạn định mức)
+          = Đã map, không giới hạn
         </span>
-        <span className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-900/50 text-emerald-400 border border-emerald-700/50 font-semibold">
-            <Link2 className="w-3.5 h-3.5" /> ≤ N
+        <span className="flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-900/50 text-emerald-400 border border-emerald-700/50">
+            <Link2 className="w-3 h-3" /> ≤50
           </span>
-          = Đã kích hoạt (Có giới hạn định mức: SP, đơn hàng, nhân viên...)
+          = Đã map, giới hạn 50
         </span>
-        <span className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-400 border border-zinc-700 font-semibold">
-            <Unlink className="w-3.5 h-3.5" /> —
+        <span className="flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-800 text-zinc-500 border border-zinc-700">
+            <Unlink className="w-3 h-3" /> —
           </span>
-          = Chưa kích hoạt (Bị khóa trong gói này)
+          = Chưa map
         </span>
       </div>
     </>
