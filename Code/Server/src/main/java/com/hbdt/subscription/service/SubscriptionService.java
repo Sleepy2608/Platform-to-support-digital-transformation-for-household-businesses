@@ -1,26 +1,38 @@
 package com.hbdt.subscription.service;
 
 import com.hbdt.common.exception.ResourceNotFoundException;
+import com.hbdt.entity.PaymentHistory;
+import com.hbdt.entity.ServiceInvoice;
 import com.hbdt.entity.Subscription;
 import com.hbdt.entity.SubscriptionPlan;
 import com.hbdt.entity.User;
 import com.hbdt.entity.enums.SubscriptionStatus;
+import com.hbdt.repository.PaymentHistoryRepository;
+import com.hbdt.repository.ServiceInvoiceRepository;
 import com.hbdt.repository.SubscriptionRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
 public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
+    private final PaymentHistoryRepository paymentHistoryRepository;
+    private final ServiceInvoiceRepository serviceInvoiceRepository;
 
-    public SubscriptionService(SubscriptionRepository subscriptionRepository) {
+    public SubscriptionService(SubscriptionRepository subscriptionRepository,
+                               PaymentHistoryRepository paymentHistoryRepository,
+                               ServiceInvoiceRepository serviceInvoiceRepository) {
         this.subscriptionRepository = subscriptionRepository;
+        this.paymentHistoryRepository = paymentHistoryRepository;
+        this.serviceInvoiceRepository = serviceInvoiceRepository;
     }
 
     /**
@@ -54,10 +66,85 @@ public class SubscriptionService {
      */
     public Subscription activateSubscription(Long id) {
         Subscription subscription = subscriptionRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Subscription not found with id: " + id));
+                .orElseThrow(() -> new com.hbdt.common.exception.ResourceNotFoundException("Subscription not found with id: " + id));
 
         subscription.setStatus(SubscriptionStatus.ACTIVE);
+        
+        // Cập nhật startDate và endDate khi kích hoạt
+        LocalDateTime now = LocalDateTime.now();
+        subscription.setStartDate(now);
+        int months = "YEARLY".equalsIgnoreCase(subscription.getBillingCycle()) ? 12 : 1;
+        subscription.setEndDate(now.plusMonths(months));
+
         return subscriptionRepository.save(subscription);
+    }
+
+    /**
+     * Tạo yêu cầu thanh toán (Payment) cho một Subscription.
+     * Subscription phải đang ở trạng thái PENDING_PAYMENT.
+     */
+    public PaymentHistory createSubscriptionPayment(Long subscriptionId, BigDecimal amount, String paymentMethod) {
+        Subscription subscription = subscriptionRepository.findById(subscriptionId)
+                .orElseThrow(() -> new com.hbdt.common.exception.ResourceNotFoundException("Subscription not found with id: " + subscriptionId));
+
+        if (subscription.getStatus() != SubscriptionStatus.PENDING_PAYMENT) {
+            throw new IllegalStateException("Only PENDING_PAYMENT subscriptions can be paid. Current status: " + subscription.getStatus());
+        }
+
+        String transactionId = "SUB-PAY-" + UUID.randomUUID().toString();
+
+        PaymentHistory paymentHistory = PaymentHistory.builder()
+                .transactionId(transactionId)
+                .subscriptionId(subscriptionId)
+                .amount(amount)
+                .paymentMethod(paymentMethod)
+                .status("PENDING")
+                .build();
+
+        return paymentHistoryRepository.save(paymentHistory);
+    }
+
+    /**
+     * Xử lý kết quả thanh toán từ callback/ipn.
+     * Cập nhật trạng thái PaymentHistory và kích hoạt Subscription nếu thành công.
+     */
+    public void processPaymentCallback(String transactionId, String paymentStatus) {
+        PaymentHistory paymentHistory = paymentHistoryRepository.findByTransactionId(transactionId)
+                .orElseThrow(() -> new com.hbdt.common.exception.ResourceNotFoundException("Payment history not found with transactionId: " + transactionId));
+
+        // Duplicate Protection: check if already processed (COMPLETED or FAILED)
+        if (!"PENDING".equalsIgnoreCase(paymentHistory.getStatus())) {
+            return;
+        }
+
+        if ("SUCCESS".equalsIgnoreCase(paymentStatus) || "COMPLETED".equalsIgnoreCase(paymentStatus)) {
+            paymentHistory.setStatus("COMPLETED");
+            paymentHistory.setPaidAt(LocalDateTime.now());
+            paymentHistoryRepository.save(paymentHistory);
+
+            // Kích hoạt Subscription
+            Subscription subscription = activateSubscription(paymentHistory.getSubscriptionId());
+
+            // Xác định businessId
+            Long businessId = 0L;
+            if (subscription.getOwner() != null && subscription.getOwner().getBusinessId() != null) {
+                businessId = subscription.getOwner().getBusinessId();
+            }
+
+            // Tạo ServiceInvoice
+            ServiceInvoice serviceInvoice = ServiceInvoice.builder()
+                    .invoiceNo("INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
+                    .businessId(businessId)
+                    .subscriptionId(subscription.getId())
+                    .amount(paymentHistory.getAmount())
+                    .status("PAID")
+                    .dueDate(LocalDateTime.now())
+                    .build();
+            serviceInvoiceRepository.save(serviceInvoice);
+        } else {
+            paymentHistory.setStatus("FAILED");
+            paymentHistoryRepository.save(paymentHistory);
+        }
     }
 
     /**

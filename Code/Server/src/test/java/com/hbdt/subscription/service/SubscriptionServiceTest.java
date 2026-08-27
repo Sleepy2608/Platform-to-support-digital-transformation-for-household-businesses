@@ -1,10 +1,13 @@
 package com.hbdt.subscription.service;
 
-import com.hbdt.common.exception.ResourceNotFoundException;
+import com.hbdt.entity.PaymentHistory;
+import com.hbdt.entity.ServiceInvoice;
 import com.hbdt.entity.Subscription;
 import com.hbdt.entity.SubscriptionPlan;
 import com.hbdt.entity.User;
 import com.hbdt.entity.enums.SubscriptionStatus;
+import com.hbdt.repository.PaymentHistoryRepository;
+import com.hbdt.repository.ServiceInvoiceRepository;
 import com.hbdt.repository.SubscriptionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +30,12 @@ class SubscriptionServiceTest {
     @Mock
     private SubscriptionRepository subscriptionRepository;
 
+    @Mock
+    private PaymentHistoryRepository paymentHistoryRepository;
+
+    @Mock
+    private ServiceInvoiceRepository serviceInvoiceRepository;
+
     private SubscriptionService subscriptionService;
 
     private User testUser;
@@ -33,7 +43,7 @@ class SubscriptionServiceTest {
 
     @BeforeEach
     void setUp() {
-        subscriptionService = new SubscriptionService(subscriptionRepository);
+        subscriptionService = new SubscriptionService(subscriptionRepository, paymentHistoryRepository, serviceInvoiceRepository);
 
         testUser = User.builder()
                 .id(1L)
@@ -220,5 +230,121 @@ class SubscriptionServiceTest {
                 .build();
 
         assertDoesNotThrow(() -> subscriptionService.validateSubscriptionUsage(active));
+    }
+
+    @Test
+    void createSubscriptionPaymentSuccessfullyCreatesPendingPayment() {
+        Subscription subscription = Subscription.builder()
+                .id(10L)
+                .status(SubscriptionStatus.PENDING_PAYMENT)
+                .build();
+
+        when(subscriptionRepository.findById(10L)).thenReturn(Optional.of(subscription));
+        when(paymentHistoryRepository.save(any(PaymentHistory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        PaymentHistory payment = subscriptionService.createSubscriptionPayment(10L, BigDecimal.valueOf(100), "BANK_TRANSFER");
+
+        assertNotNull(payment);
+        assertEquals("PENDING", payment.getStatus());
+        assertEquals(BigDecimal.valueOf(100), payment.getAmount());
+        assertEquals(10L, payment.getSubscriptionId());
+        verify(paymentHistoryRepository).save(any(PaymentHistory.class));
+    }
+
+    @Test
+    void createSubscriptionPaymentRejectsNonPending() {
+        Subscription subscription = Subscription.builder()
+                .id(10L)
+                .status(SubscriptionStatus.ACTIVE)
+                .build();
+
+        when(subscriptionRepository.findById(10L)).thenReturn(Optional.of(subscription));
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+            subscriptionService.createSubscriptionPayment(10L, BigDecimal.valueOf(100), "BANK_TRANSFER");
+        });
+
+        assertTrue(exception.getMessage().contains("Only PENDING_PAYMENT subscriptions can be paid"));
+        verify(paymentHistoryRepository, never()).save(any(PaymentHistory.class));
+    }
+
+    @Test
+    void processPaymentCallbackSuccessTransitionsToActive() {
+        Subscription subscription = Subscription.builder()
+                .id(10L)
+                .owner(testUser)
+                .billingCycle("MONTHLY")
+                .status(SubscriptionStatus.PENDING_PAYMENT)
+                .build();
+
+        PaymentHistory paymentHistory = PaymentHistory.builder()
+                .id(5L)
+                .transactionId("tx1")
+                .subscriptionId(10L)
+                .amount(BigDecimal.valueOf(100))
+                .status("PENDING")
+                .build();
+
+        when(paymentHistoryRepository.findByTransactionId("tx1")).thenReturn(Optional.of(paymentHistory));
+        when(subscriptionRepository.findById(10L)).thenReturn(Optional.of(subscription));
+        when(subscriptionRepository.save(any(Subscription.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(paymentHistoryRepository.save(any(PaymentHistory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(serviceInvoiceRepository.save(any(ServiceInvoice.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        subscriptionService.processPaymentCallback("tx1", "SUCCESS");
+
+        assertEquals(SubscriptionStatus.ACTIVE, subscription.getStatus());
+        assertEquals("COMPLETED", paymentHistory.getStatus());
+        assertNotNull(paymentHistory.getPaidAt());
+        assertNotNull(subscription.getStartDate());
+        assertNotNull(subscription.getEndDate());
+        verify(subscriptionRepository).save(subscription);
+        verify(paymentHistoryRepository).save(paymentHistory);
+        verify(serviceInvoiceRepository).save(any(ServiceInvoice.class));
+    }
+
+    @Test
+    void processPaymentCallbackFailedDoesNotTransition() {
+        Subscription subscription = Subscription.builder()
+                .id(10L)
+                .status(SubscriptionStatus.PENDING_PAYMENT)
+                .build();
+
+        PaymentHistory paymentHistory = PaymentHistory.builder()
+                .id(5L)
+                .transactionId("tx1")
+                .subscriptionId(10L)
+                .amount(BigDecimal.valueOf(100))
+                .status("PENDING")
+                .build();
+
+        when(paymentHistoryRepository.findByTransactionId("tx1")).thenReturn(Optional.of(paymentHistory));
+        when(paymentHistoryRepository.save(any(PaymentHistory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        subscriptionService.processPaymentCallback("tx1", "FAILED");
+
+        assertEquals(SubscriptionStatus.PENDING_PAYMENT, subscription.getStatus());
+        assertEquals("FAILED", paymentHistory.getStatus());
+        verify(subscriptionRepository, never()).save(any(Subscription.class));
+        verify(serviceInvoiceRepository, never()).save(any(ServiceInvoice.class));
+    }
+
+    @Test
+    void processPaymentCallbackDuplicateProtection() {
+        PaymentHistory paymentHistory = PaymentHistory.builder()
+                .id(5L)
+                .transactionId("tx1")
+                .subscriptionId(10L)
+                .amount(BigDecimal.valueOf(100))
+                .status("COMPLETED")
+                .build();
+
+        when(paymentHistoryRepository.findByTransactionId("tx1")).thenReturn(Optional.of(paymentHistory));
+
+        subscriptionService.processPaymentCallback("tx1", "SUCCESS");
+
+        verify(paymentHistoryRepository, never()).save(any(PaymentHistory.class));
+        verify(subscriptionRepository, never()).findById(anyLong());
+        verify(serviceInvoiceRepository, never()).save(any(ServiceInvoice.class));
     }
 }
