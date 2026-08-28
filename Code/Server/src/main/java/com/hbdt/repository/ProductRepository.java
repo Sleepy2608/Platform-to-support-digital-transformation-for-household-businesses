@@ -16,4 +16,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     boolean existsByBusinessIdAndProductNameIgnoreCase(Long businessId, String productName);
 
     boolean existsByBusinessIdAndProductNameIgnoreCaseAndIdNot(Long businessId, String productName, Long id);
+
+    long countByBusinessId(Long businessId);
 }

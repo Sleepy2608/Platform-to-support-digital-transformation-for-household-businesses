@@ -116,6 +116,36 @@ public class FeatureEntitlementService {
     }
 
     /**
+     * Kiểm tra định mức quota của một tính năng khi tạo mới tài nguyên (Sản phẩm, Nhân viên...).
+     * Ném FeatureAccessDeniedException (HTTP 403) nếu số lượng hiện tại đã đạt hoặc vượt quá định mức của gói.
+     *
+     * @param businessId ID của hộ kinh doanh
+     * @param featureCode Mã tính năng (PRODUCT_MANAGEMENT, EMPLOYEE_MANAGEMENT...)
+     * @param currentCount Số lượng tài nguyên hiện tại
+     * @param resourceName Tên hiển thị tài nguyên (VD: "sản phẩm", "nhân viên")
+     */
+    public void validateFeatureQuota(Long businessId, String featureCode, long currentCount, String resourceName) {
+        if (businessId == null) {
+            return;
+        }
+
+        EntitlementResult check = checkEntitlement(businessId, featureCode);
+        if (!check.allowed()) {
+            throw new com.hbdt.common.exception.FeatureAccessDeniedException(
+                    check.denyReason(), featureCode, check.requiredPackage());
+        }
+
+        if (check.quotaLimit() != null && currentCount >= check.quotaLimit()) {
+            String message = String.format(
+                    "Gói dịch vụ hiện tại chỉ cho phép tối đa %d %s (hiện có: %d). Vui lòng nâng cấp gói để tạo thêm.",
+                    check.quotaLimit(), resourceName, currentCount
+            );
+            throw new com.hbdt.common.exception.FeatureAccessDeniedException(
+                    message, featureCode, check.requiredPackage() != null ? check.requiredPackage() : "VIP");
+        }
+    }
+
+    /**
      * Lấy toàn bộ features và trạng thái entitlement cho một business.
      * Được gọi bởi EntitlementController cho frontend consume.
      */
