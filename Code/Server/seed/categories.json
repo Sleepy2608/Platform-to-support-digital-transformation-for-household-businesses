@@ -1,6 +1,6 @@
 {
   "table" : "categories",
-  "version" : 3,
+  "version" : 8,
   "rows" : [ {
     "id" : 2,
     "business_id" : 1,
@@ -19,5 +19,14 @@
     "description" : "123",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-20T03:54:11.343912"
+  }, {
+    "id" : 1,
+    "business_id" : 4,
+    "category_code" : "001",
+    "category_name" : "Đồ ăn",
+    "created_at" : "2026-08-11T19:52:14.339736",
+    "description" : null,
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-11T19:52:14.339736"
   } ]
 }

@@ -1,6 +1,6 @@
 {
   "table" : "inventory_transactions",
-  "version" : 1,
+  "version" : 6,
   "rows" : [ {
     "id" : 1,
     "balance_after" : 0.000,

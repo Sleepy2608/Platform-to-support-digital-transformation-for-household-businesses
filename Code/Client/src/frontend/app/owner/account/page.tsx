@@ -265,7 +265,7 @@ export default function OwnerAccountPage() {
           </div>
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <span className="px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-bold text-slate-700">
-              HKD Account
+              HBDT Account
             </span>
           </div>
         </div>
@@ -875,7 +875,7 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
     <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <SectionHeader icon={CreditCard} title="Gói dịch vụ &amp; Gia hạn" subtitle="Quản lý thời hạn truy cập nền tảng HKD Digital" />
+          <SectionHeader icon={CreditCard} title="Gói dịch vụ &amp; Gia hạn" subtitle="Quản lý thời hạn truy cập nền tảng HBDT Digital" />
         </div>
         {!hasActiveSubscription && (
           <button

@@ -97,7 +97,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
           <div className="p-2 bg-slate-900 text-white rounded-xl shadow-xs">
             <Briefcase className="w-4 h-4" />
           </div>
-          <span className="font-bold tracking-tight text-slate-900 text-sm">HKD.DIGITAL</span>
+          <span className="font-bold tracking-tight text-slate-900 text-sm">HBDT.DIGITAL</span>
         </div>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -126,7 +126,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                   <Briefcase className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-base font-bold tracking-tight text-slate-900 block leading-tight">HKD.DIGITAL</span>
+                  <span className="text-base font-bold tracking-tight text-slate-900 block leading-tight">HBDT.DIGITAL</span>
                   <span className="text-[11px] text-slate-500 font-medium">Cổng nhân viên</span>
                 </div>
               </div>
