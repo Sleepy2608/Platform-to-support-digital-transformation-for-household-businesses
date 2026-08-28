@@ -86,6 +86,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/manager/**").hasRole("MANAGER")
                     // Owner routes
                     .requestMatchers("/api/owner/**").hasAnyRole("BUSINESS_OWNER", "OWNER")
+                    // Product import - chỉ chủ hộ kinh doanh
+                    .requestMatchers("/api/v1/products/import/**").hasAnyRole("BUSINESS_OWNER", "OWNER")
                     // Employee routes
                     .requestMatchers("/api/employee/**").hasRole("EMPLOYEE")
                     // Everything else requires authentication
