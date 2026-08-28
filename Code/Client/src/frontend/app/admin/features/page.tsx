@@ -380,12 +380,26 @@ function FeaturesTab() {
 // Tab 2: Feature Matrix
 // ═══════════════════════════════════════════════════════════════════════════════
 
+interface QuotaEditState {
+  planId: number;
+  planName: string;
+  planCode: string;
+  featureId: number;
+  featureName: string;
+  featureCode: string;
+  isMapped: boolean;
+  isUnlimited: boolean;
+  quotaLimit: number | '';
+}
+
 function MatrixTab() {
   const [matrix, setMatrix] = useState<FeatureMatrixData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [savingCell, setSavingCell] = useState<string | null>(null);
+  const [editModal, setEditModal] = useState<QuotaEditState | null>(null);
+  const [savingModal, setSavingModal] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -403,27 +417,50 @@ function MatrixTab() {
     void load();
   }, [load]);
 
-  const handleToggleMapping = async (planId: number, featureId: number, isMapped: boolean) => {
-    const cellKey = `${planId}-${featureId}`;
-    setSavingCell(cellKey);
+  const openEditModal = (plan: PlanFeatureMapping, feature: Feature, entry?: FeatureMappingEntry) => {
+    const isMapped = entry?.mapped ?? false;
+    setEditModal({
+      planId: plan.planId,
+      planName: plan.planName,
+      planCode: plan.planCode,
+      featureId: feature.id,
+      featureName: feature.featureName,
+      featureCode: feature.featureCode,
+      isMapped,
+      isUnlimited: isMapped ? (entry?.quotaLimit == null) : true,
+      quotaLimit: entry?.quotaLimit ?? '',
+    });
+  };
+
+  const handleSaveModal = async () => {
+    if (!editModal) return;
+    setSavingModal(true);
+    setError('');
     try {
-      if (isMapped) {
-        await apiClient.delete(`/api/admin/features/matrix/unmap?planId=${planId}&featureId=${featureId}`);
-        setNotice('Đã gỡ tính năng khỏi gói');
+      if (!editModal.isMapped) {
+        // Gỡ khỏi gói
+        await apiClient.delete(`/api/admin/features/matrix/unmap?planId=${editModal.planId}&featureId=${editModal.featureId}`);
+        setNotice(`Đã khóa "${editModal.featureName}" khỏi gói ${editModal.planName}`);
       } else {
+        // Cập nhật mapping và quota
+        const quota = editModal.isUnlimited || editModal.quotaLimit === ''
+          ? null
+          : Math.max(1, Number(editModal.quotaLimit));
+
         await apiClient.post('/api/admin/features/matrix/map', {
-          planId,
-          featureId,
+          planId: editModal.planId,
+          featureId: editModal.featureId,
           enabled: true,
-          quotaLimit: null,
+          quotaLimit: quota,
         });
-        setNotice('Đã thêm tính năng vào gói');
+        setNotice(`Đã cập nhật định mức "${editModal.featureName}" cho gói ${editModal.planName} (${quota ? `≤${quota}` : 'Không giới hạn'})`);
       }
+      setEditModal(null);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra');
+      setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi lưu');
     } finally {
-      setSavingCell(null);
+      setSavingModal(false);
     }
   };
 
@@ -468,19 +505,19 @@ function MatrixTab() {
       </div>
 
       {/* Matrix Table */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-800">
-                <th className="text-left px-5 py-3.5 font-semibold text-zinc-400 sticky left-0 bg-zinc-900 z-10 min-w-[200px]">
+              <tr className="border-b border-zinc-800 bg-zinc-900/90">
+                <th className="text-left px-5 py-4 font-semibold text-zinc-400 sticky left-0 bg-zinc-900 z-10 min-w-[220px]">
                   Tính năng
                 </th>
                 {matrix.plans.map((plan) => (
-                  <th key={plan.planId} className="text-center px-5 py-3.5 font-semibold text-zinc-300 min-w-[140px]">
+                  <th key={plan.planId} className="text-center px-5 py-4 font-semibold text-zinc-300 min-w-[140px]">
                     <div className="flex flex-col items-center gap-1">
                       <span className="text-xs font-mono text-indigo-400">{plan.planCode}</span>
-                      <span>{plan.planName}</span>
+                      <span className="text-sm font-bold">{plan.planName}</span>
                     </div>
                   </th>
                 ))}
@@ -498,23 +535,18 @@ function MatrixTab() {
                   {matrix.plans.map((plan) => {
                     const entry = plan.mappings.find((m) => m.featureId === feature.id);
                     const isMapped = entry?.mapped ?? false;
-                    const cellKey = `${plan.planId}-${feature.id}`;
-                    const isSaving = savingCell === cellKey;
 
                     return (
                       <td key={plan.planId} className="px-5 py-3.5 text-center">
                         <button
-                          onClick={() => handleToggleMapping(plan.planId, feature.id, isMapped)}
-                          disabled={isSaving}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer disabled:opacity-50
+                          onClick={() => openEditModal(plan, feature, entry)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer hover:scale-105 active:scale-95
                             ${isMapped
-                              ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-700/50 hover:bg-red-900/40 hover:text-red-400 hover:border-red-700/50'
-                              : 'bg-zinc-800 text-zinc-500 border border-zinc-700 hover:bg-indigo-900/40 hover:text-indigo-400 hover:border-indigo-700/50'}`}
-                          title={isMapped ? 'Click để gỡ' : 'Click để thêm'}
+                              ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-700/50 hover:bg-emerald-800/60'
+                              : 'bg-zinc-800 text-zinc-500 border border-zinc-700 hover:bg-zinc-700 hover:text-zinc-300'}`}
+                          title="Click để chỉnh sửa định mức / bật tắt"
                         >
-                          {isSaving ? (
-                            <RefreshCw className="w-3 h-3 animate-spin" />
-                          ) : isMapped ? (
+                          {isMapped ? (
                             <>
                               <Link2 className="w-3 h-3" />
                               {entry?.quotaLimit != null ? `≤${entry.quotaLimit}` : '∞'}
@@ -535,6 +567,130 @@ function MatrixTab() {
           </table>
         </div>
       </div>
+
+      {/* Quota Configuration Modal */}
+      {editModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 bg-zinc-900/80">
+              <div>
+                <h2 className="text-base font-bold text-white">Cấu hình định mức tính năng</h2>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Gói <span className="text-indigo-400 font-semibold">{editModal.planName}</span> • <span className="text-zinc-300">{editModal.featureName}</span>
+                </p>
+              </div>
+              <button onClick={() => setEditModal(null)} className="text-zinc-400 hover:text-white cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-5">
+              {/* Trạng thái Bật/Tắt */}
+              <div>
+                <label className="block text-xs font-semibold text-zinc-400 mb-2">Trạng thái trong gói</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditModal({ ...editModal, isMapped: true })}
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold border transition cursor-pointer
+                      ${editModal.isMapped
+                        ? 'bg-emerald-950/80 border-emerald-500 text-emerald-400 shadow-xs'
+                        : 'bg-zinc-800/60 border-zinc-700 text-zinc-400 hover:bg-zinc-800'}`}
+                  >
+                    <Link2 className="w-4 h-4" /> Được phép dùng
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditModal({ ...editModal, isMapped: false })}
+                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold border transition cursor-pointer
+                      ${!editModal.isMapped
+                        ? 'bg-rose-950/80 border-rose-500 text-rose-400 shadow-xs'
+                        : 'bg-zinc-800/60 border-zinc-700 text-zinc-400 hover:bg-zinc-800'}`}
+                  >
+                    <Unlink className="w-4 h-4" /> Khóa tính năng
+                  </button>
+                </div>
+              </div>
+
+              {/* Cấu hình Quota (Chỉ hiện khi isMapped = true) */}
+              {editModal.isMapped && (
+                <div className="p-4 bg-zinc-950/60 border border-zinc-800 rounded-xl space-y-3">
+                  <label className="block text-xs font-semibold text-zinc-300">Định mức sử dụng (Quota)</label>
+
+                  {/* Radio 1: Không giới hạn */}
+                  <label className="flex items-center gap-2.5 cursor-pointer text-sm text-zinc-200">
+                    <input
+                      type="radio"
+                      name="quotaType"
+                      checked={editModal.isUnlimited}
+                      onChange={() => setEditModal({ ...editModal, isUnlimited: true, quotaLimit: '' })}
+                      className="accent-indigo-500 w-4 h-4"
+                    />
+                    <span className="font-medium">Không giới hạn (∞)</span>
+                  </label>
+
+                  {/* Radio 2: Giới hạn số lượng */}
+                  <label className="flex items-center gap-2.5 cursor-pointer text-sm text-zinc-200">
+                    <input
+                      type="radio"
+                      name="quotaType"
+                      checked={!editModal.isUnlimited}
+                      onChange={() => setEditModal({ ...editModal, isUnlimited: false, quotaLimit: editModal.quotaLimit || 20 })}
+                      className="accent-indigo-500 w-4 h-4"
+                    />
+                    <span className="font-medium">Giới hạn số lượng (≤ N)</span>
+                  </label>
+
+                  {/* Input nhập số khi chọn có giới hạn */}
+                  {!editModal.isUnlimited && (
+                    <div className="pt-2 pl-6">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-zinc-400">Tối đa:</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="1000000"
+                          value={editModal.quotaLimit}
+                          onChange={(e) => setEditModal({ ...editModal, quotaLimit: e.target.value === '' ? '' : Number(e.target.value) })}
+                          placeholder="VD: 20, 50, 100..."
+                          className="w-32 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-white font-bold outline-none focus:border-indigo-500"
+                          autoFocus
+                        />
+                        <span className="text-xs text-zinc-500">(đơn vị/lần)</span>
+                      </div>
+                      <p className="text-[11px] text-zinc-500 mt-1.5">
+                        Người dùng gói này sẽ bị chặn khi số lượng đạt tới mức này.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex justify-end gap-2.5 px-6 py-4 border-t border-zinc-800 bg-zinc-900/80">
+              <button
+                type="button"
+                onClick={() => setEditModal(null)}
+                className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-xs font-semibold transition cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveModal}
+                disabled={savingModal}
+                className="flex items-center gap-1.5 px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition cursor-pointer disabled:opacity-50 shadow-xs"
+              >
+                {savingModal ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                {savingModal ? 'Đang lưu...' : 'Lưu cấu hình'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-6 mt-4 p-3.5 bg-zinc-900/60 border border-zinc-800/80 rounded-xl text-xs text-zinc-400">
