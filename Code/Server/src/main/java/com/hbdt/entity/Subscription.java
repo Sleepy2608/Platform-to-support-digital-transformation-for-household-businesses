@@ -23,6 +23,9 @@ public class Subscription {
     @Column(columnDefinition = "BIGINT UNSIGNED")
     private Long id;
 
+    @Column(name = "user_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    private Long userId;
+
     @Column(name = "business_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
     private Long businessId;
 

@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import PaymentQrModal from '../../components/payment/PaymentQrModal';
+import { apiClient } from '../../lib/apiClient';
 import {
   CheckCircle, ShieldCheck, Zap, Crown, Loader2, AlertCircle,
   ArrowLeft, ArrowRight, BadgeCheck, Copy,
@@ -72,67 +73,28 @@ function formatVnd(amount: number): string {
   return amount.toLocaleString('vi-VN') + 'đ';
 }
 
-function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken');
-}
-
 async function fetchPackages(): Promise<PackageInfo[]> {
-  const token = getToken();
-  const res = await fetch('http://localhost:8080/api/owner/subscription/packages', {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  if (!res.ok) throw new Error('Cannot fetch packages');
-  const text = await res.text();
-  const json = text ? JSON.parse(text) : {};
-  return json.data as PackageInfo[];
+  try {
+    const data = await apiClient.get<PackageInfo[]>('/api/owner/subscription/packages');
+    return data || [];
+  } catch {
+    throw new Error('Cannot fetch packages');
+  }
 }
 
 async function fetchCurrentProfile(): Promise<{ packageType: string | null; subscriptionExpiresAt: string | null } | null> {
-  const token = getToken();
-  if (!token) return null;
   try {
-    const res = await fetch('http://localhost:8080/api/owner/profile', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return null;
-    const text = await res.text();
-    const json = text ? JSON.parse(text) : {};
-    // Handle both wrapped { data: ... } and direct response formats
-    const data = json.data ?? json;
-    return { packageType: data.packageType ?? null, subscriptionExpiresAt: data.subscriptionExpiresAt ?? null };
+    const data = await apiClient.get<{ packageType: string | null; subscriptionExpiresAt: string | null }>('/api/owner/profile');
+    return data ?? null;
   } catch {
     return null;
   }
 }
 
 async function selectPackageApi(packageType: PackageId, billingCycle: BillingCycle): Promise<void> {
-  const token = getToken();
-  const res = await fetch(
-    `http://localhost:8080/api/owner/subscription/select-package?packageType=${packageType}&billingCycle=${billingCycle}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    }
+  await apiClient.post(
+    `/api/owner/subscription/select-package?packageType=${packageType}&billingCycle=${billingCycle}`
   );
-
-  const text = await res.text();
-  let json: { message?: string } = {};
-  try {
-    json = text ? JSON.parse(text) : {};
-  } catch {
-    // Avoid throwing JSON parse exception on non-JSON/empty responses
-  }
-
-  if (!res.ok) {
-    if (res.status === 403 || res.status === 401) {
-      throw new Error('Phiên đăng nhập hết hạn hoặc không có quyền. Vui lòng đăng nhập lại!');
-    }
-    throw new Error(json.message || `Lỗi hệ thống (Mã lỗi: ${res.status})`);
-  }
 
   // Đánh dấu hoàn tất Onboarding khi chọn gói thành công
   if (typeof window !== 'undefined') {
@@ -212,8 +174,14 @@ function PackageSelectionContent() {
     if (isRegistrationFlow) {
       // Đang trong quá trình đăng ký mới -> Quay lại mục số 2 hồ sơ doanh nghiệp để chỉnh sửa
       router.push('/onboarding/business-profile');
+    } else if (fromParam === 'account' || fromParam === 'subscription') {
+      // Đến từ trang quản lý gói dịch vụ -> Quay về đúng trang subscription
+      router.push('/owner/account/subscription');
+    } else if (fromParam === 'dashboard') {
+      // Đến từ dashboard -> Quay về dashboard
+      router.push('/owner/account');
     } else {
-      // Đã đăng nhập trước đó -> Quay về Dashboard của tài khoản hiện tại
+      // Mặc định quay về trang tài khoản
       router.push('/owner/account');
     }
   };
@@ -252,9 +220,14 @@ function PackageSelectionContent() {
     try {
       await selectPackageApi(selected, cycle);
       setPaymentSuccess(true);
+      // Xác định trang đích sau khi thanh toán thành công
+      const redirectTarget =
+        fromParam === 'account' || fromParam === 'subscription'
+          ? '/owner/account/subscription'
+          : '/owner/account';
       setTimeout(() => {
         setShowPaymentModal(false);
-        router.push('/owner/account');
+        router.push(redirectTarget);
       }, 1800);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Xác nhận thanh toán thất bại, vui lòng thử lại.');

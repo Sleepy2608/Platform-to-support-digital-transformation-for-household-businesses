@@ -72,6 +72,7 @@ public class SubscriptionService implements ISubscriptionService {
         }
 
         Subscription subscription = Subscription.builder()
+                .userId(owner.getId())
                 .businessId(businessId)
                 .plan(plan)
                 .billingCycle(normalizedCycle)

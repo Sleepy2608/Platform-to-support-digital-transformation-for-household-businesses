@@ -389,20 +389,28 @@ public class OwnerService {
 
     public List<SubscriptionHistoryDto> getSubscriptionHistory(String username) {
         User user = findActiveUser(username);
-        Subscription subscription = findActiveSubscription(user);
-        
-        return subscriptionHistoryRepository.findAllBySubscriptionIdOrderByChangedAtDesc(subscription.getId())
-                .stream()
-                .map(h -> SubscriptionHistoryDto.builder()
-                        .id(h.getId())
-                        .subscriptionId(h.getSubscriptionId())
-                        .oldPlan(h.getOldPlan())
-                        .newPlan(h.getNewPlan())
-                        .action(h.getAction())
-                        .changedBy(h.getChangedBy())
-                        .changedAt(h.getChangedAt())
-                        .build())
-                .collect(Collectors.toList());
+        if (user.getBusinessId() == null) {
+            return List.of();
+        }
+
+        // Lấy subscription mới nhất (bất kỳ trạng thái) thay vì chỉ ACTIVE
+        // để tránh 404 khi subscription đã hết hạn/hủy nhưng vẫn có lịch sử
+        return subscriptionRepository
+                .findTopByBusinessIdOrderByCreatedAtDesc(user.getBusinessId())
+                .map(subscription -> subscriptionHistoryRepository
+                        .findAllBySubscriptionIdOrderByChangedAtDesc(subscription.getId())
+                        .stream()
+                        .map(h -> SubscriptionHistoryDto.builder()
+                                .id(h.getId())
+                                .subscriptionId(h.getSubscriptionId())
+                                .oldPlan(h.getOldPlan())
+                                .newPlan(h.getNewPlan())
+                                .action(h.getAction())
+                                .changedBy(h.getChangedBy())
+                                .changedAt(h.getChangedAt())
+                                .build())
+                        .collect(Collectors.toList()))
+                .orElse(List.of());
     }
 
     public OwnerProfileResponse selectPackage(String username, String packageType, String billingCycle) {
