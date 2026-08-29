@@ -186,8 +186,8 @@ class NotificationServiceTest {
         assertThat(captor.getAllValues())
                 .allSatisfy(saved -> {
                     assertThat(saved.getBusinessId()).isEqualTo(7L);
-                    assertThat(saved.getNotificationType()).isEqualTo("LOW_STOCK");
-                    assertThat(saved.getTitle()).isEqualTo("Cảnh báo tồn kho thấp");
+                    assertThat(saved.getNotificationType()).isEqualTo("GENERAL");
+                    assertThat(saved.getTitle()).isEqualTo("Cảnh báo tồn kho thấp · SP-CA-PHE");
                     assertThat(saved.getContent()).contains("Cà phê rang xay", "SP-CA-PHE", "2.000", "10.000");
                     assertThat(saved.getRead()).isFalse();
                 });
@@ -200,6 +200,13 @@ class NotificationServiceTest {
     void notifyStockRecoveredUsesResolvedTypeAndCurrentQuantity() {
         when(userRepository.findAllByBusinessIdAndStatus(7L, UserStatus.ACTIVE))
                 .thenReturn(List.of(owner));
+        Notification activeLowStock = notification(101L, owner.getId(), false, "GENERAL");
+        activeLowStock.setNotificationType("GENERAL");
+        activeLowStock.setTitle("Cảnh báo tồn kho thấp · SP-CA-PHE");
+        when(notificationRepository
+                .findAllByBusinessIdAndUserIdAndNotificationTypeAndTitleAndReadFalse(
+                        7L, owner.getId(), "GENERAL", "Cảnh báo tồn kho thấp · SP-CA-PHE"))
+                .thenReturn(List.of(activeLowStock));
         when(notificationRepository.save(any(Notification.class)))
                 .thenAnswer(invocation -> withGeneratedId(invocation.getArgument(0)));
 
@@ -208,9 +215,12 @@ class NotificationServiceTest {
         ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
         verify(notificationRepository).save(captor.capture());
         Notification saved = captor.getValue();
-        assertThat(saved.getNotificationType()).isEqualTo("LOW_STOCK_RESOLVED");
-        assertThat(saved.getTitle()).isEqualTo("Tồn kho đã an toàn");
+        assertThat(saved.getNotificationType()).isEqualTo("GENERAL");
+        assertThat(saved.getTitle()).isEqualTo("Tồn kho đã an toàn · SP-CA-PHE");
         assertThat(saved.getContent()).contains("12.500");
+        assertThat(activeLowStock.getRead()).isTrue();
+        assertThat(activeLowStock.getReadAt()).isNotNull();
+        verify(notificationRepository).saveAll(List.of(activeLowStock));
         verify(streamService).publish(eq(owner.getId()), any(NotificationResponse.class));
     }
 

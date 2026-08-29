@@ -1,19 +1,16 @@
 package com.hbdt.inventory.service;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.hbdt.common.exception.BadRequestException;
-import com.hbdt.common.exception.ResourceNotFoundException;
-import com.hbdt.entity.InventoryAlert;
-import com.hbdt.entity.InventoryBalance;
 import com.hbdt.entity.Product;
-import com.hbdt.entity.enums.InventoryAlertStatus;
-import com.hbdt.inventory.dto.StockThresholdResponse;
-import com.hbdt.inventory.dto.LowStockAlertResponse;
-import com.hbdt.inventory.dto.LowStockSummaryResponse;
+import com.hbdt.entity.SystemConfiguration;
+import com.hbdt.entity.User;
 import com.hbdt.notification.service.NotificationService;
 import com.hbdt.product.service.BusinessContextService;
-import com.hbdt.repository.InventoryAlertRepository;
 import com.hbdt.repository.InventoryBalanceRepository;
 import com.hbdt.repository.ProductRepository;
+import com.hbdt.repository.SystemConfigurationRepository;
+import com.hbdt.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,353 +35,151 @@ class LowStockAlertServiceTest {
     @Mock private BusinessContextService businessContextService;
     @Mock private ProductRepository productRepository;
     @Mock private InventoryBalanceRepository balanceRepository;
-    @Mock private InventoryAlertRepository alertRepository;
+    @Mock private SystemConfigurationRepository configurationRepository;
+    @Mock private UserRepository userRepository;
     @Mock private NotificationService notificationService;
 
     private LowStockAlertService service;
-    private Product product;
 
     @BeforeEach
     void setUp() {
         service = new LowStockAlertService(
-                businessContextService, productRepository, balanceRepository,
-                alertRepository, notificationService);
-        product = Product.builder()
-                .id(11L)
-                .businessId(7L)
-                .productCode("SP-01")
-                .productName("Cà phê")
-                .minimumStock(new BigDecimal("10.000"))
-                .status("ACTIVE")
-                .build();
+                businessContextService,
+                productRepository,
+                balanceRepository,
+                configurationRepository,
+                userRepository,
+                notificationService);
     }
 
     @Test
-    void configureThresholdPersistsAndEvaluatesCurrentBalance() {
+    void configureThresholdStoresNumberInExistingConfigurationTable() {
+        Product product = activeProduct(11L, "SP-11", "Sữa hộp");
         when(businessContextService.requireBusinessId("owner")).thenReturn(7L);
         when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
-        when(balanceRepository.findByBusinessIdAndProductId(7L, 11L)).thenReturn(Optional.of(
-                InventoryBalance.builder().quantityOnHand(new BigDecimal("8.000")).build()));
-        when(alertRepository.findActiveForUpdate(7L, 11L)).thenReturn(List.of());
-        when(alertRepository.save(any(InventoryAlert.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userRepository.findByUsername("owner")).thenReturn(Optional.of(User.builder().id(9L).build()));
+        when(configurationRepository.findByConfigKey("inventory.low-stock.7.11"))
+                .thenReturn(Optional.empty());
+        when(configurationRepository.save(any(SystemConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(balanceRepository.findByBusinessIdAndProductId(7L, 11L)).thenReturn(Optional.empty());
+        when(notificationService.notifyLowStock(
+                7L, product, BigDecimal.ZERO, new BigDecimal("5"))).thenReturn(true);
 
-        StockThresholdResponse response = service.configureThreshold(
-                "owner", 11L, new BigDecimal("12.000"));
+        var response = service.configureThreshold("owner", 11L, new BigDecimal("5"));
 
-        assertThat(product.getMinimumStock()).isEqualByComparingTo("12.000");
+        ArgumentCaptor<SystemConfiguration> captor =
+                ArgumentCaptor.forClass(SystemConfiguration.class);
+        verify(configurationRepository).save(captor.capture());
+        assertThat(captor.getValue().getConfigKey()).isEqualTo("inventory.low-stock.7.11");
+        assertThat(captor.getValue().getConfigValue().decimalValue()).isEqualByComparingTo("5");
+        assertThat(captor.getValue().getUpdatedBy()).isEqualTo(9L);
+        assertThat(response.configured()).isTrue();
         assertThat(response.lowStock()).isTrue();
-        verify(notificationService).notifyLowStock(
-                7L, product, new BigDecimal("8.000"), new BigDecimal("12.000"));
+        verify(productRepository, never()).save(any(Product.class));
     }
 
     @Test
-    void evaluateCreatesOneActiveAlertWhenQuantityDropsBelowThreshold() {
-        when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
-        when(alertRepository.findActiveForUpdate(7L, 11L)).thenReturn(List.of());
-        when(alertRepository.save(any(InventoryAlert.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        LowStockAlertService.EvaluationResult result = service.evaluate(
-                7L, 11L, new BigDecimal("4.000"));
-
-        assertThat(result.created()).isTrue();
-        assertThat(result.alert().getStatus()).isEqualTo(InventoryAlertStatus.ACTIVE);
-        assertThat(result.alert().getQuantitySnapshot()).isEqualByComparingTo("4.000");
-        verify(notificationService).notifyLowStock(
-                7L, product, new BigDecimal("4.000"), new BigDecimal("10.000"));
-    }
-
-    @Test
-    void evaluateUpdatesExistingAlertWithoutCreatingDuplicateNotification() {
-        InventoryAlert active = InventoryAlert.builder()
-                .id(99L).businessId(7L).productId(11L)
-                .status(InventoryAlertStatus.ACTIVE)
-                .quantitySnapshot(new BigDecimal("7.000"))
-                .thresholdSnapshot(new BigDecimal("10.000"))
-                .build();
-        when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
-        when(alertRepository.findActiveForUpdate(7L, 11L)).thenReturn(List.of(active));
-
-        LowStockAlertService.EvaluationResult result = service.evaluate(
-                7L, 11L, new BigDecimal("3.000"));
-
-        assertThat(result.created()).isFalse();
-        assertThat(active.getQuantitySnapshot()).isEqualByComparingTo("3.000");
-        verify(notificationService, never()).notifyLowStock(any(), any(), any(), any());
-    }
-
-    @Test
-    void evaluateResolvesAlertAfterStockReturnsToSafeLevel() {
-        InventoryAlert active = InventoryAlert.builder()
-                .id(99L).businessId(7L).productId(11L)
-                .status(InventoryAlertStatus.ACTIVE)
-                .quantitySnapshot(new BigDecimal("5.000"))
-                .thresholdSnapshot(new BigDecimal("10.000"))
-                .build();
-        when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
-        when(alertRepository.findActiveForUpdate(7L, 11L)).thenReturn(List.of(active));
-
-        LowStockAlertService.EvaluationResult result = service.evaluate(
-                7L, 11L, new BigDecimal("10.000"));
-
-        assertThat(result.resolved()).isTrue();
-        assertThat(active.getStatus()).isEqualTo(InventoryAlertStatus.RESOLVED);
-        assertThat(active.getResolvedAt()).isNotNull();
-        verify(notificationService).notifyStockRecovered(7L, product, new BigDecimal("10.000"));
-    }
-
-    @Test
-    void configureThresholdRejectsNegativeValueBeforeWritingData() {
+    void configureThresholdRejectsDecimalValues() {
         assertThatThrownBy(() -> service.configureThreshold(
-                "owner", 11L, new BigDecimal("-1")))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("không được âm");
-        verify(productRepository, never()).save(any());
-    }
-
-    @Test
-    void configureThresholdRejectsFractionalValueBeforeWritingData() {
-        assertThatThrownBy(() -> service.configureThreshold(
-                "owner", 11L, new BigDecimal("5.006")))
+                "owner", 11L, new BigDecimal("1.5")))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("số nguyên");
-        verify(productRepository, never()).save(any());
     }
 
     @Test
-    void evaluateResolvesDuplicateActiveAlertsDefensively() {
-        InventoryAlert primary = activeAlert(1L);
-        InventoryAlert duplicate = activeAlert(2L);
-        when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
-        when(alertRepository.findActiveForUpdate(7L, 11L)).thenReturn(List.of(primary, duplicate));
-
-        service.evaluate(7L, 11L, new BigDecimal("2.000"));
-
-        assertThat(primary.getStatus()).isEqualTo(InventoryAlertStatus.ACTIVE);
-        assertThat(duplicate.getStatus()).isEqualTo(InventoryAlertStatus.RESOLVED);
-        verify(notificationService, never()).notifyLowStock(any(), any(), any(), any());
-    }
-
-    @Test
-    void getThresholdsReturnsOnlyActiveProductsInAlphabeticalRepositoryOrder() {
-        Product secondProduct = Product.builder()
-                .id(12L)
-                .businessId(7L)
-                .productCode("SP-02")
-                .productName("Trà")
-                .minimumStock(null)
-                .status("ACTIVE")
+    void getThresholdsReadsTenantSpecificConfiguration() {
+        Product product = activeProduct(11L, "SP-11", "Sữa hộp");
+        SystemConfiguration configuration = SystemConfiguration.builder()
+                .configKey("inventory.low-stock.7.11")
+                .configValue(JsonNodeFactory.instance.numberNode(6))
+                .dataType("NUMBER")
+                .publicConfig(false)
                 .build();
         when(businessContextService.requireBusinessId("owner")).thenReturn(7L);
+        when(configurationRepository.findAllByConfigKeyStartingWith("inventory.low-stock.7."))
+                .thenReturn(List.of(configuration));
         when(productRepository.findAllByBusinessIdAndStatusOrderByProductNameAsc(7L, "ACTIVE"))
-                .thenReturn(List.of(product, secondProduct));
-        when(balanceRepository.findByBusinessIdAndProductId(7L, 11L))
-                .thenReturn(Optional.of(InventoryBalance.builder()
-                        .quantityOnHand(new BigDecimal("4.000"))
-                        .build()));
-        when(balanceRepository.findByBusinessIdAndProductId(7L, 12L))
-                .thenReturn(Optional.empty());
+                .thenReturn(List.of(product));
+        when(balanceRepository.findByBusinessIdAndProductId(7L, 11L)).thenReturn(Optional.empty());
 
-        List<StockThresholdResponse> result = service.getThresholds("owner");
+        var thresholds = service.getThresholds("owner");
 
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0)).satisfies(item -> {
-            assertThat(item.productId()).isEqualTo(11L);
-            assertThat(item.quantityOnHand()).isEqualByComparingTo("4.000");
+        assertThat(thresholds).singleElement().satisfies(item -> {
+            assertThat(item.minimumStock()).isEqualByComparingTo("6");
             assertThat(item.configured()).isTrue();
             assertThat(item.lowStock()).isTrue();
         });
-        assertThat(result.get(1)).satisfies(item -> {
-            assertThat(item.productId()).isEqualTo(12L);
-            assertThat(item.quantityOnHand()).isEqualByComparingTo(BigDecimal.ZERO);
-            assertThat(item.configured()).isFalse();
-            assertThat(item.lowStock()).isFalse();
-        });
     }
 
     @Test
-    void evaluateResolvesAlertSilentlyWhenProductIsInactive() {
-        product.setStatus("INACTIVE");
-        InventoryAlert active = activeAlert(99L);
-        when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
-        when(alertRepository.findActiveForUpdate(7L, 11L)).thenReturn(List.of(active));
-
-        LowStockAlertService.EvaluationResult result = service.synchronizeProductStatus(7L, 11L);
-
-        assertThat(result.resolved()).isTrue();
-        assertThat(active.getStatus()).isEqualTo(InventoryAlertStatus.RESOLVED);
-        verify(notificationService, never()).notifyStockRecovered(any(), any(), any());
-        verify(notificationService, never()).notifyLowStock(any(), any(), any(), any());
-    }
-
-    @Test
-    void activeAlertListOmitsInactiveProductsButHistoryKeepsThem() {
-        product.setStatus("INACTIVE");
-        InventoryAlert active = activeAlert(1L);
-        when(businessContextService.requireBusinessId("employee")).thenReturn(7L);
-        when(alertRepository.findAllByBusinessIdAndStatusOrderByLastDetectedAtDesc(
-                7L, InventoryAlertStatus.ACTIVE)).thenReturn(List.of(active));
-        when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
-
-        assertThat(service.getAlerts("employee", false)).isEmpty();
-    }
-
-    @Test
-    void getAlertsReturnsOnlyActiveRowsByDefault() {
-        InventoryAlert active = activeAlert(1L);
-        when(businessContextService.requireBusinessId("employee")).thenReturn(7L);
-        when(alertRepository.findAllByBusinessIdAndStatusOrderByLastDetectedAtDesc(
-                7L, InventoryAlertStatus.ACTIVE)).thenReturn(List.of(active));
-        when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
-        when(balanceRepository.findByBusinessIdAndProductId(7L, 11L))
-                .thenReturn(Optional.of(InventoryBalance.builder()
-                        .quantityOnHand(new BigDecimal("2.500"))
-                        .build()));
-
-        List<LowStockAlertResponse> result = service.getAlerts("employee", false);
-
-        assertThat(result).singleElement().satisfies(item -> {
-            assertThat(item.id()).isEqualTo(1L);
-            assertThat(item.productCode()).isEqualTo("SP-01");
-            assertThat(item.quantityOnHand()).isEqualByComparingTo("2.500");
-            assertThat(item.minimumStock()).isEqualByComparingTo("10.000");
-            assertThat(item.status()).isEqualTo("ACTIVE");
-            assertThat(item.needsRestock()).isTrue();
-        });
-    }
-
-    @Test
-    void getAlertsHistoryUsesThresholdSnapshotWhenProductThresholdWasRemoved() {
-        product.setMinimumStock(null);
-        InventoryAlert resolved = InventoryAlert.builder()
-                .id(3L)
-                .businessId(7L)
-                .productId(11L)
-                .status(InventoryAlertStatus.RESOLVED)
-                .quantitySnapshot(BigDecimal.ONE)
-                .thresholdSnapshot(new BigDecimal("6.000"))
-                .resolvedAt(java.time.LocalDateTime.now())
+    void getAlertsCalculatesCurrentLowStockWithoutAlertTable() {
+        Product product = activeProduct(11L, "SP-11", "Sữa hộp");
+        SystemConfiguration configuration = SystemConfiguration.builder()
+                .configKey("inventory.low-stock.7.11")
+                .configValue(JsonNodeFactory.instance.numberNode(10))
+                .dataType("NUMBER")
+                .publicConfig(false)
                 .build();
         when(businessContextService.requireBusinessId("owner")).thenReturn(7L);
-        when(alertRepository.findAllByBusinessIdOrderByTriggeredAtDesc(7L))
-                .thenReturn(List.of(resolved));
-        when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
-        when(balanceRepository.findByBusinessIdAndProductId(7L, 11L))
-                .thenReturn(Optional.of(InventoryBalance.builder()
-                        .quantityOnHand(new BigDecimal("9.000"))
-                        .build()));
+        when(configurationRepository.findAllByConfigKeyStartingWith("inventory.low-stock.7."))
+                .thenReturn(List.of(configuration));
+        when(productRepository.findAllByBusinessIdAndStatusOrderByProductNameAsc(7L, "ACTIVE"))
+                .thenReturn(List.of(product));
+        when(balanceRepository.findByBusinessIdAndProductId(7L, 11L)).thenReturn(Optional.empty());
 
-        List<LowStockAlertResponse> result = service.getAlerts("owner", true);
+        var alerts = service.getAlerts("owner");
 
-        assertThat(result).singleElement().satisfies(item -> {
-            assertThat(item.minimumStock()).isEqualByComparingTo("6.000");
-            assertThat(item.status()).isEqualTo("RESOLVED");
-            assertThat(item.needsRestock()).isFalse();
+        assertThat(alerts).singleElement().satisfies(alert -> {
+            assertThat(alert.productId()).isEqualTo(11L);
+            assertThat(alert.minimumStock()).isEqualByComparingTo("10");
+            assertThat(alert.quantityOnHand()).isEqualByComparingTo(BigDecimal.ZERO);
+            assertThat(alert.needsRestock()).isTrue();
         });
     }
 
     @Test
-    void getSummaryClampsRequestedLimitToOne() {
-        InventoryAlert first = activeAlert(1L);
-        InventoryAlert second = activeAlert(2L);
-        when(businessContextService.requireBusinessId("owner")).thenReturn(7L);
-        when(alertRepository.findAllByBusinessIdAndStatusOrderByLastDetectedAtDesc(
-                7L, InventoryAlertStatus.ACTIVE)).thenReturn(List.of(first, second));
+    void evaluateCreatesOnlyOneGenericNotificationTransition() {
+        Product product = activeProduct(11L, "SP-11", "Sữa hộp");
         when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
-        when(balanceRepository.findByBusinessIdAndProductId(7L, 11L))
-                .thenReturn(Optional.of(InventoryBalance.builder()
-                        .quantityOnHand(BigDecimal.ONE)
+        when(configurationRepository.findByConfigKey("inventory.low-stock.7.11"))
+                .thenReturn(Optional.of(SystemConfiguration.builder()
+                        .configValue(JsonNodeFactory.instance.numberNode(5))
                         .build()));
+        when(notificationService.notifyLowStock(
+                7L, product, new BigDecimal("2"), new BigDecimal("5"))).thenReturn(true);
 
-        LowStockSummaryResponse result = service.getSummary("owner", 0);
+        var result = service.evaluate(7L, 11L, new BigDecimal("2"));
 
-        assertThat(result.totalLowStock()).isEqualTo(2);
-        assertThat(result.products()).hasSize(1);
+        assertThat(result.lowStock()).isTrue();
+        assertThat(result.notificationCreated()).isTrue();
+        assertThat(result.notificationResolved()).isFalse();
     }
 
     @Test
-    void getSummaryClampsRequestedLimitToOneHundred() {
-        List<InventoryAlert> alerts = java.util.stream.LongStream.rangeClosed(1, 105)
-                .mapToObj(this::activeAlert)
-                .toList();
-        when(businessContextService.requireBusinessId("owner")).thenReturn(7L);
-        when(alertRepository.findAllByBusinessIdAndStatusOrderByLastDetectedAtDesc(
-                7L, InventoryAlertStatus.ACTIVE)).thenReturn(alerts);
+    void evaluateResolvesNotificationWhenStockIsSafe() {
+        Product product = activeProduct(11L, "SP-11", "Sữa hộp");
         when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
-        when(balanceRepository.findByBusinessIdAndProductId(7L, 11L))
-                .thenReturn(Optional.of(InventoryBalance.builder()
-                        .quantityOnHand(BigDecimal.ONE)
+        when(configurationRepository.findByConfigKey("inventory.low-stock.7.11"))
+                .thenReturn(Optional.of(SystemConfiguration.builder()
+                        .configValue(JsonNodeFactory.instance.numberNode(5))
                         .build()));
+        when(notificationService.notifyStockRecovered(7L, product, new BigDecimal("8")))
+                .thenReturn(true);
 
-        LowStockSummaryResponse result = service.getSummary("owner", 1000);
+        var result = service.evaluate(7L, 11L, new BigDecimal("8"));
 
-        assertThat(result.totalLowStock()).isEqualTo(105);
-        assertThat(result.products()).hasSize(100);
-    }
-
-    @Test
-    void evaluateTreatsQuantityEqualToThresholdAsSafe() {
-        InventoryAlert active = activeAlert(1L);
-        when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
-        when(alertRepository.findActiveForUpdate(7L, 11L)).thenReturn(List.of(active));
-
-        LowStockAlertService.EvaluationResult result = service.evaluate(
-                7L, 11L, new BigDecimal("10.000"));
-
-        assertThat(result.resolved()).isTrue();
-        assertThat(active.getStatus()).isEqualTo(InventoryAlertStatus.RESOLVED);
-        verify(notificationService).notifyStockRecovered(
-                7L, product, new BigDecimal("10.000"));
-    }
-
-    @Test
-    void evaluateDoesNothingWhenThresholdIsNotConfigured() {
-        product.setMinimumStock(null);
-        when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
-        when(alertRepository.findActiveForUpdate(7L, 11L)).thenReturn(List.of());
-
-        LowStockAlertService.EvaluationResult result = service.evaluate(
-                7L, 11L, BigDecimal.ZERO);
-
-        assertThat(result.alert()).isNull();
-        assertThat(result.created()).isFalse();
-        assertThat(result.resolved()).isFalse();
-        verify(alertRepository, never()).save(any(InventoryAlert.class));
-        verify(notificationService, never()).notifyLowStock(any(), any(), any(), any());
-    }
-
-    @Test
-    void configureThresholdAcceptsZeroAndDoesNotCreateAlertAtZeroQuantity() {
-        when(businessContextService.requireBusinessId("owner")).thenReturn(7L);
-        when(productRepository.findByIdAndBusinessId(11L, 7L)).thenReturn(Optional.of(product));
-        when(balanceRepository.findByBusinessIdAndProductId(7L, 11L))
-                .thenReturn(Optional.empty());
-        when(alertRepository.findActiveForUpdate(7L, 11L)).thenReturn(List.of());
-
-        StockThresholdResponse result = service.configureThreshold(
-                "owner", 11L, BigDecimal.ZERO);
-
-        assertThat(result.minimumStock()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(result.lowStock()).isFalse();
-        verify(productRepository).save(product);
-        verify(notificationService, never()).notifyLowStock(any(), any(), any(), any());
+        assertThat(result.notificationResolved()).isTrue();
     }
 
-    @Test
-    void evaluateRejectsProductFromAnotherBusiness() {
-        when(productRepository.findByIdAndBusinessId(11L, 999L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> service.evaluate(999L, 11L, BigDecimal.ONE))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("sản phẩm");
-        verify(alertRepository, never()).findActiveForUpdate(any(), any());
-    }
-
-    private InventoryAlert activeAlert(Long id) {
-        return InventoryAlert.builder()
-                .id(id).businessId(7L).productId(11L)
-                .status(InventoryAlertStatus.ACTIVE)
-                .quantitySnapshot(BigDecimal.ONE)
-                .thresholdSnapshot(BigDecimal.TEN)
+    private Product activeProduct(Long id, String code, String name) {
+        return Product.builder()
+                .id(id)
+                .businessId(7L)
+                .productCode(code)
+                .productName(name)
+                .status("ACTIVE")
                 .build();
     }
 }

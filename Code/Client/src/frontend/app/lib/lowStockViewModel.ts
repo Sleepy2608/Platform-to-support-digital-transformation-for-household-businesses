@@ -9,8 +9,8 @@ export interface LowStockListItem {
   minimumStock: number;
   status: 'ACTIVE' | 'RESOLVED';
   needsRestock: boolean;
-  triggeredAt: string;
-  lastDetectedAt: string;
+  triggeredAt: string | null;
+  lastDetectedAt: string | null;
   resolvedAt: string | null;
 }
 

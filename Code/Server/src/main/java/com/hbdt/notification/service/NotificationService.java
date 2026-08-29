@@ -23,6 +23,7 @@ import java.util.Set;
 @Service
 public class NotificationService {
 
+    private static final String GENERAL_NOTIFICATION = "GENERAL";
     private static final Set<RoleType> LOW_STOCK_RECIPIENTS =
             Set.of(RoleType.BUSINESS_OWNER, RoleType.EMPLOYEE);
 
@@ -44,18 +45,48 @@ public class NotificationService {
     }
 
     @Transactional
-    public void notifyLowStock(
+    public boolean notifyLowStock(
             Long businessId, Product product, BigDecimal quantity, BigDecimal threshold) {
+        String title = lowStockTitle(product);
         String content = "Sản phẩm %s (%s) chỉ còn %s, thấp hơn ngưỡng %s."
                 .formatted(product.getProductName(), product.getProductCode(), quantity, threshold);
-        notifyBusiness(businessId, "LOW_STOCK", "Cảnh báo tồn kho thấp", content);
+        boolean created = false;
+        for (User user : lowStockRecipients(businessId)) {
+            boolean exists = notificationRepository
+                    .existsByBusinessIdAndUserIdAndNotificationTypeAndTitleAndReadFalse(
+                            businessId, user.getId(), GENERAL_NOTIFICATION, title);
+            if (!exists) {
+                saveAndPublish(user, GENERAL_NOTIFICATION, title, content);
+                created = true;
+            }
+        }
+        return created;
     }
 
     @Transactional
-    public void notifyStockRecovered(Long businessId, Product product, BigDecimal quantity) {
+    public boolean notifyStockRecovered(Long businessId, Product product, BigDecimal quantity) {
+        String lowStockTitle = lowStockTitle(product);
+        String recoveredTitle = "Tồn kho đã an toàn · " + product.getProductCode();
         String content = "Tồn kho sản phẩm %s (%s) đã trở lại mức an toàn: %s."
                 .formatted(product.getProductName(), product.getProductCode(), quantity);
-        notifyBusiness(businessId, "LOW_STOCK_RESOLVED", "Tồn kho đã an toàn", content);
+        boolean resolved = false;
+        LocalDateTime now = LocalDateTime.now();
+        for (User user : lowStockRecipients(businessId)) {
+            List<Notification> activeNotifications = notificationRepository
+                    .findAllByBusinessIdAndUserIdAndNotificationTypeAndTitleAndReadFalse(
+                            businessId, user.getId(), GENERAL_NOTIFICATION, lowStockTitle);
+            if (activeNotifications.isEmpty()) {
+                continue;
+            }
+            activeNotifications.forEach(notification -> {
+                notification.setRead(true);
+                notification.setReadAt(now);
+            });
+            notificationRepository.saveAll(activeNotifications);
+            saveAndPublish(user, GENERAL_NOTIFICATION, recoveredTitle, content);
+            resolved = true;
+        }
+        return resolved;
     }
 
     @Transactional(readOnly = true)
@@ -96,11 +127,15 @@ public class NotificationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
     }
 
-    private void notifyBusiness(Long businessId, String type, String title, String content) {
-        userRepository.findAllByBusinessIdAndStatus(businessId, UserStatus.ACTIVE).stream()
+    private List<User> lowStockRecipients(Long businessId) {
+        return userRepository.findAllByBusinessIdAndStatus(businessId, UserStatus.ACTIVE).stream()
                 .filter(user -> user.getRole() != null
                         && LOW_STOCK_RECIPIENTS.contains(user.getRole().getName()))
-                .forEach(user -> saveAndPublish(user, type, title, content));
+                .toList();
+    }
+
+    private String lowStockTitle(Product product) {
+        return "Cảnh báo tồn kho thấp · " + product.getProductCode();
     }
 
     private void saveAndPublish(User user, String type, String title, String content) {

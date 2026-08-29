@@ -186,7 +186,7 @@ npm run dev
 
 ### 6. Cảnh báo tồn kho thấp (HBDT-52)
 
-Trước khi chạy backend production, áp dụng script
-`Code/Server/database/migration_low_stock_alert.sql`. Owner cấu hình và theo dõi tại
-`/owner/inventory-alerts`; Employee xem cảnh báo tại `/employee/inventory-alerts`.
-Chi tiết nghiệp vụ và API nằm trong `docs/workflows/low-stock-alert.md`.
+Không cần chạy migration riêng. Chức năng dùng các bảng có sẵn trên `main`:
+`system_configurations`, `inventory_balances` và `notifications`. Owner cấu hình và
+theo dõi tại `/owner/inventory-alerts`; Employee xem cảnh báo tại
+`/employee/inventory-alerts`.

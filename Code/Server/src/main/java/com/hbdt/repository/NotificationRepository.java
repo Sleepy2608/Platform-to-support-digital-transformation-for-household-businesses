@@ -18,4 +18,10 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     Optional<Notification> findByIdAndBusinessIdAndUserId(
             Long id, Long businessId, Long userId);
+
+    boolean existsByBusinessIdAndUserIdAndNotificationTypeAndTitleAndReadFalse(
+            Long businessId, Long userId, String notificationType, String title);
+
+    List<Notification> findAllByBusinessIdAndUserIdAndNotificationTypeAndTitleAndReadFalse(
+            Long businessId, Long userId, String notificationType, String title);
 }

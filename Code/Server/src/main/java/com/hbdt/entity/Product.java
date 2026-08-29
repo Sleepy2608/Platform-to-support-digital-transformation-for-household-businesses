@@ -52,9 +52,6 @@ public class Product {
     @Column(name = "sale_price", precision = 18, scale = 2)
     private BigDecimal salePrice;
 
-    @Column(name = "minimum_stock", precision = 18, scale = 3)
-    private BigDecimal minimumStock;
-
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 

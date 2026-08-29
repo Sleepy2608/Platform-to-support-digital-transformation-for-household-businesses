@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  AlertTriangle, BellRing, CheckCircle2, Clock3, PackageOpen,
+  AlertTriangle, BellRing, CheckCircle2, PackageOpen,
   ChevronLeft, ChevronRight, RefreshCw, Save, Search, ShieldCheck, Warehouse,
 } from 'lucide-react';
 import { apiClient } from '../lib/apiClient';
@@ -28,8 +28,8 @@ interface LowStockAlert {
   minimumStock: number;
   status: AlertStatus;
   needsRestock: boolean;
-  triggeredAt: string;
-  lastDetectedAt: string;
+  triggeredAt: string | null;
+  lastDetectedAt: string | null;
   resolvedAt: string | null;
 }
 
@@ -55,18 +55,10 @@ function formatQuantity(value: number | null | undefined) {
   return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 3 }).format(value);
 }
 
-function formatDate(value: string | null) {
-  if (!value) return '—';
-  return new Intl.DateTimeFormat('vi-VN', {
-    dateStyle: 'short', timeStyle: 'short',
-  }).format(new Date(value));
-}
-
 export default function LowStockAlertDashboard({ canConfigure }: { canConfigure: boolean }) {
   const [alerts, setAlerts] = useState<LowStockAlert[]>([]);
   const [thresholds, setThresholds] = useState<StockThreshold[]>([]);
   const [drafts, setDrafts] = useState<Record<number, string>>({});
-  const [showHistory, setShowHistory] = useState(false);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<LowStockSort>('URGENCY');
   const [page, setPage] = useState(1);
@@ -80,9 +72,7 @@ export default function LowStockAlertDashboard({ canConfigure }: { canConfigure:
     if (!quiet) setRefreshing(true);
     try {
       const [alertData, thresholdData] = await Promise.all([
-        apiClient.get<LowStockAlert[]>(
-          `/api/inventory/low-stock/alerts?includeResolved=${showHistory}`,
-        ),
+        apiClient.get<LowStockAlert[]>('/api/inventory/low-stock/alerts'),
         canConfigure
           ? apiClient.get<StockThreshold[]>('/api/inventory/low-stock/thresholds')
           : Promise.resolve([]),
@@ -107,7 +97,7 @@ export default function LowStockAlertDashboard({ canConfigure }: { canConfigure:
       setLoading(false);
       setRefreshing(false);
     }
-  }, [canConfigure, showHistory]);
+  }, [canConfigure]);
 
   useEffect(() => {
     const initialLoad = window.setTimeout(() => void loadData(), 0);
@@ -257,7 +247,7 @@ export default function LowStockAlertDashboard({ canConfigure }: { canConfigure:
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-4 border-b border-slate-100 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 className="font-bold text-slate-900">{showHistory ? 'Lịch sử cảnh báo' : 'Sản phẩm cần nhập thêm'}</h2>
+              <h2 className="font-bold text-slate-900">Sản phẩm cần nhập thêm</h2>
             </div>
             <div className="flex min-w-0 flex-col gap-2 sm:flex-row lg:w-auto">
               <label className="relative min-w-0 flex-1 lg:w-64"><Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" /><input value={query} onChange={(event) => { setQuery(event.target.value); setPage(1); }} placeholder="Tìm mã hoặc tên sản phẩm" className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm outline-none focus:border-slate-700" /></label>
@@ -266,7 +256,6 @@ export default function LowStockAlertDashboard({ canConfigure }: { canConfigure:
                 <option value="NEWEST">Mới phát hiện</option>
                 <option value="NAME">Tên sản phẩm</option>
               </select>
-              <button onClick={() => { setShowHistory((value) => !value); setPage(1); }} className="shrink-0 whitespace-nowrap rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">{showHistory ? 'Chỉ đang cảnh báo' : 'Xem lịch sử'}</button>
             </div>
           </div>
           {loading ? (
@@ -311,5 +300,5 @@ function AlertCard({ alert, canConfigure }: { alert: LowStockAlert; canConfigure
   const severity = stockSeverity(alert);
   const severityText = severity === 'CRITICAL' ? 'Rất thấp' : severity === 'HIGH' ? 'Sắp hết' : severity === 'LOW' ? 'Dưới ngưỡng' : 'Đã xử lý';
   const severityClass = severity === 'CRITICAL' ? 'bg-red-100 text-red-700' : severity === 'HIGH' ? 'bg-orange-100 text-orange-700' : severity === 'LOW' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700';
-  return <article className={`rounded-xl border p-4 ${active ? 'border-amber-200 bg-amber-50/60' : 'border-slate-200 bg-slate-50'}`}><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-black text-slate-900">{alert.productName}</p><p className="text-xs font-semibold text-slate-500">{alert.productCode}</p></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${severityClass}`}>{severityText}</span></div><div className="mt-4 grid grid-cols-3 gap-2"><div className="rounded-lg bg-white p-3"><p className="text-[11px] text-slate-500">Tồn hiện tại</p><p className="mt-1 text-lg font-black text-red-700">{formatQuantity(alert.quantityOnHand)}</p></div><div className="rounded-lg bg-white p-3"><p className="text-[11px] text-slate-500">Ngưỡng</p><p className="mt-1 text-lg font-black text-slate-900">{formatQuantity(alert.minimumStock)}</p></div><div className="rounded-lg bg-white p-3"><p className="text-[11px] text-slate-500">Thiếu</p><p className="mt-1 text-lg font-black text-amber-700">{formatQuantity(shortageAmount(alert))}</p></div></div><div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500"><Clock3 className="h-3.5 w-3.5" /> {active ? `Phát hiện: ${formatDate(alert.lastDetectedAt)}` : `Đã xử lý: ${formatDate(alert.resolvedAt)}`}</div>{active && canConfigure && <Link href="/owner/products" className="mt-3 inline-flex text-xs font-bold text-blue-700 hover:underline">Nhập thêm hàng →</Link>}</article>;
+  return <article className={`rounded-xl border p-4 ${active ? 'border-amber-200 bg-amber-50/60' : 'border-slate-200 bg-slate-50'}`}><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-black text-slate-900">{alert.productName}</p><p className="text-xs font-semibold text-slate-500">{alert.productCode}</p></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${severityClass}`}>{severityText}</span></div><div className="mt-4 grid grid-cols-3 gap-2"><div className="rounded-lg bg-white p-3"><p className="text-[11px] text-slate-500">Tồn hiện tại</p><p className="mt-1 text-lg font-black text-red-700">{formatQuantity(alert.quantityOnHand)}</p></div><div className="rounded-lg bg-white p-3"><p className="text-[11px] text-slate-500">Ngưỡng</p><p className="mt-1 text-lg font-black text-slate-900">{formatQuantity(alert.minimumStock)}</p></div><div className="rounded-lg bg-white p-3"><p className="text-[11px] text-slate-500">Thiếu</p><p className="mt-1 text-lg font-black text-amber-700">{formatQuantity(shortageAmount(alert))}</p></div></div>{active && canConfigure && <Link href="/owner/products" className="mt-3 inline-flex text-xs font-bold text-blue-700 hover:underline">Nhập thêm hàng →</Link>}</article>;
 }
