@@ -176,29 +176,29 @@ export default function LowStockAlertDashboard({ canConfigure }: { canConfigure:
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f6fa] px-4 py-5 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#ededed] px-4 py-5 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-5">
-        <header className="relative overflow-hidden rounded-3xl bg-slate-950 px-5 py-6 text-white shadow-lg shadow-slate-900/10 sm:px-7 sm:py-7">
-          <div className="pointer-events-none absolute -right-12 -top-20 h-56 w-56 rounded-full bg-amber-400/10 blur-2xl" />
+        <header className="relative overflow-hidden rounded-3xl bg-white border border-slate-200 px-5 py-6 text-slate-900 shadow-sm sm:px-7 sm:py-7">
+          <div className="pointer-events-none absolute -right-12 -top-20 h-56 w-56 rounded-full bg-slate-50 blur-2xl" />
           <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-2xl">
-              <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-amber-400">
+              <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-amber-600">
                 <BellRing className="h-4 w-4" /> Quản lý kho
               </div>
-              <h1 className="text-2xl font-black tracking-tight sm:text-3xl">
+              <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
                 Cảnh báo tồn kho thấp
               </h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
                 Theo dõi sản phẩm sắp hết, thiết lập ngưỡng và chủ động lên kế hoạch nhập hàng.
               </p>
             </div>
             <div className="flex flex-wrap gap-2 lg:shrink-0">
             {canConfigure && (
-              <Link href="/owner/products" className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-amber-50">
+              <Link href="/owner/products" className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800">
                 <Warehouse className="h-4 w-4" /> Đi đến nhập kho
               </Link>
             )}
-            <button onClick={() => void loadData()} disabled={refreshing} className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/20 disabled:opacity-60">
+            <button onClick={() => void loadData()} disabled={refreshing} className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60">
               <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} /> Làm mới
             </button>
             </div>

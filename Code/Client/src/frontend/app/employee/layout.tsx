@@ -112,7 +112,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
   const initials = fullName.split(' ').map((w) => w[0]).slice(-2).join('').toUpperCase();
 
   return (
-    <div className="min-h-screen bg-slate-100/70 text-slate-900 flex flex-col md:flex-row relative font-sans antialiased">
+    <div className="min-h-screen bg-[#ededed] text-slate-900 flex flex-col md:flex-row relative font-sans antialiased">
 
       {/* ── Mobile Top Header ── */}
       <div className="md:hidden bg-white/90 border-b border-slate-200/80 px-5 py-3.5 flex items-center justify-between sticky top-0 z-40 backdrop-blur-md shadow-xs">
