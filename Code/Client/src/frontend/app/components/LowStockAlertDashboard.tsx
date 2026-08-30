@@ -111,12 +111,31 @@ export default function LowStockAlertDashboard({ canConfigure }: { canConfigure:
   useEffect(() => {
     const handleNotification = (event: Event) => {
       const notification = (event as CustomEvent<NotificationEvent>).detail;
-      if (!notification) return;
-      setLiveNotification(notification);
+      if (notification) {
+        setLiveNotification(notification);
+      }
       void loadData(true);
     };
+    const handleProductUpdated = () => {
+      void loadData(true);
+    };
+    const handleFocus = () => {
+      if (document.visibilityState === 'visible') {
+        void loadData(true);
+      }
+    };
+
     window.addEventListener('hbdt-notification', handleNotification);
-    return () => window.removeEventListener('hbdt-notification', handleNotification);
+    window.addEventListener('product-updated', handleProductUpdated);
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
+
+    return () => {
+      window.removeEventListener('hbdt-notification', handleNotification);
+      window.removeEventListener('product-updated', handleProductUpdated);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+    };
   }, [loadData]);
 
   useEffect(() => {

@@ -115,9 +115,16 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     };
     void refreshCount();
     const timer = window.setInterval(() => void refreshCount(), 30_000);
+    const handleNotification = () => void refreshCount();
+
+    window.addEventListener('hbdt-notification', handleNotification);
+    window.addEventListener('product-updated', handleNotification);
+
     return () => {
       active = false;
       window.clearInterval(timer);
+      window.removeEventListener('hbdt-notification', handleNotification);
+      window.removeEventListener('product-updated', handleNotification);
     };
   }, [loading]);
 
