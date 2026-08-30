@@ -49,7 +49,11 @@ public class NotificationService {
             Long businessId, Product product, BigDecimal quantity, BigDecimal threshold) {
         String title = lowStockTitle(product);
         String content = "Sản phẩm %s (%s) chỉ còn %s, thấp hơn ngưỡng %s."
-                .formatted(product.getProductName(), product.getProductCode(), quantity, threshold);
+                .formatted(
+                        product.getProductName(),
+                        product.getProductCode(),
+                        formatQuantity(quantity),
+                        formatQuantity(threshold));
         boolean created = false;
         for (User user : lowStockRecipients(businessId)) {
             boolean exists = notificationRepository
@@ -68,7 +72,10 @@ public class NotificationService {
         String lowStockTitle = lowStockTitle(product);
         String recoveredTitle = "Tồn kho đã an toàn · " + product.getProductCode();
         String content = "Tồn kho sản phẩm %s (%s) đã trở lại mức an toàn: %s."
-                .formatted(product.getProductName(), product.getProductCode(), quantity);
+                .formatted(
+                        product.getProductName(),
+                        product.getProductCode(),
+                        formatQuantity(quantity));
         boolean resolved = false;
         LocalDateTime now = LocalDateTime.now();
         for (User user : lowStockRecipients(businessId)) {
@@ -136,6 +143,18 @@ public class NotificationService {
 
     private String lowStockTitle(Product product) {
         return "Cảnh báo tồn kho thấp · " + product.getProductCode();
+    }
+
+    /**
+     * Inventory quantities are persisted with a scale of three, so an integer
+     * quantity such as ten is loaded as {@code 10.000}. Notification content is
+     * plain text and does not pass through the frontend number formatter; remove
+     * insignificant zeroes here to avoid displaying ten as "10.000", which can
+     * be mistaken for ten thousand in Vietnamese. Decimal quantities remain
+     * supported and use the Vietnamese decimal separator.
+     */
+    private String formatQuantity(BigDecimal value) {
+        return value.stripTrailingZeros().toPlainString().replace('.', ',');
     }
 
     private void saveAndPublish(User user, String type, String title, String content) {

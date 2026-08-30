@@ -188,7 +188,8 @@ class NotificationServiceTest {
                     assertThat(saved.getBusinessId()).isEqualTo(7L);
                     assertThat(saved.getNotificationType()).isEqualTo("GENERAL");
                     assertThat(saved.getTitle()).isEqualTo("Cảnh báo tồn kho thấp · SP-CA-PHE");
-                    assertThat(saved.getContent()).contains("Cà phê rang xay", "SP-CA-PHE", "2.000", "10.000");
+                    assertThat(saved.getContent())
+                            .isEqualTo("Sản phẩm Cà phê rang xay (SP-CA-PHE) chỉ còn 2, thấp hơn ngưỡng 10.");
                     assertThat(saved.getRead()).isFalse();
                 });
         verify(streamService).publish(eq(owner.getId()), any(NotificationResponse.class));
@@ -217,7 +218,8 @@ class NotificationServiceTest {
         Notification saved = captor.getValue();
         assertThat(saved.getNotificationType()).isEqualTo("GENERAL");
         assertThat(saved.getTitle()).isEqualTo("Tồn kho đã an toàn · SP-CA-PHE");
-        assertThat(saved.getContent()).contains("12.500");
+        assertThat(saved.getContent())
+                .isEqualTo("Tồn kho sản phẩm Cà phê rang xay (SP-CA-PHE) đã trở lại mức an toàn: 12,5.");
         assertThat(activeLowStock.getRead()).isTrue();
         assertThat(activeLowStock.getReadAt()).isNotNull();
         verify(notificationRepository).saveAll(List.of(activeLowStock));
