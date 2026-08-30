@@ -83,14 +83,21 @@ public class FeatureEntitlementSeeder implements CommandLineRunner {
     }
 
     /**
-     * Khởi tạo ma trận phân quyền tính năng chuẩn theo bậc giá tiền:
-     * - FREE (0đ): SP (≤20), Đơn (≤50), KH (≤20)
-     * - BASIC (99k): SP (≤100), Đơn (≤300), KH (≤100), Báo cáo (∞)
-     * - STANDARD (199k): Bán hàng (∞), Kho (∞), Công nợ (∞), Kế toán TT88 (∞), Báo cáo (∞), Nhân viên (≤3)
-     * - PREMIUM (299k): Đầy đủ tính năng + Thuế (∞) + Marketing (∞) + AI (∞) + Nhân viên (≤10)
-     * - VIP (499k): Trọn gói không giới hạn tất cả tính năng, Nhân viên (∞)
+     * Khởi tạo ma trận phân quyền tính năng chuẩn theo bậc giá tiền (định mức tinh gọn tối ưu):
+     * - FREE (0đ - Dùng thử): SP (≤3), Đơn (≤5), KH (≤3) -> Rất nhanh để test chạm trần quota
+     * - BASIC (99k - Hộ nhỏ): SP (≤15), Đơn (≤30), KH (≤15), Báo cáo (∞)
+     * - STANDARD (199k - Chuẩn): Bán hàng (∞), Kho (∞), Công nợ (∞), Kế toán TT88 (∞), Báo cáo (∞), Nhân viên (≤2 NV)
+     * - PREMIUM (299k - Cao cấp): Đầy đủ tính năng + Thuế (∞) + Marketing (∞) + AI (∞) + Nhân viên (≤5 NV)
+     * - VIP (499k - Trọn gói): Toàn bộ 10 tính năng không giới hạn, Nhân viên (∞)
+     *
+     * TỐI ƯU HÓA: Nếu DB đã có cấu hình (Admin đã tùy chỉnh trên UI) -> Giữ nguyên, KHÔNG ghi đè khi restart server!
      */
     private void seedPackageFeatureMappings() {
+        if (packageFeatureRepository.count() > 0) {
+            logger.info("Cấu hình ma trận Package-Feature đã tồn tại trong DB, giữ nguyên dữ liệu tùy chỉnh của Admin.");
+            return;
+        }
+
         List<SubscriptionPlan> plans = subscriptionPlanRepository.findAll();
         List<Feature> features = featureRepository.findAllByOrderByFeatureCodeAsc();
 
@@ -112,62 +119,56 @@ public class FeatureEntitlementSeeder implements CommandLineRunner {
                     shouldMap = true;
                     quota = null;
                 } else if (planCode.contains("PREMIUM") || planCode.contains("CAO CẤP") || planCode.contains("PRO")) {
-                    // Gói Cao Cấp (299k): Mở Full tính năng gồm Thuế, AI, Marketing; Nhân viên tối đa 10
+                    // Gói Cao Cấp (299k): Mở Full tính năng gồm Thuế, AI, Marketing; Nhân viên tối đa 5
                     shouldMap = true;
                     if ("EMPLOYEE_MANAGEMENT".equals(code)) {
-                        quota = 10;
+                        quota = 5;
                     }
                 } else if (planCode.contains("STANDARD")) {
-                    // Gói Standard (199k): Kho, Công nợ, Kế toán TT88, Bán hàng và tối đa 3 nhân viên
+                    // Gói Standard (199k): Kho, Công nợ, Kế toán TT88, Bán hàng và tối đa 2 nhân viên
                     shouldMap = switch (code) {
                         case "PRODUCT_MANAGEMENT", "SALES_ORDER", "CUSTOMER_MANAGEMENT",
                              "INVENTORY_MANAGEMENT", "DEBT_MANAGEMENT", "ACCOUNTING_BOOK",
                              "REPORT_GENERATION" -> true;
                         case "EMPLOYEE_MANAGEMENT" -> {
-                            quota = 3;
+                            quota = 2;
                             yield true;
                         }
-                        default -> false; // AI, Thuế dành riêng cho gói cao hơn
+                        default -> false; // AI, Thuế, Marketing dành riêng cho gói cao hơn
                     };
                 } else if (planCode.contains("BASIC") || planCode.contains("CƠ BẢN")) {
                     // Gói Cơ Bản (99k): Bán hàng cơ bản + Báo cáo doanh thu
                     shouldMap = switch (code) {
-                        case "PRODUCT_MANAGEMENT" -> { quota = 100; yield true; }
-                        case "SALES_ORDER" -> { quota = 300; yield true; }
-                        case "CUSTOMER_MANAGEMENT" -> { quota = 100; yield true; }
+                        case "PRODUCT_MANAGEMENT" -> { quota = 15; yield true; }
+                        case "SALES_ORDER" -> { quota = 30; yield true; }
+                        case "CUSTOMER_MANAGEMENT" -> { quota = 15; yield true; }
                         case "REPORT_GENERATION" -> true;
                         default -> false;
                     };
                 } else {
-                    // Gói Miễn Phí (FREE - 0đ): Dùng thử với hạn mức nhỏ
+                    // Gói Miễn Phí (FREE - 0đ): Dùng thử tinh gọn (SP: 3, Đơn: 5, KH: 3)
                     shouldMap = switch (code) {
-                        case "PRODUCT_MANAGEMENT" -> { quota = 20; yield true; }
-                        case "SALES_ORDER" -> { quota = 50; yield true; }
-                        case "CUSTOMER_MANAGEMENT" -> { quota = 20; yield true; }
+                        case "PRODUCT_MANAGEMENT" -> { quota = 3; yield true; }
+                        case "SALES_ORDER" -> { quota = 5; yield true; }
+                        case "CUSTOMER_MANAGEMENT" -> { quota = 3; yield true; }
                         default -> false;
                     };
                 }
 
-                Optional<PackageFeature> existing = packageFeatureRepository.findByPlanIdAndFeatureId(plan.getId(), feature.getId());
-
                 if (shouldMap) {
-                    PackageFeature pf = existing.orElseGet(() -> PackageFeature.builder()
+                    packageFeatureRepository.save(PackageFeature.builder()
                             .plan(plan)
                             .feature(feature)
+                            .enabled(true)
+                            .quotaLimit(quota)
                             .build());
-                    pf.setEnabled(true);
-                    pf.setQuotaLimit(quota);
-                    packageFeatureRepository.save(pf);
                     seeded++;
-                } else {
-                    // Nếu không thuộc gói này nhưng trước đó đã lưu trong DB -> xóa bỏ để đồng bộ đúng
-                    existing.ifPresent(packageFeatureRepository::delete);
                 }
             }
         }
 
         if (seeded > 0) {
-            logger.info("Đã khởi tạo {} cấu hình mapping gói - tính năng theo chuẩn giá tiền", seeded);
+            logger.info("Đã khởi tạo {} cấu hình mapping gói - tính năng mặc định", seeded);
         }
     }
 }
