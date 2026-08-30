@@ -5,16 +5,18 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   UserCircle, Lock, Mail, LogOut, Menu, X,
-  ChevronRight, Briefcase, ListOrdered, ShoppingCart,
+  ChevronRight, Briefcase, ListOrdered, ShoppingCart, BellRing,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
+import { apiClient, clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
 import { isEmployee } from '../lib/roles';
 import { EntitlementProvider } from '../lib/EntitlementContext';
+import NotificationBell from '../components/NotificationBell';
 
 const NAV_ITEMS = [
   { label: 'Bán hàng tại quầy', href: '/employee/orders/new', icon: ShoppingCart, hash: '' },
   { label: 'Danh sách đơn hàng', href: '/employee/orders/history', icon: ListOrdered, hash: '' },
+  { label: 'Cảnh báo tồn kho', href: '/employee/inventory-alerts', icon: BellRing, hash: '' },
   { label: 'Hồ sơ cá nhân', href: '/employee/account#profile', icon: UserCircle, hash: '#profile' },
   { label: 'Đổi mật khẩu', href: '/employee/account#password', icon: Lock, hash: '#password' },
   { label: 'Email & Số điện thoại', href: '/employee/account#contact', icon: Mail, hash: '#contact' },
@@ -30,6 +32,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
   const [position, setPosition] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentHash, setCurrentHash] = useState('#profile');
+  const [lowStockCount, setLowStockCount] = useState(0);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -56,6 +59,34 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
     }, 0);
     return () => window.clearTimeout(timer);
   }, [router]);
+
+  useEffect(() => {
+    if (loading) return;
+    let active = true;
+    const refreshCount = async () => {
+      try {
+        const summary = await apiClient.get<{ totalLowStock: number }>(
+          '/api/inventory/low-stock/summary?limit=1',
+        );
+        if (active) setLowStockCount(summary.totalLowStock);
+      } catch {
+        // Employee can keep using the app if the optional badge is unavailable.
+      }
+    };
+    void refreshCount();
+    const timer = window.setInterval(() => void refreshCount(), 30_000);
+    const handleNotification = () => void refreshCount();
+
+    window.addEventListener('hbdt-notification', handleNotification);
+    window.addEventListener('product-updated', handleNotification);
+
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener('hbdt-notification', handleNotification);
+      window.removeEventListener('product-updated', handleNotification);
+    };
+  }, [loading]);
 
   useEffect(() => {
     const syncHash = () => {
@@ -89,7 +120,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
   const initials = fullName.split(' ').map((w) => w[0]).slice(-2).join('').toUpperCase();
 
   return (
-    <div className="min-h-screen bg-slate-100/70 text-slate-900 flex flex-col md:flex-row relative font-sans antialiased">
+    <div className="min-h-screen bg-[#ededed] text-slate-900 flex flex-col md:flex-row relative font-sans antialiased">
 
       {/* ── Mobile Top Header ── */}
       <div className="md:hidden bg-white/90 border-b border-slate-200/80 px-5 py-3.5 flex items-center justify-between sticky top-0 z-40 backdrop-blur-md shadow-xs">
@@ -121,14 +152,17 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
           >
             <div className="flex flex-col gap-6 px-5">
               {/* Brand */}
-              <div className="flex items-center gap-3 pb-2 border-b border-slate-100">
-                <div className="p-2.5 bg-slate-900 text-white rounded-xl shadow-sm">
-                  <Briefcase className="w-5 h-5" />
+              <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="p-2.5 bg-slate-900 text-white rounded-xl shadow-sm">
+                    <Briefcase className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-base font-bold tracking-tight text-slate-900 block leading-tight">HBDT.DIGITAL</span>
+                    <span className="text-[11px] text-slate-500 font-medium">Cổng nhân viên</span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-base font-bold tracking-tight text-slate-900 block leading-tight">HBDT.DIGITAL</span>
-                  <span className="text-[11px] text-slate-500 font-medium">Cổng nhân viên</span>
-                </div>
+                <NotificationBell className="shrink-0" />
               </div>
 
               {/* User summary */}
@@ -165,7 +199,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                     : pathname === item.href;
                   return (
                     <Link
-                      key={item.hash}
+                      key={item.href}
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
                       className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
@@ -176,6 +210,11 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                       <div className="flex items-center gap-2.5">
                         <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
                         <span>{item.label}</span>
+                        {item.href === '/employee/inventory-alerts' && lowStockCount > 0 && (
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${isActive ? 'bg-white text-red-700' : 'bg-red-100 text-red-700'}`}>
+                            {lowStockCount > 99 ? '99+' : lowStockCount}
+                          </span>
+                        )}
                       </div>
                       <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
                     </Link>

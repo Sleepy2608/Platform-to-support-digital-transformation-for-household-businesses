@@ -65,4 +65,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /** Đếm tổng số nhân viên của một business */
     long countByBusinessIdAndRole_Name(Long businessId, RoleType roleType);
+
+    List<User> findAllByBusinessIdAndStatus(Long businessId, UserStatus status);
 }

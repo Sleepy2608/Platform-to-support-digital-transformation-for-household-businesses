@@ -16,6 +16,7 @@ import {
   CheckoutData,
   OrderCartDrawer,
 } from '@/app/components/OrderCartDrawer';
+import { ProductImportSection } from '@/app/components/ProductImportSection';
 
 type Status = 'ACTIVE' | 'INACTIVE';
 
@@ -192,13 +193,49 @@ export default function ProductManagementPage() {
   }, [reload]);
 
   useEffect(() => {
+    const handleProductUpdated = () => {
+      void loadProducts();
+    };
+    const handleNotification = () => {
+      void loadProducts();
+    };
+    const handleFocus = () => {
+      if (document.visibilityState === 'visible') {
+        void loadProducts();
+      }
+    };
+
+    window.addEventListener('product-updated', handleProductUpdated);
+    window.addEventListener('hbdt-notification', handleNotification);
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
+
+    return () => {
+      window.removeEventListener('product-updated', handleProductUpdated);
+      window.removeEventListener('hbdt-notification', handleNotification);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+    };
+  }, [loadProducts]);
+
+  useEffect(() => {
     const timers = cartResolveTimers.current;
     return () => Object.values(timers).forEach(clearTimeout);
   }, []);
 
+  const notifyProductUpdated = () => {
+    window.dispatchEvent(new CustomEvent('product-updated'));
+  };
+
   const showNotice = (message: string) => {
     setNotice(message);
     window.setTimeout(() => setNotice(''), 2500);
+  };
+
+  const refreshProductsAfterImport = async (successCount: number) => {
+    await loadProducts();
+    notifyProductUpdated();
+    showNotice(`Đã cập nhật danh sách với ${successCount} sản phẩm vừa nhập`);
   };
 
   const openCategory = (category?: Category) => {
@@ -285,6 +322,7 @@ export default function ProductManagementPage() {
       }
       setCategoryModal(false);
       showNotice(editingCategory ? 'Đã cập nhật danh mục' : 'Đã tạo danh mục');
+      notifyProductUpdated();
       await reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể lưu danh mục');
@@ -336,6 +374,7 @@ export default function ProductManagementPage() {
       setSelectedImageFile(null);
       setImagePreview('');
       showNotice(editingProduct ? 'Đã cập nhật sản phẩm' : 'Đã tạo sản phẩm thành công');
+      notifyProductUpdated();
       await reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể lưu sản phẩm');
@@ -391,6 +430,7 @@ export default function ProductManagementPage() {
       setUnitForm({ unitId: '', conversionRate: '1' });
       await loadProductUnits(unitProduct.id);
       showNotice(editingProductUnit ? 'Đã cập nhật tỷ lệ quy đổi' : 'Đã thêm đơn vị tính');
+      notifyProductUpdated();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể lưu đơn vị tính');
     } finally {
@@ -404,6 +444,7 @@ export default function ProductManagementPage() {
       await apiClient.delete(`/api/products/${unitProduct.id}/units/${productUnitId}`);
       await loadProductUnits(unitProduct.id);
       showNotice('Đã xóa đơn vị quy đổi');
+      notifyProductUpdated();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể xóa đơn vị tính');
     }
@@ -470,6 +511,7 @@ export default function ProductManagementPage() {
       setPriceHistory([]);
       await loadPrices(priceProduct.id);
       showNotice(editingPrice ? 'Đã cập nhật và lưu lịch sử giá' : 'Đã thêm mức giá');
+      notifyProductUpdated();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể lưu mức giá');
     } finally {
@@ -484,6 +526,7 @@ export default function ProductManagementPage() {
       setPriceHistory([]);
       await loadPrices(priceProduct.id);
       showNotice('Đã ngừng áp dụng mức giá');
+      notifyProductUpdated();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể ngừng áp dụng mức giá');
     }
@@ -507,6 +550,7 @@ export default function ProductManagementPage() {
     try {
       await apiClient.delete(`/api/${kind === 'product' ? 'products' : 'categories'}/${id}`);
       showNotice('Đã vô hiệu hóa thành công');
+      notifyProductUpdated();
       await reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể vô hiệu hóa');
@@ -758,6 +802,9 @@ export default function ProductManagementPage() {
                 {formatQuantity(cartQuantity)}
               </span>
             </button>
+            {tab === 'products' && (
+              <ProductImportSection onImportSuccess={refreshProductsAfterImport} />
+            )}
             <button
               onClick={() => tab === 'products' ? openProduct() : openCategory()}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-slate-800 transition"
