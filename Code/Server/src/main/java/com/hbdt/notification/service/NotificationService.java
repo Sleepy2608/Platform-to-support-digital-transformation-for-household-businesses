@@ -145,14 +145,6 @@ public class NotificationService {
         return "Cảnh báo tồn kho thấp · " + product.getProductCode();
     }
 
-    /**
-     * Inventory quantities are persisted with a scale of three, so an integer
-     * quantity such as ten is loaded as {@code 10.000}. Notification content is
-     * plain text and does not pass through the frontend number formatter; remove
-     * insignificant zeroes here to avoid displaying ten as "10.000", which can
-     * be mistaken for ten thousand in Vietnamese. Decimal quantities remain
-     * supported and use the Vietnamese decimal separator.
-     */
     private String formatQuantity(BigDecimal value) {
         return value.stripTrailingZeros().toPlainString().replace('.', ',');
     }
