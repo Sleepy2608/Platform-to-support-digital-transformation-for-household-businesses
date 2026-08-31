@@ -6,12 +6,13 @@ import Link from 'next/link';
 import {
   Store, UserCircle, Lock, Mail, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
-  Shield, Users, PackageOpen, ReceiptText, ListOrdered,
+  Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
+import { apiClient, clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
 import { isOwner } from '../lib/roles';
+import NotificationBell from '../components/NotificationBell';
 
 function getCleanHash(rawHash?: string): string {
   if (!rawHash) return 'profile';
@@ -38,7 +39,16 @@ const MANAGE_NAV_ITEMS: Array<{
   path: string;
   children?: Array<{ label: string; href: string; icon: LucideIcon }>;
 }> = [
-  { label: 'Sản phẩm & Danh mục', href: '/owner/products', icon: PackageOpen, path: '/owner/products' },
+  {
+    label: 'Sản phẩm & Danh mục',
+    href: '/owner/products',
+    icon: PackageOpen,
+    path: '/owner/products',
+    children: [
+      { label: 'Danh sách sản phẩm', href: '/owner/products', icon: PackageOpen },
+      { label: 'Cảnh báo tồn kho', href: '/owner/inventory-alerts', icon: BellRing },
+    ],
+  },
   {
     label: 'Đơn hàng',
     href: '/owner/orders/history',
@@ -60,6 +70,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
   const [avatarUrl, setAvatarUrl] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentHash, setCurrentHash] = useState('#profile');
+  const [lowStockCount, setLowStockCount] = useState(0);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -88,6 +99,34 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     }, 0);
     return () => window.clearTimeout(timer);
   }, [router]);
+
+  useEffect(() => {
+    if (loading) return;
+    let active = true;
+    const refreshCount = async () => {
+      try {
+        const summary = await apiClient.get<{ totalLowStock: number }>(
+          '/api/inventory/low-stock/summary?limit=1',
+        );
+        if (active) setLowStockCount(summary.totalLowStock);
+      } catch {
+        // Navigation remains usable if the optional badge cannot be loaded.
+      }
+    };
+    void refreshCount();
+    const timer = window.setInterval(() => void refreshCount(), 30_000);
+    const handleNotification = () => void refreshCount();
+
+    window.addEventListener('hbdt-notification', handleNotification);
+    window.addEventListener('product-updated', handleNotification);
+
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener('hbdt-notification', handleNotification);
+      window.removeEventListener('product-updated', handleNotification);
+    };
+  }, [loading]);
 
   useEffect(() => {
     const syncOwnerSummary = (event?: Event) => {
@@ -166,7 +205,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     .toUpperCase();
 
   return (
-    <div className="min-h-screen bg-slate-100/70 text-slate-900 flex flex-col md:flex-row relative font-sans antialiased">
+    <div className="min-h-screen bg-[#ededed] text-slate-900 flex flex-col md:flex-row relative font-sans antialiased">
 
       {/* ── Mobile Top Header ── */}
       <div className="md:hidden bg-white/90 border-b border-slate-200/80 px-5 py-3.5 flex items-center justify-between sticky top-0 z-40 backdrop-blur-md shadow-xs">
@@ -199,14 +238,17 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
             {/* Top Container */}
             <div className="flex flex-col gap-6 px-5">
               {/* Brand Logo */}
-              <div className="flex items-center gap-3 pb-2 border-b border-slate-100">
-                <div className="p-2.5 bg-slate-900 text-white rounded-xl shadow-sm">
-                  <Store className="w-5 h-5" />
+              <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="p-2.5 bg-slate-900 text-white rounded-xl shadow-sm">
+                    <Store className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-base font-bold tracking-tight text-slate-900 block leading-tight">HBDT.DIGITAL</span>
+                    <span className="text-[11px] text-slate-500 font-medium">Quản lý Hộ kinh doanh</span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-base font-bold tracking-tight text-slate-900 block leading-tight">HBDT.DIGITAL</span>
-                  <span className="text-[11px] text-slate-500 font-medium">Quản lý Hộ kinh doanh</span>
-                </div>
+                <NotificationBell className="shrink-0" />
               </div>
 
               {/* User Profile Summary */}
@@ -240,7 +282,10 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                   </p>
                   {MANAGE_NAV_ITEMS.map((item) => {
                     const Icon = item.icon;
-                    const isActive = pathname.startsWith(item.path);
+                    const isActive = pathname.startsWith(item.path) ||
+                      Boolean(item.children?.some(child => pathname === child.href || pathname.startsWith(child.href)));
+                    const hasInventoryAlertsChild = item.children?.some(child => child.href === '/owner/inventory-alerts');
+
                     return (
                       <div key={item.path}>
                         <Link
@@ -255,6 +300,11 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                           <div className="flex items-center gap-2.5">
                             <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
                             <span>{item.label}</span>
+                            {hasInventoryAlertsChild && lowStockCount > 0 && !isActive && (
+                              <span className="rounded-full px-2 py-0.5 text-[10px] font-black bg-red-100 text-red-700">
+                                {lowStockCount > 99 ? '99+' : lowStockCount}
+                              </span>
+                            )}
                           </div>
                           <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'rotate-90' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
                         </Link>
@@ -263,20 +313,29 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                           <div className="ml-5 mt-1 border-l border-slate-200 pl-3">
                             {item.children.map((child) => {
                               const ChildIcon = child.icon;
-                              const childActive = pathname === child.href;
+                              const childActive = pathname === child.href || (child.href !== '/owner/products' && pathname.startsWith(child.href));
+                              const isAlertChild = child.href === '/owner/inventory-alerts';
+
                               return (
                                 <Link
                                   key={child.href}
                                   href={child.href}
                                   onClick={() => setSidebarOpen(false)}
-                                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
+                                  className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
                                     childActive
-                                      ? 'bg-slate-100 text-slate-950'
+                                      ? 'bg-slate-100 text-slate-950 font-bold'
                                       : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                                   }`}
                                 >
-                                  <ChildIcon className="h-3.5 w-3.5" />
-                                  <span>{child.label}</span>
+                                  <div className="flex items-center gap-2">
+                                    <ChildIcon className="h-3.5 w-3.5" />
+                                    <span>{child.label}</span>
+                                  </div>
+                                  {isAlertChild && lowStockCount > 0 && (
+                                    <span className="rounded-full px-1.5 py-0.2 text-[10px] font-black bg-red-100 text-red-700">
+                                      {lowStockCount > 99 ? '99+' : lowStockCount}
+                                    </span>
+                                  )}
                                 </Link>
                               );
                             })}

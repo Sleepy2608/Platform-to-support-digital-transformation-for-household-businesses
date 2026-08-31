@@ -20,6 +20,7 @@ import com.hbdt.repository.ProductRepository;
 import com.hbdt.repository.ProductUnitRepository;
 import com.hbdt.repository.TaxActivityGroupRepository;
 import com.hbdt.repository.UnitRepository;
+import com.hbdt.inventory.service.LowStockAlertService;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -54,6 +55,7 @@ public class ProductService {
     private final BusinessContextService businessContextService;
     private final ProductImageService productImageService;
     private final ImageStorageService imageStorageService;
+    private final LowStockAlertService lowStockAlertService;
 
     public ProductService(ProductRepository productRepository,
                           ProductUnitRepository productUnitRepository,
@@ -63,7 +65,8 @@ public class ProductService {
                           TaxActivityGroupRepository taxActivityGroupRepository,
                           BusinessContextService businessContextService,
                           ProductImageService productImageService,
-                          ImageStorageService imageStorageService) {
+                          ImageStorageService imageStorageService,
+                          LowStockAlertService lowStockAlertService) {
         this.productRepository = productRepository;
         this.productUnitRepository = productUnitRepository;
         this.categoryRepository = categoryRepository;
@@ -73,6 +76,7 @@ public class ProductService {
         this.businessContextService = businessContextService;
         this.productImageService = productImageService;
         this.imageStorageService = imageStorageService;
+        this.lowStockAlertService = lowStockAlertService;
     }
 
     public PageResponse<ProductResponse> search(String username, String keyword, String status, Long categoryId,
@@ -183,6 +187,8 @@ public class ProductService {
         Product saved = productRepository.save(product);
         if (request.quantityOnHand() != null) {
             saveQuantity(saved, normalizeQuantity(request.quantityOnHand(), BigDecimal.ZERO));
+        } else {
+            lowStockAlertService.synchronizeProductStatus(saved.getBusinessId(), saved.getId());
         }
         return toResponse(saved);
     }
@@ -192,7 +198,9 @@ public class ProductService {
         Long businessId = businessContextService.requireBusinessId(username);
         Product product = findOwned(id, businessId);
         product.setStatus(INACTIVE);
-        return toResponse(productRepository.save(product));
+        Product saved = productRepository.save(product);
+        lowStockAlertService.synchronizeProductStatus(saved.getBusinessId(), saved.getId());
+        return toResponse(saved);
     }
 
     private Product findOwned(Long id, Long businessId) {
@@ -301,6 +309,7 @@ public class ProductService {
         balance.setAverageUnitCost(averageCost);
         balance.setInventoryValue(averageCost.multiply(quantity));
         inventoryBalanceRepository.save(balance);
+        lowStockAlertService.evaluate(product.getBusinessId(), product.getId(), quantity);
     }
 
     private void saveBaseUnitConfiguration(Product product) {

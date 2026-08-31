@@ -2,6 +2,7 @@ package com.hbdt.product.service;
 
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.service.ImageStorageService;
+import com.hbdt.inventory.service.LowStockAlertService;
 import com.hbdt.entity.Category;
 import com.hbdt.entity.InventoryBalance;
 import com.hbdt.entity.Product;
@@ -53,6 +54,8 @@ class ProductServiceTest {
     private ProductImageService productImageService;
     @Mock
     private ImageStorageService imageStorageService;
+    @Mock
+    private LowStockAlertService lowStockAlertService;
 
     private ProductService productService;
 
@@ -60,7 +63,7 @@ class ProductServiceTest {
     void setUp() {
         productService = new ProductService(productRepository, productUnitRepository, categoryRepository, unitRepository,
                 inventoryBalanceRepository, taxActivityGroupRepository, businessContextService,
-                productImageService, imageStorageService);
+                productImageService, imageStorageService, lowStockAlertService);
         when(businessContextService.requireBusinessId("owner")).thenReturn(10L);
     }
 
@@ -201,5 +204,6 @@ class ProductServiceTest {
         assertEquals("INACTIVE", response.status());
         verify(productRepository).findByIdAndBusinessId(8L, 10L);
         verify(productRepository).save(product);
+        verify(lowStockAlertService).synchronizeProductStatus(10L, 8L);
     }
 }

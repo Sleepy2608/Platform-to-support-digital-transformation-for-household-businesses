@@ -37,6 +37,7 @@ public class InventoryMovementService {
     private final UserRepository userRepository;
     private final InventoryBalanceRepository balanceRepository;
     private final InventoryTransactionRepository transactionRepository;
+    private final LowStockAlertService lowStockAlertService;
 
     public InventoryMovementService(
             BusinessContextService businessContextService,
@@ -45,7 +46,8 @@ public class InventoryMovementService {
             UnitRepository unitRepository,
             UserRepository userRepository,
             InventoryBalanceRepository balanceRepository,
-            InventoryTransactionRepository transactionRepository
+            InventoryTransactionRepository transactionRepository,
+            LowStockAlertService lowStockAlertService
     ) {
         this.businessContextService = businessContextService;
         this.unitConversionService = unitConversionService;
@@ -54,6 +56,7 @@ public class InventoryMovementService {
         this.userRepository = userRepository;
         this.balanceRepository = balanceRepository;
         this.transactionRepository = transactionRepository;
+        this.lowStockAlertService = lowStockAlertService;
     }
 
     @Transactional(readOnly = true)
@@ -98,6 +101,7 @@ public class InventoryMovementService {
                 conversion.baseQuantity(), balanceAfter, averageCost,
                 transactionValue, inventoryValue
         );
+        lowStockAlertService.evaluate(context.businessId(), request.getProductId(), balanceAfter);
         return toResponse(transaction, request, conversion, context.product(), balance);
     }
 
@@ -126,6 +130,7 @@ public class InventoryMovementService {
                 conversion.baseQuantity().negate(), balanceAfter, balance.getAverageUnitCost(),
                 transactionValue, inventoryValue
         );
+        lowStockAlertService.evaluate(context.businessId(), request.getProductId(), balanceAfter);
         return toResponse(transaction, request, conversion, context.product(), balance);
     }
 
@@ -180,6 +185,7 @@ public class InventoryMovementService {
                 .costedAt(LocalDateTime.now())
                 .note("Hoàn kho do hủy đơn " + orderCode)
                 .build());
+        lowStockAlertService.evaluate(context.businessId(), productId, balanceAfter);
     }
 
     private Context requireContext(String actorUsername, Long productId) {
