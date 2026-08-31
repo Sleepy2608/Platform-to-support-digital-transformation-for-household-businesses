@@ -41,6 +41,7 @@ class InventoryMovementServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private InventoryBalanceRepository balanceRepository;
     @Mock private InventoryTransactionRepository transactionRepository;
+    @Mock private LowStockAlertService lowStockAlertService;
 
     private InventoryMovementService service;
 
@@ -48,7 +49,8 @@ class InventoryMovementServiceTest {
     void setUp() {
         service = new InventoryMovementService(
                 businessContextService, unitConversionService, productRepository,
-                unitRepository, userRepository, balanceRepository, transactionRepository
+                unitRepository, userRepository, balanceRepository, transactionRepository,
+                lowStockAlertService
         );
     }
 

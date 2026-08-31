@@ -183,3 +183,10 @@ npm run dev
   * Local: http://localhost:3000/
   * Network: http://[IP_ADDRESS]/
 > Lưu ý: Trang đăng nhập vào Manager/Owner/Employee được chạy ở url `http://localhost:3000/login` còn trang Admin được chạy ở url `http://localhost:3000/admin/login`.
+
+### 6. Cảnh báo tồn kho thấp (HBDT-52)
+
+Không cần chạy migration riêng. Chức năng dùng các bảng có sẵn trên `main`:
+`system_configurations`, `inventory_balances` và `notifications`. Owner cấu hình và
+theo dõi tại `/owner/inventory-alerts`; Employee xem cảnh báo tại
+`/employee/inventory-alerts`.

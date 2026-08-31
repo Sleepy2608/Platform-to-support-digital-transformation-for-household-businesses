@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:low-stock": "node --no-warnings --test --experimental-strip-types tests/lowStockViewModel.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",
