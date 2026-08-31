@@ -1,6 +1,6 @@
 {
   "table" : "subscription_plans",
-  "version" : 14,
+  "version" : 15,
   "rows" : [ {
     "id" : 1,
     "annual_price" : 0.00,
@@ -13,14 +13,14 @@
     "updated_at" : "2026-08-09T14:41:19"
   }, {
     "id" : 2,
-    "annual_price" : 990000.00,
+    "annual_price" : 2200000.00,
     "created_at" : "2026-08-09T14:41:19",
     "description" : "Cho hộ kinh doanh nhỏ",
-    "monthly_price" : 99000.00,
+    "monthly_price" : 199000.00,
     "plan_code" : "BASIC",
     "plan_name" : "Gói Cơ Bản",
     "status" : "ACTIVE",
-    "updated_at" : "2026-08-09T14:41:19"
+    "updated_at" : "2026-08-31T05:00:21.019258"
   }, {
     "id" : 3,
     "annual_price" : 2990000.00,
@@ -29,8 +29,8 @@
     "monthly_price" : 299000.00,
     "plan_code" : "PREMIUM",
     "plan_name" : "Gói Cao Cấp",
-    "status" : "ACTIVE",
-    "updated_at" : "2026-08-09T14:41:19"
+    "status" : "INACTIVE",
+    "updated_at" : "2026-08-31T04:58:50.592061"
   }, {
     "id" : 4,
     "annual_price" : 1990000.00,
@@ -39,27 +39,27 @@
     "monthly_price" : 199000.00,
     "plan_code" : "STANDARD",
     "plan_name" : "Gói Standard",
-    "status" : "ACTIVE",
-    "updated_at" : "2026-08-09T17:44:16.270805"
+    "status" : "INACTIVE",
+    "updated_at" : "2026-08-31T04:58:39.880209"
   }, {
     "id" : 5,
     "annual_price" : 234000.00,
     "created_at" : "2026-08-11T05:30:00.300988",
     "description" : null,
     "monthly_price" : 1000.00,
-    "plan_code" : "1",
-    "plan_name" : "12",
+    "plan_code" : "TEST",
+    "plan_name" : "Test",
     "status" : "INACTIVE",
-    "updated_at" : "2026-08-23T14:41:44.14638"
+    "updated_at" : "2026-08-31T04:59:14.027788"
   }, {
     "id" : 6,
-    "annual_price" : 4990000.00,
+    "annual_price" : 4500000.00,
     "created_at" : "2026-08-21T22:00:00",
     "description" : "Trợ lý AI, tự động hoá báo cáo thuế, không giới hạn nhân viên",
-    "monthly_price" : 499000.00,
+    "monthly_price" : 399000.00,
     "plan_code" : "VIP",
     "plan_name" : "Gói VIP",
     "status" : "ACTIVE",
-    "updated_at" : "2026-08-21T22:00:00"
+    "updated_at" : "2026-08-31T05:00:39.655088"
   } ]
 }

@@ -1,6 +1,6 @@
 {
   "table" : "debt_transactions",
-  "version" : 3,
+  "version" : 4,
   "rows" : [ {
     "id" : 1,
     "amount" : 60000000.00,
@@ -32,6 +32,70 @@
     "transaction_code" : "PAY-SO-6-111B4B20",
     "transaction_date" : "2026-08-23T14:39:34.077245",
     "transaction_type" : "DEBT_PAYMENT",
+    "status" : "ACTIVE"
+  }, {
+    "id" : 3,
+    "amount" : 15000000.00,
+    "balance_after" : 15000000.00,
+    "business_id" : 5,
+    "created_at" : "2026-08-23T14:54:44.778745",
+    "created_by" : 5,
+    "customer_id" : 4,
+    "description" : "Phát sinh công nợ từ đơn DH Đình chấn",
+    "payment_method" : null,
+    "reference_number" : null,
+    "sales_order_id" : 8,
+    "transaction_code" : "DEBT-SO-8",
+    "transaction_date" : "2026-08-23T14:54:44.778745",
+    "transaction_type" : "DEBT_INCREASE",
+    "status" : "ACTIVE"
+  }, {
+    "id" : 4,
+    "amount" : 15000.00,
+    "balance_after" : 14985000.00,
+    "business_id" : 5,
+    "created_at" : "2026-08-23T14:54:55.054381",
+    "created_by" : 5,
+    "customer_id" : 4,
+    "description" : "Thanh toán công nợ đơn DH Đình chấn",
+    "payment_method" : null,
+    "reference_number" : null,
+    "sales_order_id" : 8,
+    "transaction_code" : "PAY-SO-8-CE9A1201",
+    "transaction_date" : "2026-08-23T14:54:55.054381",
+    "transaction_type" : "DEBT_PAYMENT",
+    "status" : "ACTIVE"
+  }, {
+    "id" : 5,
+    "amount" : 14985000.00,
+    "balance_after" : 0.00,
+    "business_id" : 5,
+    "created_at" : "2026-08-24T06:34:38.695164",
+    "created_by" : 4,
+    "customer_id" : 4,
+    "description" : "Đảo công nợ do hủy đơn DH Đình chấn",
+    "payment_method" : null,
+    "reference_number" : null,
+    "sales_order_id" : 8,
+    "transaction_code" : "REV-SO-8",
+    "transaction_date" : "2026-08-24T06:34:38.695164",
+    "transaction_type" : "DEBT_REVERSAL",
+    "status" : "ACTIVE"
+  }, {
+    "id" : 6,
+    "amount" : 59400000.00,
+    "balance_after" : 0.00,
+    "business_id" : 5,
+    "created_at" : "2026-08-24T06:34:54.782628",
+    "created_by" : 4,
+    "customer_id" : 1,
+    "description" : "Đảo công nợ do hủy đơn DH-015",
+    "payment_method" : null,
+    "reference_number" : null,
+    "sales_order_id" : 6,
+    "transaction_code" : "REV-SO-6",
+    "transaction_date" : "2026-08-24T06:34:54.782628",
+    "transaction_type" : "DEBT_REVERSAL",
     "status" : "ACTIVE"
   } ]
 }

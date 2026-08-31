@@ -1,0 +1,85 @@
+{
+  "table" : "features",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "created_at" : "2026-08-24T06:43:25.832543",
+    "description" : "Tạo, chỉnh sửa, xóa sản phẩm và danh mục hàng hóa",
+    "feature_code" : "PRODUCT_MANAGEMENT",
+    "feature_name" : "Quản lý sản phẩm & danh mục",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-28T17:02:33.227186"
+  }, {
+    "id" : 2,
+    "created_at" : "2026-08-24T06:43:25.890714",
+    "description" : "Thêm, quản lý tài khoản và phân quyền nhân viên",
+    "feature_code" : "EMPLOYEE_MANAGEMENT",
+    "feature_name" : "Quản lý nhân viên",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-24T06:43:25.890714"
+  }, {
+    "id" : 3,
+    "created_at" : "2026-08-24T06:43:25.9035",
+    "description" : "Theo dõi tồn kho, nhập kho, xuất kho",
+    "feature_code" : "INVENTORY_MANAGEMENT",
+    "feature_name" : "Quản lý kho hàng",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-24T06:43:25.9035"
+  }, {
+    "id" : 4,
+    "created_at" : "2026-08-24T06:43:25.916502",
+    "description" : "Tạo và quản lý đơn hàng bán ra",
+    "feature_code" : "SALES_ORDER",
+    "feature_name" : "Quản lý đơn hàng",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-24T06:43:25.916502"
+  }, {
+    "id" : 5,
+    "created_at" : "2026-08-24T06:43:25.929516",
+    "description" : "Ghi chép thu chi, sổ kế toán cơ bản",
+    "feature_code" : "ACCOUNTING_BOOK",
+    "feature_name" : "Sổ kế toán",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-24T06:43:25.929516"
+  }, {
+    "id" : 6,
+    "created_at" : "2026-08-24T06:43:25.939773",
+    "description" : "Khai báo, tính toán và theo dõi nghĩa vụ thuế",
+    "feature_code" : "TAX_MANAGEMENT",
+    "feature_name" : "Quản lý thuế",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-24T06:43:25.939773"
+  }, {
+    "id" : 7,
+    "created_at" : "2026-08-24T06:43:25.951817",
+    "description" : "Hỗ trợ phân tích dữ liệu và tư vấn kinh doanh bằng AI",
+    "feature_code" : "AI_ASSISTANT",
+    "feature_name" : "Trợ lý AI",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-24T06:43:25.951817"
+  }, {
+    "id" : 8,
+    "created_at" : "2026-08-24T06:43:25.962941",
+    "description" : "Tạo và xuất báo cáo kinh doanh tùy chỉnh",
+    "feature_code" : "REPORT_GENERATION",
+    "feature_name" : "Tạo báo cáo",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-24T06:43:25.962941"
+  }, {
+    "id" : 9,
+    "created_at" : "2026-08-24T06:43:25.974444",
+    "description" : "Theo dõi và quản lý nợ phải thu, nợ phải trả",
+    "feature_code" : "DEBT_MANAGEMENT",
+    "feature_name" : "Quản lý công nợ",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-24T06:43:25.974444"
+  }, {
+    "id" : 10,
+    "created_at" : "2026-08-24T06:43:25.987449",
+    "description" : "Lưu trữ và quản lý thông tin khách hàng",
+    "feature_code" : "CUSTOMER_MANAGEMENT",
+    "feature_name" : "Quản lý khách hàng",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-24T06:43:25.987449"
+  } ]
+}

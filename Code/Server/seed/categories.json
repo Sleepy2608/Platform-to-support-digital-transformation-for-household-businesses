@@ -1,6 +1,6 @@
 {
   "table" : "categories",
-  "version" : 8,
+  "version" : 9,
   "rows" : [ {
     "id" : 2,
     "business_id" : 1,
@@ -28,5 +28,23 @@
     "description" : null,
     "status" : "ACTIVE",
     "updated_at" : "2026-08-11T19:52:14.339736"
+  }, {
+    "id" : 4,
+    "business_id" : 5,
+    "category_code" : "DM_01",
+    "category_name" : "THUC_PHAM",
+    "created_at" : "2026-08-27T02:56:51.900135",
+    "description" : "Thực phẩm ăn uống",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-27T02:56:51.900135"
+  }, {
+    "id" : 5,
+    "business_id" : 5,
+    "category_code" : "DM_02",
+    "category_name" : "NUOC_UONG",
+    "created_at" : "2026-08-27T02:57:49.129752",
+    "description" : null,
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-27T02:58:24.146398"
   } ]
 }

@@ -1,6 +1,6 @@
 {
   "table" : "products",
-  "version" : 8,
+  "version" : 9,
   "rows" : [ {
     "id" : 5,
     "base_unit_id" : 1,
@@ -14,7 +14,8 @@
     "product_name" : "1234",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-11T19:23:24.740117",
-    "sale_price" : null
+    "sale_price" : null,
+    "minimum_stock" : null
   }, {
     "id" : 6,
     "base_unit_id" : 1,
@@ -27,8 +28,9 @@
     "product_code" : "sp01",
     "product_name" : "123",
     "status" : "ACTIVE",
-    "updated_at" : "2026-08-20T03:54:53.266614",
-    "sale_price" : 50000.00
+    "updated_at" : "2026-08-28T16:44:14.324116",
+    "sale_price" : 50000.00,
+    "minimum_stock" : 5.000
   }, {
     "id" : 7,
     "base_unit_id" : 1,
@@ -42,7 +44,8 @@
     "product_name" : "1234",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-20T03:59:05.865948",
-    "sale_price" : 20000.00
+    "sale_price" : 20000.00,
+    "minimum_stock" : null
   }, {
     "id" : 8,
     "base_unit_id" : 1,
@@ -56,7 +59,8 @@
     "product_name" : "đâsd",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-20T03:59:22.296479",
-    "sale_price" : 10000.00
+    "sale_price" : 10000.00,
+    "minimum_stock" : null
   }, {
     "id" : 9,
     "base_unit_id" : 1,
@@ -70,7 +74,8 @@
     "product_name" : "đâsdasdasdasd",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-20T03:59:37.646492",
-    "sale_price" : 15000.00
+    "sale_price" : 15000.00,
+    "minimum_stock" : null
   }, {
     "id" : 10,
     "base_unit_id" : 1,
@@ -84,7 +89,8 @@
     "product_name" : "ádasdasdasdadsd",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-20T03:59:54.972915",
-    "sale_price" : 5000.00
+    "sale_price" : 5000.00,
+    "minimum_stock" : null
   }, {
     "id" : 11,
     "base_unit_id" : 1,
@@ -98,7 +104,8 @@
     "product_name" : "ádsadasdasdadasdasd",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-20T04:00:12.903251",
-    "sale_price" : 2000.00
+    "sale_price" : 2000.00,
+    "minimum_stock" : null
   }, {
     "id" : 12,
     "base_unit_id" : 1,
@@ -112,7 +119,8 @@
     "product_name" : "124",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-20T04:02:18.820069",
-    "sale_price" : 5000.00
+    "sale_price" : 5000.00,
+    "minimum_stock" : null
   }, {
     "id" : 13,
     "base_unit_id" : 1,
@@ -126,7 +134,8 @@
     "product_name" : "124124124",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-20T04:02:47.599564",
-    "sale_price" : 5000.00
+    "sale_price" : 5000.00,
+    "minimum_stock" : null
   }, {
     "id" : 14,
     "base_unit_id" : 2,
@@ -140,7 +149,8 @@
     "product_name" : "Quan Ao",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-21T17:09:38.714764",
-    "sale_price" : 0.00
+    "sale_price" : 0.00,
+    "minimum_stock" : null
   }, {
     "id" : 15,
     "base_unit_id" : 1,
@@ -154,7 +164,8 @@
     "product_name" : "Sach vo",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-21T17:23:01.696261",
-    "sale_price" : 0.00
+    "sale_price" : 0.00,
+    "minimum_stock" : null
   }, {
     "id" : 16,
     "base_unit_id" : 1,
@@ -168,7 +179,8 @@
     "product_name" : "Laptop",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-23T12:31:10.203105",
-    "sale_price" : 0.00
+    "sale_price" : 0.00,
+    "minimum_stock" : null
   }, {
     "id" : 1,
     "base_unit_id" : 1,
@@ -183,5 +195,95 @@
     "status" : "ACTIVE",
     "updated_at" : "2026-08-11T19:53:54.356496",
     "sale_price" : null
+  }, {
+    "id" : 17,
+    "base_unit_id" : 2,
+    "business_id" : 5,
+    "category_id" : 4,
+    "created_at" : "2026-08-27T03:08:35.875722",
+    "default_tax_activity_group_id" : null,
+    "description" : "Rong biển ăn liền vị cay",
+    "image_url" : null,
+    "product_code" : "SP001",
+    "product_name" : "Rong Biển Ăn Liền",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-27T03:08:35.875722",
+    "sale_price" : 15000.00,
+    "minimum_stock" : null
+  }, {
+    "id" : 18,
+    "base_unit_id" : 8,
+    "business_id" : 5,
+    "category_id" : 5,
+    "created_at" : "2026-08-27T03:08:35.895775",
+    "default_tax_activity_group_id" : null,
+    "description" : "Nước giải khát có ga",
+    "image_url" : null,
+    "product_code" : "SP002",
+    "product_name" : "Nước Ngọt Cola",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-27T03:08:35.895775",
+    "sale_price" : 12000.00,
+    "minimum_stock" : null
+  }, {
+    "id" : 19,
+    "base_unit_id" : 2,
+    "business_id" : 5,
+    "category_id" : 4,
+    "created_at" : "2026-08-27T03:08:35.896775",
+    "default_tax_activity_group_id" : null,
+    "description" : "Bánh gạo Hàn Quốc",
+    "image_url" : null,
+    "product_code" : "SP003",
+    "product_name" : "Bánh Gạo",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-27T03:08:35.896775",
+    "sale_price" : 25000.00,
+    "minimum_stock" : null
+  }, {
+    "id" : 20,
+    "base_unit_id" : 2,
+    "business_id" : 5,
+    "category_id" : 5,
+    "created_at" : "2026-08-28T16:08:36.450113",
+    "default_tax_activity_group_id" : null,
+    "description" : "Rong biển ăn liền vị cay",
+    "image_url" : null,
+    "product_code" : "SP010",
+    "product_name" : "HuyTam",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-28T16:08:36.450113",
+    "sale_price" : 15000.00,
+    "minimum_stock" : null
+  }, {
+    "id" : 21,
+    "base_unit_id" : 8,
+    "business_id" : 5,
+    "category_id" : 5,
+    "created_at" : "2026-08-28T16:08:36.47603",
+    "default_tax_activity_group_id" : null,
+    "description" : "Nước giải khát có ga",
+    "image_url" : null,
+    "product_code" : "SP011",
+    "product_name" : "NgocThang",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-28T16:08:36.47603",
+    "sale_price" : 12000.00,
+    "minimum_stock" : null
+  }, {
+    "id" : 22,
+    "base_unit_id" : 7,
+    "business_id" : 5,
+    "category_id" : 5,
+    "created_at" : "2026-08-28T16:08:36.47703",
+    "default_tax_activity_group_id" : null,
+    "description" : "Bánh gạo Hàn Quốc",
+    "image_url" : null,
+    "product_code" : "SP012",
+    "product_name" : "Văn Thái",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-28T16:08:36.47703",
+    "sale_price" : 25000.00,
+    "minimum_stock" : null
   } ]
 }
