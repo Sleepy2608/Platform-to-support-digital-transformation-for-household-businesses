@@ -183,6 +183,13 @@ export default function OwnerAccountPage() {
   const [profile, setProfile] = useState<OwnerProfile | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
 
+  // Redirect to new dedicated subscription page if tab is accessed directly
+  useEffect(() => {
+    if (activeTab === 'subscription') {
+      router.push('/owner/account/subscription');
+    }
+  }, [activeTab, router]);
+
   // ── Sync Active Tab with URL Hash (Immediate Response to Sidebar Clicks) ──────
   useEffect(() => {
     const handleHash = () => {

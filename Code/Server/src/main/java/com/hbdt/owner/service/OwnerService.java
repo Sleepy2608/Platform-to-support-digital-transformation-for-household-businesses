@@ -13,7 +13,9 @@ import com.hbdt.entity.SubscriptionHistory;
 import com.hbdt.repository.PaymentHistoryRepository;
 import com.hbdt.repository.ServiceInvoiceRepository;
 import com.hbdt.repository.SubscriptionHistoryRepository;
+import com.hbdt.subscription.service.ISubscriptionService;
 import com.hbdt.entity.enums.OtpType;
+import com.hbdt.entity.enums.SubscriptionStatus;
 import com.hbdt.entity.enums.UserStatus;
 import com.hbdt.owner.dto.*;
 import com.hbdt.repository.SubscriptionPlanRepository;
@@ -51,6 +53,7 @@ public class OwnerService {
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final ServiceInvoiceRepository serviceInvoiceRepository;
     private final SubscriptionHistoryRepository subscriptionHistoryRepository;
+    private final ISubscriptionService subscriptionService;
 
     public OwnerService(UserRepository userRepository,
                         SubscriptionRepository subscriptionRepository,
@@ -60,7 +63,8 @@ public class OwnerService {
                         ImageStorageService imageStorageService,
                         PaymentHistoryRepository paymentHistoryRepository,
                         ServiceInvoiceRepository serviceInvoiceRepository,
-                        SubscriptionHistoryRepository subscriptionHistoryRepository) {
+                        SubscriptionHistoryRepository subscriptionHistoryRepository,
+                        ISubscriptionService subscriptionService) {
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.subscriptionPlanRepository = subscriptionPlanRepository;
@@ -70,6 +74,7 @@ public class OwnerService {
         this.paymentHistoryRepository = paymentHistoryRepository;
         this.serviceInvoiceRepository = serviceInvoiceRepository;
         this.subscriptionHistoryRepository = subscriptionHistoryRepository;
+        this.subscriptionService = subscriptionService;
     }
 
     // =========================================================
@@ -243,11 +248,11 @@ public class OwnerService {
         }
         User user = findActiveUser(username);
         Subscription subscription = findActiveSubscription(user);
-        LocalDate today = LocalDate.now();
+        LocalDate now = LocalDate.now();
         LocalDate baseDate = subscription.getEndDate() != null
-                && subscription.getEndDate().isAfter(today)
+                && subscription.getEndDate().isAfter(now)
                 ? subscription.getEndDate()
-                : today;
+                : now;
 
         subscription.setEndDate(baseDate.plusMonths(months));
         subscriptionRepository.save(subscription);
@@ -303,8 +308,8 @@ public class OwnerService {
         Subscription subscription = findActiveSubscription(user);
 
         // Kiểm tra subscription chưa hết hạn
-        LocalDate today = LocalDate.now();
-        if (subscription.getEndDate() == null || !subscription.getEndDate().isAfter(today)) {
+        LocalDate now = LocalDate.now();
+        if (subscription.getEndDate() == null || subscription.getEndDate().isBefore(now)) {
             throw new BadRequestException("Gói dịch vụ đã hết hạn, không thể nâng cấp. Vui lòng gia hạn trước.");
         }
 
@@ -350,8 +355,8 @@ public class OwnerService {
         Subscription subscription = findActiveSubscription(user);
 
         // Kiểm tra subscription chưa hết hạn
-        LocalDate today = LocalDate.now();
-        if (subscription.getEndDate() == null || !subscription.getEndDate().isAfter(today)) {
+        LocalDate now = LocalDate.now();
+        if (subscription.getEndDate() == null || subscription.getEndDate().isBefore(now)) {
             throw new BadRequestException("Gói dịch vụ đã hết hạn, không thể thực hiện downgrade. Vui lòng gia hạn trước.");
         }
 
@@ -384,20 +389,28 @@ public class OwnerService {
 
     public List<SubscriptionHistoryDto> getSubscriptionHistory(String username) {
         User user = findActiveUser(username);
-        Subscription subscription = findActiveSubscription(user);
-        
-        return subscriptionHistoryRepository.findAllBySubscriptionIdOrderByChangedAtDesc(subscription.getId())
-                .stream()
-                .map(h -> SubscriptionHistoryDto.builder()
-                        .id(h.getId())
-                        .subscriptionId(h.getSubscriptionId())
-                        .oldPlan(h.getOldPlan())
-                        .newPlan(h.getNewPlan())
-                        .action(h.getAction())
-                        .changedBy(h.getChangedBy())
-                        .changedAt(h.getChangedAt())
-                        .build())
-                .collect(Collectors.toList());
+        if (user.getBusinessId() == null) {
+            return List.of();
+        }
+
+        // Lấy subscription mới nhất (bất kỳ trạng thái) thay vì chỉ ACTIVE
+        // để tránh 404 khi subscription đã hết hạn/hủy nhưng vẫn có lịch sử
+        return subscriptionRepository
+                .findTopByBusinessIdOrderByCreatedAtDesc(user.getBusinessId())
+                .map(subscription -> subscriptionHistoryRepository
+                        .findAllBySubscriptionIdOrderByChangedAtDesc(subscription.getId())
+                        .stream()
+                        .map(h -> SubscriptionHistoryDto.builder()
+                                .id(h.getId())
+                                .subscriptionId(h.getSubscriptionId())
+                                .oldPlan(h.getOldPlan())
+                                .newPlan(h.getNewPlan())
+                                .action(h.getAction())
+                                .changedBy(h.getChangedBy())
+                                .changedAt(h.getChangedAt())
+                                .build())
+                        .collect(Collectors.toList()))
+                .orElse(List.of());
     }
 
     public OwnerProfileResponse selectPackage(String username, String packageType, String billingCycle) {
@@ -414,22 +427,24 @@ public class OwnerService {
 
         SubscriptionPlan plan = findActivePlan(packageType);
         LocalDate today = LocalDate.now();
-        Subscription subscription = subscriptionRepository
-                .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(user.getBusinessId(), "ACTIVE")
-                .orElseGet(() -> Subscription.builder()
-                        .businessId(user.getBusinessId())
-                        .startDate(today)
-                        .status("ACTIVE")
-                        .build());
+        Subscription subscription = subscriptionService.createPendingPaymentSubscription(
+                user,
+                plan,
+                billingCycle,
+                today,
+                today.plusMonths("YEARLY".equals(billingCycle) ? 12 : 1)
+        );
 
-        LocalDate baseDate = subscription.getEndDate() != null
-                && subscription.getEndDate().isAfter(today)
-                ? subscription.getEndDate()
-                : today;
-        subscription.setPlan(plan);
-        subscription.setBillingCycle(billingCycle);
-        subscription.setEndDate(baseDate.plusMonths("YEARLY".equals(billingCycle) ? 12 : 1));
-        subscriptionRepository.save(subscription);
+        java.math.BigDecimal amount = "YEARLY".equals(billingCycle)
+                ? plan.getAnnualPrice()
+                : plan.getMonthlyPrice();
+        if (amount.signum() == 0) {
+            subscriptionService.activateSubscription(subscription.getId());
+        } else {
+            PaymentHistory payment = subscriptionService.createSubscriptionPayment(
+                    subscription.getId(), amount, "BANK_TRANSFER");
+            subscriptionService.processPaymentCallback(payment.getTransactionId(), "COMPLETED");
+        }
 
         return toProfileResponse(user);
     }
@@ -474,7 +489,7 @@ public class OwnerService {
             throw new BadRequestException("Tài khoản chưa có hồ sơ hộ kinh doanh");
         }
         return subscriptionRepository
-                .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(user.getBusinessId(), "ACTIVE")
+                .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(user.getBusinessId(), SubscriptionStatus.ACTIVE)
                 .orElseThrow(() -> new BadRequestException("Chưa có gói dịch vụ đang hoạt động"));
     }
 
@@ -507,14 +522,12 @@ public class OwnerService {
         Set<String> roleNames = user.getRoles().stream()
                 .map(r -> r.getName().name())
                 .collect(Collectors.toSet());
-        Subscription subscription = user.getBusinessId() == null
-                ? null
-                : subscriptionRepository
-                        .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(user.getBusinessId(), "ACTIVE")
-                        .orElse(null);
+        Subscription subscription = subscriptionRepository
+                .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(user.getBusinessId(), SubscriptionStatus.ACTIVE)
+                .orElse(null);
         LocalDateTime subscriptionExpiresAt = subscription == null || subscription.getEndDate() == null
                 ? null
-                : subscription.getEndDate().atTime(23, 59, 59);
+                : subscription.getEndDate().atTime(java.time.LocalTime.MAX);
         String packageType = subscription == null ? null : subscription.getPlan().getPlanCode();
 
         return OwnerProfileResponse.builder()

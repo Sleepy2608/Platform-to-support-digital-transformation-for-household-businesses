@@ -172,7 +172,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     setCurrentHash(`#${clean}`);
     setSidebarOpen(false);
 
-    if (pathname === '/owner/account') {
+    if (pathname === '/owner/account' && href !== '/owner/account/subscription') {
       window.history.replaceState(null, '', `/owner/account#${clean}`);
       window.dispatchEvent(new CustomEvent('owner-tab-change', { detail: clean }));
       window.dispatchEvent(new HashChangeEvent('hashchange'));
