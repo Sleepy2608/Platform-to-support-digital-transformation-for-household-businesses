@@ -6,7 +6,7 @@
 <b>Đề tài:</b> Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh <br>
 <b>Môn học:</b> Lập trình Java </em>
 <br>
-<img src="https://img.shields.io/badge/Java-21-orange?logo=openjdk" alt="Java-21">
+  <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"/>
 </p>
 
 ---
@@ -15,12 +15,12 @@
 
 | STT | Họ và Tên | MSSV | Vai trò | Nhiệm vụ được giao |
 | :---: | :--- | :---: | :---: | :--- |
-| 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Leader | Repository & Git Management, Authorization, Password Encoder and Security |
-| 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer | Register/Login web, Owner Account Management, Searching Engine, Image, CRUD (Customer, Owner Employee, Product) |
-| 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger | Database Management, Audit Log, Measurement & Product Pricing Rules, Service Invoice Management |
-| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager | Database Management, CRUD (Category, Product, Subcription) |
-| 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Feature Developer | Employee Account Management, Subcription Management |
-| 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer | Manage purchase package payments, Admin Account Management, Subcription Management, RBAC, Service Invoice Management |
+| 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Leader | Repository & Git Management, Authorization, Password Encoder and Security, Payment Process, Subscription Pricing & Plans |
+| 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer | Register/Login web, Owner Account Management, Searching Engine, Image (Avatar, Products), CRUD (Customer, Owner Employee, Product) |
+| 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger | Database Management, Audit Log, Measurement & Product Pricing Rules, Product Stock Management, Service Invoice Management |
+| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager | Database Management, CRUD (Category, Product, Subcription), Product Stock Management |
+| 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Feature Developer | Employee Account Management, Feature Plans Management |
+| 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer | Manage purchase package payments, Admin Account Management, Subscription Pricing & Plans, RBAC, Service Invoice Management |
 
 > **Ghi chú:**
 > - Mọi người đều được giao task có backend code bằng Java (Vai trò trên chỉ bao gồm các vai trò khác ngoài Backend Developer)
@@ -33,8 +33,8 @@
 *Tiến độ: Sprint 4 + 5*
 
 > Các issue cần chỉnh sửa/cập nhật/phát triển/sửa lỗi sẽ được cập nhật ở phần [Issue](https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/issues) trên Github<br>
-> Các issue trên Github sẽ được cập nhật theo tiến độ của Jira và sẽ được test trước khi merge vào nhánh chính<br>
-> Ngày cập nhật lần cuối: 27/08/2026<br>
+> Các issue trên Github sẽ được cập nhật theo tiến độ của Jira và sẽ được test trước khi merge vào nhánh Main<br>
+> Ngày cập nhật lần cuối: 01/09/2026<br>
 
 ---
 
@@ -106,27 +106,63 @@ JDBC URL có `createDatabaseIfNotExist=true` nên database được tạo nếu 
 
 ---
 
-## Cấu trúc thư mục (Project Structure - Draft) 
+## Cấu trúc thư mục (Project Structure)
 
 ```
 Platform-to-support-digital-transformation-for-household-businesses/
-├── README.md                                  # Tài liệu giới thiệu tổng quan dự án
-├── docker-compose.yml                         # Cấu hình Docker triển khai toàn bộ hệ thống
-├── Code/                                      # Mã nguồn chính của dự án
-│   ├── AI/                                    # AI Service - xử lý đơn hàng bằng ngôn ngữ tự nhiên (Python/FastAPI)
-│   ├── Client/                                # Ứng dụng Client
-│   │   └── src/frontend/                      # Giao diện web (React + TypeScript + Next.js)
-│   └── Server/                                # Backend API (Java Spring Boot)
-│       ├── database/                          # Script khởi tạo database
-│       └── src/main/                          # Source code backend (controller, service, entity, repository, config, ...)
-├── docs/                                      # Tài liệu dự án
-│   ├── architecture_design/                   # Thiết kế kiến trúc hệ thống
-│   ├── detailed-design/                       # Thiết kế chi tiết (database, diagrams)
-│   ├── requirements/                          # Yêu cầu đề tài
-│   ├── software_requirement_specification/    # Đặc tả yêu cầu phần mềm (SRS)
-│   ├── user_requirements/                     # Yêu cầu người dùng
-│   └── workflows/                             # Quy trình nghiệp vụ
-└── Extra/                                     # Tài nguyên bổ sung, tài liệu tham khảo
+├── README.md                                     # Tài liệu giới thiệu tổng quan dự án
+├── docker-compose.yml                            # Cấu hình Docker triển khai toàn bộ hệ thống
+├── Code/                                         # Mã nguồn chính của dự án
+│   ├── AI/                                       # AI Service xử lý đơn hàng bằng ngôn ngữ tự nhiên
+│   ├── Client/                                   # Frontend ứng dụng
+│   │   └── src/
+│   │       └── frontend/
+│   │           ├── app/
+│   │           ├── public/
+│   │           ├── tests/
+│   │           ├── package.json
+│   │           ├── next.config.ts
+│   │           ├── tsconfig.json
+│   │           ├── eslint.config.mjs
+│   │           └── README.md
+│   └── Server/                                   # Backend API Java Spring Boot
+│       ├── Dockerfile
+│       ├── mvnw
+│       ├── mvnw.cmd
+│       ├── pom.xml
+│       ├── database/
+│       │   ├── create-user.sql
+│       │   ├── init.sql
+│       │   └── migration_employee_profile_fields.sql
+│       ├── seed/                                 # Seed dữ liệu
+│       │   ├── businesses.json
+│       │   ├── customers.json
+│       │   ├── products.json
+│       │   ├── sales_orders.json
+│       │   ├── subscriptions.json
+│       │   └── ...
+│       ├── src/
+│       │   ├── main/
+│       │   └── test/
+│       ├── target/
+│       └── uploads/
+├── docs/                                         # Tài liệu dự án
+│   ├── architecture_design/                      # Thiết kế kiến trúc hệ thống
+│   ├── compliance/                               # Thông tin bộ luật 88
+│   ├── detailed-design/                          # Thiết kế chi tiết (database, diagrams)
+│   ├── requirements/                             # Yêu cầu đề tài
+│   ├── run-guide/                                # Cách chạy dự án
+│   ├── software_requirement_specification/       # Đặc tả yêu cầu phần mềm (SRS)
+│   ├── testing_documents/                        # Kiểm thử dự án
+│   ├── user_requirements/                        # Yêu cầu người dùng
+│   └── workflows/                                # Quy trình nghiệp vụ
+├── seed/                                         # Seed dữ liệu cấp repo
+│   ├── seed_config.json
+│   ├── roles.json
+│   ├── subscription_plans.json
+│   ├── users.json
+│   └── ...
+└── .gitignore                                    # Bỏ qua file nhạy cảm / build output
 ```
 
 ---
