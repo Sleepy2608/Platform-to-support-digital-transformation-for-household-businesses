@@ -1,6 +1,6 @@
 {
   "table" : "service_invoices",
-  "version" : 6,
+  "version" : 8,
   "rows" : [ {
     "id" : 1,
     "amount" : 11976000.00,
@@ -10,5 +10,23 @@
     "invoice_no" : "INV-A4C95D12",
     "status" : "PAID",
     "subscription_id" : 5
+  }, {
+    "id" : 2,
+    "amount" : 11976000.00,
+    "business_id" : 5,
+    "created_at" : "2026-08-25T17:34:34.913944",
+    "due_date" : "2026-08-25T17:34:34.913944",
+    "invoice_no" : "INV-4FEFE0EA",
+    "status" : "PAID",
+    "subscription_id" : 5
+  }, {
+    "id" : 3,
+    "amount" : 299000.00,
+    "business_id" : 5,
+    "created_at" : "2026-08-30T05:49:48.136242",
+    "due_date" : "2026-08-30T05:49:48.136242",
+    "invoice_no" : "INV-68CE4678",
+    "status" : "PAID",
+    "subscription_id" : 11
   } ]
 }

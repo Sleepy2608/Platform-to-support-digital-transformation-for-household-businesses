@@ -1,11 +1,12 @@
 package com.hbdt.repository;
 
-import com.hbdt.entity.Product;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-import java.util.Optional;
-import java.util.List;
+import com.hbdt.entity.Product;
 
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
     Optional<Product> findByIdAndBusinessId(Long id, Long businessId);
@@ -17,6 +18,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     boolean existsByBusinessIdAndProductNameIgnoreCase(Long businessId, String productName);
 
     boolean existsByBusinessIdAndProductNameIgnoreCaseAndIdNot(Long businessId, String productName, Long id);
+
+    long countByBusinessId(Long businessId);
 
     List<Product> findAllByBusinessIdOrderByProductNameAsc(Long businessId);
 

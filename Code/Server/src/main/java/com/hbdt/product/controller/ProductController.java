@@ -8,6 +8,7 @@ import com.hbdt.product.dto.ProductResponse;
 import com.hbdt.product.dto.ReferenceOption;
 import com.hbdt.product.service.ProductImageService;
 import com.hbdt.product.service.ProductService;
+import com.hbdt.entitlement.annotation.RequireFeature;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/products")
 @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER', 'EMPLOYEE')")
+@RequireFeature("PRODUCT_MANAGEMENT")
 public class ProductController {
 
     private final ProductService productService;

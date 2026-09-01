@@ -3,6 +3,7 @@ package com.hbdt.product.service;
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.inventory.service.LowStockAlertService;
+import com.hbdt.entitlement.service.FeatureEntitlementService;
 import com.hbdt.entity.Category;
 import com.hbdt.entity.InventoryBalance;
 import com.hbdt.entity.Product;
@@ -56,6 +57,8 @@ class ProductServiceTest {
     private ImageStorageService imageStorageService;
     @Mock
     private LowStockAlertService lowStockAlertService;
+    @Mock
+    private FeatureEntitlementService featureEntitlementService;
 
     private ProductService productService;
 
@@ -63,7 +66,7 @@ class ProductServiceTest {
     void setUp() {
         productService = new ProductService(productRepository, productUnitRepository, categoryRepository, unitRepository,
                 inventoryBalanceRepository, taxActivityGroupRepository, businessContextService,
-                productImageService, imageStorageService, lowStockAlertService);
+                productImageService, imageStorageService, featureEntitlementService, lowStockAlertService);
         when(businessContextService.requireBusinessId("owner")).thenReturn(10L);
     }
 

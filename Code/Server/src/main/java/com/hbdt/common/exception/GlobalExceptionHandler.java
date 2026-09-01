@@ -94,6 +94,19 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getMessage()));
     }
 
+    @ExceptionHandler(FeatureAccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleFeatureAccessDenied(
+            FeatureAccessDeniedException ex) {
+        Map<String, String> details = new java.util.HashMap<>();
+        details.put("errorCode", ex.getErrorCode());
+        details.put("featureCode", ex.getFeatureCode());
+        if (ex.getRequiredPackage() != null) {
+            details.put("requiredPackage", ex.getRequiredPackage());
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error(ex.getMessage(), details));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneralException(Exception ex) {
         logger.error("Unhandled exception: ", ex);

@@ -1,6 +1,6 @@
 {
   "table" : "test_huy3",
-  "version" : 20,
+  "version" : 21,
   "rows" : [ {
     "id" : 1,
     "ghi_chu" : "aaa",
