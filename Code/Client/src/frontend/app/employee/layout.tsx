@@ -18,8 +18,7 @@ const NAV_ITEMS = [
   { label: 'Danh sách đơn hàng', href: '/employee/orders/history', icon: ListOrdered, hash: '' },
   { label: 'Cảnh báo tồn kho', href: '/employee/inventory-alerts', icon: BellRing, hash: '' },
   { label: 'Hồ sơ cá nhân', href: '/employee/account#profile', icon: UserCircle, hash: '#profile' },
-  { label: 'Đổi mật khẩu', href: '/employee/account#password', icon: Lock, hash: '#password' },
-  { label: 'Email & Số điện thoại', href: '/employee/account#contact', icon: Mail, hash: '#contact' },
+  { label: 'Thay đổi thông tin cá nhân', href: '/employee/account#personal-info', icon: Lock, hash: '#personal-info' },
 ];
 
 export default function EmployeeLayout({ children }: { children: React.ReactNode }) {

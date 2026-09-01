@@ -18,7 +18,7 @@ import NotificationBell from '../components/NotificationBell';
 function getCleanHash(rawHash?: string): string {
   if (!rawHash) return 'profile';
   const clean = rawHash.replace(/^#+/, '').split('#')[0].toLowerCase().trim();
-  if (clean === 'email' || clean === 'phone') return 'contact';
+  if (clean === 'email' || clean === 'phone' || clean === 'contact' || clean === 'password' || clean === 'personal-info') return 'personal-info';
   if (clean === 'plans' || clean === 'package') return 'subscription';
   if (clean === 'danger-zone') return 'danger';
   if (clean === 'business') return 'business-profile';
@@ -27,10 +27,9 @@ function getCleanHash(rawHash?: string): string {
 
 const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash: string }> = [
   { label: 'Hồ sơ cá nhân', href: '/owner/account#profile', icon: UserCircle, hash: '#profile' },
-  { label: 'Đổi mật khẩu', href: '/owner/account#password', icon: Lock, hash: '#password' },
-  { label: 'Email & Số điện thoại', href: '/owner/account#contact', icon: Mail, hash: '#contact' },
+  { label: 'Thay đổi thông tin cá nhân', href: '/owner/account#personal-info', icon: Lock, hash: '#personal-info' },
   { label: 'Gói đăng ký', href: '/owner/account#subscription', icon: CreditCard, hash: '#subscription' },
-  { label: 'Vùng nguy hiểm', href: '/owner/account#danger', icon: AlertTriangle, hash: '#danger' },
+  { label: 'Kiểm soát tài khoản', href: '/owner/account#danger', icon: AlertTriangle, hash: '#danger' },
 ];
 
 const MANAGE_NAV_ITEMS: Array<{
