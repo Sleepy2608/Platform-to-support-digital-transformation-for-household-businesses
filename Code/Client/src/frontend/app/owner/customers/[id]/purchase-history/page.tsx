@@ -8,6 +8,7 @@ import {
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { apiClient } from '@/app/lib/apiClient';
+import CustomerOrderDetailModal from '@/app/components/CustomerOrderDetailModal';
 
 /* ─── Types ─────────────────────────────────────────────────────────── */
 interface CustomerOption {
@@ -79,6 +80,7 @@ export default function OwnerPurchaseHistoryPage() {
   const [loadingCustomer, setLoadingCustomer] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [error, setError] = useState('');
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
 
   /* Load customer info via options search */
   useEffect(() => {
@@ -295,7 +297,11 @@ export default function OwnerPurchaseHistoryPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {history.content.map((item) => (
-                    <tr key={item.orderId} className="hover:bg-slate-50/70 transition-colors">
+                    <tr 
+                      key={item.orderId} 
+                      className="hover:bg-slate-50/70 transition-colors cursor-pointer"
+                      onClick={() => setSelectedOrderId(item.orderId)}
+                    >
                       <td className="px-5 py-4 font-black text-slate-900">{item.orderCode}</td>
                       <td className="px-5 py-4 text-slate-500">{fmtDate(item.createdAt)}</td>
                       <td className="px-5 py-4 text-right font-bold text-slate-800">{fmt(item.totalAmount)}</td>
@@ -334,6 +340,13 @@ export default function OwnerPurchaseHistoryPage() {
           )}
         </section>
       </div>
+
+      {selectedOrderId !== null && (
+        <CustomerOrderDetailModal 
+          orderId={selectedOrderId} 
+          onClose={() => setSelectedOrderId(null)} 
+        />
+      )}
     </div>
   );
 }
