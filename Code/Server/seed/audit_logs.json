@@ -1,6 +1,6 @@
 {
   "table" : "audit_logs",
-  "version" : 13,
+  "version" : 14,
   "rows" : [ {
     "id" : 1,
     "action" : "POST /api/owner/business-profile",
@@ -4908,6 +4908,150 @@
     "new_data" : null,
     "old_data" : null,
     "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+    "user_id" : 1
+  }, {
+    "id" : 410,
+    "action" : "PATCH /api/admin/features/{id}/toggle",
+    "business_id" : null,
+    "created_at" : "2026-08-31T05:35:24.291975",
+    "entity_id" : 7,
+    "entity_type" : "API_REQUEST",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 1
+  }, {
+    "id" : 411,
+    "action" : "PATCH /api/admin/features/{id}/toggle",
+    "business_id" : null,
+    "created_at" : "2026-08-31T05:35:25.338066",
+    "entity_id" : 7,
+    "entity_type" : "API_REQUEST",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 1
+  }, {
+    "id" : 412,
+    "action" : "PUT /api/admin/subscription-plans/{id}",
+    "business_id" : null,
+    "created_at" : "2026-08-31T05:35:57.411358",
+    "entity_id" : 1,
+    "entity_type" : "API_REQUEST",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 1
+  }, {
+    "id" : 413,
+    "action" : "PUT /api/admin/subscription-plans/{id}",
+    "business_id" : null,
+    "created_at" : "2026-08-31T05:36:14.519303",
+    "entity_id" : 2,
+    "entity_type" : "API_REQUEST",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 1
+  }, {
+    "id" : 414,
+    "action" : "PUT /api/admin/subscription-plans/{id}",
+    "business_id" : null,
+    "created_at" : "2026-08-31T05:36:45.400212",
+    "entity_id" : 6,
+    "entity_type" : "API_REQUEST",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 1
+  }, {
+    "id" : 415,
+    "action" : "POST /api/owner/business-profile",
+    "business_id" : null,
+    "created_at" : "2026-08-31T05:38:31.922903",
+    "entity_id" : null,
+    "entity_type" : "BUSINESS",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "user_id" : 17
+  }, {
+    "id" : 416,
+    "action" : "POST /api/owner/subscription/select-package",
+    "business_id" : 13,
+    "created_at" : "2026-08-31T05:38:47.230897",
+    "entity_id" : null,
+    "entity_type" : "SUBSCRIPTION",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+    "user_id" : 17
+  }, {
+    "id" : 417,
+    "action" : "POST /api/admin/features/matrix/map",
+    "business_id" : null,
+    "created_at" : "2026-08-31T05:40:23.112949",
+    "entity_id" : null,
+    "entity_type" : "API_REQUEST",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 1
+  }, {
+    "id" : 418,
+    "action" : "POST /api/seed/restore",
+    "business_id" : null,
+    "created_at" : "2026-08-31T05:40:30.136066",
+    "entity_id" : null,
+    "entity_type" : "SEED_DATA",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 1
+  }, {
+    "id" : 419,
+    "action" : "PUT /api/owner/profile",
+    "business_id" : 13,
+    "created_at" : "2026-09-01T05:47:12.55008",
+    "entity_id" : null,
+    "entity_type" : "API_REQUEST",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 17
+  }, {
+    "id" : 420,
+    "action" : "PUT /api/admin/subscription-plans/{id}",
+    "business_id" : null,
+    "created_at" : "2026-09-01T06:37:50.49815",
+    "entity_id" : 6,
+    "entity_type" : "API_REQUEST",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 1
+  }, {
+    "id" : 421,
+    "action" : "PUT /api/admin/subscription-plans/{id}",
+    "business_id" : null,
+    "created_at" : "2026-09-01T06:38:01.942196",
+    "entity_id" : 3,
+    "entity_type" : "API_REQUEST",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
     "user_id" : 1
   } ]
 }

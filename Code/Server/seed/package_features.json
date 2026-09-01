@@ -1,6 +1,6 @@
 {
   "table" : "package_features",
-  "version" : 1,
+  "version" : 2,
   "rows" : [ {
     "id" : 4,
     "created_at" : "2026-08-24T06:43:26.105697",
@@ -19,188 +19,188 @@
     "plan_id" : 2
   }, {
     "id" : 6,
-    "created_at" : "2026-08-24T06:43:26.137635",
+    "created_at" : "2026-08-31T05:32:53.881756",
     "enabled" : true,
     "quota_limit" : null,
-    "updated_at" : "2026-08-31T05:03:48.989888",
-    "feature_id" : 4,
+    "updated_at" : "2026-08-31T05:32:53.881756",
+    "feature_id" : 8,
     "plan_id" : 2
   }, {
     "id" : 17,
-    "created_at" : "2026-08-24T06:43:26.317504",
+    "created_at" : "2026-08-31T05:32:54.114646",
     "enabled" : true,
     "quota_limit" : null,
-    "updated_at" : "2026-08-28T16:48:33.277882",
-    "feature_id" : 10,
-    "plan_id" : 4
+    "updated_at" : "2026-08-31T05:32:54.114646",
+    "feature_id" : 6,
+    "plan_id" : 3
   }, {
     "id" : 18,
-    "created_at" : "2026-08-24T06:43:26.333539",
+    "created_at" : "2026-08-31T05:32:54.128694",
     "enabled" : true,
     "quota_limit" : null,
-    "updated_at" : "2026-08-28T16:48:33.316524",
-    "feature_id" : 1,
+    "updated_at" : "2026-08-31T05:32:54.128694",
+    "feature_id" : 5,
     "plan_id" : 4
   }, {
     "id" : 19,
-    "created_at" : "2026-08-24T06:43:26.348585",
+    "created_at" : "2026-08-31T05:32:54.141752",
     "enabled" : true,
     "quota_limit" : null,
-    "updated_at" : "2026-08-28T16:48:33.336226",
-    "feature_id" : 4,
+    "updated_at" : "2026-08-31T05:32:54.141752",
+    "feature_id" : 10,
     "plan_id" : 4
   }, {
     "id" : 20,
-    "created_at" : "2026-08-24T06:43:26.371572",
+    "created_at" : "2026-08-31T05:32:54.156854",
     "enabled" : true,
-    "quota_limit" : 20,
-    "updated_at" : "2026-08-28T16:48:33.347749",
+    "quota_limit" : null,
+    "updated_at" : "2026-08-31T05:32:54.156854",
+    "feature_id" : 9,
+    "plan_id" : 4
+  }, {
+    "id" : 21,
+    "created_at" : "2026-08-31T05:32:54.172031",
+    "enabled" : true,
+    "quota_limit" : 2,
+    "updated_at" : "2026-08-31T05:32:54.172031",
+    "feature_id" : 2,
+    "plan_id" : 4
+  }, {
+    "id" : 22,
+    "created_at" : "2026-08-31T05:32:54.210468",
+    "enabled" : true,
+    "quota_limit" : null,
+    "updated_at" : "2026-08-31T05:32:54.210468",
+    "feature_id" : 3,
+    "plan_id" : 4
+  }, {
+    "id" : 23,
+    "created_at" : "2026-08-31T05:32:54.255714",
+    "enabled" : true,
+    "quota_limit" : null,
+    "updated_at" : "2026-08-31T05:32:54.255714",
+    "feature_id" : 1,
+    "plan_id" : 4
+  }, {
+    "id" : 24,
+    "created_at" : "2026-08-31T05:32:54.2977",
+    "enabled" : true,
+    "quota_limit" : null,
+    "updated_at" : "2026-08-31T05:32:54.2977",
+    "feature_id" : 8,
+    "plan_id" : 4
+  }, {
+    "id" : 25,
+    "created_at" : "2026-08-31T05:32:54.325698",
+    "enabled" : true,
+    "quota_limit" : null,
+    "updated_at" : "2026-08-31T05:32:54.325698",
+    "feature_id" : 4,
+    "plan_id" : 4
+  }, {
+    "id" : 26,
+    "created_at" : "2026-08-31T05:32:54.358276",
+    "enabled" : true,
+    "quota_limit" : 3,
+    "updated_at" : "2026-08-31T05:32:54.358276",
     "feature_id" : 10,
     "plan_id" : 5
   }, {
-    "id" : 21,
-    "created_at" : "2026-08-24T06:43:26.391801",
+    "id" : 27,
+    "created_at" : "2026-08-31T05:32:54.396694",
     "enabled" : true,
-    "quota_limit" : 20,
-    "updated_at" : "2026-08-28T16:48:33.361125",
+    "quota_limit" : 3,
+    "updated_at" : "2026-08-31T05:32:54.396694",
     "feature_id" : 1,
     "plan_id" : 5
   }, {
-    "id" : 22,
-    "created_at" : "2026-08-24T06:43:26.404992",
+    "id" : 28,
+    "created_at" : "2026-08-31T05:32:54.416019",
     "enabled" : true,
-    "quota_limit" : 50,
-    "updated_at" : "2026-08-28T16:48:33.373792",
+    "quota_limit" : 5,
+    "updated_at" : "2026-08-31T05:32:54.416019",
     "feature_id" : 4,
     "plan_id" : 5
   }, {
-    "id" : 23,
-    "created_at" : "2026-08-24T06:43:26.419553",
-    "enabled" : true,
-    "quota_limit" : null,
-    "updated_at" : "2026-08-24T06:43:26.419553",
-    "feature_id" : 5,
-    "plan_id" : 6
-  }, {
-    "id" : 24,
-    "created_at" : "2026-08-24T06:43:26.432599",
-    "enabled" : true,
-    "quota_limit" : null,
-    "updated_at" : "2026-08-24T06:43:26.432599",
-    "feature_id" : 7,
-    "plan_id" : 6
-  }, {
-    "id" : 25,
-    "created_at" : "2026-08-24T06:43:26.442905",
-    "enabled" : true,
-    "quota_limit" : null,
-    "updated_at" : "2026-08-24T06:43:26.442905",
-    "feature_id" : 10,
-    "plan_id" : 6
-  }, {
-    "id" : 26,
-    "created_at" : "2026-08-24T06:43:26.455433",
-    "enabled" : true,
-    "quota_limit" : null,
-    "updated_at" : "2026-08-24T06:43:26.455433",
-    "feature_id" : 9,
-    "plan_id" : 6
-  }, {
-    "id" : 27,
-    "created_at" : "2026-08-24T06:43:26.467713",
-    "enabled" : true,
-    "quota_limit" : null,
-    "updated_at" : "2026-08-24T06:43:26.467713",
-    "feature_id" : 2,
-    "plan_id" : 6
-  }, {
-    "id" : 28,
-    "created_at" : "2026-08-24T06:43:26.48175",
-    "enabled" : true,
-    "quota_limit" : null,
-    "updated_at" : "2026-08-24T06:43:26.48175",
-    "feature_id" : 3,
-    "plan_id" : 6
-  }, {
     "id" : 29,
-    "created_at" : "2026-08-24T06:43:26.493268",
+    "created_at" : "2026-08-31T05:32:54.448339",
     "enabled" : true,
     "quota_limit" : null,
-    "updated_at" : "2026-08-24T06:43:26.493268",
-    "feature_id" : 1,
+    "updated_at" : "2026-08-31T05:32:54.448339",
+    "feature_id" : 5,
     "plan_id" : 6
   }, {
     "id" : 30,
-    "created_at" : "2026-08-24T06:43:26.503406",
+    "created_at" : "2026-08-31T05:32:54.471943",
     "enabled" : true,
     "quota_limit" : null,
-    "updated_at" : "2026-08-24T06:43:26.503406",
-    "feature_id" : 8,
+    "updated_at" : "2026-08-31T05:32:54.471943",
+    "feature_id" : 7,
     "plan_id" : 6
   }, {
     "id" : 31,
-    "created_at" : "2026-08-24T06:43:26.517649",
+    "created_at" : "2026-08-31T05:32:54.491984",
     "enabled" : true,
     "quota_limit" : null,
-    "updated_at" : "2026-08-24T06:43:26.517649",
-    "feature_id" : 4,
+    "updated_at" : "2026-08-31T05:32:54.491984",
+    "feature_id" : 10,
     "plan_id" : 6
   }, {
     "id" : 32,
-    "created_at" : "2026-08-24T06:43:26.530678",
+    "created_at" : "2026-08-31T05:32:54.51285",
     "enabled" : true,
     "quota_limit" : null,
-    "updated_at" : "2026-08-24T06:43:26.530678",
-    "feature_id" : 6,
+    "updated_at" : "2026-08-31T05:32:54.51285",
+    "feature_id" : 9,
     "plan_id" : 6
   }, {
     "id" : 33,
-    "created_at" : "2026-08-28T16:48:33.185446",
+    "created_at" : "2026-08-31T05:32:54.525369",
     "enabled" : true,
     "quota_limit" : null,
-    "updated_at" : "2026-08-28T16:48:33.185446",
-    "feature_id" : 8,
-    "plan_id" : 2
+    "updated_at" : "2026-08-31T05:32:54.525369",
+    "feature_id" : 2,
+    "plan_id" : 6
   }, {
     "id" : 34,
-    "created_at" : "2026-08-28T16:48:33.259282",
+    "created_at" : "2026-08-31T05:32:54.538157",
     "enabled" : true,
     "quota_limit" : null,
-    "updated_at" : "2026-08-28T16:48:33.259282",
-    "feature_id" : 5,
-    "plan_id" : 4
+    "updated_at" : "2026-08-31T05:32:54.538157",
+    "feature_id" : 3,
+    "plan_id" : 6
   }, {
     "id" : 35,
-    "created_at" : "2026-08-28T16:48:33.286415",
+    "created_at" : "2026-08-31T05:32:54.569874",
     "enabled" : true,
     "quota_limit" : null,
-    "updated_at" : "2026-08-28T16:48:33.286415",
-    "feature_id" : 9,
-    "plan_id" : 4
+    "updated_at" : "2026-08-31T05:32:54.569874",
+    "feature_id" : 1,
+    "plan_id" : 6
   }, {
     "id" : 36,
-    "created_at" : "2026-08-28T16:48:33.296873",
+    "created_at" : "2026-08-31T05:32:54.585674",
     "enabled" : true,
-    "quota_limit" : 3,
-    "updated_at" : "2026-08-28T16:48:33.296873",
-    "feature_id" : 2,
-    "plan_id" : 4
+    "quota_limit" : null,
+    "updated_at" : "2026-08-31T05:32:54.585674",
+    "feature_id" : 8,
+    "plan_id" : 6
   }, {
     "id" : 37,
-    "created_at" : "2026-08-28T16:48:33.304176",
+    "created_at" : "2026-08-31T05:32:54.60074",
     "enabled" : true,
     "quota_limit" : null,
-    "updated_at" : "2026-08-28T16:48:33.304176",
-    "feature_id" : 3,
-    "plan_id" : 4
+    "updated_at" : "2026-08-31T05:32:54.60074",
+    "feature_id" : 4,
+    "plan_id" : 6
   }, {
     "id" : 38,
-    "created_at" : "2026-08-28T16:48:33.325317",
+    "created_at" : "2026-08-31T05:32:54.613702",
     "enabled" : true,
     "quota_limit" : null,
-    "updated_at" : "2026-08-28T16:48:33.325317",
-    "feature_id" : 8,
-    "plan_id" : 4
+    "updated_at" : "2026-08-31T05:32:54.613702",
+    "feature_id" : 6,
+    "plan_id" : 6
   }, {
     "id" : 44,
     "created_at" : "2026-08-28T17:04:51.5856",
@@ -257,5 +257,109 @@
     "updated_at" : "2026-08-31T05:03:58.455666",
     "feature_id" : 6,
     "plan_id" : 2
+  }, {
+    "id" : 1,
+    "created_at" : "2026-08-31T05:32:53.575379",
+    "enabled" : true,
+    "quota_limit" : 30,
+    "updated_at" : "2026-08-31T05:40:23.060867",
+    "feature_id" : 10,
+    "plan_id" : 1
+  }, {
+    "id" : 2,
+    "created_at" : "2026-08-31T05:32:53.663578",
+    "enabled" : true,
+    "quota_limit" : 3,
+    "updated_at" : "2026-08-31T05:32:53.663578",
+    "feature_id" : 1,
+    "plan_id" : 1
+  }, {
+    "id" : 3,
+    "created_at" : "2026-08-31T05:32:53.798418",
+    "enabled" : true,
+    "quota_limit" : 5,
+    "updated_at" : "2026-08-31T05:32:53.798418",
+    "feature_id" : 4,
+    "plan_id" : 1
+  }, {
+    "id" : 7,
+    "created_at" : "2026-08-31T05:32:53.900534",
+    "enabled" : true,
+    "quota_limit" : 30,
+    "updated_at" : "2026-08-31T05:32:53.900534",
+    "feature_id" : 4,
+    "plan_id" : 2
+  }, {
+    "id" : 8,
+    "created_at" : "2026-08-31T05:32:53.930368",
+    "enabled" : true,
+    "quota_limit" : null,
+    "updated_at" : "2026-08-31T05:32:53.930368",
+    "feature_id" : 5,
+    "plan_id" : 3
+  }, {
+    "id" : 9,
+    "created_at" : "2026-08-31T05:32:53.946445",
+    "enabled" : true,
+    "quota_limit" : null,
+    "updated_at" : "2026-08-31T05:32:53.946445",
+    "feature_id" : 7,
+    "plan_id" : 3
+  }, {
+    "id" : 10,
+    "created_at" : "2026-08-31T05:32:53.965141",
+    "enabled" : true,
+    "quota_limit" : null,
+    "updated_at" : "2026-08-31T05:32:53.965141",
+    "feature_id" : 10,
+    "plan_id" : 3
+  }, {
+    "id" : 11,
+    "created_at" : "2026-08-31T05:32:53.990413",
+    "enabled" : true,
+    "quota_limit" : null,
+    "updated_at" : "2026-08-31T05:32:53.990413",
+    "feature_id" : 9,
+    "plan_id" : 3
+  }, {
+    "id" : 12,
+    "created_at" : "2026-08-31T05:32:54.007523",
+    "enabled" : true,
+    "quota_limit" : 5,
+    "updated_at" : "2026-08-31T05:32:54.007523",
+    "feature_id" : 2,
+    "plan_id" : 3
+  }, {
+    "id" : 13,
+    "created_at" : "2026-08-31T05:32:54.027618",
+    "enabled" : true,
+    "quota_limit" : null,
+    "updated_at" : "2026-08-31T05:32:54.027618",
+    "feature_id" : 3,
+    "plan_id" : 3
+  }, {
+    "id" : 14,
+    "created_at" : "2026-08-31T05:32:54.05629",
+    "enabled" : true,
+    "quota_limit" : null,
+    "updated_at" : "2026-08-31T05:32:54.05629",
+    "feature_id" : 1,
+    "plan_id" : 3
+  }, {
+    "id" : 15,
+    "created_at" : "2026-08-31T05:32:54.075427",
+    "enabled" : true,
+    "quota_limit" : null,
+    "updated_at" : "2026-08-31T05:32:54.075427",
+    "feature_id" : 8,
+    "plan_id" : 3
+  }, {
+    "id" : 16,
+    "created_at" : "2026-08-31T05:32:54.089465",
+    "enabled" : true,
+    "quota_limit" : null,
+    "updated_at" : "2026-08-31T05:32:54.089465",
+    "feature_id" : 4,
+    "plan_id" : 3
   } ]
 }

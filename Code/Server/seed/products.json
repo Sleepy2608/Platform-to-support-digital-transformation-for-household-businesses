@@ -1,6 +1,6 @@
 {
   "table" : "products",
-  "version" : 9,
+  "version" : 10,
   "rows" : [ {
     "id" : 5,
     "base_unit_id" : 1,
@@ -194,7 +194,8 @@
     "product_name" : "Nem chua Thanh Hóa",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-11T19:53:54.356496",
-    "sale_price" : null
+    "sale_price" : null,
+    "minimum_stock" : null
   }, {
     "id" : 17,
     "base_unit_id" : 2,

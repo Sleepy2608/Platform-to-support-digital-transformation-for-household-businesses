@@ -1,6 +1,6 @@
 {
   "table" : "notifications",
-  "version" : 1,
+  "version" : 2,
   "rows" : [ {
     "id" : 1,
     "ai_request_id" : null,
@@ -133,5 +133,149 @@
     "sales_order_id" : null,
     "title" : "Tồn kho đã an toàn · Sp123",
     "user_id" : 5
+  }, {
+    "id" : 3,
+    "ai_request_id" : null,
+    "business_id" : 12,
+    "content" : "Sản phẩm testLowStockAlert (DH1) chỉ còn 2, thấp hơn ngưỡng 4.",
+    "created_at" : "2026-08-30T05:41:36.856415",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-08-30T05:41:40.85502",
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · DH1",
+    "user_id" : 16
+  }, {
+    "id" : 4,
+    "ai_request_id" : null,
+    "business_id" : 12,
+    "content" : "Sản phẩm testLowStockAlert (DH1) chỉ còn 10, thấp hơn ngưỡng 15.",
+    "created_at" : "2026-08-30T05:43:20.990954",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-08-30T05:43:26.360064",
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · DH1",
+    "user_id" : 16
+  }, {
+    "id" : 14,
+    "ai_request_id" : null,
+    "business_id" : 12,
+    "content" : "Sản phẩm test2 (DH2) chỉ còn 12, thấp hơn ngưỡng 15.",
+    "created_at" : "2026-08-30T06:37:24.88726",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-08-30T06:37:27.917315",
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · DH2",
+    "user_id" : 16
+  }, {
+    "id" : 15,
+    "ai_request_id" : null,
+    "business_id" : 12,
+    "content" : "Tồn kho sản phẩm test2 (DH2) đã trở lại mức an toàn: 12.",
+    "created_at" : "2026-08-30T06:37:27.921398",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-08-30T06:37:58.366489",
+    "sales_order_id" : null,
+    "title" : "Tồn kho đã an toàn · DH2",
+    "user_id" : 16
+  }, {
+    "id" : 16,
+    "ai_request_id" : null,
+    "business_id" : 12,
+    "content" : "Sản phẩm test2 (DH2) chỉ còn 12, thấp hơn ngưỡng 15.",
+    "created_at" : "2026-08-30T06:37:47.649592",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-08-30T06:37:58.366489",
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · DH2",
+    "user_id" : 16
+  }, {
+    "id" : 17,
+    "ai_request_id" : null,
+    "business_id" : 12,
+    "content" : "Sản phẩm testLowStockAlert (DH1) chỉ còn 3, thấp hơn ngưỡng 6.",
+    "created_at" : "2026-08-30T06:37:55.169534",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-08-30T06:37:58.366489",
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · DH1",
+    "user_id" : 16
+  }, {
+    "id" : 18,
+    "ai_request_id" : null,
+    "business_id" : 12,
+    "content" : "Sản phẩm testLowStockAlert (DH1) chỉ còn 3, thấp hơn ngưỡng 5.",
+    "created_at" : "2026-08-30T06:38:19.572116",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-08-30T06:38:25.600733",
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · DH1",
+    "user_id" : 16
+  }, {
+    "id" : 19,
+    "ai_request_id" : null,
+    "business_id" : 12,
+    "content" : "Tồn kho sản phẩm testLowStockAlert (DH1) đã trở lại mức an toàn: 3.",
+    "created_at" : "2026-08-30T06:38:25.605572",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-08-30T06:38:28.593316",
+    "sales_order_id" : null,
+    "title" : "Tồn kho đã an toàn · DH1",
+    "user_id" : 16
+  }, {
+    "id" : 20,
+    "ai_request_id" : null,
+    "business_id" : 12,
+    "content" : "Sản phẩm test2 (DH2) chỉ còn 12, thấp hơn ngưỡng 15.",
+    "created_at" : "2026-08-30T06:38:31.420057",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-08-30T06:38:36.298562",
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · DH2",
+    "user_id" : 16
+  }, {
+    "id" : 21,
+    "ai_request_id" : null,
+    "business_id" : 12,
+    "content" : "Tồn kho sản phẩm test2 (DH2) đã trở lại mức an toàn: 12.",
+    "created_at" : "2026-08-30T06:38:36.30136",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-08-30T06:38:39.763556",
+    "sales_order_id" : null,
+    "title" : "Tồn kho đã an toàn · DH2",
+    "user_id" : 16
+  }, {
+    "id" : 22,
+    "ai_request_id" : null,
+    "business_id" : 12,
+    "content" : "Sản phẩm test2 (DH2) chỉ còn 12, thấp hơn ngưỡng 15.",
+    "created_at" : "2026-08-30T06:45:09.014328",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-08-30T06:45:12.886345",
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · DH2",
+    "user_id" : 16
+  }, {
+    "id" : 23,
+    "ai_request_id" : null,
+    "business_id" : 12,
+    "content" : "Tồn kho sản phẩm test2 (DH2) đã trở lại mức an toàn: 12.",
+    "created_at" : "2026-08-30T06:45:12.89039",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-08-30T06:45:16.491574",
+    "sales_order_id" : null,
+    "title" : "Tồn kho đã an toàn · DH2",
+    "user_id" : 16
   } ]
 }

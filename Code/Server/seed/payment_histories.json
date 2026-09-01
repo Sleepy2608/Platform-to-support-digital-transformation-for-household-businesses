@@ -1,6 +1,6 @@
 {
   "table" : "payment_histories",
-  "version" : 7,
+  "version" : 8,
   "rows" : [ {
     "id" : 1,
     "amount" : 11976000.00,

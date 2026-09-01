@@ -1,6 +1,6 @@
 {
   "table" : "subscription_histories",
-  "version" : 7,
+  "version" : 8,
   "rows" : [ {
     "id" : 1,
     "action" : "UPGRADE",
