@@ -1,6 +1,6 @@
 {
   "table" : "inventory_balances",
-  "version" : 8,
+  "version" : 10,
   "rows" : [ {
     "id" : 1,
     "average_unit_cost" : 0.00,
@@ -95,7 +95,55 @@
     "business_id" : 5,
     "inventory_value" : 0.00,
     "product_id" : 16,
-    "quantity_on_hand" : 11.000,
-    "updated_at" : "2026-08-23T12:54:27.82256"
+    "quantity_on_hand" : 12.000,
+    "updated_at" : "2026-08-24T06:34:54.7867"
+  }, {
+    "id" : 13,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 17,
+    "quantity_on_hand" : 100.000,
+    "updated_at" : "2026-08-27T03:08:35.897778"
+  }, {
+    "id" : 14,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 18,
+    "quantity_on_hand" : 50.000,
+    "updated_at" : "2026-08-27T03:08:35.898774"
+  }, {
+    "id" : 15,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 19,
+    "quantity_on_hand" : 200.000,
+    "updated_at" : "2026-08-27T03:08:35.898774"
+  }, {
+    "id" : 16,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 20,
+    "quantity_on_hand" : 100.000,
+    "updated_at" : "2026-08-28T16:08:36.47803"
+  }, {
+    "id" : 17,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 21,
+    "quantity_on_hand" : 50.000,
+    "updated_at" : "2026-08-28T16:08:36.479032"
+  }, {
+    "id" : 18,
+    "average_unit_cost" : 0.00,
+    "business_id" : 5,
+    "inventory_value" : 0.00,
+    "product_id" : 22,
+    "quantity_on_hand" : 200.000,
+    "updated_at" : "2026-08-28T16:08:36.479032"
   } ]
 }

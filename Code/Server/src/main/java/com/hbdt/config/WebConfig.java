@@ -1,6 +1,7 @@
 package com.hbdt.config;
 
 import com.hbdt.common.service.ImageStorageService;
+import com.hbdt.entitlement.interceptor.FeatureEntitlementInterceptor;
 import com.hbdt.subscription.interceptor.SubscriptionInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -12,8 +13,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 /**
  * Web MVC configuration:
  * - Enables @Async (used by MailService)
- * - Enables @Scheduled (used by OtpService cleanup)
+ * - Enables @Scheduled (used by OtpService cleanup, SubscriptionExpiryScheduler)
  * - Maps /uploads/** to the local upload directory so avatars are accessible via HTTP
+ * - Registers FeatureEntitlementInterceptor for /api/owner/** and /api/employee/**
  * - Registers SubscriptionInterceptor for business API endpoints
  */
 @Configuration
@@ -22,11 +24,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     private final ImageStorageService imageStorageService;
-    private final SubscriptionInterceptor subscriptionInterceptor;
+    private final FeatureEntitlementInterceptor featureEntitlementInterceptor;
 
-    public WebConfig(ImageStorageService imageStorageService, SubscriptionInterceptor subscriptionInterceptor) {
+    public WebConfig(ImageStorageService imageStorageService,
+                     FeatureEntitlementInterceptor featureEntitlementInterceptor) {
         this.imageStorageService = imageStorageService;
-        this.subscriptionInterceptor = subscriptionInterceptor;
+        this.featureEntitlementInterceptor = featureEntitlementInterceptor;
     }
 
     @Override
@@ -37,6 +40,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(featureEntitlementInterceptor)
+                .addPathPatterns("/api/owner/**", "/api/employee/**", "/api/products/**", "/api/categories/**");
         registry.addInterceptor(subscriptionInterceptor)
                 .addPathPatterns(
                         "/api/products/**",

@@ -1,18 +1,18 @@
 package com.hbdt.repository;
 
-import com.hbdt.entity.User;
-import com.hbdt.entity.enums.UserStatus;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-import com.hbdt.entity.enums.RoleType;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import com.hbdt.entity.User;
+import com.hbdt.entity.enums.RoleType;
+import com.hbdt.entity.enums.UserStatus;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -62,6 +62,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /** Đếm nhân viên đang ACTIVE của một business */
     long countByBusinessIdAndRole_NameAndStatus(Long businessId, RoleType roleType, UserStatus status);
+
+    /** Đếm tổng số nhân viên của một business */
+    long countByBusinessIdAndRole_Name(Long businessId, RoleType roleType);
 
     List<User> findAllByBusinessIdAndStatus(Long businessId, UserStatus status);
 }

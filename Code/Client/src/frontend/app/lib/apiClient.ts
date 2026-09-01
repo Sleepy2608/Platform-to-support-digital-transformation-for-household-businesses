@@ -292,6 +292,9 @@ async function request<T = unknown>(
   const json = await response.json();
 
   if (!response.ok) {
+    if (response.status === 403) {
+      throw new Error(json.message || 'Bạn không có quyền thực hiện thao tác này.');
+    }
     throw new Error(json.message || `HTTP ${response.status}`);
   }
 

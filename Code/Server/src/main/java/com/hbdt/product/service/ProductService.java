@@ -9,6 +9,7 @@ import com.hbdt.entity.Product;
 import com.hbdt.entity.ProductUnit;
 import com.hbdt.entity.TaxActivityGroup;
 import com.hbdt.entity.Unit;
+import com.hbdt.entitlement.service.FeatureEntitlementService;
 import com.hbdt.product.dto.PageResponse;
 import com.hbdt.product.dto.ProductImageResponse;
 import com.hbdt.product.dto.ProductRequest;
@@ -55,6 +56,7 @@ public class ProductService {
     private final BusinessContextService businessContextService;
     private final ProductImageService productImageService;
     private final ImageStorageService imageStorageService;
+    private final FeatureEntitlementService featureEntitlementService;
     private final LowStockAlertService lowStockAlertService;
 
     public ProductService(ProductRepository productRepository,
@@ -66,6 +68,7 @@ public class ProductService {
                           BusinessContextService businessContextService,
                           ProductImageService productImageService,
                           ImageStorageService imageStorageService,
+                          FeatureEntitlementService featureEntitlementService,
                           LowStockAlertService lowStockAlertService) {
         this.productRepository = productRepository;
         this.productUnitRepository = productUnitRepository;
@@ -76,6 +79,7 @@ public class ProductService {
         this.businessContextService = businessContextService;
         this.productImageService = productImageService;
         this.imageStorageService = imageStorageService;
+        this.featureEntitlementService = featureEntitlementService;
         this.lowStockAlertService = lowStockAlertService;
     }
 
@@ -132,6 +136,11 @@ public class ProductService {
     @Transactional
     public ProductResponse create(String username, ProductRequest request) {
         Long businessId = businessContextService.requireBusinessId(username);
+
+        // Kiểm tra hạn mức sản phẩm theo gói dịch vụ (Feature Entitlement)
+        long currentProductCount = productRepository.countByBusinessId(businessId);
+        featureEntitlementService.validateFeatureQuota(businessId, "PRODUCT_MANAGEMENT", currentProductCount, "sản phẩm");
+
         String code = cleanRequired(request.productCode());
         String name = cleanRequired(request.productName());
         BigDecimal quantity = normalizeQuantity(request.quantityOnHand(), BigDecimal.ZERO);

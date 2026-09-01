@@ -1,6 +1,6 @@
 {
   "table" : "customers",
-  "version" : 6,
+  "version" : 8,
   "rows" : [ {
     "id" : 1,
     "address" : null,
@@ -23,5 +23,38 @@
     "phone" : "0889182269",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-23T12:49:40.921377"
+  }, {
+    "id" : 3,
+    "address" : null,
+    "business_id" : 5,
+    "created_at" : "2026-08-23T14:51:15.18141",
+    "customer_code" : "KH-9F072BF5",
+    "customer_name" : "Ngọc Chấn",
+    "note" : null,
+    "phone" : "0889123321",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-23T14:51:15.18141"
+  }, {
+    "id" : 4,
+    "address" : null,
+    "business_id" : 5,
+    "created_at" : "2026-08-23T14:51:32.4328",
+    "customer_code" : "KH-C6FB7A6A",
+    "customer_name" : "Đình Chấn",
+    "note" : null,
+    "phone" : "0889181129",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-23T14:51:32.4328"
+  }, {
+    "id" : 5,
+    "address" : null,
+    "business_id" : 5,
+    "created_at" : "2026-08-23T14:51:42.998985",
+    "customer_code" : "KH-9ED7CA97",
+    "customer_name" : "Đình Thái",
+    "note" : null,
+    "phone" : "0889231234",
+    "status" : "ACTIVE",
+    "updated_at" : "2026-08-23T14:51:42.998985"
   } ]
 }

@@ -36,17 +36,16 @@ interface OwnerProfile {
   updatedAt: string;
 }
 
-type Tab = 'profile' | 'business-profile' | 'password' | 'contact' | 'subscription' | 'consent' | 'danger';
+type Tab = 'profile' | 'business-profile' | 'personal-info' | 'subscription' | 'consent' | 'danger';
 type OtpTarget = 'email' | 'phone' | null;
 
 function resolveTabFromHash(hashString?: string): Tab {
   if (!hashString) return 'profile';
   const clean = hashString.replace(/^#+/, '').split('#')[0].toLowerCase().trim();
-  if (clean === 'email' || clean === 'phone' || clean === 'contact') return 'contact';
+  if (clean === 'email' || clean === 'phone' || clean === 'contact' || clean === 'password' || clean === 'personal-info') return 'personal-info';
   if (clean === 'plans' || clean === 'package' || clean === 'subscription') return 'subscription';
   if (clean === 'danger-zone' || clean === 'danger') return 'danger';
   if (clean === 'business-profile' || clean === 'business') return 'business-profile';
-  if (clean === 'password') return 'password';
   if (clean === 'consent') return 'consent';
   return 'profile';
 }
@@ -251,11 +250,10 @@ export default function OwnerAccountPage() {
   const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
     { id: 'profile', label: 'Hồ sơ cá nhân', icon: UserCircle },
     { id: 'business-profile', label: 'Hồ sơ kinh doanh', icon: Building2 },
-    { id: 'password', label: 'Mật khẩu', icon: Lock },
-    { id: 'contact', label: 'Email & SĐT', icon: Mail },
+    { id: 'personal-info', label: 'Thông tin cá nhân', icon: Lock },
     { id: 'subscription', label: 'Gói dịch vụ', icon: CreditCard },
     { id: 'consent', label: 'Điều khoản & Bảo mật', icon: ShieldCheck },
-    { id: 'danger', label: 'Vùng nguy hiểm', icon: AlertTriangle },
+    { id: 'danger', label: 'Kiểm soát tài khoản', icon: AlertTriangle },
   ];
 
   return (
@@ -323,9 +321,8 @@ export default function OwnerAccountPage() {
             {activeTab === 'business-profile' && (
               <BusinessProfileTab />
             )}
-            {activeTab === 'password' && <PasswordTab />}
-            {activeTab === 'contact' && (
-              <ContactTab profile={profile} onUpdated={loadProfile} />
+            {activeTab === 'personal-info' && (
+              <PersonalInfoTab profile={profile} onUpdated={loadProfile} />
             )}
             {activeTab === 'subscription' && (
               <SubscriptionTab profile={profile} onUpdated={loadProfile} />
@@ -545,8 +542,20 @@ function ProfileTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TAB 2: Change Password
+// TAB: Personal Information (Password & Contact)
 // ═══════════════════════════════════════════════════════════════════════════════
+function PersonalInfoTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUpdated: () => void }) {
+  return (
+    <div className="space-y-6">
+      <PasswordTab />
+      <ContactTab profile={profile} onUpdated={onUpdated} />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-tab / Section: Change Password
+// ─────────────────────────────────────────────────────────────────────────────
 function PasswordTab() {
   const [current, setCurrent] = useState('');
   const [newPwd, setNewPwd] = useState('');
@@ -884,7 +893,7 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
         <div className="min-w-0 flex-1">
           <SectionHeader icon={CreditCard} title="Gói dịch vụ &amp; Gia hạn" subtitle="Quản lý thời hạn truy cập nền tảng HBDT Digital" />
         </div>
-        {(hasActiveSubscription || packageType) && (
+        {hasActiveSubscription && (
           <button
             type="button"
             onClick={() => router.push('/onboarding/package-selection?from=account')}

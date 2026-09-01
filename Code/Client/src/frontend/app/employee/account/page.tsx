@@ -100,16 +100,19 @@ export default function EmployeeAccountPage() {
       <AnimatePresence>
         {toast && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className={`fixed top-5 right-5 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl text-sm font-semibold
-              ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className={`fixed top-5 right-5 z-[99999] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold border pointer-events-auto transition-all ${
+              toast.type === 'success'
+                ? 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-900/30'
+                : 'bg-red-600 text-white border-red-500 shadow-red-900/30'
+            }`}
           >
             {toast.type === 'success'
-              ? <CheckCircle2 className="w-4 h-4" />
-              : <AlertCircle className="w-4 h-4" />}
-            {toast.message}
+              ? <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-white" />
+              : <AlertCircle className="w-5 h-5 flex-shrink-0 text-white" />}
+            <span>{toast.message}</span>
           </motion.div>
         )}
       </AnimatePresence>

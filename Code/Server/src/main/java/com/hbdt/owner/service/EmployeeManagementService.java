@@ -7,6 +7,7 @@ import com.hbdt.entity.Role;
 import com.hbdt.entity.User;
 import com.hbdt.entity.enums.RoleType;
 import com.hbdt.entity.enums.UserStatus;
+import com.hbdt.entitlement.service.FeatureEntitlementService;
 import com.hbdt.owner.dto.*;
 import com.hbdt.repository.RoleRepository;
 import com.hbdt.repository.UserRepository;
@@ -51,15 +52,18 @@ public class EmployeeManagementService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final ImageStorageService imageStorageService;
+    private final FeatureEntitlementService featureEntitlementService;
 
     public EmployeeManagementService(UserRepository userRepository,
                                      RoleRepository roleRepository,
                                      PasswordEncoder passwordEncoder,
-                                     ImageStorageService imageStorageService) {
+                                     ImageStorageService imageStorageService,
+                                     FeatureEntitlementService featureEntitlementService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.imageStorageService = imageStorageService;
+        this.featureEntitlementService = featureEntitlementService;
     }
 
     // =========================================================
@@ -76,6 +80,10 @@ public class EmployeeManagementService {
         if (businessId == null) {
             throw new BadRequestException("Tài khoản chưa có hồ sơ hộ kinh doanh");
         }
+
+        // Kiểm tra hạn mức tài khoản nhân viên theo gói dịch vụ (Feature Entitlement)
+        long currentEmployeeCount = userRepository.countByBusinessIdAndRole_Name(businessId, RoleType.EMPLOYEE);
+        featureEntitlementService.validateFeatureQuota(businessId, "EMPLOYEE_MANAGEMENT", currentEmployeeCount, "nhân viên");
 
         // Validate uniqueness
         if (userRepository.existsByUsername(request.getUsername())) {

@@ -211,6 +211,11 @@ export default function LoginPage() {
               <Link href="/register" className="text-white font-semibold hover:underline">
                 Đăng ký dùng thử
               </Link>
+              <br></br>
+              Bạn là Admin?{' '}
+              <Link href="/admin/login" className="text-white font-semibold hover:underline">
+                Đăng nhập bằng Admin
+              </Link>
             </div>
           </div>
         </ScrollReveal>
