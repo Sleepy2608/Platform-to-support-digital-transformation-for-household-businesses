@@ -4,6 +4,7 @@ import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
 import com.hbdt.entity.Subscription;
 import com.hbdt.entity.SubscriptionPlan;
+import com.hbdt.entity.enums.SubscriptionStatus;
 import com.hbdt.repository.SubscriptionPlanRepository;
 import com.hbdt.repository.SubscriptionRepository;
 import org.slf4j.Logger;
@@ -29,10 +30,10 @@ public class SubscriptionLifecycleService {
 
     private static final Logger logger = LoggerFactory.getLogger(SubscriptionLifecycleService.class);
 
-    private static final String PENDING = "PENDING";
-    private static final String ACTIVE = "ACTIVE";
-    private static final String EXPIRED = "EXPIRED";
-    private static final String CANCELLED = "CANCELLED";
+    private static final SubscriptionStatus PENDING = SubscriptionStatus.PENDING_PAYMENT;
+    private static final SubscriptionStatus ACTIVE = SubscriptionStatus.ACTIVE;
+    private static final SubscriptionStatus EXPIRED = SubscriptionStatus.EXPIRED;
+    private static final SubscriptionStatus CANCELLED = SubscriptionStatus.CANCELLED;
 
     private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionPlanRepository subscriptionPlanRepository;

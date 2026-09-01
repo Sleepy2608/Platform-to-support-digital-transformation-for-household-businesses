@@ -1,14 +1,15 @@
 package com.hbdt.config;
 
-import com.hbdt.common.service.ImageStorageService;
-import com.hbdt.entitlement.interceptor.FeatureEntitlementInterceptor;
-import com.hbdt.subscription.interceptor.SubscriptionInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import com.hbdt.common.service.ImageStorageService;
+import com.hbdt.entitlement.interceptor.FeatureEntitlementInterceptor;
+import com.hbdt.subscription.interceptor.SubscriptionInterceptor;
 
 /**
  * Web MVC configuration:
@@ -25,11 +26,14 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final ImageStorageService imageStorageService;
     private final FeatureEntitlementInterceptor featureEntitlementInterceptor;
+    private final SubscriptionInterceptor subscriptionInterceptor;
 
     public WebConfig(ImageStorageService imageStorageService,
-                     FeatureEntitlementInterceptor featureEntitlementInterceptor) {
+                     FeatureEntitlementInterceptor featureEntitlementInterceptor,
+                     SubscriptionInterceptor subscriptionInterceptor) {
         this.imageStorageService = imageStorageService;
         this.featureEntitlementInterceptor = featureEntitlementInterceptor;
+        this.subscriptionInterceptor = subscriptionInterceptor;
     }
 
     @Override
