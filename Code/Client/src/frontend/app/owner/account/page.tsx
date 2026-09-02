@@ -183,13 +183,9 @@ export default function OwnerAccountPage() {
   const [profile, setProfile] = useState<OwnerProfile | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
 
-  // Redirect to new dedicated subscription page if tab is accessed directly
-  useEffect(() => {
-    if (activeTab === 'subscription') {
-      router.push('/owner/account/subscription');
-    }
-  }, [activeTab, router]);
-
+  // Keep hash-based subscription tab as an in-page tab only; 
+  // ../owner/account/subscription -> dùng cho pops up thông báo
+  // ../owner/account#subscription -> dashboard subcription
   // ── Sync Active Tab with URL Hash (Immediate Response to Sidebar Clicks) ──────
   useEffect(() => {
     const handleHash = () => {
@@ -251,7 +247,6 @@ export default function OwnerAccountPage() {
     { id: 'profile', label: 'Hồ sơ cá nhân', icon: UserCircle },
     { id: 'business-profile', label: 'Hồ sơ kinh doanh', icon: Building2 },
     { id: 'personal-info', label: 'Thông tin cá nhân', icon: Lock },
-    { id: 'subscription', label: 'Gói dịch vụ', icon: CreditCard },
     { id: 'consent', label: 'Điều khoản & Bảo mật', icon: ShieldCheck },
     { id: 'danger', label: 'Kiểm soát tài khoản', icon: AlertTriangle },
   ];
@@ -519,10 +514,10 @@ function ProfileTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Trạng thái tài khoản</label>
           <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border ${profile?.status === 'ACTIVE'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-              : profile?.status === 'LOCKED'
-                ? 'bg-amber-50 border-amber-200 text-amber-700'
-                : 'bg-rose-50 border-rose-200 text-rose-700'
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+            : profile?.status === 'LOCKED'
+              ? 'bg-amber-50 border-amber-200 text-amber-700'
+              : 'bg-rose-50 border-rose-200 text-rose-700'
             }`}>
             <div className={`w-2 h-2 rounded-full ${profile?.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
             {profile?.status === 'ACTIVE' ? 'Đang hoạt động' : profile?.status === 'LOCKED' ? 'Đã khóa' : 'Vô hiệu hóa'}
@@ -976,8 +971,8 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
               key={m}
               onClick={() => setMonths(m)}
               className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${months === m
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
                 }`}
             >
               {m} tháng
@@ -1017,8 +1012,8 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${item.action === 'UPGRADE' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
-                        item.action === 'DOWNGRADE' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
-                          'bg-blue-100 text-blue-800 border border-blue-200'
+                      item.action === 'DOWNGRADE' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                        'bg-blue-100 text-blue-800 border border-blue-200'
                       }`}>
                       {item.action}
                     </span>

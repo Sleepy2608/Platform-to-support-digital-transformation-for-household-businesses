@@ -7,6 +7,7 @@ import {
   Store, UserCircle, Lock, Mail, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
   Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing,
+  Building2, ShieldCheck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,8 +28,10 @@ function getCleanHash(rawHash?: string): string {
 
 const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash: string }> = [
   { label: 'Hồ sơ cá nhân', href: '/owner/account#profile', icon: UserCircle, hash: '#profile' },
+  { label: 'Hồ sơ kinh doanh', href: '/owner/account#business-profile', icon: Building2, hash: '#business-profile' },
   { label: 'Thay đổi thông tin cá nhân', href: '/owner/account#personal-info', icon: Lock, hash: '#personal-info' },
   { label: 'Gói đăng ký', href: '/owner/account#subscription', icon: CreditCard, hash: '#subscription' },
+  { label: 'Điều khoản & Bảo mật', href: '/owner/account#consent', icon: ShieldCheck, hash: '#consent' },
   { label: 'Kiểm soát tài khoản', href: '/owner/account#danger', icon: AlertTriangle, hash: '#danger' },
 ];
 
@@ -168,11 +171,17 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
 
   const handleNavAccount = (e: React.MouseEvent, href: string, hash: string) => {
     e.preventDefault();
-    const clean = getCleanHash(hash);
-    setCurrentHash(`#${clean}`);
     setSidebarOpen(false);
 
-    if (pathname === '/owner/account' && href !== '/owner/account/subscription') {
+    if (href === '/owner/account/subscription') {
+      router.push('/owner/account/subscription');
+      return;
+    }
+
+    const clean = getCleanHash(hash);
+    setCurrentHash(`#${clean}`);
+
+    if (pathname === '/owner/account') {
       window.history.replaceState(null, '', `/owner/account#${clean}`);
       window.dispatchEvent(new CustomEvent('owner-tab-change', { detail: clean }));
       window.dispatchEvent(new HashChangeEvent('hashchange'));
@@ -354,11 +363,14 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                   {ACCOUNT_NAV_ITEMS.map((item) => {
                     const Icon = item.icon;
                     const isDanger = item.hash === '#danger';
-                    const isActive = pathname === '/owner/account' && currentHash === item.hash;
+                    const isSubscriptionPage = item.href === '/owner/account/subscription';
+                    const isActive = isSubscriptionPage
+                      ? pathname === '/owner/account/subscription'
+                      : pathname === '/owner/account' && currentHash === item.hash;
 
                     return (
                       <Link
-                        key={item.hash}
+                        key={item.href}
                         href={item.href}
                         onClick={(event) => handleNavAccount(event, item.href, item.hash || '#profile')}
                         className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
