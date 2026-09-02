@@ -38,7 +38,7 @@ public class SubscriptionExpiryScheduler {
     public void checkExpiredSubscriptions() {
         LocalDate today = LocalDate.now();
         List<Subscription> expiredList = subscriptionRepository
-                .findAllByEndDateBeforeAndStatus(today, "ACTIVE");
+                .findAllByEndDateBeforeAndStatus(today, com.hbdt.entity.enums.SubscriptionStatus.ACTIVE);
 
         if (expiredList.isEmpty()) {
             logger.debug("No expired subscriptions found for date: {}", today);
@@ -47,7 +47,7 @@ public class SubscriptionExpiryScheduler {
 
         int count = 0;
         for (Subscription subscription : expiredList) {
-            subscription.setStatus("EXPIRED");
+            subscription.setStatus(com.hbdt.entity.enums.SubscriptionStatus.EXPIRED);
             subscriptionRepository.save(subscription);
             count++;
             logger.info("Auto-expired subscription: id={}, businessId={}, endDate={}",
