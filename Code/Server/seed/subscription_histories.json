@@ -1,6 +1,6 @@
 {
   "table" : "subscription_histories",
-  "version" : 8,
+  "version" : 9,
   "rows" : [ {
     "id" : 1,
     "action" : "UPGRADE",
@@ -81,5 +81,13 @@
     "new_plan" : "VIP",
     "old_plan" : "VIP",
     "subscription_id" : 5
+  }, {
+    "id" : 11,
+    "action" : "RENEWAL",
+    "changed_at" : "2026-09-02T09:54:22.003734",
+    "changed_by" : "huytamowner",
+    "new_plan" : "BASIC",
+    "old_plan" : "BASIC",
+    "subscription_id" : 13
   } ]
 }

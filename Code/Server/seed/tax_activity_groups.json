@@ -1,6 +1,6 @@
 {
   "table" : "tax_activity_groups",
-  "version" : 10,
+  "version" : 11,
   "rows" : [ {
     "id" : 1,
     "activity_code" : "DISTRIBUTION_GOODS",

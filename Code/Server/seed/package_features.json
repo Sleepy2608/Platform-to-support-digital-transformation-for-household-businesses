@@ -1,6 +1,6 @@
 {
   "table" : "package_features",
-  "version" : 2,
+  "version" : 3,
   "rows" : [ {
     "id" : 4,
     "created_at" : "2026-08-24T06:43:26.105697",

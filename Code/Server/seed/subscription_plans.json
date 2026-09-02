@@ -1,6 +1,6 @@
 {
   "table" : "subscription_plans",
-  "version" : 16,
+  "version" : 17,
   "rows" : [ {
     "id" : 1,
     "annual_price" : 0.00,

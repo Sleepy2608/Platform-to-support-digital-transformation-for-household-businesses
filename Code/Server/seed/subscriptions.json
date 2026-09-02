@@ -1,116 +1,136 @@
 {
   "table" : "subscriptions",
-  "version" : 13,
+  "version" : 14,
   "rows" : [ {
     "id" : 1,
     "billing_cycle" : "MONTHLY",
-    "user_id" : 2,
     "business_id" : 2,
     "created_at" : "2026-08-09T17:44:16.274014",
     "end_date" : "2026-09-10",
     "start_date" : "2026-08-10",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-09T17:44:16.274014",
-    "plan_id" : 4
+    "plan_id" : 4,
+    "cancellation_reason" : null,
+    "cancelled_at" : null,
+    "user_id" : 0
   }, {
     "id" : 2,
     "billing_cycle" : "MONTHLY",
-    "user_id" : 2,
     "business_id" : 1,
     "created_at" : "2026-08-09T18:29:53.779536",
     "end_date" : "2026-09-10",
     "start_date" : "2026-08-10",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-09T18:29:53.779536",
-    "plan_id" : 4
+    "plan_id" : 4,
+    "cancellation_reason" : null,
+    "cancelled_at" : null,
+    "user_id" : 0
   }, {
     "id" : 3,
     "billing_cycle" : "YEARLY",
-    "user_id" : 7,
     "business_id" : 3,
     "created_at" : "2026-08-11T03:35:54.021464",
     "end_date" : "2027-08-11",
     "start_date" : "2026-08-11",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-11T03:35:54.021464",
-    "plan_id" : 4
+    "plan_id" : 4,
+    "cancellation_reason" : null,
+    "cancelled_at" : null,
+    "user_id" : 0
   }, {
     "id" : 4,
     "billing_cycle" : "MONTHLY",
-    "user_id" : 8,
     "business_id" : 4,
     "created_at" : "2026-08-11T04:12:48.438044",
     "end_date" : "2026-09-11",
     "start_date" : "2026-08-11",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-11T04:12:48.438044",
-    "plan_id" : 4
+    "plan_id" : 4,
+    "cancellation_reason" : null,
+    "cancelled_at" : null,
+    "user_id" : 0
   }, {
     "id" : 5,
     "billing_cycle" : "MONTHLY",
-    "user_id" : 4,
     "business_id" : 5,
     "created_at" : "2026-08-18T09:12:10.936911",
     "end_date" : "2030-04-18",
     "start_date" : "2026-08-18",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-23T14:36:46.213092",
-    "plan_id" : 6
+    "plan_id" : 6,
+    "cancellation_reason" : null,
+    "cancelled_at" : null,
+    "user_id" : 0
   }, {
     "id" : 6,
     "billing_cycle" : "MONTHLY",
-    "user_id" : 9,
     "business_id" : 6,
     "created_at" : "2026-08-20T03:21:28.589088",
     "end_date" : "2026-09-20",
     "start_date" : "2026-08-20",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-20T03:21:28.589088",
-    "plan_id" : 3
+    "plan_id" : 3,
+    "cancellation_reason" : null,
+    "cancelled_at" : null,
+    "user_id" : 0
   }, {
     "id" : 7,
     "billing_cycle" : "MONTHLY",
-    "user_id" : 10,
     "business_id" : 7,
     "created_at" : "2026-08-21T15:28:25.559345",
     "end_date" : "2026-09-21",
     "start_date" : "2026-08-21",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-21T15:28:25.559345",
-    "plan_id" : 3
+    "plan_id" : 3,
+    "cancellation_reason" : null,
+    "cancelled_at" : null,
+    "user_id" : 0
   }, {
     "id" : 8,
     "billing_cycle" : "MONTHLY",
-    "user_id" : 11,
     "business_id" : 8,
     "created_at" : "2026-08-21T15:30:46.894467",
     "end_date" : "2026-09-21",
     "start_date" : "2026-08-21",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-21T15:30:46.894467",
-    "plan_id" : 3
+    "plan_id" : 3,
+    "cancellation_reason" : null,
+    "cancelled_at" : null,
+    "user_id" : 0
   }, {
     "id" : 9,
     "billing_cycle" : "MONTHLY",
-    "user_id" : 12,
     "business_id" : 9,
     "created_at" : "2026-08-23T10:50:03.68935",
     "end_date" : "2026-10-23",
     "start_date" : "2026-08-23",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-23T10:50:17.103956",
-    "plan_id" : 1
+    "plan_id" : 1,
+    "cancellation_reason" : null,
+    "cancelled_at" : null,
+    "user_id" : 0
   }, {
     "id" : 10,
     "billing_cycle" : "MONTHLY",
-    "user_id" : 13,
     "business_id" : 10,
     "created_at" : "2026-08-23T10:51:41.602302",
     "end_date" : "2026-09-23",
     "start_date" : "2026-08-23",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-23T10:51:41.602302",
-    "plan_id" : 1
+    "plan_id" : 1,
+    "cancellation_reason" : null,
+    "cancelled_at" : null,
+    "user_id" : 0
   }, {
     "id" : 11,
     "billing_cycle" : "MONTHLY",
@@ -120,7 +140,10 @@
     "start_date" : "2026-08-30",
     "status" : "ACTIVE",
     "updated_at" : "2026-08-29T17:13:14.83395",
-    "plan_id" : 6
+    "plan_id" : 6,
+    "cancellation_reason" : null,
+    "cancelled_at" : null,
+    "user_id" : 0
   }, {
     "id" : 12,
     "billing_cycle" : "MONTHLY",
@@ -128,8 +151,63 @@
     "created_at" : "2026-08-31T05:38:47.216953",
     "end_date" : "2026-09-30",
     "start_date" : "2026-08-31",
+    "status" : "CANCELLED",
+    "updated_at" : "2026-09-02T08:47:43.591763",
+    "plan_id" : 1,
+    "cancellation_reason" : "không dùng nữa",
+    "cancelled_at" : "2026-09-02T08:47:43.547213",
+    "user_id" : 0
+  }, {
+    "id" : 13,
+    "billing_cycle" : "MONTHLY",
+    "business_id" : 13,
+    "created_at" : "2026-09-02T09:50:52.91593",
+    "end_date" : "2026-11-02",
+    "start_date" : "2026-09-02",
+    "status" : "CANCELLED",
+    "updated_at" : "2026-09-02T09:55:01.75016",
+    "plan_id" : 2,
+    "cancellation_reason" : "Không dùng nữa",
+    "cancelled_at" : "2026-09-02T09:55:01.740709",
+    "user_id" : 17
+  }, {
+    "id" : 14,
+    "billing_cycle" : "MONTHLY",
+    "business_id" : 13,
+    "created_at" : "2026-09-02T09:55:12.631948",
+    "end_date" : "2026-10-02",
+    "start_date" : "2026-09-02",
+    "status" : "CANCELLED",
+    "updated_at" : "2026-09-02T10:16:29.417678",
+    "plan_id" : 6,
+    "cancellation_reason" : "hủy",
+    "cancelled_at" : "2026-09-02T10:16:29.400812",
+    "user_id" : 17
+  }, {
+    "id" : 15,
+    "billing_cycle" : "MONTHLY",
+    "business_id" : 13,
+    "created_at" : "2026-09-02T10:16:40.653711",
+    "end_date" : "2026-10-02",
+    "start_date" : "2026-09-02",
+    "status" : "CANCELLED",
+    "updated_at" : "2026-09-02T14:47:36.586284",
+    "plan_id" : 2,
+    "cancellation_reason" : "hủy",
+    "cancelled_at" : "2026-09-02T14:47:36.569286",
+    "user_id" : 17
+  }, {
+    "id" : 16,
+    "billing_cycle" : "MONTHLY",
+    "business_id" : 13,
+    "created_at" : "2026-09-02T14:47:46.606817",
+    "end_date" : "2026-10-02",
+    "start_date" : "2026-09-02",
     "status" : "ACTIVE",
-    "updated_at" : "2026-08-31T05:38:47.216953",
-    "plan_id" : 1
+    "updated_at" : "2026-09-02T14:47:46.813283",
+    "plan_id" : 2,
+    "cancellation_reason" : null,
+    "cancelled_at" : null,
+    "user_id" : 17
   } ]
 }
