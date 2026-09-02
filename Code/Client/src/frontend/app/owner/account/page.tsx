@@ -247,6 +247,7 @@ export default function OwnerAccountPage() {
     { id: 'profile', label: 'Hồ sơ cá nhân', icon: UserCircle },
     { id: 'business-profile', label: 'Hồ sơ kinh doanh', icon: Building2 },
     { id: 'personal-info', label: 'Thông tin cá nhân', icon: Lock },
+    { id: 'subscription', label: 'Gói đăng ký', icon: CreditCard },
     { id: 'consent', label: 'Điều khoản & Bảo mật', icon: ShieldCheck },
     { id: 'danger', label: 'Kiểm soát tài khoản', icon: AlertTriangle },
   ];

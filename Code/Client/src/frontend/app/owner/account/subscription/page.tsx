@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   CreditCard, Calendar, RefreshCw, AlertTriangle, CheckCircle2,
   XCircle, Ban, Clock, ArrowLeft, Send, X, Crown, Sparkles, ShieldAlert
@@ -369,8 +369,24 @@ function CancelConfirmationModal({
   );
 }
 
-// ─── Success Toast ────────────────────────────────────────────────────────────
-function SuccessToast({ message, isVisible }: { message: string; isVisible: boolean }) {
+// ─── Notification Toast (Success / Warning / Error) ─────────────────────────
+function NotificationToast({ 
+  message, 
+  isVisible, 
+  type = 'success' 
+}: { 
+  message: string; 
+  isVisible: boolean; 
+  type?: 'success' | 'warning' | 'error';
+}) {
+  const typeConfig = {
+    success: { bg: 'bg-emerald-600', icon: CheckCircle2 },
+    warning: { bg: 'bg-amber-600', icon: AlertTriangle },
+    error: { bg: 'bg-rose-600', icon: XCircle },
+  };
+  const config = typeConfig[type];
+  const Icon = config.icon;
+
   return (
     <AnimatePresence>
       {isVisible && (
@@ -378,9 +394,9 @@ function SuccessToast({ message, isVisible }: { message: string; isVisible: bool
           initial={{ opacity: 0, y: -20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -20, scale: 0.95 }}
-          className="fixed top-6 left-1/2 -translate-x-1/2 z-[70] px-5 py-3.5 bg-emerald-600 text-white rounded-2xl shadow-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold"
+          className={`fixed top-6 left-1/2 -translate-x-1/2 z-[70] px-5 py-3.5 ${config.bg} text-white rounded-2xl shadow-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold`}
         >
-          <CheckCircle2 className="w-5 h-5" />
+          <Icon className="w-5 h-5" />
           {message}
         </motion.div>
       )}
@@ -393,6 +409,7 @@ function SuccessToast({ message, isVisible }: { message: string; isVisible: bool
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function SubscriptionManagementPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [subscription, setSubscription] = useState<SubscriptionResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -402,8 +419,9 @@ export default function SubscriptionManagementPage() {
   // Modal states
   const [showStatusPopup, setShowStatusPopup] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [showSubscriptionNotice, setShowSubscriptionNotice] = useState(true);
+  const [showSubscriptionNotice, setShowSubscriptionNotice] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [messageType, setMessageType] = useState<'success' | 'warning' | 'error'>('success');
 
   const fetchSubscription = async () => {
     setLoading(true);
@@ -420,9 +438,57 @@ export default function SubscriptionManagementPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const fromPackageSelection = searchParams.get('from') === 'account';
+    const subscriptionError = searchParams.get('subscriptionError');
+
     apiClient.get<SubscriptionResponse>('/api/owner/subscriptions/current')
       .then((data) => {
-        if (!cancelled) setSubscription(data);
+        if (!cancelled) {
+          if (subscriptionError) {
+            setMessageType('error');
+            setSuccessMessage(subscriptionError);
+            setShowSubscriptionNotice(false);
+            window.history.replaceState(null, '', '/owner/account/subscription');
+            setTimeout(() => setSuccessMessage(null), 4500);
+          }
+
+          // Nếu từ package-selection, check xem gói cũ còn không
+          if (fromPackageSelection) {
+            const oldSubStr = typeof window !== 'undefined' ? localStorage.getItem('oldSubscriptionData') : null;
+            if (oldSubStr) {
+              try {
+                const oldSub = JSON.parse(oldSubStr) as SubscriptionResponse;
+                const daysRemaining = oldSub.endDate 
+                  ? Math.ceil((new Date(oldSub.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                  : 0;
+                
+                const hasActiveOldSubscription = (oldSub.status === 'ACTIVE' || oldSub.status === 'PENDING_PAYMENT') && daysRemaining > 0;
+                
+                // Nếu gói mới khác gói cũ, tức là upgrade thành công
+                if (data.id !== oldSub.id) {
+                  if (hasActiveOldSubscription) {
+                    setMessageType('warning');
+                    setSuccessMessage('Gói mới được chọn không thành công, hãy thanh toán xong gói đang chờ hiện tại hoặc hủy gói cũ.');
+                  } else {
+                    setMessageType('success');
+                    setSuccessMessage('Gói dịch vụ đã được cập nhật thành công!');
+                  }
+                } else {
+                  // Gói chưa thay đổi
+                  if (hasActiveOldSubscription) {
+                    setMessageType('warning');
+                    setSuccessMessage('Gói mới được chọn không thành công, hãy thanh toán xong gói đang chờ hiện tại hoặc hủy gói cũ.');
+                  }
+                }
+                setTimeout(() => setSuccessMessage(null), 4500);
+                localStorage.removeItem('oldSubscriptionData');
+              } catch {
+                // Parse error, ignore
+              }
+            }
+          }
+          setSubscription(data);
+        }
       })
       .catch((err: unknown) => {
         if (!cancelled) setError(errorMessage(err, 'Không thể tải thông tin gói dịch vụ.'));
@@ -431,7 +497,7 @@ export default function SubscriptionManagementPage() {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [searchParams]);
 
   const handleCancelSubscription = async (reason: string) => {
     setCancelling(true);
@@ -459,6 +525,10 @@ export default function SubscriptionManagementPage() {
       setCancelError(null);
       setShowCancelModal(true);
     } else if (action === 'renew' || action === 'resubscribe') {
+      // Lưu gói hiện tại trước khi chuyển đến package-selection
+      if (subscription && typeof window !== 'undefined') {
+        localStorage.setItem('oldSubscriptionData', JSON.stringify(subscription));
+      }
       router.push('/onboarding/package-selection?from=account');
     }
   };
@@ -518,7 +588,7 @@ export default function SubscriptionManagementPage() {
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
       {/* Success Toast */}
-      <SuccessToast message={successMessage || ''} isVisible={!!successMessage} />
+      <NotificationToast message={successMessage || ''} isVisible={!!successMessage} type={messageType} />
 
       <AnimatePresence>
         {showSubscriptionNotice && (
@@ -566,7 +636,7 @@ export default function SubscriptionManagementPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => router.push('/owner/account')}
+            onClick={() => router.push('/owner/account#subscription')}
             className="p-2 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer text-slate-600"
             title="Quay lại"
           >
@@ -754,7 +824,13 @@ export default function SubscriptionManagementPage() {
 
               {(subscription.status === 'EXPIRED' || subscription.status === 'CANCELLED') && (
                 <button
-                  onClick={() => router.push('/onboarding/package-selection?from=account')}
+                  onClick={() => {
+                    // Lưu gói hiện tại trước khi chuyển
+                    if (typeof window !== 'undefined') {
+                      localStorage.setItem('oldSubscriptionData', JSON.stringify(subscription));
+                    }
+                    router.push('/onboarding/package-selection?from=account');
+                  }}
                   className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Crown className="w-4 h-4" /> Chọn gói mới
@@ -777,7 +853,13 @@ export default function SubscriptionManagementPage() {
             Bạn chưa đăng ký gói dịch vụ nào trên nền tảng.
           </p>
           <button
-            onClick={() => router.push('/onboarding/package-selection?from=account')}
+            onClick={() => {
+              // Lưu gói hiện tại trước khi chuyển
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('oldSubscriptionData', JSON.stringify(subscription));
+              }
+              router.push('/onboarding/package-selection?from=account');
+            }}
             className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
           >
             <Crown className="w-4 h-4" /> Đăng ký gói dịch vụ
@@ -802,6 +884,13 @@ export default function SubscriptionManagementPage() {
         onConfirm={handleCancelSubscription}
         cancelling={cancelling}
         cancelError={cancelError}
+      />
+
+      {/* Notification Toast */}
+      <NotificationToast 
+        message={successMessage || ''} 
+        isVisible={!!successMessage} 
+        type={messageType}
       />
     </div>
   );

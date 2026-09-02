@@ -205,7 +205,12 @@ function PackageSelectionContent() {
           router.push('/owner/account');
         }, 1500);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.');
+        const message = err instanceof Error ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.';
+        if (fromParam === 'account' || fromParam === 'subscription') {
+          router.push(`/owner/account/subscription?subscriptionError=${encodeURIComponent(message)}`);
+          return;
+        }
+        setError(message);
       } finally {
         setSubmitting(false);
       }
@@ -230,7 +235,12 @@ function PackageSelectionContent() {
         router.push(redirectTarget);
       }, 1800);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Xác nhận thanh toán thất bại, vui lòng thử lại.');
+      const message = err instanceof Error ? err.message : 'Xác nhận thanh toán thất bại, vui lòng thử lại.';
+      if (fromParam === 'account' || fromParam === 'subscription') {
+        router.push(`/owner/account/subscription?subscriptionError=${encodeURIComponent(message)}`);
+        return;
+      }
+      setError(message);
     } finally {
       setSubmitting(false);
     }

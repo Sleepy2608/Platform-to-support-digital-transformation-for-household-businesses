@@ -68,7 +68,7 @@ public class SubscriptionService implements ISubscriptionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Business not found with id: " + businessId));
 
         if (subscriptionRepository.existsByBusinessIdAndStatusIn(businessId, OPEN_STATUSES)) {
-            throw new IllegalStateException("Business already has a pending or active subscription");
+            throw new IllegalStateException("Tài khoản đang có subscription đang mở (PENDING_PAYMENT hoặc ACTIVE). Vui lòng hủy subscription hiện tại trước khi tạo mới.");
         }
 
         Subscription subscription = Subscription.builder()
@@ -96,22 +96,22 @@ public class SubscriptionService implements ISubscriptionService {
                                                      String paymentMethod) {
         Subscription subscription = findSubscriptionForUpdate(subscriptionId);
         if (subscription.getStatus() != SubscriptionStatus.PENDING_PAYMENT) {
-            throw new IllegalStateException("Only PENDING_PAYMENT subscriptions can be paid. Current status: "
+            throw new IllegalStateException("Chỉ có thể thanh toán các subscription có trạng thái PENDING_PAYMENT. Trạng thái hiện tại: "
                     + subscription.getStatus());
         }
         if (amount == null || amount.signum() <= 0) {
-            throw new IllegalArgumentException("Payment amount must be greater than zero");
+            throw new IllegalArgumentException("Số tiền thanh toán phải lớn hơn 0đ");
         }
         if (paymentMethod == null || paymentMethod.isBlank()) {
-            throw new IllegalArgumentException("Payment method must not be blank");
+            throw new IllegalArgumentException("Phương thức thanh toán không được để trống");
         }
 
         BigDecimal expectedAmount = expectedAmount(subscription);
         if (amount.compareTo(expectedAmount) != 0) {
-            throw new IllegalArgumentException("Payment amount does not match the selected subscription plan");
+            throw new IllegalArgumentException("Số tiền thanh toán không khớp với gói subscription đã chọn");
         }
         if (paymentHistoryRepository.existsBySubscriptionIdAndStatus(subscriptionId, PAYMENT_PENDING)) {
-            throw new IllegalStateException("A pending payment already exists for this subscription");
+            throw new IllegalStateException("Đã tồn tại một khoản thanh toán đang chờ xử lý cho subscription này");
         }
 
         PaymentHistory payment = PaymentHistory.builder()
@@ -143,7 +143,7 @@ public class SubscriptionService implements ISubscriptionService {
                         "Payment history not found with transactionId: " + transactionId));
 
         if (!PAYMENT_PENDING.equalsIgnoreCase(payment.getStatus())) {
-            return;
+            throw new IllegalStateException("Chỉ có thể xử lý các khoản thanh toán đang chờ xử lý. Trạng thái hiện tại: " + payment.getStatus());
         }
 
         if (failed) {
