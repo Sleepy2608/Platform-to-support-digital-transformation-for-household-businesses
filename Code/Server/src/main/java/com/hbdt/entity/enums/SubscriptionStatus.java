@@ -1,27 +1,33 @@
 package com.hbdt.entity.enums;
 
 /**
- * Trạng thái vòng đời của thuê bao (Subscription).
- *
- * State transitions:
- * - PENDING / PENDING_PAYMENT: Initial state when subscription is created, awaiting payment
- * - ACTIVE: Payment successful, subscription is active
- * - EXPIRED: Subscription has passed end date
- * - CANCELLED: Owner voluntarily cancelled the subscription
+ * Subscription status for Lifecycle:
+ * PENDING_PAYMENT -> ACTIVE
+ * ACTIVE -> EXPIRED
+ * ACTIVE -> CANCELLED
  */
 public enum SubscriptionStatus {
-    /** Chờ kích hoạt */
-    PENDING,
-
-    /** Subscription created but awaiting payment confirmation */
     PENDING_PAYMENT,
-
-    /** Đang hoạt động — Owner được phép truy cập features */
     ACTIVE,
-
-    /** Đã hết hạn */
     EXPIRED,
+    CANCELLED;
 
-    /** Đã bị hủy */
-    CANCELLED
+    /**
+     * Checks if transitioning from this status to next status is valid.
+     */
+    public boolean canTransitionTo(SubscriptionStatus next) {
+        if (this == next) {
+            return true;
+        }
+        switch (this) {
+            case PENDING_PAYMENT:
+                return next == ACTIVE;
+            case ACTIVE:
+                return next == EXPIRED || next == CANCELLED;
+            case EXPIRED:
+            case CANCELLED:
+            default:
+                return false;
+        }
+    }
 }

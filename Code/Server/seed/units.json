@@ -1,6 +1,6 @@
 {
   "table" : "units",
-  "version" : 10,
+  "version" : 11,
   "rows" : [ {
     "id" : 1,
     "status" : "ACTIVE",
