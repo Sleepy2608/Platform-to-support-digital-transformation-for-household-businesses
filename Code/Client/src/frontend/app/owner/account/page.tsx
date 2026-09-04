@@ -249,7 +249,7 @@ export default function OwnerAccountPage() {
     { id: 'business-profile', label: 'Hồ sơ kinh doanh', icon: Building2 },
     { id: 'personal-info', label: 'Thông tin cá nhân', icon: Lock },
     { id: 'subscription', label: 'Gói đăng ký', icon: CreditCard },
-    { id: 'consent', label: 'Chính sách, điều khoản & Bảo mật', icon: ShieldCheck },
+    { id: 'consent', label: 'Chính sách & Điều khoản', icon: ShieldCheck },
     { id: 'danger', label: 'Kiểm soát tài khoản', icon: AlertTriangle },
   ];
 

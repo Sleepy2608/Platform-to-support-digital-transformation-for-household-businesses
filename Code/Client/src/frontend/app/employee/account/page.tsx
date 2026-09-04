@@ -169,11 +169,11 @@ export default function EmployeeAccountPage() {
         </div>
       )}
 
-      {/* ── Section: Chính sách, điều khoản & bảo mật ── */}
+      {/* ── Section: Chính sách & Điều khoản ── */}
       <div id="policy" className="scroll-mt-8 space-y-4">
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4 text-slate-500" />
-          <h2 className="font-bold text-slate-900 text-base">Chính sách, điều khoản & bảo mật</h2>
+          <h2 className="font-bold text-slate-900 text-base">Chính sách & Điều khoản</h2>
         </div>
         <Circular88PolicyCard />
       </div>
