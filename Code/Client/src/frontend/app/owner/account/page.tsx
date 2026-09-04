@@ -11,6 +11,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient, clearAuth } from '../../lib/apiClient';
 import PaymentQrModal from '../../components/payment/PaymentQrModal';
+import Circular88PolicyCard from '../../components/legal/Circular88PolicyCard';
 import {
   type BusinessProfileResponse, type BusinessProfileRequest, type BusinessType,
   type ProvinceDto, type DistrictDto, type WardDto,
@@ -248,7 +249,7 @@ export default function OwnerAccountPage() {
     { id: 'business-profile', label: 'Hồ sơ kinh doanh', icon: Building2 },
     { id: 'personal-info', label: 'Thông tin cá nhân', icon: Lock },
     { id: 'subscription', label: 'Gói đăng ký', icon: CreditCard },
-    { id: 'consent', label: 'Điều khoản & Bảo mật', icon: ShieldCheck },
+    { id: 'consent', label: 'Chính sách, điều khoản & Bảo mật', icon: ShieldCheck },
     { id: 'danger', label: 'Kiểm soát tài khoản', icon: AlertTriangle },
   ];
 
@@ -1291,64 +1292,66 @@ function ConsentTab() {
       : d.toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
   };
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-10 flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-6 h-6 text-slate-900 animate-spin" />
-        <span className="text-slate-500 text-xs font-semibold">Đang tải lịch sử chấp thuận...</span>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6">
-      <SectionHeader
-        icon={ShieldCheck}
-        title="Điều khoản & Bảo mật"
-        subtitle="Lịch sử các lần bạn chấp thuận Điều khoản sử dụng và Chính sách bảo mật"
-      />
+    <div className="space-y-6">
+      {/* ── Thông tư 88 & Chính sách kế toán ── */}
+      <Circular88PolicyCard />
 
-      {error && <Alert type="error" message={error} />}
+      {/* ── Lịch sử chấp thuận điều khoản & bảo mật ── */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6">
+        <SectionHeader
+          icon={ShieldCheck}
+          title="Lịch sử chấp thuận Chính sách & Điều khoản"
+          subtitle="Bản ghi lưu vết các lần tài khoản xác nhận Điều khoản sử dụng, Chính sách bảo mật và cam kết pháp lý"
+        />
 
-      {records.length === 0 ? (
-        <div className="py-10 text-center">
-          <ShieldCheck className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-sm text-slate-500 font-medium">Chưa có bản ghi chấp thuận nào.</p>
-          <p className="text-xs text-slate-400 mt-1">
-            Bản ghi sẽ được lưu lại khi bạn đăng ký tài khoản và xác nhận điều khoản.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {records.map((r) => (
-            <div key={r.id} className="border border-slate-200 rounded-xl p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <span className="text-sm font-bold text-slate-900">{formatDate(r.acceptedAt)}</span>
-                <span className="text-[11px] text-slate-500 font-medium bg-slate-100 border border-slate-200 rounded-full px-2.5 py-0.5">
-                  Điều khoản v{r.termsVersion} · Bảo mật v{r.privacyVersion}
-                </span>
+        {error && <Alert type="error" message={error} />}
+
+        {loading ? (
+          <div className="py-10 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="w-6 h-6 text-slate-900 animate-spin" />
+            <span className="text-slate-500 text-xs font-semibold">Đang tải lịch sử chấp thuận...</span>
+          </div>
+        ) : records.length === 0 ? (
+          <div className="py-10 text-center">
+            <ShieldCheck className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+            <p className="text-sm text-slate-500 font-medium">Chưa có bản ghi chấp thuận nào.</p>
+            <p className="text-xs text-slate-400 mt-1">
+              Bản ghi sẽ được lưu lại khi bạn đăng ký tài khoản và xác nhận điều khoản.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {records.map((r) => (
+              <div key={r.id} className="border border-slate-200 rounded-xl p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <span className="text-sm font-bold text-slate-900">{formatDate(r.acceptedAt)}</span>
+                  <span className="text-[11px] text-slate-500 font-medium bg-slate-100 border border-slate-200 rounded-full px-2.5 py-0.5">
+                    Điều khoản v{r.termsVersion} · Bảo mật v{r.privacyVersion}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {items.map((it) => (
+                    <div key={it.key} className="flex items-center gap-2 text-xs text-slate-600">
+                      {r[it.key] ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                      )}
+                      <span className="font-medium">{it.label}</span>
+                    </div>
+                  ))}
+                </div>
+                {r.ipAddress && (
+                  <p className="text-[11px] text-slate-400 mt-3 border-t border-slate-100 pt-2">
+                    IP: {r.ipAddress}
+                  </p>
+                )}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {items.map((it) => (
-                  <div key={it.key} className="flex items-center gap-2 text-xs text-slate-600">
-                    {r[it.key] ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                    ) : (
-                      <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                    )}
-                    <span className="font-medium">{it.label}</span>
-                  </div>
-                ))}
-              </div>
-              {r.ipAddress && (
-                <p className="text-[11px] text-slate-400 mt-3 border-t border-slate-100 pt-2">
-                  IP: {r.ipAddress}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
