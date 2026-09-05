@@ -11,6 +11,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient, clearAuth } from '../../lib/apiClient';
 import PaymentQrModal from '../../components/payment/PaymentQrModal';
+import Circular88PolicyCard from '../../components/legal/Circular88PolicyCard';
 import {
   type BusinessProfileResponse, type BusinessProfileRequest, type BusinessType,
   type ProvinceDto, type DistrictDto, type WardDto,
@@ -183,6 +184,9 @@ export default function OwnerAccountPage() {
   const [profile, setProfile] = useState<OwnerProfile | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
 
+  // Keep hash-based subscription tab as an in-page tab only; 
+  // ../owner/account/subscription -> dùng cho pops up thông báo
+  // ../owner/account#subscription -> dashboard subcription
   // ── Sync Active Tab with URL Hash (Immediate Response to Sidebar Clicks) ──────
   useEffect(() => {
     const handleHash = () => {
@@ -244,8 +248,8 @@ export default function OwnerAccountPage() {
     { id: 'profile', label: 'Hồ sơ cá nhân', icon: UserCircle },
     { id: 'business-profile', label: 'Hồ sơ kinh doanh', icon: Building2 },
     { id: 'personal-info', label: 'Thông tin cá nhân', icon: Lock },
-    { id: 'subscription', label: 'Gói dịch vụ', icon: CreditCard },
-    { id: 'consent', label: 'Điều khoản & Bảo mật', icon: ShieldCheck },
+    { id: 'subscription', label: 'Gói đăng ký', icon: CreditCard },
+    { id: 'consent', label: 'Chính sách & Điều khoản', icon: ShieldCheck },
     { id: 'danger', label: 'Kiểm soát tài khoản', icon: AlertTriangle },
   ];
 
@@ -512,10 +516,10 @@ function ProfileTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Trạng thái tài khoản</label>
           <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border ${profile?.status === 'ACTIVE'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-              : profile?.status === 'LOCKED'
-                ? 'bg-amber-50 border-amber-200 text-amber-700'
-                : 'bg-rose-50 border-rose-200 text-rose-700'
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+            : profile?.status === 'LOCKED'
+              ? 'bg-amber-50 border-amber-200 text-amber-700'
+              : 'bg-rose-50 border-rose-200 text-rose-700'
             }`}>
             <div className={`w-2 h-2 rounded-full ${profile?.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
             {profile?.status === 'ACTIVE' ? 'Đang hoạt động' : profile?.status === 'LOCKED' ? 'Đã khóa' : 'Vô hiệu hóa'}
@@ -969,8 +973,8 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
               key={m}
               onClick={() => setMonths(m)}
               className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${months === m
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
                 }`}
             >
               {m} tháng
@@ -1010,8 +1014,8 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${item.action === 'UPGRADE' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
-                        item.action === 'DOWNGRADE' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
-                          'bg-blue-100 text-blue-800 border border-blue-200'
+                      item.action === 'DOWNGRADE' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                        'bg-blue-100 text-blue-800 border border-blue-200'
                       }`}>
                       {item.action}
                     </span>
@@ -1288,64 +1292,66 @@ function ConsentTab() {
       : d.toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' });
   };
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-10 flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-6 h-6 text-slate-900 animate-spin" />
-        <span className="text-slate-500 text-xs font-semibold">Đang tải lịch sử chấp thuận...</span>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6">
-      <SectionHeader
-        icon={ShieldCheck}
-        title="Điều khoản & Bảo mật"
-        subtitle="Lịch sử các lần bạn chấp thuận Điều khoản sử dụng và Chính sách bảo mật"
-      />
+    <div className="space-y-6">
+      {/* ── Thông tư 88 & Chính sách kế toán ── */}
+      <Circular88PolicyCard />
 
-      {error && <Alert type="error" message={error} />}
+      {/* ── Lịch sử chấp thuận điều khoản & bảo mật ── */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6">
+        <SectionHeader
+          icon={ShieldCheck}
+          title="Lịch sử chấp thuận Chính sách & Điều khoản"
+          subtitle="Bản ghi lưu vết các lần tài khoản xác nhận Điều khoản sử dụng, Chính sách bảo mật và cam kết pháp lý"
+        />
 
-      {records.length === 0 ? (
-        <div className="py-10 text-center">
-          <ShieldCheck className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-sm text-slate-500 font-medium">Chưa có bản ghi chấp thuận nào.</p>
-          <p className="text-xs text-slate-400 mt-1">
-            Bản ghi sẽ được lưu lại khi bạn đăng ký tài khoản và xác nhận điều khoản.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {records.map((r) => (
-            <div key={r.id} className="border border-slate-200 rounded-xl p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <span className="text-sm font-bold text-slate-900">{formatDate(r.acceptedAt)}</span>
-                <span className="text-[11px] text-slate-500 font-medium bg-slate-100 border border-slate-200 rounded-full px-2.5 py-0.5">
-                  Điều khoản v{r.termsVersion} · Bảo mật v{r.privacyVersion}
-                </span>
+        {error && <Alert type="error" message={error} />}
+
+        {loading ? (
+          <div className="py-10 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="w-6 h-6 text-slate-900 animate-spin" />
+            <span className="text-slate-500 text-xs font-semibold">Đang tải lịch sử chấp thuận...</span>
+          </div>
+        ) : records.length === 0 ? (
+          <div className="py-10 text-center">
+            <ShieldCheck className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+            <p className="text-sm text-slate-500 font-medium">Chưa có bản ghi chấp thuận nào.</p>
+            <p className="text-xs text-slate-400 mt-1">
+              Bản ghi sẽ được lưu lại khi bạn đăng ký tài khoản và xác nhận điều khoản.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {records.map((r) => (
+              <div key={r.id} className="border border-slate-200 rounded-xl p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <span className="text-sm font-bold text-slate-900">{formatDate(r.acceptedAt)}</span>
+                  <span className="text-[11px] text-slate-500 font-medium bg-slate-100 border border-slate-200 rounded-full px-2.5 py-0.5">
+                    Điều khoản v{r.termsVersion} · Bảo mật v{r.privacyVersion}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {items.map((it) => (
+                    <div key={it.key} className="flex items-center gap-2 text-xs text-slate-600">
+                      {r[it.key] ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                      )}
+                      <span className="font-medium">{it.label}</span>
+                    </div>
+                  ))}
+                </div>
+                {r.ipAddress && (
+                  <p className="text-[11px] text-slate-400 mt-3 border-t border-slate-100 pt-2">
+                    IP: {r.ipAddress}
+                  </p>
+                )}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {items.map((it) => (
-                  <div key={it.key} className="flex items-center gap-2 text-xs text-slate-600">
-                    {r[it.key] ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                    ) : (
-                      <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                    )}
-                    <span className="font-medium">{it.label}</span>
-                  </div>
-                ))}
-              </div>
-              {r.ipAddress && (
-                <p className="text-[11px] text-slate-400 mt-3 border-t border-slate-100 pt-2">
-                  IP: {r.ipAddress}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

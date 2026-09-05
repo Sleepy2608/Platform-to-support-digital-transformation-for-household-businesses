@@ -162,7 +162,6 @@ export default function SalesOrderHistoryPage() {
       <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Bán hàng</p>
             <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">Danh sách đơn hàng</h1>
             <p className="mt-2 text-sm text-slate-500">Tra cứu các đơn đã tạo và xem lại giá được lưu tại thời điểm bán.</p>
           </div>
