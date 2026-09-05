@@ -6,6 +6,7 @@ import Link from 'next/link';
 import {
   UserCircle, Lock, Mail, LogOut, Menu, X,
   ChevronRight, Briefcase, ListOrdered, ShoppingCart, BellRing, UserSearch,
+  ChevronRight, Briefcase, ListOrdered, ShoppingCart, BellRing, ShieldCheck,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient, clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { label: 'Cảnh báo tồn kho', href: '/employee/inventory-alerts', icon: BellRing, hash: '' },
   { label: 'Hồ sơ cá nhân', href: '/employee/account#profile', icon: UserCircle, hash: '#profile' },
   { label: 'Thay đổi thông tin cá nhân', href: '/employee/account#personal-info', icon: Lock, hash: '#personal-info' },
+  { label: 'Chính sách & Điều khoản', href: '/employee/account#policy', icon: ShieldCheck, hash: '#policy' },
 ];
 
 export default function EmployeeLayout({ children }: { children: React.ReactNode }) {
