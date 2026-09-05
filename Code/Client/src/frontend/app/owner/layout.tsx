@@ -6,8 +6,7 @@ import Link from 'next/link';
 import {
   Store, UserCircle, Lock, Mail, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
-  Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing,
-  Building2, ShieldCheck,
+  Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing, ContactRound,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -61,6 +60,7 @@ const MANAGE_NAV_ITEMS: Array<{
       { label: 'Danh sách đơn hàng', href: '/owner/orders/history', icon: ListOrdered },
     ],
   },
+  { label: 'Quản lý khách hàng', href: '/owner/customers', icon: ContactRound, path: '/owner/customers' },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
 ];
 
