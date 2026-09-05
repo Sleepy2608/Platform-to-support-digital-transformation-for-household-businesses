@@ -4,6 +4,8 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import PaymentQrModal from '../../components/payment/PaymentQrModal';
+import PolicyModal from '../../components/legal/PolicyModal';
+import { LEGAL_DOCS, type LegalDocKey } from '../../lib/legal-content';
 import { apiClient } from '../../lib/apiClient';
 import {
   CheckCircle, ShieldCheck, Zap, Crown, Loader2, AlertCircle,
@@ -133,6 +135,13 @@ function PackageSelectionContent() {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [copiedAccountNum, setCopiedAccountNum] = useState(false);
   const [copiedSyntax, setCopiedSyntax] = useState(false);
+
+  // Legal Policy Modal State
+  const [activeDoc, setActiveDoc] = useState<LegalDocKey | null>(null);
+  const [acceptedDocs, setAcceptedDocs] = useState<Record<string, boolean>>({
+    terms: false,
+    privacy: false,
+  });
 
   // Load packages and current profile from API
   useEffect(() => {
@@ -573,13 +582,27 @@ function PackageSelectionContent() {
           className="text-xs sm:text-sm text-slate-600 font-medium cursor-pointer select-none"
         >
           Tôi đồng ý với{' '}
-          <a href="#" className="text-slate-900 font-bold underline hover:text-slate-700">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveDoc('terms');
+            }}
+            className="text-slate-900 font-bold underline hover:text-slate-700 cursor-pointer inline"
+          >
             Điều khoản dịch vụ
-          </a>{' '}
+          </button>{' '}
           &amp;{' '}
-          <a href="#" className="text-slate-900 font-bold underline hover:text-slate-700">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveDoc('privacy');
+            }}
+            className="text-slate-900 font-bold underline hover:text-slate-700 cursor-pointer inline"
+          >
             Chính sách bảo mật
-          </a>{' '}
+          </button>{' '}
           của HBDT Digital.
         </label>
       </motion.div>
@@ -841,6 +864,21 @@ function PackageSelectionContent() {
         error={error}
         onClose={() => setShowPaymentModal(false)}
         onConfirm={handleConfirmPaymentTest}
+      />
+
+      {/* Modal xem chi tiết văn bản điều khoản / chính sách */}
+      <PolicyModal
+        docKey={activeDoc}
+        doc={activeDoc ? LEGAL_DOCS[activeDoc] : null}
+        onClose={() => setActiveDoc(null)}
+        onAccept={(docKey) => {
+          const updated = { ...acceptedDocs, [docKey]: true };
+          setAcceptedDocs(updated);
+          if (updated.terms && updated.privacy) {
+            setAgreed(true);
+          }
+          setActiveDoc(null);
+        }}
       />
 
     </div>
