@@ -79,7 +79,12 @@ public class SubscriptionService implements ISubscriptionService {
                 .endDate(endDate)
                 .status(SubscriptionStatus.PENDING_PAYMENT)
                 .build();
-        return subscriptionRepository.save(subscription);
+        subscription = subscriptionRepository.save(subscription);
+        
+        // Create Service Invoice upon registration
+        createInvoiceForSubscription(subscription.getId(), owner);
+        
+        return subscription;
     }
 
     @Override
@@ -120,7 +125,15 @@ public class SubscriptionService implements ISubscriptionService {
                 .paymentMethod(paymentMethod.trim().toUpperCase(Locale.ROOT))
                 .status(PAYMENT_PENDING)
                 .build();
-        return paymentHistoryRepository.save(payment);
+        payment = paymentHistoryRepository.save(payment);
+
+        // Ensure an invoice exists for this payment (creates new if previous FAILED, reuses if PENDING)
+        User proxyOwner = new User();
+        proxyOwner.setId(subscription.getUserId());
+        proxyOwner.setBusinessId(subscription.getBusinessId());
+        createInvoiceForSubscription(subscription.getId(), proxyOwner);
+
+        return payment;
     }
 
     @Override
@@ -148,6 +161,16 @@ public class SubscriptionService implements ISubscriptionService {
         if (failed) {
             payment.setStatus(PAYMENT_FAILED);
             paymentHistoryRepository.save(payment);
+            
+            // Mark invoice as FAILED
+            java.util.List<ServiceInvoice> existingInvoices = serviceInvoiceRepository.findBySubscriptionId(payment.getSubscriptionId());
+            for (ServiceInvoice inv : existingInvoices) {
+                if ("PENDING".equalsIgnoreCase(inv.getStatus())) {
+                    inv.setStatus("FAILED");
+                    serviceInvoiceRepository.save(inv);
+                    break;
+                }
+            }
             return;
         }
 
@@ -159,20 +182,21 @@ public class SubscriptionService implements ISubscriptionService {
         subscriptionRepository.save(subscription);
         paymentHistoryRepository.save(payment);
 
-        if (serviceInvoiceRepository.findBySubscriptionId(subscription.getId()).isEmpty()) {
-            User invoiceUser = new User();
-            invoiceUser.setId(subscription.getUserId());
-            ServiceInvoice invoice = ServiceInvoice.builder()
-                    .invoiceCode("INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT))
-                    .user(invoiceUser)
-                    .subscription(subscription)
-                    .plan(subscription.getPlan())
-                    .duration(1)
-                    .unitPrice(payment.getAmount())
-                    .totalAmount(payment.getAmount())
-                    .status("PAID")
-                    .build();
-            serviceInvoiceRepository.save(invoice);
+        // Update PENDING invoice to PAID
+        java.util.List<ServiceInvoice> existingInvoices = serviceInvoiceRepository.findBySubscriptionId(subscription.getId());
+        boolean foundPending = false;
+        for (ServiceInvoice inv : existingInvoices) {
+            if ("PENDING".equalsIgnoreCase(inv.getStatus())) {
+                inv.setStatus("PAID");
+                serviceInvoiceRepository.save(inv);
+                foundPending = true;
+                break;
+            }
+        }
+
+        // Fallback: throw exception if no PENDING was found
+        if (!foundPending) {
+            throw new IllegalStateException("Không tìm thấy hóa đơn đang chờ thanh toán (PENDING) cho đăng ký này. Trạng thái thanh toán bị lỗi.");
         }
     }
 
