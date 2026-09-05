@@ -17,8 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -161,11 +163,22 @@ public class SubscriptionService implements ISubscriptionService {
         paymentHistoryRepository.save(payment);
 
         if (!serviceInvoiceRepository.existsBySubscriptionIdAndStatus(subscription.getId(), "PAID")) {
+            int duration = invoiceDurationMonths(subscription);
+            BigDecimal totalAmount = payment.getAmount();
+            BigDecimal unitPrice = totalAmount.divide(BigDecimal.valueOf(duration), 2, RoundingMode.HALF_UP);
+            String invoiceNo = "INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
+
             ServiceInvoice invoice = ServiceInvoice.builder()
-                    .invoiceNo("INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT))
+                    .invoiceNo(invoiceNo)
+                    .invoiceCode(invoiceNo)
                     .businessId(subscription.getBusinessId())
                     .subscriptionId(subscription.getId())
-                    .amount(payment.getAmount())
+                    .planId(subscription.getPlan().getId())
+                    .userId(subscription.getUserId())
+                    .amount(totalAmount)
+                    .totalAmount(totalAmount)
+                    .unitPrice(unitPrice)
+                    .duration(duration)
                     .status("PAID")
                     .dueDate(LocalDateTime.now())
                     .build();
@@ -338,5 +351,19 @@ public class SubscriptionService implements ISubscriptionService {
             throw new IllegalStateException("Subscription plan price is invalid");
         }
         return amount;
+    }
+
+    /**
+     * Số tháng mà hóa đơn bao phủ — tính từ khoảng (startDate, endDate) của
+     * subscription; fallback theo billing cycle (MONTHLY=1, YEARLY=12).
+     */
+    private int invoiceDurationMonths(Subscription subscription) {
+        if (subscription.getStartDate() != null && subscription.getEndDate() != null) {
+            long months = ChronoUnit.MONTHS.between(subscription.getStartDate(), subscription.getEndDate());
+            if (months >= 1 && months <= 60) {
+                return (int) months;
+            }
+        }
+        return YEARLY.equalsIgnoreCase(subscription.getBillingCycle()) ? 12 : 1;
     }
 }
