@@ -59,6 +59,7 @@ const MANAGE_NAV_ITEMS: Array<{
     path: '/owner/orders',
     children: [
       { label: 'Danh sách đơn hàng', href: '/owner/orders/history', icon: ListOrdered },
+      { label: 'Tạo đơn hàng', href: '/owner/orders/new', icon: ReceiptText },
     ],
   },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
