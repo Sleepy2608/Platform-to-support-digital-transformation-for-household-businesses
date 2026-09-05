@@ -31,7 +31,7 @@ const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; 
   { label: 'Hồ sơ kinh doanh', href: '/owner/account#business-profile', icon: Building2, hash: '#business-profile' },
   { label: 'Thay đổi thông tin cá nhân', href: '/owner/account#personal-info', icon: Lock, hash: '#personal-info' },
   { label: 'Gói đăng ký', href: '/owner/account#subscription', icon: CreditCard, hash: '#subscription' },
-  { label: 'Điều khoản & Bảo mật', href: '/owner/account#consent', icon: ShieldCheck, hash: '#consent' },
+  { label: 'Chính sách & Điều khoản', href: '/owner/account#consent', icon: ShieldCheck, hash: '#consent' },
   { label: 'Kiểm soát tài khoản', href: '/owner/account#danger', icon: AlertTriangle, hash: '#danger' },
 ];
 
@@ -63,6 +63,7 @@ const MANAGE_NAV_ITEMS: Array<{
       { label: 'Danh sách đơn hàng', href: '/owner/orders/history', icon: ListOrdered },
     ],
   },
+  { label: 'Quản lý khách hàng', href: '/owner/customers', icon: ContactRound, path: '/owner/customers' },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
 ];
 
