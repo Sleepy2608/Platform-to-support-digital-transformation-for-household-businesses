@@ -22,6 +22,35 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     boolean existsByBusinessIdAndCustomerCodeIgnoreCase(Long businessId, String customerCode);
 
+    // ===== Phone uniqueness checks (HBDT-47) =====
+
+    /** Check trùng phone khi tạo mới */
+    boolean existsByBusinessIdAndPhone(Long businessId, String phone);
+
+    /** Check trùng phone khi cập nhật (loại trừ chính customer đó) */
+    boolean existsByBusinessIdAndPhoneAndIdNot(Long businessId, String phone, Long id);
+
+    // ===== Search & Filter (HBDT-47) =====
+
+    /** Tìm kiếm + lọc theo status + phân trang, scoped theo businessId */
+    @Query("""
+        SELECT c FROM Customer c
+        WHERE c.businessId = :businessId
+          AND (:status IS NULL OR c.status = :status)
+          AND (:keyword IS NULL OR :keyword = ''
+               OR LOWER(c.customerName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR LOWER(c.customerCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
+               OR c.phone LIKE CONCAT('%', :keyword, '%'))
+        ORDER BY c.createdAt DESC
+        """)
+    Page<Customer> findByBusinessIdWithFilters(
+            @Param("businessId") Long businessId,
+            @Param("keyword") String keyword,
+            @Param("status") String status,
+            Pageable pageable);
+
+    // ===== Existing queries (preserved) =====
+
     @Query("""
         SELECT c FROM Customer c
         WHERE c.businessId = :businessId
@@ -58,3 +87,4 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             Pageable pageable
     );
 }
+
