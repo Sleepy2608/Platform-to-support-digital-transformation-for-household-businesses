@@ -7,6 +7,7 @@ import {
   Store, UserCircle, Lock, Mail, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
   Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing, ContactRound,
+  Building2, ShieldCheck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
