@@ -63,6 +63,7 @@ const MANAGE_NAV_ITEMS: Array<{
   },
   { label: 'Khách hàng', href: '/owner/customers', icon: UserSearch, path: '/owner/customers' },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
+  { label: 'Lịch sử hóa đơn', href: '/owner/invoices', icon: ReceiptText, path: '/owner/invoices' },
 ];
 
 export default function OwnerLayout({ children }: { children: React.ReactNode }) {
