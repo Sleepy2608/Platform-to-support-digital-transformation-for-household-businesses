@@ -1,6 +1,6 @@
 {
   "table" : "audit_logs",
-  "version" : 14,
+  "version" : 15,
   "rows" : [ {
     "id" : 1,
     "action" : "POST /api/owner/business-profile",
@@ -5053,5 +5053,137 @@
     "old_data" : null,
     "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
     "user_id" : 1
+  }, {
+    "id" : 422,
+    "action" : "POST /api/seed/snapshot-all",
+    "business_id" : null,
+    "created_at" : "2026-09-01T06:52:30.01316",
+    "entity_id" : null,
+    "entity_type" : "SEED_DATA",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 1
+  }, {
+    "id" : 423,
+    "action" : "POST /api/seed/restore",
+    "business_id" : null,
+    "created_at" : "2026-09-01T06:52:32.397364",
+    "entity_id" : null,
+    "entity_type" : "SEED_DATA",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 1
+  }, {
+    "id" : 424,
+    "action" : "POST /api/owner/subscriptions/{id}/cancel",
+    "business_id" : 13,
+    "created_at" : "2026-09-02T08:47:43.929392",
+    "entity_id" : 12,
+    "entity_type" : "SUBSCRIPTION",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 17
+  }, {
+    "id" : 425,
+    "action" : "POST /api/owner/subscription/select-package",
+    "business_id" : 13,
+    "created_at" : "2026-09-02T09:50:55.561806",
+    "entity_id" : null,
+    "entity_type" : "SUBSCRIPTION",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 17
+  }, {
+    "id" : 426,
+    "action" : "POST /api/owner/subscription/renew",
+    "business_id" : 13,
+    "created_at" : "2026-09-02T09:54:22.170595",
+    "entity_id" : null,
+    "entity_type" : "SUBSCRIPTION",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 17
+  }, {
+    "id" : 427,
+    "action" : "POST /api/owner/subscriptions/{id}/cancel",
+    "business_id" : 13,
+    "created_at" : "2026-09-02T09:55:01.784904",
+    "entity_id" : 13,
+    "entity_type" : "SUBSCRIPTION",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 17
+  }, {
+    "id" : 428,
+    "action" : "POST /api/owner/subscription/select-package",
+    "business_id" : 13,
+    "created_at" : "2026-09-02T09:55:13.076499",
+    "entity_id" : null,
+    "entity_type" : "SUBSCRIPTION",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 17
+  }, {
+    "id" : 429,
+    "action" : "POST /api/owner/subscriptions/{id}/cancel",
+    "business_id" : 13,
+    "created_at" : "2026-09-02T10:16:29.601901",
+    "entity_id" : 14,
+    "entity_type" : "SUBSCRIPTION",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 17
+  }, {
+    "id" : 430,
+    "action" : "POST /api/owner/subscription/select-package",
+    "business_id" : 13,
+    "created_at" : "2026-09-02T10:16:40.994728",
+    "entity_id" : null,
+    "entity_type" : "SUBSCRIPTION",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 17
+  }, {
+    "id" : 431,
+    "action" : "POST /api/owner/subscriptions/{id}/cancel",
+    "business_id" : 13,
+    "created_at" : "2026-09-02T14:47:36.750418",
+    "entity_id" : 15,
+    "entity_type" : "SUBSCRIPTION",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 17
+  }, {
+    "id" : 432,
+    "action" : "POST /api/owner/subscription/select-package",
+    "business_id" : 13,
+    "created_at" : "2026-09-02T14:47:46.896327",
+    "entity_id" : null,
+    "entity_type" : "SUBSCRIPTION",
+    "ip_address" : "0:0:0:0:0:0:0:1",
+    "new_data" : null,
+    "old_data" : null,
+    "user_agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36 Edg/152.0.0.0",
+    "user_id" : 17
   } ]
 }

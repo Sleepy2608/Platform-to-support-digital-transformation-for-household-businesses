@@ -1,6 +1,6 @@
 {
   "table" : "test_huy",
-  "version" : 17,
+  "version" : 18,
   "rows" : [ {
     "id" : 1,
     "ghi_chu" : "dong test 1",
