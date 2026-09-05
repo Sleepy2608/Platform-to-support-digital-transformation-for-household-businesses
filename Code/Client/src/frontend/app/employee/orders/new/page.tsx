@@ -4,11 +4,13 @@ import { useRef, useState } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
 import { ProductSearchPicker, SearchProduct } from '@/app/components/ProductSearchPicker';
+import { AiOrderInput, AiOrderProposal } from '@/app/components/AiOrderInput';
 import {
   CartItem,
   CartResolvedPrice,
   CartUnit,
   CheckoutData,
+  InitialCheckout,
   OrderCartDrawer,
 } from '@/app/components/OrderCartDrawer';
 
@@ -16,12 +18,38 @@ interface SalesOrderResponse {
   orderCode: string;
 }
 
-export default function EmployeeCreateOrderPage() {
+export function CreateOrderPage() {
   const nextKey = useRef(1);
   const resolveTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const [items, setItems] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [error, setError] = useState('');
+  const [initialCheckout, setInitialCheckout] = useState<InitialCheckout>();
+  const [cartSession, setCartSession] = useState(0);
+
+  const applyAiProposal = (proposal: AiOrderProposal) => {
+    if (!proposal.readyToApply || items.length > 0 || proposal.paymentType === 'UNKNOWN'
+        || proposal.items.length === 0 || proposal.items.some((item) => !item.product || !item.price || !item.quantity)) return;
+    Object.values(resolveTimers.current).forEach(clearTimeout);
+    resolveTimers.current = {};
+    const proposedItems: CartItem[] = proposal.items.map((item) => ({
+      key: nextKey.current++, productId: item.product!.id, productCode: item.product!.productCode,
+      productName: item.product!.productName, imageUrl: item.product!.imageUrl,
+      baseUnitName: item.product!.baseUnitName, quantityOnHand: item.product!.quantityOnHand,
+      unitId: item.price!.unitId, quantity: String(item.quantity), units: item.units,
+      resolving: false, resolved: item.price!,
+    }));
+    setItems(proposedItems);
+    setInitialCheckout({
+      orderCode: `AI-${crypto.randomUUID().slice(0, 18)}`,
+      customer: proposal.customer || undefined,
+      paymentType: proposal.paymentType,
+      note: `Đơn được hỗ trợ nhập bằng AI. Thanh toán: ${proposal.paymentType === 'DEBT' ? 'ghi nợ' : proposal.paymentType === 'TRANSFER' ? 'chuyển khoản' : 'tiền mặt'}.`,
+    });
+    setCartSession((value) => value + 1);
+    setCartOpen(true);
+    setError('');
+  };
 
   const patchItem = (key: number, patch: Partial<CartItem>) => {
     setItems((current) => current.map((item) => item.key === key ? { ...item, ...patch } : item));
@@ -206,12 +234,15 @@ export default function EmployeeCreateOrderPage() {
           </button>
         </header>
         {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</div>}
+        <AiOrderInput onApply={applyAiProposal} cartHasItems={items.length > 0} />
         <ProductSearchPicker
           onSelectProduct={(product) => void addProduct(product)}
           selectedIds={items.map((item) => item.productId)}
         />
       </div>
       <OrderCartDrawer
+        key={cartSession}
+        initialCheckout={initialCheckout}
         isOpen={cartOpen}
         onClose={() => setCartOpen(false)}
         items={items}
@@ -223,6 +254,10 @@ export default function EmployeeCreateOrderPage() {
       />
     </div>
   );
+}
+
+export default function EmployeeCreateOrderPage() {
+  return <CreateOrderPage />;
 }
 
 function parseQuantity(value: string) {

@@ -64,7 +64,15 @@ export interface CheckoutData {
   customerId?: number;
 }
 
+export interface InitialCheckout {
+  orderCode: string;
+  customer?: CustomerOption;
+  paymentType: 'CASH' | 'TRANSFER' | 'DEBT';
+  note: string;
+}
+
 interface OrderCartDrawerProps {
+  initialCheckout?: InitialCheckout;
   isOpen: boolean;
   onClose: () => void;
   items: CartItem[];
@@ -76,6 +84,7 @@ interface OrderCartDrawerProps {
 }
 
 export function OrderCartDrawer({
+  initialCheckout,
   isOpen,
   onClose,
   items,
@@ -85,16 +94,16 @@ export function OrderCartDrawer({
   onClearCart,
   onCheckout,
 }: OrderCartDrawerProps) {
-  const [orderCode, setOrderCode] = useState('');
+  const [orderCode, setOrderCode] = useState(initialCheckout?.orderCode || '');
   const [source, setSource] = useState<'POS' | 'ONLINE'>('POS');
-  const [paidAmount, setPaidAmount] = useState('');
-  const [note, setNote] = useState('');
+  const [paidAmount, setPaidAmount] = useState(initialCheckout?.paymentType === 'DEBT' ? '0' : '');
+  const [note, setNote] = useState(initialCheckout?.note || '');
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [customers, setCustomers] = useState<CustomerOption[]>([]);
-  const [customerKeyword, setCustomerKeyword] = useState('');
-  const [customerId, setCustomerId] = useState('');
+  const [customers, setCustomers] = useState<CustomerOption[]>(initialCheckout?.customer ? [initialCheckout.customer] : []);
+  const [customerKeyword, setCustomerKeyword] = useState(initialCheckout?.customer?.customerName || '');
+  const [customerId, setCustomerId] = useState(initialCheckout?.customer ? String(initialCheckout.customer.id) : '');
   const [customerLoading, setCustomerLoading] = useState(false);
   const [newCustomerName, setNewCustomerName] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
