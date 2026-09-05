@@ -7,8 +7,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 @Repository
-public interface ServiceInvoiceRepository extends JpaRepository<ServiceInvoice, Long> {
+public interface ServiceInvoiceRepository extends JpaRepository<ServiceInvoice, Long>, JpaSpecificationExecutor<ServiceInvoice> {
     Optional<ServiceInvoice> findByInvoiceCode(String invoiceCode);
     List<ServiceInvoice> findByUserId(Long userId);
     List<ServiceInvoice> findBySubscriptionId(Long subscriptionId);

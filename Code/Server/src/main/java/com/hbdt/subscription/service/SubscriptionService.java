@@ -15,6 +15,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Sort;
+import jakarta.persistence.criteria.Predicate;
+import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,6 +28,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
+import com.hbdt.subscription.dto.ServiceInvoiceResponse;
 
 @Service
 @Transactional
@@ -365,6 +371,55 @@ public class SubscriptionService implements ISubscriptionService {
             throw new IllegalStateException("Subscription plan price is invalid");
         }
         return amount;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ServiceInvoiceResponse> getOwnerInvoiceHistory(User owner, String status, LocalDate fromDate, LocalDate toDate) {
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            throw new IllegalArgumentException("Từ ngày (fromDate) không được lớn hơn đến ngày (toDate).");
+        }
+
+        if (status != null && !status.isBlank()) {
+            String normStatus = status.trim().toUpperCase(Locale.ROOT);
+            if (!"PENDING".equals(normStatus) && !"PAID".equals(normStatus) && !"FAILED".equals(normStatus)) {
+                throw new IllegalArgumentException("Trạng thái hóa đơn không hợp lệ: " + status);
+            }
+        }
+
+        Specification<ServiceInvoice> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("user").get("id"), owner.getId()));
+
+            if (status != null && !status.isBlank()) {
+                predicates.add(cb.equal(root.get("status"), status.trim().toUpperCase(Locale.ROOT)));
+            }
+            if (fromDate != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), fromDate.atStartOfDay()));
+            }
+            if (toDate != null) {
+                predicates.add(cb.lessThan(root.get("createdAt"), toDate.plusDays(1).atStartOfDay()));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        return serviceInvoiceRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+                .stream()
+                .map(ServiceInvoiceResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ServiceInvoiceResponse getOwnerInvoiceDetail(Long invoiceId, User owner) {
+        ServiceInvoice invoice = serviceInvoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn dịch vụ với ID: " + invoiceId));
+
+        if (!invoice.getUser().getId().equals(owner.getId())) {
+            throw new AccessDeniedException("Bạn không có quyền truy cập hóa đơn này.");
+        }
+
+        return ServiceInvoiceResponse.fromEntity(invoice);
     }
 
     @Override
