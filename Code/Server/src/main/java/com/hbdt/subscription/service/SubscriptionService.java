@@ -167,7 +167,7 @@ public class SubscriptionService implements ISubscriptionService {
                     .user(invoiceUser)
                     .subscription(subscription)
                     .plan(subscription.getPlan())
-                    .duration("YEARLY".equals(subscription.getBillingCycle()) ? 12 : 1)
+                    .duration(1)
                     .unitPrice(payment.getAmount())
                     .totalAmount(payment.getAmount())
                     .status("PAID")
@@ -341,5 +341,51 @@ public class SubscriptionService implements ISubscriptionService {
             throw new IllegalStateException("Subscription plan price is invalid");
         }
         return amount;
+    }
+
+    @Override
+    @Transactional
+    public ServiceInvoice createInvoiceForSubscription(Long subscriptionId, User owner) {
+        Subscription subscription = getSubscriptionById(subscriptionId, owner);
+
+        java.util.List<ServiceInvoice> existingInvoices = serviceInvoiceRepository.findBySubscriptionId(subscription.getId());
+        for (ServiceInvoice inv : existingInvoices) {
+            if ("PENDING".equalsIgnoreCase(inv.getStatus())) {
+                return inv; // Trả về hóa đơn đang chờ thanh toán nếu đã có
+            }
+        }
+
+        SubscriptionPlan plan = subscription.getPlan();
+        if (plan == null) {
+            throw new IllegalStateException("Không tìm thấy gói dịch vụ cho đăng ký này.");
+        }
+
+        int duration = 1; // 1 billing cycle (MONTHLY or YEARLY)
+        BigDecimal unitPrice = "YEARLY".equalsIgnoreCase(subscription.getBillingCycle())
+                ? plan.getAnnualPrice()
+                : plan.getMonthlyPrice();
+
+        if (unitPrice == null) {
+            unitPrice = BigDecimal.ZERO;
+        }
+        
+        // totalAmount = unitPrice * duration
+        BigDecimal totalAmount = unitPrice.multiply(BigDecimal.valueOf(duration));
+
+        User invoiceUser = new User();
+        invoiceUser.setId(subscription.getUserId());
+
+        ServiceInvoice invoice = ServiceInvoice.builder()
+                .invoiceCode("INV-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase(java.util.Locale.ROOT))
+                .user(invoiceUser)
+                .subscription(subscription)
+                .plan(plan)
+                .duration(duration)
+                .unitPrice(unitPrice)
+                .totalAmount(totalAmount)
+                .status("PENDING")
+                .build();
+
+        return serviceInvoiceRepository.save(invoice);
     }
 }

@@ -94,4 +94,20 @@ public class SubscriptionController {
             Authentication authentication) {
         return cancelSubscriptionPost(id, request, authentication);
     }
+
+    /**
+     * POST /api/owner/subscriptions/{id}/invoices
+     * Tạo ServiceInvoice cho Subscription hiện tại.
+     */
+    @PostMapping("/{id}/invoices")
+    public ResponseEntity<ApiResponse<com.hbdt.subscription.dto.ServiceInvoiceResponse>> createInvoiceForSubscription(
+            @PathVariable Long id,
+            Authentication authentication) {
+        User user = getAuthenticatedUser(authentication);
+        com.hbdt.entity.ServiceInvoice invoice = subscriptionService.createInvoiceForSubscription(id, user);
+        return ResponseEntity.ok(ApiResponse.success(
+                "Tạo hóa đơn dịch vụ thành công",
+                com.hbdt.subscription.dto.ServiceInvoiceResponse.fromEntity(invoice)
+        ));
+    }
 }

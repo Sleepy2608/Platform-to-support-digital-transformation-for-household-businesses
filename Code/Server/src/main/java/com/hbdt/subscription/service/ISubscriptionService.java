@@ -31,4 +31,6 @@ public interface ISubscriptionService {
     Subscription cancelSubscription(Long id, User owner, String reason);
 
     void checkAndExpireSubscriptions();
+
+    com.hbdt.entity.ServiceInvoice createInvoiceForSubscription(Long subscriptionId, User owner);
 }
