@@ -42,7 +42,6 @@ public class SubscriptionService implements ISubscriptionService {
     private final BusinessProfileRepository businessProfileRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final ServiceInvoiceRepository serviceInvoiceRepository;
-
     public SubscriptionService(SubscriptionRepository subscriptionRepository,
                                BusinessProfileRepository businessProfileRepository,
                                PaymentHistoryRepository paymentHistoryRepository,
@@ -160,14 +159,18 @@ public class SubscriptionService implements ISubscriptionService {
         subscriptionRepository.save(subscription);
         paymentHistoryRepository.save(payment);
 
-        if (!serviceInvoiceRepository.existsBySubscriptionIdAndStatus(subscription.getId(), "PAID")) {
+        if (serviceInvoiceRepository.findBySubscriptionId(subscription.getId()).isEmpty()) {
+            User invoiceUser = new User();
+            invoiceUser.setId(subscription.getUserId());
             ServiceInvoice invoice = ServiceInvoice.builder()
-                    .invoiceNo("INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT))
-                    .businessId(subscription.getBusinessId())
-                    .subscriptionId(subscription.getId())
-                    .amount(payment.getAmount())
+                    .invoiceCode("INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT))
+                    .user(invoiceUser)
+                    .subscription(subscription)
+                    .plan(subscription.getPlan())
+                    .duration("YEARLY".equals(subscription.getBillingCycle()) ? 12 : 1)
+                    .unitPrice(payment.getAmount())
+                    .totalAmount(payment.getAmount())
                     .status("PAID")
-                    .dueDate(LocalDateTime.now())
                     .build();
             serviceInvoiceRepository.save(invoice);
         }
