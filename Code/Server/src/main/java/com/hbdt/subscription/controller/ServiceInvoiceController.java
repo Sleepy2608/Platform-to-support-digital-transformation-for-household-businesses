@@ -6,7 +6,10 @@ import com.hbdt.entity.User;
 import com.hbdt.repository.UserRepository;
 import com.hbdt.subscription.dto.ServiceInvoiceResponse;
 import com.hbdt.subscription.service.ISubscriptionService;
+import com.hbdt.subscription.service.ServiceInvoicePdfService;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -17,15 +20,16 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/owner/invoices")
-@PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
 public class ServiceInvoiceController {
 
     private final ISubscriptionService subscriptionService;
     private final UserRepository userRepository;
+    private final ServiceInvoicePdfService pdfService;
 
-    public ServiceInvoiceController(ISubscriptionService subscriptionService, UserRepository userRepository) {
+    public ServiceInvoiceController(ISubscriptionService subscriptionService, UserRepository userRepository, ServiceInvoicePdfService pdfService) {
         this.subscriptionService = subscriptionService;
         this.userRepository = userRepository;
+        this.pdfService = pdfService;
     }
 
     private User getAuthenticatedUser(Authentication authentication) {
@@ -35,10 +39,11 @@ public class ServiceInvoiceController {
 
     /**
      * GET /api/owner/invoices
-     * Lấy danh sách lịch sử hóa đơn dịch vụ của chủ kinh doanh
+     * Lấy danh sách hóa đơn dịch vụ của Owner
      */
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ServiceInvoiceResponse>>> getInvoiceHistory(
+    public ResponseEntity<ApiResponse<List<ServiceInvoiceResponse>>> getOwnerInvoices(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
@@ -53,6 +58,7 @@ public class ServiceInvoiceController {
      * GET /api/owner/invoices/{id}
      * Lấy chi tiết hóa đơn dịch vụ
      */
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ServiceInvoiceResponse>> getInvoiceDetail(
             @PathVariable Long id,
@@ -61,5 +67,29 @@ public class ServiceInvoiceController {
         User user = getAuthenticatedUser(authentication);
         ServiceInvoiceResponse invoice = subscriptionService.getOwnerInvoiceDetail(id, user);
         return ResponseEntity.ok(ApiResponse.success("Lấy chi tiết hóa đơn thành công", invoice));
+    }
+
+    /**
+     * GET /api/owner/invoices/{id}/download
+     * Tải PDF hóa đơn
+     */
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
+    @GetMapping("/{id}/download")
+    public ResponseEntity<byte[]> downloadInvoicePdf(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        User user = getAuthenticatedUser(authentication);
+        // This validates ownership and existence
+        ServiceInvoiceResponse invoice = subscriptionService.getOwnerInvoiceDetail(id, user);
+        
+        byte[] pdfBytes = pdfService.generateInvoicePdf(invoice);
+        
+        String filename = "invoice-" + invoice.getInvoiceCode() + ".pdf";
+        
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(pdfBytes);
     }
 }

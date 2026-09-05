@@ -30,9 +30,35 @@ export default function InvoiceDetailPage() {
   if (error) return <div className="p-6 text-red-500">{error}</div>;
   if (!invoice) return <div className="p-6">Không tìm thấy hóa đơn.</div>;
 
+  const handleDownload = async () => {
+    try {
+      setError(null);
+      const data = await apiClient.get<Blob>(`/api/owner/invoices/${id}/download`, { responseType: 'blob' });
+      const blob = data instanceof Blob ? data : new Blob([data as unknown as BlobPart], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice-${invoice?.invoiceCode || id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể tải hóa đơn. Vui lòng thử lại.');
+    }
+  };
+
   return (
     <div className="p-6 max-w-2xl mx-auto bg-white rounded-lg shadow-sm">
-      <Link href="/owner/invoices" className="text-blue-600 mb-4 inline-block">&larr; Quay lại danh sách</Link>
+      <div className="flex justify-between items-center mb-4">
+        <Link href="/owner/invoices" className="text-blue-600">&larr; Quay lại danh sách</Link>
+        <button 
+          onClick={handleDownload}
+          className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
+        >
+          Tải hóa đơn
+        </button>
+      </div>
       <h1 className="text-2xl font-bold mb-4">Chi tiết hóa đơn {invoice.invoiceCode}</h1>
       <div className="space-y-3">
         <p><strong>Gói:</strong> {invoice.planName}</p>
