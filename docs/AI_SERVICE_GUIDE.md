@@ -91,6 +91,8 @@ Nhập tên sản phẩm, đơn vị và khách hàng có thật trong cửa hà
 > Lấy 5 bao xi măng Hà Tiên cho anh Ba, ghi nợ
 
 Nếu không khớp hoặc trùng tên, nhập tên/mã cụ thể hơn hoặc dùng phần chọn hàng thủ công.
+Nếu câu không nói đơn vị, backend tự dùng đơn vị cơ sở đã cấu hình của sản phẩm.
+Nếu câu có nói đơn vị thì đơn vị đó vẫn phải khớp, hệ thống không tự đổi sang đơn vị khác.
 Nếu giỏ đã có hàng, cần hoàn tất hoặc xóa giỏ trước khi đưa bản đề xuất AI mới vào.
 
 Với Docker Compose, truyền file cấu hình khi tạo các container:

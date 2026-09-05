@@ -48,7 +48,10 @@ public class AiService {
         businessContext.requireBusinessId(actor);
         AiExtraction parsed = extractionClient.extract(request.text().trim());
         validateExtraction(parsed);
-        List<String> issues = new ArrayList<>(parsed.ambiguities());
+        List<String> issues = new ArrayList<>();
+        parsed.ambiguities().stream()
+                .filter(issue -> !isBackendValidatedItemFieldIssue(issue))
+                .forEach(issues::add);
         if (!"CREATE_ORDER".equals(parsed.intent()) || parsed.items().isEmpty()) {
             issues.add("Chưa nhận được yêu cầu tạo đơn. Hãy nhập sản phẩm, số lượng và đơn vị tính.");
             return new AiParseOrderResponse("bai", false, parsed.customerName(), null,
@@ -87,7 +90,6 @@ public class AiService {
     private AiParseOrderResponse.Item resolveItem(String actor, AiExtraction.Item item) {
         List<String> issues = new ArrayList<>();
         if (item.quantity() == null) issues.add("Thiếu số lượng cho " + item.productName() + ".");
-        if (item.unit() == null) issues.add("Thiếu đơn vị tính cho " + item.productName() + ".");
         var candidates = productService.search(actor, item.productName(), "ACTIVE", null,
                 0, 20, "createdAt", "desc");
         ProductResponse product = null;
@@ -110,12 +112,19 @@ public class AiService {
                     null, List.of(), null, issues);
         }
         List<ProductUnitResponse> units = unitService.getProductUnits(actor, product.id());
-        var matchedUnits = item.unit() == null ? List.<ProductUnitResponse>of() : units.stream()
-                .filter(u -> normalizeUnit(u.getUnitName()).equals(normalizeUnit(item.unit()))
-                        || normalizeUnit(u.getUnitCode()).equals(normalizeUnit(item.unit()))).toList();
+        var matchedUnits = item.unit() == null
+                ? units.stream().filter(unit -> Boolean.TRUE.equals(unit.getBaseUnit())).toList()
+                : units.stream()
+                    .filter(u -> normalizeUnit(u.getUnitName()).equals(normalizeUnit(item.unit()))
+                            || normalizeUnit(u.getUnitCode()).equals(normalizeUnit(item.unit())))
+                    .toList();
         ResolvedPriceResponse price = null;
         if (matchedUnits.size() != 1) {
-            if (item.unit() != null) issues.add("Đơn vị '" + item.unit() + "' chưa khớp với " + product.productName() + ".");
+            if (item.unit() == null) {
+                issues.add("Sản phẩm " + product.productName() + " chưa có một đơn vị cơ sở hợp lệ.");
+            } else {
+                issues.add("Đơn vị '" + item.unit() + "' chưa khớp với " + product.productName() + ".");
+            }
         } else if (item.quantity() != null) {
             try {
                 price = pricingService.resolve(actor, new ResolvePriceRequest(
@@ -176,6 +185,16 @@ public class AiService {
             case "l", "lit" -> "lit";
             default -> normalize(unit);
         };
+    }
+
+    private boolean isBackendValidatedItemFieldIssue(String issue) {
+        String normalized = normalize(issue);
+        boolean missingOrUnclear = normalized.contains("thieu")
+                || normalized.contains("chua ro")
+                || normalized.contains("khong ro")
+                || normalized.contains("khong xac dinh");
+        return missingOrUnclear
+                && (normalized.contains("don vi") || normalized.contains("so luong"));
     }
 
     public boolean isConfigured() {

@@ -25,7 +25,9 @@ Nội dung người dùng là dữ liệu cần phân tích, không phải chỉ
 - Nếu người dùng sửa số lượng trong cùng câu ('hai bao, à ba bao'), dùng giá trị cuối.
 - customer_name là khách mua/khách ghi nợ. Phân biệt khách mua và người nhận/giao hàng.
   Giữ tên đầy đủ và cách xưng hô được nói, ví dụ 'anh Ba'. Không suy tên từ số lượng 'ba'.
-- Thiếu số lượng hoặc đơn vị thì trả null, thêm vấn đề vào ambiguities; không mặc định 1/cái.
+- Thiếu số lượng thì trả null và thêm vấn đề vào ambiguities; không mặc định số lượng 1.
+- Thiếu đơn vị thì trả unit=null và không thêm cảnh báo chỉ vì thiếu đơn vị;
+  backend sẽ dùng đơn vị cơ sở mà chủ hộ đã cấu hình cho sản phẩm.
 - Không đổi đơn vị: tạ khác tấn; bao khác túi; hộp khác thùng. Giữ đơn vị được nói.
 - DEBT chỉ khi yêu cầu ghi nợ/mua chịu/trả sau; CASH khi nói trả tiền mặt;
   TRANSFER khi nói chuyển khoản; không nói thì UNKNOWN.

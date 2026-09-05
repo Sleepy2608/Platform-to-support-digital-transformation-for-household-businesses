@@ -87,7 +87,7 @@ class AiServiceTest {
     }
 
     @Test
-    void doesNotConvertTaToTanOrFallBackToBaseUnit() {
+    void doesNotReplaceAnExplicitMismatchedUnitWithBaseUnit() {
         when(client.extract(anyString())).thenReturn(new AiExtraction("CREATE_ORDER", null, "CASH",
                 List.of(new AiExtraction.Item("xi măng", BigDecimal.ONE, "tạ")), List.of()));
         when(products.search(anyString(), anyString(), anyString(), isNull(), anyInt(), anyInt(), anyString(), anyString()))
@@ -98,6 +98,27 @@ class AiServiceTest {
         assertFalse(result.readyToApply());
         assertNull(result.items().getFirst().price());
         verifyNoInteractions(prices);
+    }
+
+    @Test
+    void missingSpokenUnitUsesConfiguredBaseUnitWithoutDuplicateWarning() {
+        when(client.extract(anyString())).thenReturn(new AiExtraction("CREATE_ORDER", null, "CASH",
+                List.of(new AiExtraction.Item("laptop", BigDecimal.ONE, null)),
+                List.of("Thiếu đơn vị tính cho sản phẩm laptop")));
+        when(products.search(anyString(), anyString(), anyString(), isNull(), anyInt(), anyInt(), anyString(), anyString()))
+                .thenReturn(page(List.of(product(20L, "Laptop", 10))));
+        when(units.getProductUnits("owner", 20L)).thenReturn(List.of(
+                new ProductUnitResponse(4L, 20L, 3L, "Cái", "CAI", BigDecimal.ONE, true, "ACTIVE")));
+        when(prices.resolve(eq("owner"), any())).thenReturn(new ResolvedPriceResponse(
+                20L, 4L, 3L, "Cái", BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE,
+                new BigDecimal("10000000"), new BigDecimal("10000000"), 12L, "Giá hiện hành", false));
+
+        var result = service.parseOrder("owner", new AiParseOrderRequest("Lấy 1 laptop, trả tiền mặt"));
+
+        assertTrue(result.readyToApply());
+        assertTrue(result.ambiguities().isEmpty());
+        assertEquals("Cái", result.items().getFirst().price().unitName());
+        verify(prices).resolve(eq("owner"), argThat(request -> request.unitId().equals(3L)));
     }
 
     @Test
