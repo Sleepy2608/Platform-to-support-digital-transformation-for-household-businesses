@@ -1,9 +1,15 @@
 package com.hbdt.customer.controller;
 
 import com.hbdt.common.dto.ApiResponse;
+import com.hbdt.common.dto.PageResponse;
+import com.hbdt.customer.dto.CustomerCreateRequest;
+import com.hbdt.customer.dto.CustomerListResponse;
 import com.hbdt.customer.dto.CustomerOptionResponse;
 import com.hbdt.customer.dto.CustomerPurchaseHistoryPageResponse;
 import com.hbdt.customer.dto.CustomerPurchaseSummaryResponse;
+import com.hbdt.customer.dto.CustomerResponse;
+import com.hbdt.customer.dto.CustomerStatusRequest;
+import com.hbdt.customer.dto.CustomerUpdateRequest;
 import com.hbdt.customer.dto.QuickCreateCustomerRequest;
 import com.hbdt.customer.service.CustomerService;
 import jakarta.validation.Valid;
@@ -13,8 +19,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
