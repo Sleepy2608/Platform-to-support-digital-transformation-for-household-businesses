@@ -144,6 +144,11 @@ public class SubscriptionService implements ISubscriptionService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Payment history not found with transactionId: " + transactionId));
 
+        if ((successful && PAYMENT_COMPLETED.equalsIgnoreCase(payment.getStatus()))
+                || (failed && PAYMENT_FAILED.equalsIgnoreCase(payment.getStatus()))) {
+            return;
+        }
+
         if (!PAYMENT_PENDING.equalsIgnoreCase(payment.getStatus())) {
             throw new IllegalStateException("Chỉ có thể xử lý các khoản thanh toán đang chờ xử lý. Trạng thái hiện tại: " + payment.getStatus());
         }
