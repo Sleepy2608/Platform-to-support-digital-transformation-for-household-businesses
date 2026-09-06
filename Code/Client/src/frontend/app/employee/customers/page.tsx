@@ -12,7 +12,7 @@ interface CustomerOption {
   phone: string | null;
 }
 
-export default function OwnerCustomerDirectoryPage() {
+export default function EmployeeCustomerDirectoryPage() {
   const [keyword, setKeyword] = useState('');
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [loading, setLoading] = useState(false);
@@ -80,7 +80,7 @@ export default function OwnerCustomerDirectoryPage() {
               {customers.map((c) => (
                 <li key={c.id}>
                   <Link
-                    href={`/owner/customers/${c.id}/purchase-history`}
+                    href={`/employee/customers/${c.id}/purchase-history`}
                     className="flex items-center justify-between px-5 py-4 hover:bg-slate-50/70 transition-colors group"
                   >
                     <div className="flex items-center gap-4">

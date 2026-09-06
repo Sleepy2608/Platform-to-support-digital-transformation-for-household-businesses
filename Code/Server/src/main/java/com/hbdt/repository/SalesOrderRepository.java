@@ -64,6 +64,37 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long>, J
             @Param("businessId") Long businessId,
             @Param("customerId") Long customerId,
             Pageable pageable);
+
+    @Query("""
+        SELECT o FROM SalesOrder o
+        WHERE o.businessId = :businessId
+          AND o.customerId = :customerId
+          AND (:keyword IS NULL OR LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :keyword, '%')))
+          AND (CAST(:startDate as timestamp) IS NULL OR o.createdAt >= :startDate)
+          AND (CAST(:endDate as timestamp) IS NULL OR o.createdAt <= :endDate)
+          AND (:paymentStatus IS NULL OR o.paymentStatus = :paymentStatus)
+        ORDER BY o.createdAt DESC
+        """)
+    Page<SalesOrder> searchCustomerPurchaseHistory(
+            @Param("businessId") Long businessId,
+            @Param("customerId") Long customerId,
+            @Param("keyword") String keyword,
+            @Param("startDate") java.time.LocalDateTime startDate,
+            @Param("endDate") java.time.LocalDateTime endDate,
+            @Param("paymentStatus") PaymentStatus paymentStatus,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT COALESCE(SUM(o.totalAmount), 0) FROM SalesOrder o
+        WHERE o.businessId = :businessId
+          AND o.customerId = :customerId
+          AND o.status = 'CONFIRMED'
+        """)
+    java.math.BigDecimal sumTotalAmountByCustomer(
+            @Param("businessId") Long businessId,
+            @Param("customerId") Long customerId
+    );
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             select salesOrder from SalesOrder salesOrder
