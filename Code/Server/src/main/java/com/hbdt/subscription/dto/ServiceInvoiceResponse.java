@@ -41,7 +41,7 @@ public class ServiceInvoiceResponse {
                 .totalAmount(invoice.getTotalAmount())
                 .status(invoice.getStatus())
                 .createdAt(invoice.getCreatedAt())
-                .updatedAt(invoice.getUpdatedAt())
+                .updatedAt(invoice.getCreatedAt())
                 .build();
     }
 }
