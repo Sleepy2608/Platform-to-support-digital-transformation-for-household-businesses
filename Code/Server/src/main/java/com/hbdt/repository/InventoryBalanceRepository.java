@@ -8,10 +8,13 @@ import org.springframework.data.repository.query.Param;
 
 import jakarta.persistence.LockModeType;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface InventoryBalanceRepository extends JpaRepository<InventoryBalance, Long> {
     Optional<InventoryBalance> findByBusinessIdAndProductId(Long businessId, Long productId);
+
+    List<InventoryBalance> findAllByBusinessId(Long businessId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
