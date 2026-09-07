@@ -17,7 +17,7 @@ class ParseOrderRequest(BaseModel):
 
 
 class ParseOrderResponse(BaseModel):
-    success: boolrun
+    success: bool
     draft_order: Optional[dict] = None
     ambiguities: list[str] = []
     message: str = ""

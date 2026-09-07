@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Store, UserCircle, Lock, CreditCard,
+  Store, UserCircle, Lock, Mail, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
   Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing, UserSearch,
-  Building2, ShieldCheck, ClipboardList, ShoppingCart, Warehouse,
+  Building2, ShieldCheck,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -49,8 +49,6 @@ const MANAGE_NAV_ITEMS: Array<{
     path: '/owner/products',
     children: [
       { label: 'Danh sách sản phẩm', href: '/owner/products', icon: PackageOpen },
-      { label: 'Tồn kho hiện tại', href: '/owner/inventory', icon: Warehouse },
-      { label: 'Nhập kho', href: '/owner/products/stock-import', icon: ClipboardList },
       { label: 'Cảnh báo tồn kho', href: '/owner/inventory-alerts', icon: BellRing },
     ],
   },
@@ -60,7 +58,6 @@ const MANAGE_NAV_ITEMS: Array<{
     icon: ReceiptText,
     path: '/owner/orders',
     children: [
-      { label: 'Tạo đơn tại quầy', href: '/owner/orders/new', icon: ShoppingCart },
       { label: 'Danh sách đơn hàng', href: '/owner/orders/history', icon: ListOrdered },
     ],
   },

@@ -3,21 +3,6 @@
 English: Platform to Support Digital Transformation for Household Businesses  
 Vietnamese: Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh
 
-# 0. Tổng quát
-
-- Nội dung tài liệu được chi tiết hóa và chuẩn hóa dựa vào tài liệu gốc [topic-requirements.txt](topic-requirements.txt).
-- Các thay đổi / bổ sung chi tiết so với tài liệu gốc:
-  * **Phân tầng vai trò Quản lý / Chuyên viên (`Manager`):** 
-    - Tài liệu gốc chỉ định nghĩa 3 vai trò người dùng (`Employee`, `Owner`, `Administrator`).
-    - Bản chi tiết hóa bổ sung phân tầng vai trò `Manager` (Quản lý / Chuyên viên hỗ trợ vận hành) phụ trách: quản lý tài khoản chủ hộ, xem phân tích tăng trưởng nền tảng, xử lý phản hồi khách hàng (feedback) và theo dõi trạng thái thanh toán gói thuê bao; đồng thời nâng cấp `Administrator` thành Quản trị viên cấp cao (quản lý tài khoản Manager, định nghĩa giá gói Subscription, cấu hình tham số AI, biểu mẫu kế toán và giám sát Audit Logs toàn hệ thống).
-  * **Chi tiết hóa các chức năng nghiệp vụ:**
-    - Bổ sung ví dụ cụ thể về đa đơn vị tính trong quản lý sản phẩm (ví dụ: *Xi măng theo bao / tấn*).
-    - Làm rõ các chỉ số và thành phần trực quan hóa dữ liệu (Summary cards, Biểu đồ doanh thu, Business KPIs) trong Dashboard của Owner.
-    - Cụ thể hóa cấu trúc gói thuê bao (Gói Basic, Pro; chu kỳ thanh toán theo tháng / năm).
-  * **Chuẩn hóa cấu trúc và sản phẩm bàn giao (Deliverables):**
-    - Tổ chức lại nội dung theo cấu trúc phân mục Markdown chuẩn mực (Context, Current Challenges, Proposed Solutions, Functional Requirements, Non-Functional Requirements, Deliverables).
-    - Chuẩn hóa mục sản phẩm bàn giao (Deliverables) bám sát theo quy trình phát triển phần mềm chuẩn UML 2.0 (User Requirement, SRS, Architecture Design, Detailed Design, System Implementation, Testing Document, Installation Guide, Source Code, Deployable Package).
-
 ---
 
 # 1. Context

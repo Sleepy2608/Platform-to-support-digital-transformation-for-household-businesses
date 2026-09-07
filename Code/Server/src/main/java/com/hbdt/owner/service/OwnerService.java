@@ -269,11 +269,8 @@ public class OwnerService {
                 .build();
         paymentHistoryRepository.save(paymentHistory);
 
-        String invoiceNo = "INV-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        java.math.BigDecimal unitPrice = amount.divide(java.math.BigDecimal.valueOf(months), 2, java.math.RoundingMode.HALF_UP);
-
         ServiceInvoice serviceInvoice = ServiceInvoice.builder()
-                .invoiceCode(invoiceNo)
+                .invoiceCode("INV-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .user(user)
                 .subscription(subscription)
                 .plan(subscription.getPlan())

@@ -22,10 +22,8 @@ import java.util.stream.Collectors;
 import java.util.ArrayList;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -90,7 +88,7 @@ public class SubscriptionService implements ISubscriptionService {
         subscription = subscriptionRepository.save(subscription);
         
         // Create Service Invoice upon registration
-        createInvoiceForSubscription(subscription, owner);
+        createInvoiceForSubscription(subscription.getId(), owner);
         
         return subscription;
     }
@@ -139,7 +137,7 @@ public class SubscriptionService implements ISubscriptionService {
         User proxyOwner = new User();
         proxyOwner.setId(subscription.getUserId());
         proxyOwner.setBusinessId(subscription.getBusinessId());
-        createInvoiceForSubscription(subscription, proxyOwner);
+        createInvoiceForSubscription(subscription.getId(), proxyOwner);
 
         return payment;
     }
@@ -161,11 +159,6 @@ public class SubscriptionService implements ISubscriptionService {
         PaymentHistory payment = paymentHistoryRepository.findByTransactionIdForUpdate(transactionId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Payment history not found with transactionId: " + transactionId));
-
-        if ((successful && PAYMENT_COMPLETED.equalsIgnoreCase(payment.getStatus()))
-                || (failed && PAYMENT_FAILED.equalsIgnoreCase(payment.getStatus()))) {
-            return;
-        }
 
         if (!PAYMENT_PENDING.equalsIgnoreCase(payment.getStatus())) {
             throw new IllegalStateException("Chỉ có thể xử lý các khoản thanh toán đang chờ xử lý. Trạng thái hiện tại: " + payment.getStatus());
@@ -195,7 +188,7 @@ public class SubscriptionService implements ISubscriptionService {
         subscriptionRepository.save(subscription);
         paymentHistoryRepository.save(payment);
 
-        // Update PENDING invoice to PAID or create PAID invoice if missing
+        // Update PENDING invoice to PAID
         java.util.List<ServiceInvoice> existingInvoices = serviceInvoiceRepository.findBySubscriptionId(subscription.getId());
         boolean foundPending = false;
         for (ServiceInvoice inv : existingInvoices) {
@@ -207,26 +200,9 @@ public class SubscriptionService implements ISubscriptionService {
             }
         }
 
-        if (!foundPending && !serviceInvoiceRepository.existsBySubscriptionIdAndStatus(subscription.getId(), "PAID")) {
-            int duration = invoiceDurationMonths(subscription);
-            BigDecimal totalAmount = payment.getAmount();
-            BigDecimal unitPrice = totalAmount.divide(BigDecimal.valueOf(duration), 2, RoundingMode.HALF_UP);
-            String invoiceNo = "INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
-
-            User invoiceUser = new User();
-            invoiceUser.setId(subscription.getUserId());
-
-            ServiceInvoice invoice = ServiceInvoice.builder()
-                    .invoiceCode(invoiceNo)
-                    .user(invoiceUser)
-                    .subscription(subscription)
-                    .plan(subscription.getPlan())
-                    .duration(duration)
-                    .unitPrice(unitPrice)
-                    .totalAmount(totalAmount)
-                    .status("PAID")
-                    .build();
-            serviceInvoiceRepository.save(invoice);
+        // Fallback: throw exception if no PENDING was found
+        if (!foundPending) {
+            throw new IllegalStateException("Không tìm thấy hóa đơn đang chờ thanh toán (PENDING) cho đăng ký này. Trạng thái thanh toán bị lỗi.");
         }
     }
 
@@ -450,16 +426,11 @@ public class SubscriptionService implements ISubscriptionService {
     @Transactional
     public ServiceInvoice createInvoiceForSubscription(Long subscriptionId, User owner) {
         Subscription subscription = getSubscriptionById(subscriptionId, owner);
-        return createInvoiceForSubscription(subscription, owner);
-    }
 
-    private ServiceInvoice createInvoiceForSubscription(Subscription subscription, User owner) {
-        if (subscription.getId() != null) {
-            java.util.List<ServiceInvoice> existingInvoices = serviceInvoiceRepository.findBySubscriptionId(subscription.getId());
-            for (ServiceInvoice inv : existingInvoices) {
-                if ("PENDING".equalsIgnoreCase(inv.getStatus())) {
-                    return inv; // Trả về hóa đơn đang chờ thanh toán nếu đã có
-                }
+        java.util.List<ServiceInvoice> existingInvoices = serviceInvoiceRepository.findBySubscriptionId(subscription.getId());
+        for (ServiceInvoice inv : existingInvoices) {
+            if ("PENDING".equalsIgnoreCase(inv.getStatus())) {
+                return inv; // Trả về hóa đơn đang chờ thanh toán nếu đã có
             }
         }
 
@@ -468,7 +439,7 @@ public class SubscriptionService implements ISubscriptionService {
             throw new IllegalStateException("Không tìm thấy gói dịch vụ cho đăng ký này.");
         }
 
-        int duration = invoiceDurationMonths(subscription);
+        int duration = 1; // 1 billing cycle (MONTHLY or YEARLY)
         BigDecimal unitPrice = "YEARLY".equalsIgnoreCase(subscription.getBillingCycle())
                 ? plan.getAnnualPrice()
                 : plan.getMonthlyPrice();
@@ -495,19 +466,5 @@ public class SubscriptionService implements ISubscriptionService {
                 .build();
 
         return serviceInvoiceRepository.save(invoice);
-    }
-
-    /**
-     * Số tháng mà hóa đơn bao phủ — tính từ khoảng (startDate, endDate) của
-     * subscription; fallback theo billing cycle (MONTHLY=1, YEARLY=12).
-     */
-    private int invoiceDurationMonths(Subscription subscription) {
-        if (subscription.getStartDate() != null && subscription.getEndDate() != null) {
-            long months = ChronoUnit.MONTHS.between(subscription.getStartDate(), subscription.getEndDate());
-            if (months >= 1 && months <= 60) {
-                return (int) months;
-            }
-        }
-        return YEARLY.equalsIgnoreCase(subscription.getBillingCycle()) ? 12 : 1;
     }
 }

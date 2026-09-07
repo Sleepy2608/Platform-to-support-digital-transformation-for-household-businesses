@@ -30,7 +30,7 @@ public class StockImport {
     @Column(name = "import_code", nullable = false, length = 50)
     private String importCode;
 
-    @Column(name = "import_date", nullable = false)
+    @Column(name = "import_date", nullable = false, insertable = false, updatable = false)
     private LocalDateTime importDate;
 
     @Column(name = "total_amount", nullable = false, precision = 18, scale = 2)
@@ -42,26 +42,9 @@ public class StockImport {
     @Column(name = "note", length = 500)
     private String note;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        if (importDate == null) {
-            importDate = now;
-        }
-        if (createdAt == null) {
-            createdAt = now;
-        }
-        updatedAt = now;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }
