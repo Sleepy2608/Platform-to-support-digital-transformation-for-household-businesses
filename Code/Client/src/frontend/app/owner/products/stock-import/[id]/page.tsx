@@ -88,27 +88,37 @@ export default function StockImportDetailPage() {
   const isDraft = data?.status === 'DRAFT';
 
   return (
-    <div className="min-h-screen p-5 sm:p-8 lg:p-10">
+    <div className="min-h-screen bg-slate-100/70 p-4 sm:p-8 lg:p-10 select-none" style={{ cursor: 'default' }}>
       <div className="mx-auto max-w-5xl space-y-6">
-        {/* Header */}
-        <header className="flex items-center gap-4">
-          <Link href="/owner/products/stock-import"
-            className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 hover:bg-slate-50 transition">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-2xl font-black tracking-tight text-slate-950">
-              {data ? `Phiếu ${data.importCode}` : 'Chi tiết phiếu nhập kho'}
-            </h1>
+        {/* Page Title Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div className="flex items-center gap-4">
+            <Link href="/owner/products/stock-import"
+              className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 hover:bg-slate-50 transition cursor-pointer shadow-2xs">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight select-none" style={{ userSelect: 'none' }}>
+                {data ? `Phiếu ${data.importCode}` : 'Chi tiết phiếu nhập kho'}
+              </h1>
+              <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1 select-none" style={{ userSelect: 'none' }}>
+                Xem thông tin chi tiết phiếu nhập và sản phẩm
+              </p>
+            </div>
           </div>
-          {isDraft && (
-            <button onClick={handleConfirm} disabled={confirming}
-              className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-500 transition cursor-pointer disabled:opacity-50 shadow-sm">
-              {confirming ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-              Xác nhận nhập kho
-            </button>
-          )}
-        </header>
+          <div className="flex items-center gap-3 self-start sm:self-auto">
+            <span className="px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-bold text-slate-700">
+              Nhập kho
+            </span>
+            {isDraft && (
+              <button onClick={handleConfirm} disabled={confirming}
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-emerald-500 transition cursor-pointer disabled:opacity-50 shadow-xs">
+                {confirming ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                Xác nhận nhập kho
+              </button>
+            )}
+          </div>
+        </div>
 
         {/* Alerts */}
         {error && (
@@ -129,7 +139,7 @@ export default function StockImportDetailPage() {
         ) : data ? (
           <>
             {/* Info Card */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs">
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <div>
                   <p className="text-xs font-bold text-slate-400">Mã phiếu</p>
@@ -161,7 +171,7 @@ export default function StockImportDetailPage() {
             </div>
 
             {/* Items Table */}
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/60 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">

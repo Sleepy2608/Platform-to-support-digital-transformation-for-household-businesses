@@ -68,35 +68,42 @@ export default function StockImportListPage() {
   };
 
   return (
-    <div className="min-h-screen p-5 sm:p-8 lg:p-10">
+    <div className="min-h-screen bg-slate-100/70 p-4 sm:p-8 lg:p-10 select-none" style={{ cursor: 'default' }}>
       <div className="mx-auto max-w-6xl space-y-6">
-        {/* Header */}
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        {/* Page Title Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-slate-950">Phiếu nhập kho</h1>
-            <p className="mt-2 text-sm text-slate-500">
-              Tạo phiếu nhập kho mới, xem lịch sử và xác nhận cập nhật tồn kho.
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight select-none" style={{ userSelect: 'none' }}>
+              Phiếu nhập kho
+            </h1>
+            <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1 select-none" style={{ userSelect: 'none' }}>
+              Tạo phiếu nhập kho mới, xem lịch sử và xác nhận cập nhật tồn kho
             </p>
           </div>
-          <Link
-            href="/owner/products/stock-import/new"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white hover:bg-slate-800 transition"
-          >
-            <Plus className="h-4 w-4" /> Tạo phiếu nhập kho
-          </Link>
-        </header>
+          <div className="flex items-center gap-3 self-start sm:self-auto">
+            <span className="px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-bold text-slate-700">
+              Nhập kho
+            </span>
+            <Link
+              href="/owner/products/stock-import/new"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-slate-800 transition shadow-xs cursor-pointer"
+            >
+              <Plus className="h-4 w-4" /> Tạo phiếu nhập kho
+            </Link>
+          </div>
+        </div>
 
         {/* Search */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 placeholder="Tìm theo mã phiếu..."
                 value={keyword}
                 onChange={(e) => { setKeyword(e.target.value); setPage(0); }}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-2.5 text-sm outline-none focus:border-slate-400 focus:bg-white transition"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2.5 text-sm outline-none focus:border-slate-400 focus:bg-white transition"
               />
               {keyword && (
                 <button onClick={() => { setKeyword(''); setPage(0); }}
@@ -106,7 +113,7 @@ export default function StockImportListPage() {
               )}
             </div>
             <button onClick={load} disabled={loading}
-              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50">
+              className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50 shadow-2xs">
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
           </div>
@@ -120,7 +127,7 @@ export default function StockImportListPage() {
         )}
 
         {/* Table */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
           {loading ? (
             <div className="flex items-center justify-center py-20 text-sm text-slate-400">
               <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Đang tải...

@@ -90,26 +90,33 @@ export default function CurrentStockBalanceDashboard() {
   );
 
   return (
-    <div className="min-h-screen p-5 sm:p-8 lg:p-10">
+    <div className="min-h-screen bg-slate-100/70 p-4 sm:p-8 lg:p-10 select-none" style={{ cursor: 'default' }}>
       <div className="mx-auto max-w-7xl space-y-6">
-        {/* Header */}
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        {/* Page Title Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-slate-950">Tồn kho hiện tại</h1>
-            <p className="mt-2 text-sm text-slate-500">
-              Theo dõi số lượng thực tế của từng sản phẩm theo đơn vị cơ sở.
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight select-none" style={{ userSelect: 'none' }}>
+              Tồn kho hiện tại
+            </h1>
+            <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1 select-none" style={{ userSelect: 'none' }}>
+              Theo dõi số lượng thực tế của từng sản phẩm theo đơn vị cơ sở
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => void loadBalances()}
-            disabled={refreshing}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Làm mới
-          </button>
-        </header>
+          <div className="flex items-center gap-3 self-start sm:self-auto">
+            <span className="px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-bold text-slate-700">
+              Kho hàng
+            </span>
+            <button
+              type="button"
+              onClick={() => void loadBalances()}
+              disabled={refreshing}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              Làm mới
+            </button>
+          </div>
+        </div>
 
         {/* Error Alert */}
         {error && (
@@ -123,7 +130,7 @@ export default function CurrentStockBalanceDashboard() {
 
         {/* Summary Cards */}
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:shadow-md">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs transition hover:shadow-md">
             <div className="flex items-center justify-between">
               <div className="rounded-xl bg-slate-100 p-3 text-slate-700">
                 <Boxes className="h-5 w-5" />
@@ -133,7 +140,7 @@ export default function CurrentStockBalanceDashboard() {
             <p className="mt-3 text-xs font-bold uppercase tracking-wider text-slate-400">Sản phẩm đang hoạt động</p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:shadow-md">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs transition hover:shadow-md">
             <div className="flex items-center justify-between">
               <div className="rounded-xl bg-emerald-50 p-3 text-emerald-600">
                 <CheckCircle2 className="h-5 w-5" />
@@ -143,7 +150,7 @@ export default function CurrentStockBalanceDashboard() {
             <p className="mt-3 text-xs font-bold uppercase tracking-wider text-slate-400">Còn hàng</p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:shadow-md">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs transition hover:shadow-md">
             <div className="flex items-center justify-between">
               <div className="rounded-xl bg-rose-50 p-3 text-rose-600">
                 <PackageX className="h-5 w-5" />
@@ -155,7 +162,7 @@ export default function CurrentStockBalanceDashboard() {
         </section>
 
         {/* Search & Sort Filter */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -192,7 +199,7 @@ export default function CurrentStockBalanceDashboard() {
         </div>
 
         {/* Table List */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs">
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
           {loading ? (
             <div className="flex items-center justify-center py-20 text-sm text-slate-400">
               <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Đang tải dữ liệu tồn kho...

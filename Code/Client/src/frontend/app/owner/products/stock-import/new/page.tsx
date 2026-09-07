@@ -131,18 +131,30 @@ export default function StockImportCreatePage() {
   };
 
   return (
-    <div className="min-h-screen p-5 sm:p-8 lg:p-10">
+    <div className="min-h-screen bg-slate-100/70 p-4 sm:p-8 lg:p-10 select-none" style={{ cursor: 'default' }}>
       <div className="mx-auto max-w-5xl space-y-6">
-        {/* Header */}
-        <header className="flex items-center gap-4">
-          <Link href="/owner/products/stock-import"
-            className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 hover:bg-slate-50 transition">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-950">Tạo phiếu nhập kho</h1>
+        {/* Page Title Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div className="flex items-center gap-4">
+            <Link href="/owner/products/stock-import"
+              className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 hover:bg-slate-50 transition cursor-pointer shadow-2xs">
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight select-none" style={{ userSelect: 'none' }}>
+                Tạo phiếu nhập kho
+              </h1>
+              <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1 select-none" style={{ userSelect: 'none' }}>
+                Tìm kiếm sản phẩm, nhập số lượng và giá nhập để tạo phiếu nhập kho
+              </p>
+            </div>
           </div>
-        </header>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <span className="px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-bold text-slate-700">
+              Nhập kho
+            </span>
+          </div>
+        </div>
 
         {/* Alerts */}
         {error && (
@@ -158,8 +170,8 @@ export default function StockImportCreatePage() {
         )}
 
         {/* Product Search */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-bold text-slate-700">Tìm sản phẩm để thêm vào phiếu nhập</h2>
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs">
+          <h2 className="mb-3 text-sm font-bold text-slate-800">Tìm sản phẩm để thêm vào phiếu nhập</h2>
           <ProductSearchPicker
             onSelectProduct={(p) => void addProduct(p)}
             selectedIds={items.map((i) => i.productId)}
@@ -168,7 +180,7 @@ export default function StockImportCreatePage() {
 
         {/* Items Table */}
         {items.length > 0 && (
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
