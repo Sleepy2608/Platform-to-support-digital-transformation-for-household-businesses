@@ -11,14 +11,9 @@ import {
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { apiClient } from '@/app/lib/apiClient';
+import { CustomerSelect, CustomerOption } from '@/app/components/CustomerSelect';
 
-interface CustomerOption {
-  id: number;
-  customerCode: string;
-  customerName: string;
-  phone?: string;
-}
+export type { CustomerOption };
 
 export interface CartUnit {
   id: number;
@@ -92,18 +87,7 @@ export function OrderCartDrawer({
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [customers, setCustomers] = useState<CustomerOption[]>([]);
-  const [customerKeyword, setCustomerKeyword] = useState('');
-  const [customerId, setCustomerId] = useState('');
-  const [customerLoading, setCustomerLoading] = useState(false);
-  const [newCustomerName, setNewCustomerName] = useState('');
-  const [newCustomerPhone, setNewCustomerPhone] = useState('');
-  const customerSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const customerSearchRequest = useRef(0);
-
-  useEffect(() => () => {
-    if (customerSearchTimer.current) clearTimeout(customerSearchTimer.current);
-  }, []);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerOption | null>(null);
 
   const totalAmount = useMemo(
     () => Math.round(items.reduce((sum, item) => sum + Number(item.resolved?.lineTotal || 0), 0)),
@@ -117,47 +101,6 @@ export function OrderCartDrawer({
   const paid = Number.isFinite(parsedPaid) ? Math.round(parsedPaid) : Number.NaN;
   const debtAmount = Math.max(0, Math.round(totalAmount - (Number.isFinite(paid) ? paid : 0)));
   const hasInvalidItem = items.some((item) => !item.resolved || item.resolving || Boolean(item.error));
-  const selectedCustomer = customers.find((customer) => String(customer.id) === customerId);
-
-  const searchCustomers = async (keyword = customerKeyword) => {
-    const requestId = ++customerSearchRequest.current;
-    setCustomerLoading(true);
-    try {
-      const params = new URLSearchParams({ keyword: keyword.trim(), limit: '50' });
-      const results = await apiClient.get<CustomerOption[]>(`/api/customers/options?${params}`);
-      if (requestId !== customerSearchRequest.current) return;
-      setCustomers(results);
-    } catch (error) {
-      if (requestId === customerSearchRequest.current) {
-        setCheckoutError(error instanceof Error ? error.message : 'Không thể tải khách hàng');
-      }
-    } finally {
-      if (requestId === customerSearchRequest.current) setCustomerLoading(false);
-    }
-  };
-
-  const quickCreateCustomer = async () => {
-    if (!newCustomerName.trim()) {
-      setCheckoutError('Vui lòng nhập tên khách hàng mới');
-      return;
-    }
-    setCustomerLoading(true);
-    setCheckoutError('');
-    try {
-      const created = await apiClient.post<CustomerOption>('/api/customers/quick', {
-        customerName: newCustomerName.trim(),
-        phone: newCustomerPhone.trim(),
-      });
-      setCustomers((current) => [created, ...current.filter((item) => item.id !== created.id)]);
-      setCustomerId(String(created.id));
-      setNewCustomerName('');
-      setNewCustomerPhone('');
-    } catch (error) {
-      setCheckoutError(error instanceof Error ? error.message : 'Không thể tạo khách hàng');
-    } finally {
-      setCustomerLoading(false);
-    }
-  };
 
   const handleCheckout = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -174,8 +117,8 @@ export function OrderCartDrawer({
       setCheckoutError('Số tiền khách trả phải từ 0 đến tổng tiền đơn hàng');
       return;
     }
-    if (debtAmount > 0 && !customerId) {
-      setCheckoutError('Đơn còn nợ bắt buộc phải chọn khách hàng');
+    if (debtAmount > 0 && !selectedCustomer) {
+      setCheckoutError('Đơn còn nợ bắt buộc phải chọn khách hàng cụ thể');
       return;
     }
 
@@ -186,13 +129,13 @@ export function OrderCartDrawer({
         source,
         paidAmount: paid,
         note: note.trim(),
-        customerId: customerId ? Number(customerId) : undefined,
+        customerId: selectedCustomer ? selectedCustomer.id : undefined,
       });
       setSuccessMessage(`Đã tạo đơn ${result.orderCode} thành công`);
       setOrderCode('');
       setPaidAmount('');
       setNote('');
-      setCustomerId('');
+      setSelectedCustomer(null);
       onClearCart();
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : 'Không thể tạo đơn hàng');
@@ -344,23 +287,11 @@ export function OrderCartDrawer({
                     <input required maxLength={50} value={orderCode} onChange={(event) => setOrderCode(event.target.value)} placeholder="Ví dụ: DH-001" className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-slate-500" />
                   </label>
                   <div className="sm:col-span-2">
-                    <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Khách hàng {debtAmount > 0 ? '(bắt buộc vì đơn còn nợ)' : '(không bắt buộc)'}</span>
-                    <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-                      <input value={customerKeyword} onFocus={() => { if (!customers.length) void searchCustomers(''); }} onChange={(event) => { const value = event.target.value; setCustomerKeyword(value); if (selectedCustomer && normalizeSearchText(value) !== normalizeSearchText(selectedCustomer.customerName)) setCustomerId(''); if (customerSearchTimer.current) clearTimeout(customerSearchTimer.current); customerSearchTimer.current = setTimeout(() => void searchCustomers(value), 250); }} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); if (customerSearchTimer.current) clearTimeout(customerSearchTimer.current); void searchCustomers(); } }} placeholder="Gõ tên, mã hoặc số điện thoại..." className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-slate-500" />
-                      <button type="button" disabled={customerLoading} onClick={() => void searchCustomers()} className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold disabled:opacity-50">Tìm</button>
-                    </div>
-                    <div className="mt-2 max-h-44 overflow-y-auto rounded-xl border border-slate-200 bg-white">
-                      <button type="button" onClick={() => { setCustomerId(''); setCustomerKeyword(''); }} className={`block w-full border-b border-slate-100 px-3.5 py-2.5 text-left text-sm hover:bg-slate-50 ${!customerId ? 'bg-slate-50 font-bold text-slate-700' : 'text-slate-500'}`}>Khách lẻ / chưa chọn khách hàng</button>
-                      {customerLoading && <p className="px-3.5 py-3 text-sm font-semibold text-slate-400">Đang tìm khách hàng...</p>}
-                      {!customerLoading && customers.map((customer) => <button type="button" key={customer.id} onClick={() => { if (customerSearchTimer.current) clearTimeout(customerSearchTimer.current); setCustomerId(String(customer.id)); setCustomerKeyword(customer.customerName); }} className={`block w-full border-b border-slate-100 px-3.5 py-2.5 text-left text-sm last:border-b-0 hover:bg-emerald-50 ${String(customer.id) === customerId ? 'bg-emerald-50 font-bold text-emerald-800' : 'text-slate-700'}`}><span className="font-mono text-xs text-slate-500">{customer.customerCode}</span> — {customer.customerName}{customer.phone ? ` — ${customer.phone}` : ''}</button>)}
-                      {!customerLoading && customerKeyword.trim() && customers.length === 0 && <p className="px-3.5 py-3 text-sm text-slate-400">Không tìm thấy khách hàng phù hợp</p>}
-                    </div>
-                    {selectedCustomer && <p className="mt-1.5 text-xs font-bold text-emerald-700">Đã chọn khách hàng: {selectedCustomer.customerName}</p>}
-                    <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_180px_auto]">
-                      <input maxLength={150} value={newCustomerName} onChange={(event) => setNewCustomerName(event.target.value)} placeholder="Tên khách hàng mới" className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none" />
-                      <input maxLength={20} value={newCustomerPhone} onChange={(event) => setNewCustomerPhone(event.target.value)} placeholder="Số điện thoại" className="rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none" />
-                      <button type="button" disabled={customerLoading} onClick={() => void quickCreateCustomer()} className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700 disabled:opacity-50">Tạo khách</button>
-                    </div>
+                    <CustomerSelect
+                      value={selectedCustomer}
+                      onChange={setSelectedCustomer}
+                      requiredDebtWarning={debtAmount > 0 && !selectedCustomer}
+                    />
                   </div>
                   <label>
                     <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Nguồn đơn</span>
@@ -423,9 +354,6 @@ function allowsFractionalQuantity(unitCode?: string) {
   return code === 'KG' || code === 'LIT';
 }
 
-function normalizeSearchText(value: string) {
-  return value.trim().toLocaleLowerCase('vi-VN').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
 
 function formatVnd(value: number) {
   return `${Number(value || 0).toLocaleString('vi-VN')} ₫`;

@@ -14,4 +14,5 @@ public interface ServiceInvoiceRepository extends JpaRepository<ServiceInvoice, 
     Optional<ServiceInvoice> findByInvoiceCode(String invoiceCode);
     List<ServiceInvoice> findByUserId(Long userId);
     List<ServiceInvoice> findBySubscriptionId(Long subscriptionId);
+    boolean existsBySubscriptionIdAndStatus(Long subscriptionId, String status);
 }
