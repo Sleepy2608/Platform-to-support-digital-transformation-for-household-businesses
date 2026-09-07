@@ -5,7 +5,7 @@
 | **Tài liệu** | Hướng Dẫn Sử Dụng Hệ Thống – Vai Trò Quản Trị Viên (System Admin) |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Vai trò áp dụng** | Quản trị viên hệ thống (`ADMIN` / System Administrator) |
-| **Phiên bản** | 1.0 — 07/09/2026 |
+| **Phiên bản** | 1.1 |
 | **Cập nhật lần cuối** | 07/09/2026 |
 
 ---
@@ -47,11 +47,11 @@ Màn hình Dashboard cung cấp cái nhìn toàn cảnh về tình hình vận h
 
 ---
 
-### 3.2 Quản lý Tài khoản Người dùng (User Management)
+### 3.2 Quản lý Tài khoản Người dùng (User Management — `/admin/accounts`)
 Cho phép Quản trị viên tìm kiếm, xem chi tiết, khởi tạo và phân quyền cho người dùng trên toàn hệ thống.
 
 #### a. Xem danh sách và Tìm kiếm Người dùng
-1. Vào menu **Quản lý người dùng** trên thanh điều hướng bên trái.
+1. Vào menu **Quản lý người dùng** (`/admin/accounts`) trên thanh điều hướng bên trái.
 2. Sử dụng ô tìm kiếm theo **Tên đăng nhập, Email, Số điện thoại hoặc Tên người dùng**.
 3. Bộ lọc theo Vai trò (`ADMIN`, `MANAGER`, `BUSINESS_OWNER`, `EMPLOYEE`) và Trạng thái (`ACTIVE`, `INACTIVE`, `LOCKED`).
 
@@ -78,10 +78,10 @@ Quản lý thông tin pháp lý và trạng thái vận hành của các Hộ ki
 
 ---
 
-### 3.4 Quản lý Gói Dịch vụ Thuê bao (Subscription Plan Management)
+### 3.4 Quản lý Gói Dịch vụ & Tính năng (Subscription Plans & Features — `/admin/subscription-plans`, `/admin/features`)
 Cấu hình các gói cước dịch vụ mà Hộ kinh doanh có thể đăng ký (Free, Basic, Pro).
 
-1. Vào menu **Gói dịch vụ (Subscriptions)**.
+1. Vào menu **Gói dịch vụ** (`/admin/subscription-plans`) và **Quản lý tính năng** (`/admin/features`).
 2. **Khởi tạo / Chỉnh sửa Gói:**
    - **Tên gói:** Ví dụ *Gói Khởi nghiệp (Free)*, *Gói Kê khai Thuế (Basic)*, *Gói Chuyên nghiệp AI (Pro)*.
    - **Giá cước:** Thiết lập giá theo tháng / năm (VND).
@@ -103,10 +103,10 @@ Giám sát toàn bộ các thao tác nhạy cảm diễn ra trên nền tảng �
 
 ---
 
-### 3.6 Quản lý Dữ liệu Mẫu & Mã hóa Seek Data (Database Seek Service)
+### 3.6 Quản lý Dữ liệu Mẫu & Mã hóa Seek Data (Database Seek Service — `/admin/seed`)
 Tính năng dành riêng cho Quản trị viên nhằm tạo bản sao lưu snapshot và đồng bộ dữ liệu mẫu hệ thống giữa các môi trường.
 
-1. Vào menu **Seek Data** trong Admin Web Portal.
+1. Vào menu **Seek Data** (`/admin/seed`) trong Admin Web Portal.
 2. Nhập **Database Key** (Khóa mã hóa bảo mật của hệ thống).
 3. Thao tác:
    - **Snapshot tất cả:** Đọc toàn bộ dữ liệu bảng master (danh mục, gói dịch vụ, cấu hình thuế) và xuất ra file JSON mã hóa lưu tại `Code/Server/seed/`.

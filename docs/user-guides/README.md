@@ -3,9 +3,10 @@
 | Thông tin | Nội dung |
 |---|---|
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
+| **Mã issue/ticket** | HBDT-98 |  
 | **Môn học** | Lập trình Java / Đồ án phát triển phần mềm |
-| **Tài liệu** | Tổng quan Thư mục Hướng dẫn Sử dụng Hệ thống (User Guides Index) |
-| **Phiên bản** | 1.0 — 07/09/2026 |
+| **Tài liệu** | Tổng quan Thư mục Hướng dẫn Sử dụng Hệ thống (User Manual Guides) |
+| **Phiên bản** | 1.1 — 07/09/2026 |
 
 ---
 
@@ -19,10 +20,10 @@ Thư mục `docs/user-guides` chứa toàn bộ tài liệu hướng dẫn vận
 
 | File tài liệu | Vai trò áp dụng | Mô tả ngắn gọn | Đường dẫn giao diện |
 |---|---|---|---|
-| 👑 **[admin-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/admin-manual-guide.md)** | Quản trị viên hệ thống (`ADMIN`) | Quản lý toàn bộ tài khoản, phê duyệt hộ kinh doanh, quản lý gói thuê bao, giám sát Audit Log và cơ chế mã hóa Seek Data. | `/admin/login`<br>`/admin/accounts`<br>`/admin/seed` |
-| 💼 **[manager-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/manager-manual-guide.md)** | Quản lý / Chuyên viên (`MANAGER`) | Phê duyệt hồ sơ hộ kinh doanh, đối soát hóa đơn dịch vụ, quản lý danh mục biểu mẫu Thông tư 88 và thuế khoán. | `/manager` |
-| 🏪 **[owner-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/owner-manual-guide.md)** | Chủ Hộ Kinh Doanh (`BUSINESS_OWNER`) | Thiết lập cửa hàng, Onboarding gói cước, quản lý sản phẩm & tồn kho, phân quyền nhân viên, bán hàng POS/AI, xuất báo cáo thuế TT88. | `/login`<br>`/onboarding`<br>`/owner/products`<br>`/owner/orders` |
-| 🛒 **[employee-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/employee-manual-guide.md)** | Nhân viên cửa hàng (`EMPLOYEE`) | Lập đơn bán hàng tại quầy (POS), quét mã vạch, sử dụng trợ lý giọng nói AI, tra cứu giá & cảnh báo tồn kho thấp. | `/login`<br>`/employee/orders`<br>`/employee/inventory-alerts` |
+| **[admin-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/admin-manual-guide.md)** | Quản trị viên hệ thống (`ADMIN`) | Quản lý toàn bộ tài khoản, phê duyệt hộ kinh doanh, quản lý gói thuê bao, giám sát Audit Log và cơ chế mã hóa Seek Data. | `/admin/login`<br>`/admin/accounts`<br>`/admin/seed` |
+| **[manager-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/manager-manual-guide.md)** | Quản lý / Chuyên viên (`MANAGER`) | Phê duyệt hồ sơ hộ kinh doanh, đối soát hóa đơn dịch vụ, quản lý danh mục biểu mẫu Thông tư 88 và thuế khoán. | `/manager` |
+| **[owner-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/owner-manual-guide.md)** | Chủ Hộ Kinh Doanh (`BUSINESS_OWNER`) | Thiết lập cửa hàng, Onboarding gói cước, quản lý sản phẩm & tồn kho, phân quyền nhân viên, bán hàng POS/AI, xuất báo cáo thuế TT88. | `/login`<br>`/onboarding`<br>`/owner/products`<br>`/owner/orders` |
+| **[employee-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/employee-manual-guide.md)** | Nhân viên cửa hàng (`EMPLOYEE`) | Lập đơn bán hàng tại quầy (POS), quét mã vạch, sử dụng trợ lý giọng nói AI, tra cứu giá & cảnh báo tồn kho thấp. | `/login`<br>`/employee/orders`<br>`/employee/inventory-alerts` |
 
 ---
 
@@ -60,7 +61,7 @@ Thư mục `docs/user-guides` chứa toàn bộ tài liệu hướng dẫn vận
 | **Quản lý Sản phẩm & Tồn kho** | ❌ Không | ❌ Không | ✅ Toàn quyền | 👁️ Tra cứu tồn |
 | **Cảnh báo Tồn kho thấp** | ❌ Không | ❌ Không | ✅ Cấu hình ngưỡng | 👁️ Xem cảnh báo |
 | **Lập Đơn bán hàng (POS / AI)** | ❌ Không | ❌ Không | ✅ Có | ✅ Thao tác chính |
-| **Xuất Biểu mẫu Sổ thuế TT88** | ❌ Không | ❌ Không | ✅ Xuất S1->S7 (PDF/Excel) | ❌ Không |
+| **Xuất Sổ sách Thuế TT88 (S1, S2, S4)** | ❌ Không | ❌ Không | ✅ Xuất S1-HKD, S2-HKD, S4-HKD (PDF/Excel) | ❌ Không |
 | **Thao tác Seek Data Mã hóa** | ✅ Cần DB Key | ❌ Không | ❌ Không | ❌ Không |
 
 ---

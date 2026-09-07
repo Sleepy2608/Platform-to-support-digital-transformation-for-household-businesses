@@ -5,7 +5,7 @@
 | **Tài liệu** | Hướng Dẫn Sử Dụng Hệ Thống – Vai Trò Quản Lý / Chuyên Viên (System Manager) |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Vai trò áp dụng** | Quản lý / Chuyên viên hỗ trợ (`MANAGER` / System Manager) |
-| **Phiên bản** | 1.0 — 07/09/2026 |
+| **Phiên bản** | 1.1 |
 | **Cập nhật lần cuối** | 07/09/2026 |
 
 ---
@@ -62,7 +62,7 @@ Khi có Hộ kinh doanh mới đăng ký hoặc cập nhật hồ sơ giấy ph�
 Chuyên viên có nhiệm vụ cập nhật các danh mục tham chiếu theo quy định mới nhất của Nhà nước:
 1. Vào menu **Danh mục chuẩn** (Master Data):
    - **Danh mục Loại Thuế (`tax_types`):** Cập nhật tỷ lệ % thuế GTGT và thuế TNCN áp dụng cho từng ngành nghề (Phân phối hàng hóa 1.5%, Dịch vụ 7%, Sản xuất 4.5%,...).
-   - **Danh mục Mẫu Biểu Sổ Kế Toán (`report_templates`):** Quản lý cấu trúc 7 mẫu sổ kế toán S1-HKD đến S7-HKD theo Thông tư 88/2021/TT-BTC.
+   - **Danh mục Mẫu Biểu Sổ Kế Toán (`report_templates`):** Quản lý cấu trúc các biểu mẫu sổ kế toán theo Thông tư 88/2021/TT-BTC (trọng tâm là S1-HKD Doanh thu, S2-HKD Kho hàng hóa, S4-HKD Nghĩa vụ thuế với NSNN).
    - **Danh mục Ngành nghề kinh doanh:** Cập nhật bảng mã ngành nghề kinh tế Việt Nam.
 
 ---

@@ -5,7 +5,7 @@
 | **Tài liệu** | Hướng Dẫn Sử Dụng Hệ Thống – Vai Trò Nhân Viên Cửa Hàng (Employee) |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Vai trò áp dụng** | Nhân viên cửa hàng / Thu ngân (`EMPLOYEE` / Store Staff) |
-| **Phiên bản** | 1.0 — 07/09/2026 |
+| **Phiên bản** | 1.1 |
 | **Cập nhật lần cuối** | 07/09/2026 |
 
 ---
@@ -67,13 +67,23 @@ Có 3 cách để thêm sản phẩm vào đơn hàng:
 
 ---
 
-### 3.2 Lập đơn hàng bằng Trợ lý Giọng nói AI (Smart AI Order)
-Khi bán hàng bận rộn hoặc tiếp nhận đơn hàng qua điện thoại/tin nhắn:
-1. Bấm vào nút **Micro / Trợ lý AI** trên giao diện POS.
+### 3.2 Tạo và Xử Lý Đơn Hàng bằng Trợ Lý AI (AI Order & Draft Orders)
+
+#### a. Lập đơn hàng tại quầy bằng Trợ lý Giọng nói
+Khi bán hàng bận rộn hoặc tiếp nhận đơn hàng qua điện thoại:
+1. Bấm vào nút **Micro / Trợ lý AI** trên giao diện POS (`/employee/orders`).
 2. Đọc rõ nội dung đơn hàng:
    - *Ví dụ: "Lấy 3 chai dầu ăn Neptune 1 lít và 2 bao đường Biên Hòa 1kg cho cô Lan"*
-3. Hệ thống AI tự động phân tích và đưa chính xác các sản phẩm vào giỏ hàng.
+3. Hệ thống AI tự động bóc tách và đưa chính xác các sản phẩm vào giỏ hàng.
 4. Nhân viên đối soát lại màn hình và bấm **Thanh toán**.
+
+#### b. Xử lý Đơn hàng Nháp (Draft Orders) từ xa
+Khi khách hàng gửi tin nhắn/giọng nói đặt hàng từ xa (qua kênh tích hợp):
+1. **Nhận thông báo Realtime:** Hệ thống phát chuông và thông báo đẩy (WebSocket) trên màn hình làm việc của nhân viên.
+2. **Kiểm tra đơn nháp (`PENDING_REVIEW`):**
+   - Mở tab **Đơn hàng nháp** trên màn hình `/employee/orders`.
+   - Xem độ khớp thông tin (Matching Score / Confidence Score), danh sách mặt hàng và tên khách hàng do AI đề xuất.
+   - **Xử lý:** Chỉnh sửa lại số lượng nếu khách thay đổi ý, bấm **Xác nhận (Confirm)** để chốt đơn in bill hoặc **Từ chối (Reject)** nếu đơn không hợp lệ.
 
 ---
 
