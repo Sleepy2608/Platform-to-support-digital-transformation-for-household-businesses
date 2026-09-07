@@ -1,10 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { ShieldCheck, LogIn, Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Store, ArrowLeft, LogIn, Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import ScrollReveal from '../../components/ScrollReveal';
-
 import { saveAuthData } from '../../lib/apiClient';
 import { getLoginRedirectPath, type AppRole } from '../../lib/roles';
 
@@ -89,8 +89,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white relative flex items-center justify-center p-4 overflow-hidden select-none" style={{ cursor: 'default' }}>
-      {/* Background */}
+    <main className="min-h-screen bg-zinc-950 text-white relative flex items-center justify-center p-4 overflow-hidden">
       <div
         className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-30 pointer-events-none scale-105"
         style={{
@@ -98,17 +97,22 @@ export default function AdminLoginPage() {
         }}
       />
 
-      {/* Login Form */}
+      <Link
+        href="/"
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-zinc-400 hover:text-white bg-zinc-900/80 border border-zinc-700/80 px-4 py-2 rounded-xl backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95 text-sm font-medium shadow-lg"
+      >
+        <ArrowLeft className="w-4 h-4" /> Quay lại trang chủ
+      </Link>
+
       <div className="relative z-10 w-full max-w-md">
         <ScrollReveal>
           <div className="bg-zinc-900/90 border border-zinc-700/80 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl">
-            {/* Header */}
             <div className="text-center mb-6">
               <div className="inline-flex p-3 bg-white/10 rounded-2xl border border-zinc-600 mb-4 shadow-inner">
-                <ShieldCheck className="w-8 h-8 text-white" />
+                <Store className="w-8 h-8 text-white" />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white select-none" style={{ userSelect: 'none' }}>Đăng Nhập Vào Tài Khoản Quản Trị Viên</h1>
-              <p className="text-zinc-400 text-sm mt-2 select-none" style={{ userSelect: 'none' }}>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">Đăng Nhập</h1>
+              <p className="text-zinc-400 text-sm mt-2">
                 Khu vực dành riêng cho quản trị viên hệ thống
               </p>
             </div>
@@ -121,9 +125,8 @@ export default function AdminLoginPage() {
             )}
 
             <form onSubmit={handleLogin} className="space-y-5">
-              {/* Username */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-2 select-none" style={{ userSelect: 'none', cursor: 'default' }}>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-2">
                   Tên đăng nhập
                 </label>
                 <div className="relative">
@@ -134,17 +137,18 @@ export default function AdminLoginPage() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="Nhập tên đăng nhập"
-                    className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all cursor-text select-text"
+                    className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
                     required
                   />
                 </div>
               </div>
 
-              {/* Password */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-2 select-none" style={{ userSelect: 'none', cursor: 'default' }}>
-                  Mật khẩu
-                </label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
+                    Mật khẩu
+                  </label>
+                </div>
                 <div className="relative">
                   <Lock className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
                   <input
@@ -153,7 +157,7 @@ export default function AdminLoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 pl-11 pr-11 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all cursor-text select-text"
+                    className="w-full bg-zinc-800/80 border border-zinc-700 rounded-xl py-3 pl-11 pr-11 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all"
                     required
                   />
                   <button
@@ -166,7 +170,6 @@ export default function AdminLoginPage() {
                 </div>
               </div>
 
-              {/* Submit */}
               <button
                 id="admin-login-submit"
                 type="submit"
@@ -174,9 +177,16 @@ export default function AdminLoginPage() {
                 className="w-full py-3.5 bg-white text-zinc-950 font-bold rounded-xl hover:bg-zinc-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none transition-all duration-200 shadow-xl flex items-center justify-center gap-2 cursor-pointer mt-2"
               >
                 <LogIn className="w-4 h-4" />
-                {loading ? 'Đang xác thực...' : 'Đăng nhập quản trị'}
+                {loading ? 'Đang xác thực...' : 'Đăng nhập hệ thống'}
               </button>
             </form>
+
+            <div className="text-center mt-6 pt-6 border-t border-zinc-800 text-xs text-zinc-400">
+              Bạn không phải quản trị viên?{' '}
+              <Link href="/login" className="text-white font-semibold hover:underline">
+                Quay về cổng người dùng
+              </Link>
+            </div>
           </div>
         </ScrollReveal>
       </div>

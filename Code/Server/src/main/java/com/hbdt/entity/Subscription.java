@@ -1,27 +1,17 @@
 package com.hbdt.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.hbdt.entity.enums.SubscriptionStatus;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "subscriptions")
+@Table(name = "subscriptions", indexes = {
+        @Index(name = "idx_subscriptions_business_status", columnList = "business_id, status"),
+        @Index(name = "idx_subscriptions_end_date", columnList = "end_date")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,6 +22,9 @@ public class Subscription {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "BIGINT UNSIGNED")
     private Long id;
+
+    @Column(name = "user_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    private Long userId;
 
     @Column(name = "business_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
     private Long businessId;
@@ -46,11 +39,19 @@ public class Subscription {
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
-    @Column(name = "end_date")
+    @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private String status;
+    @Setter(AccessLevel.NONE)
+    private SubscriptionStatus status;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
+    @Column(name = "cancellation_reason", length = 500)
+    private String cancellationReason;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -58,14 +59,56 @@ public class Subscription {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    /**
+     * Enforce status transitions:
+     * PENDING_PAYMENT -> ACTIVE
+     * ACTIVE -> EXPIRED
+     * ACTIVE -> CANCELLED
+     */
+    public void setStatus(SubscriptionStatus newStatus) {
+        if (newStatus == null) {
+            throw new IllegalArgumentException("Subscription status must not be null");
+        }
+        if (this.status != null && this.status != newStatus && !this.status.canTransitionTo(newStatus)) {
+            throw new IllegalStateException("Transition from " + this.status + " to " + newStatus + " is not allowed");
+        }
+        this.status = newStatus;
+    }
+
+    public void cancel(String reason, LocalDateTime cancelledAt) {
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("Cancellation reason must not be blank");
+        }
+        setStatus(SubscriptionStatus.CANCELLED);
+        this.cancelledAt = cancelledAt;
+        this.cancellationReason = reason.trim();
+    }
+
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        if (this.status == null) {
+            this.status = SubscriptionStatus.PENDING_PAYMENT;
+        }
+        if (this.status == SubscriptionStatus.ACTIVE) {
+            throw new IllegalStateException("Cannot create a subscription directly in ACTIVE status");
+        }
+        validateDates();
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
     }
 
     @PreUpdate
     protected void onUpdate() {
+        validateDates();
         updatedAt = LocalDateTime.now();
+    }
+
+    private void validateDates() {
+        if (startDate == null || endDate == null || !startDate.isBefore(endDate)) {
+            throw new IllegalStateException("Subscription start date must be before end date");
+        }
     }
 }

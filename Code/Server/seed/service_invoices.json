@@ -1,6 +1,6 @@
 {
   "table" : "service_invoices",
-  "version" : 8,
+  "version" : 9,
   "rows" : [ {
     "id" : 1,
     "amount" : 11976000.00,
@@ -28,5 +28,50 @@
     "invoice_no" : "INV-68CE4678",
     "status" : "PAID",
     "subscription_id" : 11
+  }, {
+    "id" : 4,
+    "amount" : 199000.00,
+    "business_id" : 13,
+    "created_at" : "2026-09-02T09:50:55.165229",
+    "due_date" : "2026-09-02T09:50:55.158765",
+    "invoice_no" : "INV-D44FDA38",
+    "status" : "PAID",
+    "subscription_id" : 13
+  }, {
+    "id" : 5,
+    "amount" : 199000.00,
+    "business_id" : 13,
+    "created_at" : "2026-09-02T09:54:21.989214",
+    "due_date" : "2026-09-02T09:54:21.985205",
+    "invoice_no" : "INV-2482ED84",
+    "status" : "PAID",
+    "subscription_id" : 13
+  }, {
+    "id" : 6,
+    "amount" : 399000.00,
+    "business_id" : 13,
+    "created_at" : "2026-09-02T09:55:12.923809",
+    "due_date" : "2026-09-02T09:55:12.922802",
+    "invoice_no" : "INV-FAD20DF5",
+    "status" : "PAID",
+    "subscription_id" : 14
+  }, {
+    "id" : 7,
+    "amount" : 199000.00,
+    "business_id" : 13,
+    "created_at" : "2026-09-02T10:16:40.793946",
+    "due_date" : "2026-09-02T10:16:40.788755",
+    "invoice_no" : "INV-A5870351",
+    "status" : "PAID",
+    "subscription_id" : 15
+  }, {
+    "id" : 8,
+    "amount" : 199000.00,
+    "business_id" : 13,
+    "created_at" : "2026-09-02T14:47:46.7926",
+    "due_date" : "2026-09-02T14:47:46.788552",
+    "invoice_no" : "INV-A60E3EBA",
+    "status" : "PAID",
+    "subscription_id" : 16
   } ]
 }

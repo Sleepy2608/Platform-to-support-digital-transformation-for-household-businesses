@@ -3,11 +3,14 @@ package com.hbdt.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "customers", uniqueConstraints = @UniqueConstraint(
-        name = "uk_customers_business_code", columnNames = {"business_id", "customer_code"}))
+@Table(name = "customers", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_customers_business_code", columnNames = {"business_id", "customer_code"}),
+        @UniqueConstraint(name = "uk_customers_business_phone", columnNames = {"business_id", "phone"})
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,11 +35,18 @@ public class Customer {
     @Column(name = "phone", length = 20)
     private String phone;
 
+    @Column(name = "email", length = 150)
+    private String email;
+
     @Column(name = "address", length = 500)
     private String address;
 
     @Column(name = "note", length = 500)
     private String note;
+
+    @Column(name = "debt_balance", nullable = false, precision = 18, scale = 2)
+    @Builder.Default
+    private BigDecimal debtBalance = BigDecimal.ZERO;
 
     @Column(name = "status", nullable = false, length = 20)
     private String status;
@@ -52,6 +62,9 @@ public class Customer {
         LocalDateTime now = LocalDateTime.now();
         if (status == null || status.isBlank()) {
             status = "ACTIVE";
+        }
+        if (debtBalance == null) {
+            debtBalance = BigDecimal.ZERO;
         }
         if (createdAt == null) {
             createdAt = now;

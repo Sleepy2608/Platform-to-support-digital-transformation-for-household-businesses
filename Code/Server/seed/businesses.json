@@ -1,6 +1,6 @@
 {
   "table" : "businesses",
-  "version" : 13,
+  "version" : 14,
   "rows" : [ {
     "id" : 1,
     "address" : "{\"businessType\":\"HOUSEHOLD\",\"provinceCode\":\"83\",\"districtCode\":\"837\",\"wardCode\":\"29230\",\"detailAddress\":\"14/6 tran ba giao\",\"representativeEmail\":\"tranvanngocthang2006@gmail.com\",\"storeName\":\"bán hàng\"}",

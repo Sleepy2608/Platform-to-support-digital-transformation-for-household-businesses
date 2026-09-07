@@ -23,6 +23,7 @@ Bản đồ này xác định phần nào của Thông tư 88/2021/TT-BTC, Quy�
 | S2-HKD: sổ chi tiết vật liệu, dụng cụ, sản phẩm, hàng hóa | Quản lý nhập kho, xuất kho, tồn kho, giá xuất kho | `products`, `inventory_balances`, `inventory_transactions`, `product_units` | Có triển khai |
 | S4-HKD: sổ theo dõi nghĩa vụ thuế với NSNN | Theo dõi thuế phát sinh, đã nộp, còn phải nộp / nộp thừa | `tax_types`, `tax_obligations`, `tax_payments`, `generated_reports` | Có triển khai |
 | Ghi nhận chứng từ và lịch sử giao dịch | Hệ thống lưu giao dịch theo sự kiện đã xác nhận | `debt_transactions`, `inventory_transactions`, `accounting_book_entries`, `audit_logs` | Có triển khai |
+| Công khai chính sách kế toán & văn bản Thông tư 88 | Giao diện Chính sách & Điều khoản (Dashboard Owner/Employee) | `Circular88PolicyCard`, `88-btc.pdf`, `terms_consents` | Có triển khai |
 | Phê duyệt báo cáo trước khi dùng | Owner kiểm tra, chỉnh sửa và xác nhận báo cáo | `generated_reports`, `audit_logs`, `report_template_versions` | Có triển khai |
 | Quản lý AI tạo Draft Order | AI nhận dữ liệu văn bản/giọng nói, sinh đơn nháp | `ai_requests`, `notifications`, `feedback` | Có triển khai |
 | Xác nhận quyền truy cập theo vai trò | RBAC 4 tầng: Admin, Manager, Owner, Employee | `users`, `roles`, `user_roles` hoặc mô hình tương đương | Có triển khai |

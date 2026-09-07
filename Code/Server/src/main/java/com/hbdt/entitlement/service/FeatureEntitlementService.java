@@ -7,6 +7,7 @@ import com.hbdt.entity.PackageFeature;
 import com.hbdt.entity.Subscription;
 import com.hbdt.entity.User;
 import com.hbdt.entity.enums.RoleType;
+import com.hbdt.entity.enums.SubscriptionStatus;
 import com.hbdt.repository.FeatureRepository;
 import com.hbdt.repository.PackageFeatureRepository;
 import com.hbdt.repository.SubscriptionRepository;
@@ -32,7 +33,8 @@ import java.util.Optional;
 public class FeatureEntitlementService {
 
     private static final Logger logger = LoggerFactory.getLogger(FeatureEntitlementService.class);
-    private static final String ACTIVE = "ACTIVE";
+    private static final String FEATURE_ACTIVE = "ACTIVE";
+    private static final SubscriptionStatus ACTIVE_SUBSCRIPTION_STATUS = SubscriptionStatus.ACTIVE;
 
     private final SubscriptionRepository subscriptionRepository;
     private final PackageFeatureRepository packageFeatureRepository;
@@ -68,14 +70,14 @@ public class FeatureEntitlementService {
         }
 
         Feature feature = featureOpt.get();
-        if (!ACTIVE.equals(feature.getStatus())) {
+        if (!FEATURE_ACTIVE.equals(feature.getStatus())) {
             return EntitlementResult.denied(featureCode,
                     "Tính năng đang bị tắt bởi hệ thống", null);
         }
 
         // 2. Tìm subscription ACTIVE của business
         Optional<Subscription> subscriptionOpt = subscriptionRepository
-                .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(businessId, ACTIVE);
+                .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(businessId, ACTIVE_SUBSCRIPTION_STATUS);
 
         if (subscriptionOpt.isEmpty()) {
             return EntitlementResult.denied(featureCode,
@@ -150,7 +152,7 @@ public class FeatureEntitlementService {
      * Được gọi bởi EntitlementController cho frontend consume.
      */
     public List<FeatureEntitlementResponse> getEntitlementsByBusinessId(Long businessId) {
-        List<Feature> allFeatures = featureRepository.findAllByStatus(ACTIVE);
+        List<Feature> allFeatures = featureRepository.findAllByStatus(FEATURE_ACTIVE);
         List<FeatureEntitlementResponse> result = new ArrayList<>();
 
         for (Feature feature : allFeatures) {

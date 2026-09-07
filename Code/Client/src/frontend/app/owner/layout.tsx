@@ -6,8 +6,8 @@ import Link from 'next/link';
 import {
   Store, UserCircle, Lock, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
-  Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing,
-  Warehouse,
+  Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing, UserSearch,
+  Building2, ShieldCheck, ClipboardList, ShoppingCart, Warehouse,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,8 +28,10 @@ function getCleanHash(rawHash?: string): string {
 
 const ACCOUNT_NAV_ITEMS: Array<{ label: string; href: string; icon: LucideIcon; hash: string }> = [
   { label: 'Hồ sơ cá nhân', href: '/owner/account#profile', icon: UserCircle, hash: '#profile' },
+  { label: 'Hồ sơ kinh doanh', href: '/owner/account#business-profile', icon: Building2, hash: '#business-profile' },
   { label: 'Thay đổi thông tin cá nhân', href: '/owner/account#personal-info', icon: Lock, hash: '#personal-info' },
   { label: 'Gói đăng ký', href: '/owner/account#subscription', icon: CreditCard, hash: '#subscription' },
+  { label: 'Chính sách & Điều khoản', href: '/owner/account#consent', icon: ShieldCheck, hash: '#consent' },
   { label: 'Kiểm soát tài khoản', href: '/owner/account#danger', icon: AlertTriangle, hash: '#danger' },
 ];
 
@@ -48,6 +50,7 @@ const MANAGE_NAV_ITEMS: Array<{
     children: [
       { label: 'Danh sách sản phẩm', href: '/owner/products', icon: PackageOpen },
       { label: 'Tồn kho hiện tại', href: '/owner/inventory', icon: Warehouse },
+      { label: 'Nhập kho', href: '/owner/products/stock-import', icon: ClipboardList },
       { label: 'Cảnh báo tồn kho', href: '/owner/inventory-alerts', icon: BellRing },
     ],
   },
@@ -57,9 +60,11 @@ const MANAGE_NAV_ITEMS: Array<{
     icon: ReceiptText,
     path: '/owner/orders',
     children: [
+      { label: 'Tạo đơn tại quầy', href: '/owner/orders/new', icon: ShoppingCart },
       { label: 'Danh sách đơn hàng', href: '/owner/orders/history', icon: ListOrdered },
     ],
   },
+  { label: 'Khách hàng', href: '/owner/customers', icon: UserSearch, path: '/owner/customers' },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
 ];
 
@@ -170,9 +175,15 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
 
   const handleNavAccount = (e: React.MouseEvent, href: string, hash: string) => {
     e.preventDefault();
+    setSidebarOpen(false);
+
+    if (href === '/owner/account/subscription') {
+      router.push('/owner/account/subscription');
+      return;
+    }
+
     const clean = getCleanHash(hash);
     setCurrentHash(`#${clean}`);
-    setSidebarOpen(false);
 
     if (pathname === '/owner/account') {
       window.history.replaceState(null, '', `/owner/account#${clean}`);
@@ -356,11 +367,14 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                   {ACCOUNT_NAV_ITEMS.map((item) => {
                     const Icon = item.icon;
                     const isDanger = item.hash === '#danger';
-                    const isActive = pathname === '/owner/account' && currentHash === item.hash;
+                    const isSubscriptionPage = item.href === '/owner/account/subscription';
+                    const isActive = isSubscriptionPage
+                      ? pathname === '/owner/account/subscription'
+                      : pathname === '/owner/account' && currentHash === item.hash;
 
                     return (
                       <Link
-                        key={item.hash}
+                        key={item.href}
                         href={item.href}
                         onClick={(event) => handleNavAccount(event, item.href, item.hash || '#profile')}
                         className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer

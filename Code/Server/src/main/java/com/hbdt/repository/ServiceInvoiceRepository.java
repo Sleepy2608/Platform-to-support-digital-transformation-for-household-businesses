@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ServiceInvoiceRepository extends JpaRepository<ServiceInvoice, Long> {
+    boolean existsBySubscriptionIdAndStatus(Long subscriptionId, String status);
 }
