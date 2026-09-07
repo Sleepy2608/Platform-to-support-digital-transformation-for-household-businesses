@@ -197,8 +197,7 @@ export default function OwnerCreateOrderPage() {
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Bán hàng</p>
-            <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">Tạo đơn tại quầy</h1>
+            <h1 className="text-3xl font-black tracking-tight text-slate-950">Tạo đơn tại quầy</h1>
             <p className="mt-2 text-sm text-slate-500">Tìm sản phẩm, chọn số lượng và xác nhận đơn ngay trên điện thoại hoặc máy tính.</p>
           </div>
           <button onClick={() => setCartOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white">

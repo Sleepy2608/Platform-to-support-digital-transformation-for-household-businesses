@@ -73,8 +73,7 @@ export default function StockImportListPage() {
         {/* Header */}
         <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">KHO HÀNG</p>
-            <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">Phiếu nhập kho</h1>
+            <h1 className="text-3xl font-black tracking-tight text-slate-950">Phiếu nhập kho</h1>
             <p className="mt-2 text-sm text-slate-500">
               Tạo phiếu nhập kho mới, xem lịch sử và xác nhận cập nhật tồn kho.
             </p>

@@ -140,7 +140,6 @@ export default function StockImportCreatePage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">KHO HÀNG</p>
             <h1 className="text-2xl font-black tracking-tight text-slate-950">Tạo phiếu nhập kho</h1>
           </div>
         </header>

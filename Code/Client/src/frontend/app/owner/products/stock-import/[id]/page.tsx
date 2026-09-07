@@ -97,7 +97,6 @@ export default function StockImportDetailPage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="flex-1">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">KHO HÀNG</p>
             <h1 className="text-2xl font-black tracking-tight text-slate-950">
               {data ? `Phiếu ${data.importCode}` : 'Chi tiết phiếu nhập kho'}
             </h1>
