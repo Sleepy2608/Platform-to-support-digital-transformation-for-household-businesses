@@ -18,6 +18,7 @@ import com.hbdt.repository.DebtTransactionRepository;
 import com.hbdt.repository.UserRepository;
 import com.hbdt.repository.ProductRepository;
 import com.hbdt.repository.UnitRepository;
+import com.hbdt.revenue.service.RevenueLedgerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +51,7 @@ class SalesOrderServiceTest {
     @Mock private InventoryMovementService inventoryMovementService;
     @Mock private CustomerRepository customerRepository;
     @Mock private DebtTransactionRepository debtTransactionRepository;
+    @Mock private RevenueLedgerService revenueLedgerService;
 
     private SalesOrderService service;
 
@@ -58,7 +60,8 @@ class SalesOrderServiceTest {
         service = new SalesOrderService(
                 salesOrderRepository, salesOrderItemRepository, productPricingService,
                 businessContextService, userRepository, productRepository, unitRepository,
-                inventoryMovementService, customerRepository, debtTransactionRepository
+                inventoryMovementService, customerRepository, debtTransactionRepository,
+                revenueLedgerService
         );
     }
 
