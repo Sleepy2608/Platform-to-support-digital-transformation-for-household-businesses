@@ -50,6 +50,7 @@ class SalesOrderServiceTest {
     @Mock private InventoryMovementService inventoryMovementService;
     @Mock private CustomerRepository customerRepository;
     @Mock private DebtTransactionRepository debtTransactionRepository;
+    @Mock private SalesBookkeepingService salesBookkeepingService;
 
     private SalesOrderService service;
 
@@ -58,7 +59,8 @@ class SalesOrderServiceTest {
         service = new SalesOrderService(
                 salesOrderRepository, salesOrderItemRepository, productPricingService,
                 businessContextService, userRepository, productRepository, unitRepository,
-                inventoryMovementService, customerRepository, debtTransactionRepository
+                inventoryMovementService, customerRepository, debtTransactionRepository,
+                salesBookkeepingService
         );
     }
 
