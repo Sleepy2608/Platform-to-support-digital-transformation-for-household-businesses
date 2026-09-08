@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Ban, Banknote, ChevronLeft, ChevronRight, Eye, RefreshCw, Search, X } from 'lucide-react';
+import { Ban, Banknote, ChevronLeft, ChevronRight, Eye, FileText, RefreshCw, Search, X } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
 import { usePathname } from 'next/navigation';
+import SalesInvoicePreview from '@/app/components/SalesInvoicePreview';
 
 interface PageResponse<T> {
   content: T[];
@@ -62,6 +63,7 @@ export default function SalesOrderHistoryPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [cancelReason, setCancelReason] = useState('');
+  const [previewDetail, setPreviewDetail] = useState<SalesOrderDetail | null>(null);
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -91,6 +93,18 @@ export default function SalesOrderHistoryPage() {
       setDetail(await apiClient.get<SalesOrderDetail>(`/api/sales-orders/${orderId}`));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể tải chi tiết đơn hàng');
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const openInvoicePreview = async (orderId: number) => {
+    setDetailLoading(true);
+    setError('');
+    try {
+      setPreviewDetail(await apiClient.get<SalesOrderDetail>(`/api/sales-orders/${orderId}`));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể tải hóa đơn');
     } finally {
       setDetailLoading(false);
     }
@@ -178,7 +192,7 @@ export default function SalesOrderHistoryPage() {
           </div>
 
           {loading ? <div className="flex h-64 items-center justify-center text-sm text-slate-500"><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Đang tải đơn hàng...</div> : !orders?.content.length ? <div className="flex h-64 flex-col items-center justify-center gap-3 text-slate-400"><p className="font-semibold">Chưa có đơn hàng phù hợp</p></div> : (
-            <div className="overflow-x-auto"><table className="min-w-[900px] w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-400"><tr><th className="px-5 py-3">Mã đơn</th><th className="px-5 py-3">Ngày tạo</th><th className="px-5 py-3">Nguồn đơn</th><th className="px-5 py-3">Tổng tiền</th><th className="px-5 py-3">Đã trả</th><th className="px-5 py-3">Còn nợ</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3 text-right">Chi tiết</th></tr></thead><tbody className="divide-y divide-slate-100">{orders.content.map((order) => <tr key={order.id} className="hover:bg-slate-50/70"><td className="px-5 py-4 font-black text-slate-900">{order.orderCode}</td><td className="px-5 py-4 text-slate-500">{formatDateTime(order.createdAt)}</td><td className="px-5 py-4 text-slate-600">{sourceLabel(order.source)}</td><td className="px-5 py-4 font-bold">{formatVnd(order.totalAmount)}</td><td className="px-5 py-4 text-emerald-700">{formatVnd(order.paidAmount)}</td><td className="px-5 py-4 font-semibold text-amber-700">{formatVnd(order.debtAmount)}</td><td className="px-5 py-4"><OrderStatus status={order.status} /></td><td className="px-5 py-4 text-right"><button disabled={detailLoading} onClick={() => void openDetail(order.id)} className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-100" title="Xem chi tiết"><Eye className="h-4 w-4" /></button></td></tr>)}</tbody></table></div>
+            <div className="overflow-x-auto"><table className="min-w-[900px] w-full text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-400"><tr><th className="px-5 py-3">Mã đơn</th><th className="px-5 py-3">Ngày tạo</th><th className="px-5 py-3">Nguồn đơn</th><th className="px-5 py-3">Tổng tiền</th><th className="px-5 py-3">Đã trả</th><th className="px-5 py-3">Còn nợ</th><th className="px-5 py-3">Trạng thái</th><th className="px-5 py-3 text-right">Chi tiết</th></tr></thead><tbody className="divide-y divide-slate-100">{orders.content.map((order) => <tr key={order.id} className="hover:bg-slate-50/70"><td className="px-5 py-4 font-black text-slate-900">{order.orderCode}</td><td className="px-5 py-4 text-slate-500">{formatDateTime(order.createdAt)}</td><td className="px-5 py-4 text-slate-600">{sourceLabel(order.source)}</td><td className="px-5 py-4 font-bold">{formatVnd(order.totalAmount)}</td><td className="px-5 py-4 text-emerald-700">{formatVnd(order.paidAmount)}</td><td className="px-5 py-4 font-semibold text-amber-700">{formatVnd(order.debtAmount)}</td><td className="px-5 py-4"><OrderStatus status={order.status} /></td><td className="px-5 py-4 text-right"><div className="inline-flex gap-1">{order.status === 'CONFIRMED' && <button disabled={detailLoading} onClick={() => void openInvoicePreview(order.id)} className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-100" title="Xem hóa đơn"><FileText className="h-4 w-4" /></button>}<button disabled={detailLoading} onClick={() => void openDetail(order.id)} className="rounded-lg border border-slate-200 p-2 text-slate-600 hover:bg-slate-100" title="Xem chi tiết"><Eye className="h-4 w-4" /></button></div></td></tr>)}</tbody></table></div>
           )}
 
           {orders && orders.totalPages > 1 && <div className="flex items-center justify-between border-t border-slate-200 px-5 py-4 text-sm text-slate-500"><span>{orders.totalElements} đơn hàng</span><div className="flex items-center gap-2"><button disabled={orders.first} onClick={() => setPage((value) => Math.max(0, value - 1))} className="rounded-lg border p-2 disabled:opacity-30"><ChevronLeft className="h-4 w-4" /></button><span>Trang {orders.page + 1}/{orders.totalPages}</span><button disabled={orders.last} onClick={() => setPage((value) => value + 1)} className="rounded-lg border p-2 disabled:opacity-30"><ChevronRight className="h-4 w-4" /></button></div></div>}
@@ -194,6 +208,8 @@ export default function SalesOrderHistoryPage() {
             </div>
             <div className="space-y-5 p-6">
               <div className="grid gap-3 sm:grid-cols-4"><Summary label="Tổng tiền" value={formatVnd(detail.totalAmount)} /><Summary label="Đã trả" value={formatVnd(detail.paidAmount)} /><Summary label="Còn nợ" value={formatVnd(detail.debtAmount)} /><Summary label="Trạng thái" value={statusLabel(detail.status)} /></div>
+
+              {detail.status === 'CONFIRMED' && <button onClick={() => { setDetail(null); setPreviewDetail(detail); }} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition"><FileText className="h-4 w-4" /> Xem hóa đơn</button>}
 
               {detail.status === 'CONFIRMED' && (
                 <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-end">
@@ -225,6 +241,8 @@ export default function SalesOrderHistoryPage() {
           </div>
         </div>
       )}
+
+      {previewDetail && <SalesInvoicePreview detail={previewDetail} onClose={() => setPreviewDetail(null)} />}
     </div>
   );
 }
