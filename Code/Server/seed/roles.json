@@ -18,11 +18,6 @@
     "role_name" : "Nhân viên"
   }, {
     "id" : 4,
-    "description" : "Siêu quản trị viên hệ thống – toàn quyền seed/create/delete Admin",
-    "role_code" : "ADMIN",
-    "role_name" : "Quản trị viên hệ thống"
-  }, {
-    "id" : 5,
     "description" : "Quản trị viên thường / Chuyên viên – không toàn quyền",
     "role_code" : "MANAGER",
     "role_name" : "Quản lý / Chuyên viên"

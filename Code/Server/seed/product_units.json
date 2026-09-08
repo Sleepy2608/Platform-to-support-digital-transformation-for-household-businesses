@@ -102,21 +102,12 @@
     "updated_at" : "2026-08-30T06:04:39.392061"
   }, {
     "id" : 12,
-    "is_base_unit" : true,
+    "is_base_unit" : false,
     "conversion_rate" : 1.000000,
-    "created_at" : "2026-09-05T15:59:43.84938",
-    "product_id" : 19,
+    "created_at" : "2026-09-08T08:45:37.689099",
+    "product_id" : 17,
     "status" : "ACTIVE",
     "unit_id" : 1,
-    "updated_at" : "2026-09-05T15:59:43.84938"
-  }, {
-    "id" : 13,
-    "is_base_unit" : true,
-    "conversion_rate" : 1.000000,
-    "created_at" : "2026-09-07T06:55:40.432136",
-    "product_id" : 20,
-    "status" : "ACTIVE",
-    "unit_id" : 1,
-    "updated_at" : "2026-09-07T06:55:40.432136"
+    "updated_at" : "2026-09-08T08:45:37.689099"
   } ]
 }

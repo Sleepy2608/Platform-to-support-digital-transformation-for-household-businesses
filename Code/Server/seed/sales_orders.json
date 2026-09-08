@@ -17,11 +17,11 @@
     "status" : "DRAFT",
     "total_amount" : 1830000.00,
     "updated_at" : "2026-08-20T19:09:32.309871",
+    "last_payment_at" : null,
+    "payment_status" : "PAID",
     "cancel_request_reason" : null,
     "cancel_requested_at" : null,
-    "cancel_requested_by" : null,
-    "last_payment_at" : null,
-    "payment_status" : "PAID"
+    "cancel_requested_by" : null
   }, {
     "id" : 2,
     "business_id" : 5,
@@ -38,11 +38,11 @@
     "status" : "DRAFT",
     "total_amount" : 15000.00,
     "updated_at" : "2026-08-21T15:18:01.685758",
+    "last_payment_at" : null,
+    "payment_status" : "PAID",
     "cancel_request_reason" : null,
     "cancel_requested_at" : null,
-    "cancel_requested_by" : null,
-    "last_payment_at" : null,
-    "payment_status" : "PAID"
+    "cancel_requested_by" : null
   }, {
     "id" : 3,
     "business_id" : 5,
@@ -59,11 +59,11 @@
     "status" : "DRAFT",
     "total_amount" : 345000.00,
     "updated_at" : "2026-08-21T17:36:19.963682",
+    "last_payment_at" : null,
+    "payment_status" : "PAID",
     "cancel_request_reason" : null,
     "cancel_requested_at" : null,
-    "cancel_requested_by" : null,
-    "last_payment_at" : null,
-    "payment_status" : "PAID"
+    "cancel_requested_by" : null
   }, {
     "id" : 4,
     "business_id" : 5,
@@ -80,11 +80,11 @@
     "status" : "DRAFT",
     "total_amount" : 2000000.00,
     "updated_at" : "2026-08-21T17:39:32.893633",
+    "last_payment_at" : null,
+    "payment_status" : "PAID",
     "cancel_request_reason" : null,
     "cancel_requested_at" : null,
-    "cancel_requested_by" : null,
-    "last_payment_at" : null,
-    "payment_status" : "PAID"
+    "cancel_requested_by" : null
   }, {
     "id" : 5,
     "business_id" : 5,
@@ -101,11 +101,11 @@
     "status" : "CANCELLED",
     "total_amount" : 30000000.00,
     "updated_at" : "2026-08-23T12:41:49.714244",
+    "last_payment_at" : null,
+    "payment_status" : "PAID",
     "cancel_request_reason" : null,
     "cancel_requested_at" : null,
-    "cancel_requested_by" : null,
-    "last_payment_at" : null,
-    "payment_status" : "PAID"
+    "cancel_requested_by" : null
   }, {
     "id" : 6,
     "business_id" : 5,
@@ -122,11 +122,11 @@
     "status" : "CANCELLED",
     "total_amount" : 120000000.00,
     "updated_at" : "2026-08-24T06:34:54.7867",
+    "last_payment_at" : null,
+    "payment_status" : "PAID",
     "cancel_request_reason" : "Khách bom đơn",
     "cancel_requested_at" : "2026-08-23T14:39:50.366115",
-    "cancel_requested_by" : 5,
-    "last_payment_at" : null,
-    "payment_status" : "PAID"
+    "cancel_requested_by" : 5
   }, {
     "id" : 7,
     "business_id" : 5,
@@ -143,11 +143,11 @@
     "status" : "CONFIRMED",
     "total_amount" : 90000000.00,
     "updated_at" : "2026-08-23T14:52:52.455754",
+    "last_payment_at" : null,
+    "payment_status" : "PAID",
     "cancel_request_reason" : null,
     "cancel_requested_at" : null,
-    "cancel_requested_by" : null,
-    "last_payment_at" : null,
-    "payment_status" : "PAID"
+    "cancel_requested_by" : null
   }, {
     "id" : 8,
     "business_id" : 5,
@@ -164,11 +164,11 @@
     "status" : "CANCELLED",
     "total_amount" : 30000000.00,
     "updated_at" : "2026-08-24T06:34:38.701163",
+    "last_payment_at" : null,
+    "payment_status" : "PAID",
     "cancel_request_reason" : "Khách bom hàng",
     "cancel_requested_at" : "2026-08-23T14:55:15.981749",
-    "cancel_requested_by" : 5,
-    "last_payment_at" : null,
-    "payment_status" : "PAID"
+    "cancel_requested_by" : 5
   }, {
     "id" : 10,
     "business_id" : 12,
@@ -185,11 +185,11 @@
     "status" : "CONFIRMED",
     "total_amount" : 300000.00,
     "updated_at" : "2026-08-30T05:16:40.845484",
+    "last_payment_at" : null,
+    "payment_status" : "PAID",
     "cancel_request_reason" : null,
     "cancel_requested_at" : null,
-    "cancel_requested_by" : null,
-    "last_payment_at" : null,
-    "payment_status" : "PAID"
+    "cancel_requested_by" : null
   }, {
     "id" : 11,
     "business_id" : 12,
@@ -206,11 +206,11 @@
     "status" : "CONFIRMED",
     "total_amount" : 500000.00,
     "updated_at" : "2026-08-30T05:41:36.729789",
+    "last_payment_at" : null,
+    "payment_status" : "PAID",
     "cancel_request_reason" : null,
     "cancel_requested_at" : null,
-    "cancel_requested_by" : null,
-    "last_payment_at" : null,
-    "payment_status" : "PAID"
+    "cancel_requested_by" : null
   }, {
     "id" : 12,
     "business_id" : 12,
@@ -227,52 +227,31 @@
     "status" : "CONFIRMED",
     "total_amount" : 700000.00,
     "updated_at" : "2026-08-30T05:44:45.523101",
+    "last_payment_at" : null,
+    "payment_status" : "PAID",
     "cancel_request_reason" : null,
     "cancel_requested_at" : null,
-    "cancel_requested_by" : null,
-    "last_payment_at" : null,
-    "payment_status" : "PAID"
+    "cancel_requested_by" : null
   }, {
     "id" : 13,
     "business_id" : 5,
-    "confirmed_at" : "2026-09-05T16:05:17.959604",
-    "confirmed_by" : 3,
-    "created_at" : "2026-09-05T16:05:17.961796",
-    "created_by" : 3,
-    "customer_id" : 6,
-    "debt_amount" : 10000.00,
+    "confirmed_at" : "2026-09-08T08:48:28.768726",
+    "confirmed_by" : 4,
+    "created_at" : "2026-09-08T08:48:28.769711",
+    "created_by" : 4,
+    "customer_id" : 2,
+    "debt_amount" : 0.00,
     "note" : "",
-    "order_code" : "DH-007",
+    "order_code" : "DH-111",
     "paid_amount" : 20000.00,
     "source" : "POS",
     "status" : "CONFIRMED",
-    "total_amount" : 30000.00,
-    "updated_at" : "2026-09-05T16:05:17.961796",
+    "total_amount" : 20000.00,
+    "updated_at" : "2026-09-08T08:48:28.769711",
+    "last_payment_at" : null,
+    "payment_status" : "PAID",
     "cancel_request_reason" : null,
     "cancel_requested_at" : null,
-    "cancel_requested_by" : null,
-    "last_payment_at" : null,
-    "payment_status" : "PARTIALLY_PAID"
-  }, {
-    "id" : 14,
-    "business_id" : 5,
-    "confirmed_at" : "2026-09-07T06:57:17.293349",
-    "confirmed_by" : 3,
-    "created_at" : "2026-09-07T06:57:17.295351",
-    "created_by" : 3,
-    "customer_id" : 1,
-    "debt_amount" : 0.00,
-    "note" : "",
-    "order_code" : "SP-002",
-    "paid_amount" : 15000.00,
-    "source" : "POS",
-    "status" : "CONFIRMED",
-    "total_amount" : 15000.00,
-    "updated_at" : "2026-09-07T06:57:17.295351",
-    "cancel_request_reason" : null,
-    "cancel_requested_at" : null,
-    "cancel_requested_by" : null,
-    "last_payment_at" : null,
-    "payment_status" : "PAID"
+    "cancel_requested_by" : null
   } ]
 }

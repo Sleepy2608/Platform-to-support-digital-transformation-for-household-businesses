@@ -66,18 +66,5 @@
     "updated_at" : "2026-08-23T14:51:42.998985",
     "debt_balance" : 0.00,
     "email" : null
-  }, {
-    "id" : 6,
-    "address" : null,
-    "business_id" : 5,
-    "created_at" : "2026-09-05T16:02:56.193635",
-    "customer_code" : "KH-6856B1D0",
-    "customer_name" : "Bảo Linh",
-    "note" : null,
-    "phone" : "0980812415",
-    "status" : "ACTIVE",
-    "updated_at" : "2026-09-05T16:02:56.193635",
-    "debt_balance" : 0.00,
-    "email" : null
   } ]
 }

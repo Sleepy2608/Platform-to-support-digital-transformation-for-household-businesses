@@ -123,39 +123,27 @@
     "rule_name" : "sỉ"
   }, {
     "id" : 11,
-    "created_at" : "2026-08-24T04:21:38.748844",
-    "effective_from" : "2026-08-24T04:21:38.748844",
-    "effective_to" : null,
-    "minimum_quantity" : 1.000,
-    "product_unit_id" : 11,
-    "sale_price" : 15000.00,
-    "status" : "ACTIVE",
-    "updated_at" : "2026-08-24T04:21:38.748844",
-    "changed_by" : 4,
-    "rule_name" : "Bán sỉ"
-  }, {
-    "id" : 12,
-    "created_at" : "2026-09-05T16:04:47.423516",
-    "effective_from" : "2026-09-05T16:04:47.423516",
+    "created_at" : "2026-09-08T08:45:58.42044",
+    "effective_from" : "2026-09-08T08:45:58.42044",
     "effective_to" : null,
     "minimum_quantity" : 1.000,
     "product_unit_id" : 12,
-    "sale_price" : 15000.00,
+    "sale_price" : 12000.00,
     "status" : "ACTIVE",
-    "updated_at" : "2026-09-05T16:04:47.423516",
-    "changed_by" : 3,
+    "updated_at" : "2026-09-08T08:45:58.42044",
+    "changed_by" : 4,
     "rule_name" : "Giá bán"
   }, {
-    "id" : 13,
-    "created_at" : "2026-09-07T06:56:33.107351",
-    "effective_from" : "2026-09-07T06:56:33.107351",
+    "id" : 12,
+    "created_at" : "2026-09-08T08:46:36.40874",
+    "effective_from" : "2026-09-08T08:46:36.40874",
     "effective_to" : null,
     "minimum_quantity" : 1.000,
-    "product_unit_id" : 13,
-    "sale_price" : 15000.00,
+    "product_unit_id" : 11,
+    "sale_price" : 10000.00,
     "status" : "ACTIVE",
-    "updated_at" : "2026-09-07T06:56:33.107351",
-    "changed_by" : 3,
+    "updated_at" : "2026-09-08T08:46:36.40874",
+    "changed_by" : 4,
     "rule_name" : "Giá bán"
   } ]
 }
