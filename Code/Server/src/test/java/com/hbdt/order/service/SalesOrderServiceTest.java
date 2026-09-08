@@ -52,6 +52,7 @@ class SalesOrderServiceTest {
     @Mock private CustomerRepository customerRepository;
     @Mock private DebtTransactionRepository debtTransactionRepository;
     @Mock private RevenueLedgerService revenueLedgerService;
+    @Mock private SalesBookkeepingService salesBookkeepingService;
 
     private SalesOrderService service;
 
@@ -61,7 +62,8 @@ class SalesOrderServiceTest {
                 salesOrderRepository, salesOrderItemRepository, productPricingService,
                 businessContextService, userRepository, productRepository, unitRepository,
                 inventoryMovementService, customerRepository, debtTransactionRepository,
-                revenueLedgerService
+                revenueLedgerService,
+                salesBookkeepingService
         );
     }
 

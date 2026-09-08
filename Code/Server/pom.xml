@@ -23,6 +23,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <jjwt.version>0.12.6</jjwt.version>
         <lombok.version>1.18.38</lombok.version>
+        <mockito.version>5.11.0</mockito.version>
     </properties>
 
     <dependencies>
@@ -151,7 +152,21 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+            <!-- Mockito inline mock-maker requires open access on JDK 17+ -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>
+                        --add-opens java.base/java.lang=ALL-UNNAMED
+                        --add-opens java.base/java.util=ALL-UNNAMED
+                        --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+                        -XX:+EnableDynamicAgentLoading
+                    </argLine>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
+
 
 </project>
