@@ -35,6 +35,8 @@ class RevenueLedgerServiceTest {
     @Mock private UnitRepository unitRepository;
     @Mock private SalesOrderRepository salesOrderRepository;
     @Mock private SalesOrderItemRepository salesOrderItemRepository;
+    @Mock private StockImportRepository stockImportRepository;
+    @Mock private UserRepository userRepository;
 
     private RevenueLedgerService service;
 
@@ -47,7 +49,9 @@ class RevenueLedgerServiceTest {
                 productRepository,
                 unitRepository,
                 salesOrderRepository,
-                salesOrderItemRepository
+                salesOrderItemRepository,
+                stockImportRepository,
+                userRepository
         );
     }
 
@@ -172,6 +176,11 @@ class RevenueLedgerServiceTest {
         when(revenueLedgerRepository.calculateSummary(eq(1L), eq("ACTIVE"), any(), any(), isNull(), eq("SO-001")))
                 .thenReturn(summaryProj);
 
+        when(stockImportRepository.calculateTotalImportCost(eq(1L), any(), any()))
+                .thenReturn(new BigDecimal("30000.00"));
+        when(stockImportRepository.searchConfirmedStockImports(eq(1L), any(), any(), eq("SO-001"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
         RevenueLedgerPageResponse response = service.search(
                 "testuser",
                 LocalDate.now(),
@@ -184,6 +193,8 @@ class RevenueLedgerServiceTest {
 
         assertThat(response.items()).hasSize(1);
         assertThat(response.summary().totalRevenue()).isEqualByComparingTo("100000.00");
+        assertThat(response.summary().totalImportCost()).isEqualByComparingTo("30000.00");
+        assertThat(response.summary().netRevenue()).isEqualByComparingTo("70000.00");
         assertThat(response.summary().totalOrders()).isEqualTo(1L);
     }
 }

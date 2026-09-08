@@ -6,6 +6,7 @@ import java.util.List;
 
 public record RevenueLedgerPageResponse(
         List<RevenueLedgerItemResponse> items,
+        List<StockImportLedgerItemResponse> stockImports,
         RevenueLedgerSummaryResponse summary,
         int page,
         int size,
@@ -16,10 +17,12 @@ public record RevenueLedgerPageResponse(
 ) {
     public static RevenueLedgerPageResponse of(
             Page<RevenueLedgerItemResponse> pageResult,
+            List<StockImportLedgerItemResponse> stockImports,
             RevenueLedgerSummaryResponse summary
     ) {
         return new RevenueLedgerPageResponse(
                 pageResult.getContent(),
+                stockImports,
                 summary,
                 pageResult.getNumber(),
                 pageResult.getSize(),

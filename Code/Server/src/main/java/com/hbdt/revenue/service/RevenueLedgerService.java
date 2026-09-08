@@ -31,6 +31,8 @@ public class RevenueLedgerService {
     private final UnitRepository unitRepository;
     private final SalesOrderRepository salesOrderRepository;
     private final SalesOrderItemRepository salesOrderItemRepository;
+    private final StockImportRepository stockImportRepository;
+    private final UserRepository userRepository;
 
     public RevenueLedgerService(
             RevenueLedgerRepository revenueLedgerRepository,
@@ -39,7 +41,9 @@ public class RevenueLedgerService {
             ProductRepository productRepository,
             UnitRepository unitRepository,
             SalesOrderRepository salesOrderRepository,
-            SalesOrderItemRepository salesOrderItemRepository
+            SalesOrderItemRepository salesOrderItemRepository,
+            StockImportRepository stockImportRepository,
+            UserRepository userRepository
     ) {
         this.revenueLedgerRepository = revenueLedgerRepository;
         this.businessContextService = businessContextService;
@@ -48,6 +52,8 @@ public class RevenueLedgerService {
         this.unitRepository = unitRepository;
         this.salesOrderRepository = salesOrderRepository;
         this.salesOrderItemRepository = salesOrderItemRepository;
+        this.stockImportRepository = stockImportRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -195,15 +201,49 @@ public class RevenueLedgerService {
                 normalizedKeyword
         );
 
+        BigDecimal totalRevenue = summaryProj != null && summaryProj.getTotalRevenue() != null ? summaryProj.getTotalRevenue() : BigDecimal.ZERO;
+        BigDecimal totalQuantity = summaryProj != null && summaryProj.getTotalQuantity() != null ? summaryProj.getTotalQuantity() : BigDecimal.ZERO;
+        Long totalOrders = summaryProj != null && summaryProj.getTotalOrders() != null ? summaryProj.getTotalOrders() : 0L;
+        Long totalItems = summaryProj != null && summaryProj.getTotalItems() != null ? summaryProj.getTotalItems() : 0L;
+
+        BigDecimal totalImportCost = stockImportRepository.calculateTotalImportCost(businessId, fromDateTime, toDateTime);
+        if (totalImportCost == null) {
+            totalImportCost = BigDecimal.ZERO;
+        }
+
+        BigDecimal netRevenue = totalRevenue.subtract(totalImportCost);
+
         RevenueLedgerSummaryResponse summary = new RevenueLedgerSummaryResponse(
-                summaryProj != null && summaryProj.getTotalRevenue() != null ? summaryProj.getTotalRevenue() : BigDecimal.ZERO,
-                summaryProj != null && summaryProj.getTotalQuantity() != null ? summaryProj.getTotalQuantity() : BigDecimal.ZERO,
-                summaryProj != null && summaryProj.getTotalOrders() != null ? summaryProj.getTotalOrders() : 0L,
-                summaryProj != null && summaryProj.getTotalItems() != null ? summaryProj.getTotalItems() : 0L
+                totalRevenue,
+                totalImportCost,
+                netRevenue,
+                totalQuantity,
+                totalOrders,
+                totalItems
         );
 
+        Page<StockImport> importPage = stockImportRepository.searchConfirmedStockImports(
+                businessId,
+                fromDateTime,
+                toDateTime,
+                normalizedKeyword,
+                pageRequest
+        );
+
+        List<com.hbdt.revenue.dto.StockImportLedgerItemResponse> stockImports = importPage.getContent().stream()
+                .map(si -> new com.hbdt.revenue.dto.StockImportLedgerItemResponse(
+                        si.getId(),
+                        si.getImportCode(),
+                        si.getImportDate(),
+                        si.getTotalAmount(),
+                        userRepository.findById(si.getCreatedBy()).map(User::getFullName).orElse("—"),
+                        si.getStatus(),
+                        si.getNote()
+                ))
+                .toList();
+
         Page<RevenueLedgerItemResponse> dtoPage = entriesPage.map(this::toItemResponse);
-        return RevenueLedgerPageResponse.of(dtoPage, summary);
+        return RevenueLedgerPageResponse.of(dtoPage, stockImports, summary);
     }
 
     private RevenueLedgerItemResponse toItemResponse(RevenueLedgerEntry entry) {
