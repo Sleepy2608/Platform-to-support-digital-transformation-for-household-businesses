@@ -176,7 +176,7 @@ public class RevenueLedgerService {
 
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), 100);
-        PageRequest pageRequest = PageRequest.of(
+        PageRequest ledgerPageRequest = PageRequest.of(
                 safePage,
                 safeSize,
                 Sort.by(Sort.Direction.DESC, "confirmedAt").and(Sort.by(Sort.Direction.DESC, "id"))
@@ -189,7 +189,7 @@ public class RevenueLedgerService {
                 toDateTime,
                 productId,
                 normalizedKeyword,
-                pageRequest
+                ledgerPageRequest
         );
 
         RevenueLedgerRepository.RevenueSummaryProjection summaryProj = revenueLedgerRepository.calculateSummary(
@@ -222,12 +222,18 @@ public class RevenueLedgerService {
                 totalItems
         );
 
+        PageRequest importPageRequest = PageRequest.of(
+                safePage,
+                safeSize,
+                Sort.by(Sort.Direction.DESC, "importDate").and(Sort.by(Sort.Direction.DESC, "id"))
+        );
+
         Page<StockImport> importPage = stockImportRepository.searchConfirmedStockImports(
                 businessId,
                 fromDateTime,
                 toDateTime,
                 normalizedKeyword,
-                pageRequest
+                importPageRequest
         );
 
         List<com.hbdt.revenue.dto.StockImportLedgerItemResponse> stockImports = importPage.getContent().stream()

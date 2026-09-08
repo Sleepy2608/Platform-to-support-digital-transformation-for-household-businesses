@@ -43,7 +43,6 @@ public interface StockImportRepository extends JpaRepository<StockImport, Long> 
           AND (:fromDateTime IS NULL OR s.importDate >= :fromDateTime)
           AND (:toDateTime IS NULL OR s.importDate <= :toDateTime)
           AND (:keyword IS NULL OR :keyword = '' OR LOWER(s.importCode) LIKE LOWER(CONCAT('%', :keyword, '%')))
-        ORDER BY s.importDate DESC
     """)
     Page<StockImport> searchConfirmedStockImports(
             @Param("businessId") Long businessId,
