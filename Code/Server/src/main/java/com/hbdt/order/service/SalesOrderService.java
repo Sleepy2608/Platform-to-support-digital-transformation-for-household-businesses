@@ -26,6 +26,8 @@ import com.hbdt.repository.SalesOrderRepository;
 import com.hbdt.repository.UserRepository;
 import com.hbdt.repository.ProductRepository;
 import com.hbdt.repository.UnitRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -43,6 +45,7 @@ import java.util.UUID;
 @Service
 public class SalesOrderService {
 
+    private static final Logger log = LoggerFactory.getLogger(SalesOrderService.class);
     private static final int QUANTITY_SCALE = 3;
     private static final BigDecimal MAX_ORDER_QUANTITY = new BigDecimal("999999999999999.999");
 
@@ -56,6 +59,7 @@ public class SalesOrderService {
     private final InventoryMovementService inventoryMovementService;
     private final CustomerRepository customerRepository;
     private final DebtTransactionRepository debtTransactionRepository;
+    private final SalesBookkeepingService salesBookkeepingService;
 
     public SalesOrderService(
             SalesOrderRepository salesOrderRepository,
@@ -67,7 +71,8 @@ public class SalesOrderService {
             UnitRepository unitRepository,
             InventoryMovementService inventoryMovementService,
             CustomerRepository customerRepository,
-            DebtTransactionRepository debtTransactionRepository
+            DebtTransactionRepository debtTransactionRepository,
+            SalesBookkeepingService salesBookkeepingService
     ) {
         this.salesOrderRepository = salesOrderRepository;
         this.salesOrderItemRepository = salesOrderItemRepository;
@@ -79,6 +84,7 @@ public class SalesOrderService {
         this.inventoryMovementService = inventoryMovementService;
         this.customerRepository = customerRepository;
         this.debtTransactionRepository = debtTransactionRepository;
+        this.salesBookkeepingService = salesBookkeepingService;
     }
 
     @Transactional
@@ -164,6 +170,11 @@ public class SalesOrderService {
                     order, actor.getId(), "DEBT_INCREASE", debtAmount, customerDebtBefore.add(debtAmount),
                     "Phát sinh công nợ từ đơn " + order.getOrderCode(), "DEBT-SO-" + order.getId());
         }
+
+        // ── HBDT-59: Ghi sổ kế toán tự động ──────────────────────────────────
+        // Chạy trong cùng @Transactional — nếu ghi sổ thất bại, đơn hàng cũng rollback.
+        salesBookkeepingService.recordSaleFromOrder(order);
+
         return toResponse(order, savedItems);
     }
 
@@ -273,6 +284,10 @@ public class SalesOrderService {
         }
         order.setStatus("CANCELLED");
         salesOrderRepository.save(order);
+
+        // ── HBDT-59: Đảo bút toán kế toán khi hủy đơn ────────────────────────
+        salesBookkeepingService.handleOrderCancellation(order.getId());
+
         return toResponse(order, items);
     }
 
