@@ -402,22 +402,17 @@ public class SubscriptionService implements ISubscriptionService {
     public List<ServiceInvoiceResponse> getManagerInvoiceHistory(String status, LocalDate fromDate, LocalDate toDate) {
         validateInvoiceFilters(status, fromDate, toDate);
 
-        Specification<ServiceInvoice> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (status != null && !status.isBlank()) {
-                predicates.add(cb.equal(root.get("status"), status.trim().toUpperCase(Locale.ROOT)));
-            }
-            if (fromDate != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), fromDate.atStartOfDay()));
-            }
-            if (toDate != null) {
-                predicates.add(cb.lessThan(root.get("createdAt"), toDate.plusDays(1).atStartOfDay()));
-            }
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
+        String normalizedStatus = (status != null && !status.isBlank())
+                ? status.trim().toUpperCase(Locale.ROOT)
+                : null;
 
-        return serviceInvoiceRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
-                .stream()
+        java.time.LocalDateTime startDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
+        java.time.LocalDateTime endDateTime = toDate != null ? toDate.plusDays(1).atStartOfDay() : null;
+
+        List<ServiceInvoice> invoices = serviceInvoiceRepository.findAllWithDetailsAndFilters(
+                normalizedStatus, startDateTime, endDateTime);
+
+        return invoices.stream()
                 .map(ServiceInvoiceResponse::fromEntity)
                 .collect(Collectors.toList());
     }
@@ -437,7 +432,7 @@ public class SubscriptionService implements ISubscriptionService {
     @Override
     @Transactional(readOnly = true)
     public ServiceInvoiceResponse getManagerInvoiceDetail(Long invoiceId) {
-        ServiceInvoice invoice = serviceInvoiceRepository.findById(invoiceId)
+        ServiceInvoice invoice = serviceInvoiceRepository.findWithDetailsById(invoiceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn dịch vụ với ID: " + invoiceId));
         return ServiceInvoiceResponse.fromEntity(invoice);
     }
