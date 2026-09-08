@@ -33,6 +33,8 @@ class RevenueLedgerServiceTest {
     @Mock private CustomerRepository customerRepository;
     @Mock private ProductRepository productRepository;
     @Mock private UnitRepository unitRepository;
+    @Mock private SalesOrderRepository salesOrderRepository;
+    @Mock private SalesOrderItemRepository salesOrderItemRepository;
 
     private RevenueLedgerService service;
 
@@ -43,7 +45,9 @@ class RevenueLedgerServiceTest {
                 businessContextService,
                 customerRepository,
                 productRepository,
-                unitRepository
+                unitRepository,
+                salesOrderRepository,
+                salesOrderItemRepository
         );
     }
 

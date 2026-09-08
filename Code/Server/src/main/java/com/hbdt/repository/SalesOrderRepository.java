@@ -26,6 +26,10 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long>, J
 
     List<SalesOrder> findByCustomerIdAndBusinessId(Long customerId, Long businessId);
 
+    List<SalesOrder> findAllByBusinessIdAndStatus(Long businessId, String status);
+
+    List<SalesOrder> findAllByStatus(String status);
+
     Page<SalesOrder> findAllByBusinessIdOrderByCreatedAtDesc(Long businessId, Pageable pageable);
 
     @Query("""

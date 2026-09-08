@@ -11,6 +11,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -27,19 +29,25 @@ public class RevenueLedgerService {
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
     private final UnitRepository unitRepository;
+    private final SalesOrderRepository salesOrderRepository;
+    private final SalesOrderItemRepository salesOrderItemRepository;
 
     public RevenueLedgerService(
             RevenueLedgerRepository revenueLedgerRepository,
             BusinessContextService businessContextService,
             CustomerRepository customerRepository,
             ProductRepository productRepository,
-            UnitRepository unitRepository
+            UnitRepository unitRepository,
+            SalesOrderRepository salesOrderRepository,
+            SalesOrderItemRepository salesOrderItemRepository
     ) {
         this.revenueLedgerRepository = revenueLedgerRepository;
         this.businessContextService = businessContextService;
         this.customerRepository = customerRepository;
         this.productRepository = productRepository;
         this.unitRepository = unitRepository;
+        this.salesOrderRepository = salesOrderRepository;
+        this.salesOrderItemRepository = salesOrderItemRepository;
     }
 
     @Transactional
@@ -109,7 +117,41 @@ public class RevenueLedgerService {
         revenueLedgerRepository.updateStatusBySalesOrderId(salesOrderId, "CANCELLED", LocalDateTime.now());
     }
 
-    @Transactional(readOnly = true)
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void onApplicationReady() {
+        try {
+            List<SalesOrder> allConfirmed = salesOrderRepository.findAllByStatus("CONFIRMED");
+            for (SalesOrder order : allConfirmed) {
+                if (!revenueLedgerRepository.existsByBusinessIdAndSalesOrderIdAndStatus(
+                        order.getBusinessId(), order.getId(), "ACTIVE")) {
+                    List<SalesOrderItem> items = salesOrderItemRepository.findAllBySalesOrderIdOrderByIdAsc(order.getId());
+                    recordRevenueForOrder(order, items);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Transactional
+    public void syncMissingConfirmedOrders(Long businessId) {
+        if (businessId == null) {
+            return;
+        }
+        try {
+            List<SalesOrder> confirmedOrders = salesOrderRepository.findAllByBusinessIdAndStatus(businessId, "CONFIRMED");
+            for (SalesOrder order : confirmedOrders) {
+                if (!revenueLedgerRepository.existsByBusinessIdAndSalesOrderIdAndStatus(
+                        order.getBusinessId(), order.getId(), "ACTIVE")) {
+                    List<SalesOrderItem> items = salesOrderItemRepository.findAllBySalesOrderIdOrderByIdAsc(order.getId());
+                    recordRevenueForOrder(order, items);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Transactional
     public RevenueLedgerPageResponse search(
             String actorUsername,
             LocalDate fromDate,
@@ -120,6 +162,7 @@ public class RevenueLedgerService {
             int size
     ) {
         Long businessId = businessContextService.requireBusinessId(actorUsername);
+        syncMissingConfirmedOrders(businessId);
 
         LocalDateTime fromDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
         LocalDateTime toDateTime = toDate != null ? toDate.atTime(LocalTime.MAX) : null;
