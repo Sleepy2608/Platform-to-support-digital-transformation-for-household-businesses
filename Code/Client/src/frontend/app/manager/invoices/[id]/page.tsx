@@ -7,7 +7,7 @@ import { ArrowLeft, Download, Receipt, Loader2, AlertCircle } from 'lucide-react
 import { apiClient } from '../../../lib/apiClient';
 import { ServiceInvoiceResponse } from '../../../lib/invoice-types';
 
-export default function InvoiceDetailPage() {
+export default function ManagerInvoiceDetailPage() {
   const { id } = useParams();
   const [invoice, setInvoice] = useState<ServiceInvoiceResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -15,7 +15,7 @@ export default function InvoiceDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    apiClient.get<ServiceInvoiceResponse>(`/api/owner/invoices/${id}`)
+    apiClient.get<ServiceInvoiceResponse>(`/api/manager/invoices/${id}`)
       .then(setInvoice)
       .catch((err) => {
         if (err instanceof Error && err.message.includes('404')) {
@@ -30,7 +30,7 @@ export default function InvoiceDetailPage() {
   const handleDownload = async () => {
     try {
       setError(null);
-      const data = await apiClient.get<Blob>(`/api/owner/invoices/${id}/download`, { responseType: 'blob' });
+      const data = await apiClient.get<Blob>(`/api/manager/invoices/${id}/download`, { responseType: 'blob' });
       const blob = data instanceof Blob ? data : new Blob([data as unknown as BlobPart], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -62,7 +62,7 @@ export default function InvoiceDetailPage() {
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <span>{error}</span>
           </div>
-          <Link href="/owner/invoices" className="inline-flex items-center gap-2 text-sm font-bold text-slate-900 hover:underline">
+          <Link href="/manager/invoices" className="inline-flex items-center gap-2 text-sm font-bold text-slate-900 hover:underline">
             <ArrowLeft className="w-4 h-4" /> Quay lại danh sách hóa đơn
           </Link>
         </div>
@@ -75,7 +75,7 @@ export default function InvoiceDetailPage() {
       <div className="min-h-screen bg-slate-100/70 p-4 sm:p-8 lg:p-10">
         <div className="max-w-4xl mx-auto space-y-6 text-center py-20">
           <p className="text-slate-500">Không tìm thấy hóa đơn.</p>
-          <Link href="/owner/invoices" className="inline-flex items-center gap-2 text-sm font-bold text-slate-900 hover:underline">
+          <Link href="/manager/invoices" className="inline-flex items-center gap-2 text-sm font-bold text-slate-900 hover:underline">
             <ArrowLeft className="w-4 h-4" /> Quay lại danh sách hóa đơn
           </Link>
         </div>
@@ -90,7 +90,7 @@ export default function InvoiceDetailPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div className="flex items-center gap-4">
             <Link
-              href="/owner/invoices"
+              href="/manager/invoices"
               className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
               title="Quay lại danh sách"
             >
@@ -109,7 +109,7 @@ export default function InvoiceDetailPage() {
             <span className="px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-bold text-slate-700">
               Hóa đơn
             </span>
-            <button 
+            <button
               onClick={handleDownload}
               className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-slate-800 transition cursor-pointer"
             >
@@ -136,6 +136,11 @@ export default function InvoiceDetailPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-200/80">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Chủ hộ</p>
+              <p className="text-base font-bold text-slate-900 mt-1">{invoice.ownerFullName || '—'}</p>
+              <p className="font-mono text-xs text-slate-500 mt-0.5">@{invoice.ownerUsername || '—'}</p>
+            </div>
             <div className="p-4 bg-slate-50/50 rounded-xl border border-slate-200/80">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Gói dịch vụ</p>
               <p className="text-base font-bold text-slate-900 mt-1">{invoice.planName}</p>

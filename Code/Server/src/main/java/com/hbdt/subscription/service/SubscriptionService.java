@@ -399,22 +399,11 @@ public class SubscriptionService implements ISubscriptionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ServiceInvoiceResponse> getOwnerInvoiceHistory(User owner, String status, LocalDate fromDate, LocalDate toDate) {
-        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
-            throw new IllegalArgumentException("Từ ngày (fromDate) không được lớn hơn đến ngày (toDate).");
-        }
-
-        if (status != null && !status.isBlank()) {
-            String normStatus = status.trim().toUpperCase(Locale.ROOT);
-            if (!"PENDING".equals(normStatus) && !"PAID".equals(normStatus) && !"FAILED".equals(normStatus)) {
-                throw new IllegalArgumentException("Trạng thái hóa đơn không hợp lệ: " + status);
-            }
-        }
+    public List<ServiceInvoiceResponse> getManagerInvoiceHistory(String status, LocalDate fromDate, LocalDate toDate) {
+        validateInvoiceFilters(status, fromDate, toDate);
 
         Specification<ServiceInvoice> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.equal(root.get("user").get("id"), owner.getId()));
-
             if (status != null && !status.isBlank()) {
                 predicates.add(cb.equal(root.get("status"), status.trim().toUpperCase(Locale.ROOT)));
             }
@@ -433,16 +422,23 @@ public class SubscriptionService implements ISubscriptionService {
                 .collect(Collectors.toList());
     }
 
+    private void validateInvoiceFilters(String status, LocalDate fromDate, LocalDate toDate) {
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            throw new IllegalArgumentException("Từ ngày (fromDate) không được lớn hơn đến ngày (toDate).");
+        }
+        if (status != null && !status.isBlank()) {
+            String normalized = status.trim().toUpperCase(Locale.ROOT);
+            if (!PAYMENT_PENDING.equals(normalized) && !"PAID".equals(normalized) && !PAYMENT_FAILED.equals(normalized)) {
+                throw new IllegalArgumentException("Trạng thái hóa đơn không hợp lệ: " + status);
+            }
+        }
+    }
+
     @Override
     @Transactional(readOnly = true)
-    public ServiceInvoiceResponse getOwnerInvoiceDetail(Long invoiceId, User owner) {
+    public ServiceInvoiceResponse getManagerInvoiceDetail(Long invoiceId) {
         ServiceInvoice invoice = serviceInvoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn dịch vụ với ID: " + invoiceId));
-
-        if (!invoice.getUser().getId().equals(owner.getId())) {
-            throw new AccessDeniedException("Bạn không có quyền truy cập hóa đơn này.");
-        }
-
         return ServiceInvoiceResponse.fromEntity(invoice);
     }
 

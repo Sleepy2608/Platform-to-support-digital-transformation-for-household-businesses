@@ -25,6 +25,8 @@ public class ServiceInvoiceResponse {
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String ownerUsername;
+    private String ownerFullName;
 
     public static ServiceInvoiceResponse fromEntity(ServiceInvoice invoice) {
         if (invoice == null) {
@@ -42,6 +44,8 @@ public class ServiceInvoiceResponse {
                 .status(invoice.getStatus())
                 .createdAt(invoice.getCreatedAt())
                 .updatedAt(invoice.getCreatedAt())
+                .ownerUsername(invoice.getUser() != null ? invoice.getUser().getUsername() : null)
+                .ownerFullName(invoice.getUser() != null ? invoice.getUser().getFullName() : null)
                 .build();
     }
 }

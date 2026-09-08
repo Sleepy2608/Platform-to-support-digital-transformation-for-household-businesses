@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { apiClient } from '../../lib/apiClient';
 import { ServiceInvoiceResponse } from '../../lib/invoice-types';
-import { RotateCcw, Eye } from 'lucide-react';
+import { RotateCcw, Eye, ReceiptText } from 'lucide-react';
 
-export default function InvoiceHistoryPage() {
+export default function ManagerInvoiceHistoryPage() {
   const [invoices, setInvoices] = useState<ServiceInvoiceResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,9 +27,9 @@ export default function InvoiceHistoryPage() {
       if (filters.status) params.status = filters.status;
       if (filters.fromDate) params.fromDate = filters.fromDate;
       if (filters.toDate) params.toDate = filters.toDate;
-      
+
       const query = new URLSearchParams(params).toString();
-      const data = await apiClient.get<ServiceInvoiceResponse[]>(`/api/owner/invoices${query ? `?${query}` : ''}`);
+      const data = await apiClient.get<ServiceInvoiceResponse[]>(`/api/manager/invoices${query ? `?${query}` : ''}`);
       setInvoices(data);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Có lỗi xảy ra khi tải danh sách hóa đơn.');
@@ -56,7 +56,7 @@ export default function InvoiceHistoryPage() {
               Lịch sử hóa đơn
             </h1>
             <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1 select-none" style={{ userSelect: 'none' }}>
-              Tra cứu các hóa đơn thanh toán dịch vụ và gói đăng ký tài khoản
+              Tra cứu toàn bộ hóa đơn thanh toán dịch vụ của các chủ hộ kinh doanh
             </p>
           </div>
           <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -68,7 +68,7 @@ export default function InvoiceHistoryPage() {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-          <select 
+          <select
             value={filters.status}
             onChange={(e) => setFilters({...filters, status: e.target.value})}
             className="px-3.5 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-900/10 cursor-pointer"
@@ -102,13 +102,17 @@ export default function InvoiceHistoryPage() {
           {loading ? (
             <div className="flex items-center justify-center py-20 text-sm text-slate-400">Đang tải...</div>
           ) : invoices.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-sm text-slate-400">Không tìm thấy hóa đơn nào.</div>
+            <div className="flex flex-col items-center justify-center py-20 text-sm text-slate-400">
+              <ReceiptText className="w-8 h-8 mb-3 text-slate-300" />
+              Không tìm thấy hóa đơn nào.
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/60 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                     <th className="px-5 py-3.5">Mã hóa đơn</th>
+                    <th className="px-5 py-3.5">Chủ hộ</th>
                     <th className="px-5 py-3.5">Gói dịch vụ</th>
                     <th className="px-5 py-3.5">Số tháng</th>
                     <th className="px-5 py-3.5">Số tiền</th>
@@ -121,6 +125,10 @@ export default function InvoiceHistoryPage() {
                   {invoices.map((invoice) => (
                     <tr key={invoice.id} className="hover:bg-slate-50/70 transition-colors">
                       <td className="px-5 py-4 font-mono font-bold text-slate-900 text-xs">{invoice.invoiceCode}</td>
+                      <td className="px-5 py-4">
+                        <p className="font-bold text-slate-900">{invoice.ownerFullName || '—'}</p>
+                        <p className="font-mono text-xs text-slate-500">@{invoice.ownerUsername || '—'}</p>
+                      </td>
                       <td className="px-5 py-4 font-bold text-slate-900">{invoice.planName}</td>
                       <td className="px-5 py-4 text-slate-600">{invoice.duration} tháng</td>
                       <td className="px-5 py-4 font-black text-slate-900">{invoice.totalAmount.toLocaleString('vi-VN')} đ</td>
@@ -135,7 +143,7 @@ export default function InvoiceHistoryPage() {
                       </td>
                       <td className="px-5 py-4 text-slate-500 text-xs">{new Date(invoice.createdAt).toLocaleDateString('vi-VN')}</td>
                       <td className="px-5 py-4 text-right">
-                        <Link href={`/owner/invoices/${invoice.id}`} className="inline-flex items-center justify-center p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition shadow-2xs" title="Xem chi tiết">
+                        <Link href={`/manager/invoices/${invoice.id}`} className="inline-flex items-center justify-center p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition shadow-2xs" title="Xem chi tiết">
                           <Eye size={16} />
                         </Link>
                       </td>

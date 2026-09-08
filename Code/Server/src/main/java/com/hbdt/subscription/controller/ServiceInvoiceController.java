@@ -1,9 +1,6 @@
 package com.hbdt.subscription.controller;
 
 import com.hbdt.common.dto.ApiResponse;
-import com.hbdt.common.exception.ResourceNotFoundException;
-import com.hbdt.entity.User;
-import com.hbdt.repository.UserRepository;
 import com.hbdt.subscription.dto.ServiceInvoiceResponse;
 import com.hbdt.subscription.service.ISubscriptionService;
 import com.hbdt.subscription.service.ServiceInvoicePdfService;
@@ -12,81 +9,48 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/owner/invoices")
+@RequestMapping("/api/manager/invoices")
+@PreAuthorize("hasRole('MANAGER')")
 public class ServiceInvoiceController {
 
     private final ISubscriptionService subscriptionService;
-    private final UserRepository userRepository;
     private final ServiceInvoicePdfService pdfService;
 
-    public ServiceInvoiceController(ISubscriptionService subscriptionService, UserRepository userRepository, ServiceInvoicePdfService pdfService) {
+    public ServiceInvoiceController(ISubscriptionService subscriptionService, ServiceInvoicePdfService pdfService) {
         this.subscriptionService = subscriptionService;
-        this.userRepository = userRepository;
         this.pdfService = pdfService;
     }
 
-    private User getAuthenticatedUser(Authentication authentication) {
-        return userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("Tài khoản không tồn tại"));
-    }
-
-    /**
-     * GET /api/owner/invoices
-     * Lấy danh sách hóa đơn dịch vụ của Owner
-     */
-    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
+    /** GET /api/manager/invoices - Manager xem toàn bộ lịch sử hóa đơn dịch vụ. */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ServiceInvoiceResponse>>> getOwnerInvoices(
+    public ResponseEntity<ApiResponse<List<ServiceInvoiceResponse>>> getManagerInvoices(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
-            Authentication authentication) {
-
-        User user = getAuthenticatedUser(authentication);
-        List<ServiceInvoiceResponse> invoices = subscriptionService.getOwnerInvoiceHistory(user, status, fromDate, toDate);
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+        List<ServiceInvoiceResponse> invoices = subscriptionService.getManagerInvoiceHistory(status, fromDate, toDate);
         return ResponseEntity.ok(ApiResponse.success("Lấy lịch sử hóa đơn thành công", invoices));
     }
 
-    /**
-     * GET /api/owner/invoices/{id}
-     * Lấy chi tiết hóa đơn dịch vụ
-     */
-    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
+    /** GET /api/manager/invoices/{id} - Manager xem chi tiết hóa đơn. */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ServiceInvoiceResponse>> getInvoiceDetail(
-            @PathVariable Long id,
-            Authentication authentication) {
-
-        User user = getAuthenticatedUser(authentication);
-        ServiceInvoiceResponse invoice = subscriptionService.getOwnerInvoiceDetail(id, user);
+    public ResponseEntity<ApiResponse<ServiceInvoiceResponse>> getInvoiceDetail(@PathVariable Long id) {
+        ServiceInvoiceResponse invoice = subscriptionService.getManagerInvoiceDetail(id);
         return ResponseEntity.ok(ApiResponse.success("Lấy chi tiết hóa đơn thành công", invoice));
     }
 
-    /**
-     * GET /api/owner/invoices/{id}/download
-     * Tải PDF hóa đơn
-     */
-    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER')")
+    /** GET /api/manager/invoices/{id}/download - Manager tải PDF hóa đơn. */
     @GetMapping("/{id}/download")
-    public ResponseEntity<byte[]> downloadInvoicePdf(
-            @PathVariable Long id,
-            Authentication authentication) {
-
-        User user = getAuthenticatedUser(authentication);
-        // This validates ownership and existence
-        ServiceInvoiceResponse invoice = subscriptionService.getOwnerInvoiceDetail(id, user);
-        
+    public ResponseEntity<byte[]> downloadInvoicePdf(@PathVariable Long id) {
+        ServiceInvoiceResponse invoice = subscriptionService.getManagerInvoiceDetail(id);
         byte[] pdfBytes = pdfService.generateInvoicePdf(invoice);
-        
         String filename = "invoice-" + invoice.getInvoiceCode() + ".pdf";
-        
+
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")

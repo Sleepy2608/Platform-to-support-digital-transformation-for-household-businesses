@@ -1,6 +1,6 @@
 {
   "table" : "inventory_transactions",
-  "version" : 9,
+  "version" : 10,
   "rows" : [ {
     "id" : 1,
     "balance_after" : 0.000,
@@ -240,6 +240,46 @@
     "unit_cost" : 0.00,
     "conversion_rate" : 1.000000,
     "entered_quantity" : 7.000,
+    "unit_id" : 1
+  }, {
+    "id" : 13,
+    "balance_after" : 98.000,
+    "balance_value" : 0.00,
+    "business_id" : 5,
+    "cost_status" : "COSTED",
+    "costed_at" : "2026-09-05T16:05:18.024754",
+    "created_at" : "2026-09-05T16:05:18.027269",
+    "created_by" : 3,
+    "note" : "Xuất kho cho đơn hàng DH-007",
+    "product_id" : 19,
+    "quantity_change" : -2.000,
+    "reference_id" : 13,
+    "reference_type" : "SALES_ORDER",
+    "transaction_type" : "STOCK_OUT",
+    "transaction_value" : 0.00,
+    "unit_cost" : 0.00,
+    "conversion_rate" : 1.000000,
+    "entered_quantity" : 2.000,
+    "unit_id" : 1
+  }, {
+    "id" : 14,
+    "balance_after" : 99.000,
+    "balance_value" : 0.00,
+    "business_id" : 5,
+    "cost_status" : "COSTED",
+    "costed_at" : "2026-09-07T06:57:17.349993",
+    "created_at" : "2026-09-07T06:57:17.350976",
+    "created_by" : 3,
+    "note" : "Xuất kho cho đơn hàng SP-002",
+    "product_id" : 20,
+    "quantity_change" : -1.000,
+    "reference_id" : 14,
+    "reference_type" : "SALES_ORDER",
+    "transaction_type" : "STOCK_OUT",
+    "transaction_value" : 0.00,
+    "unit_cost" : 0.00,
+    "conversion_rate" : 1.000000,
+    "entered_quantity" : 1.000,
     "unit_id" : 1
   } ]
 }

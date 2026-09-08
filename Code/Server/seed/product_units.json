@@ -1,6 +1,6 @@
 {
   "table" : "product_units",
-  "version" : 9,
+  "version" : 10,
   "rows" : [ {
     "id" : 1,
     "is_base_unit" : false,
@@ -100,5 +100,23 @@
     "status" : "ACTIVE",
     "unit_id" : 1,
     "updated_at" : "2026-08-30T06:04:39.392061"
+  }, {
+    "id" : 12,
+    "is_base_unit" : true,
+    "conversion_rate" : 1.000000,
+    "created_at" : "2026-09-05T15:59:43.84938",
+    "product_id" : 19,
+    "status" : "ACTIVE",
+    "unit_id" : 1,
+    "updated_at" : "2026-09-05T15:59:43.84938"
+  }, {
+    "id" : 13,
+    "is_base_unit" : true,
+    "conversion_rate" : 1.000000,
+    "created_at" : "2026-09-07T06:55:40.432136",
+    "product_id" : 20,
+    "status" : "ACTIVE",
+    "unit_id" : 1,
+    "updated_at" : "2026-09-07T06:55:40.432136"
   } ]
 }

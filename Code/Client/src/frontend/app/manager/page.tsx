@@ -109,18 +109,27 @@ export default function ManagerDashboard() {
       </header>
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-3 text-slate-900 shadow-sm">
-            <Users className="h-6 w-6" />
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 text-slate-900 shadow-sm">
+              <Users className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                Quản lý Chủ hộ kinh doanh
+              </h1>
+              <p className="mt-1 text-sm text-slate-500 font-medium">
+                Theo dõi, khóa hoặc mở khóa tài khoản chủ hộ kinh doanh.
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-              Quản lý Chủ hộ kinh doanh
-            </h1>
-            <p className="mt-1 text-sm text-slate-500 font-medium">
-              Theo dõi, khóa hoặc mở khóa tài khoản chủ hộ kinh doanh.
-            </p>
-          </div>
+          <a
+            id="manager-invoice-history-link"
+            href="/manager/invoices"
+            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-xs transition-colors hover:bg-slate-800"
+          >
+            Xem lịch sử hóa đơn
+          </a>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

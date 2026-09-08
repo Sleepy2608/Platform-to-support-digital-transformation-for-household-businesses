@@ -37,7 +37,7 @@ public interface ISubscriptionService {
 
     ServiceInvoice createInvoiceForSubscription(Long subscriptionId, User owner);
 
-    List<ServiceInvoiceResponse> getOwnerInvoiceHistory(User owner, String status, LocalDate fromDate, LocalDate toDate);
+    List<ServiceInvoiceResponse> getManagerInvoiceHistory(String status, LocalDate fromDate, LocalDate toDate);
 
-    ServiceInvoiceResponse getOwnerInvoiceDetail(Long invoiceId, User owner);
+    ServiceInvoiceResponse getManagerInvoiceDetail(Long invoiceId);
 }
