@@ -1,6 +1,6 @@
 {
   "table" : "customers",
-  "version" : 9,
+  "version" : 10,
   "rows" : [ {
     "id" : 1,
     "address" : null,
@@ -11,7 +11,9 @@
     "note" : null,
     "phone" : "0889181169",
     "status" : "ACTIVE",
-    "updated_at" : "2026-08-23T12:32:24.357123"
+    "updated_at" : "2026-08-23T12:32:24.357123",
+    "debt_balance" : 0.00,
+    "email" : null
   }, {
     "id" : 2,
     "address" : null,
@@ -22,7 +24,9 @@
     "note" : null,
     "phone" : "0889182269",
     "status" : "ACTIVE",
-    "updated_at" : "2026-08-23T12:49:40.921377"
+    "updated_at" : "2026-08-23T12:49:40.921377",
+    "debt_balance" : 0.00,
+    "email" : null
   }, {
     "id" : 3,
     "address" : null,
@@ -33,7 +37,9 @@
     "note" : null,
     "phone" : "0889123321",
     "status" : "ACTIVE",
-    "updated_at" : "2026-08-23T14:51:15.18141"
+    "updated_at" : "2026-08-23T14:51:15.18141",
+    "debt_balance" : 0.00,
+    "email" : null
   }, {
     "id" : 4,
     "address" : null,
@@ -44,7 +50,9 @@
     "note" : null,
     "phone" : "0889181129",
     "status" : "ACTIVE",
-    "updated_at" : "2026-08-23T14:51:32.4328"
+    "updated_at" : "2026-08-23T14:51:32.4328",
+    "debt_balance" : 0.00,
+    "email" : null
   }, {
     "id" : 5,
     "address" : null,
@@ -55,6 +63,8 @@
     "note" : null,
     "phone" : "0889231234",
     "status" : "ACTIVE",
-    "updated_at" : "2026-08-23T14:51:42.998985"
+    "updated_at" : "2026-08-23T14:51:42.998985",
+    "debt_balance" : 0.00,
+    "email" : null
   } ]
 }

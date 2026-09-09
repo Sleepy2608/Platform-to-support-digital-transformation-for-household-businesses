@@ -1,6 +1,6 @@
 {
   "table" : "subscriptions",
-  "version" : 15,
+  "version" : 16,
   "rows" : [ {
     "id" : 1,
     "billing_cycle" : "MONTHLY",
@@ -213,11 +213,11 @@
     "id" : 1000,
     "billing_cycle" : "MONTHLY",
     "business_id" : 13,
-    "created_at" : "2026-09-05T22:40:00.000000",
+    "created_at" : "2026-09-05T22:40:00",
     "end_date" : "2027-09-05",
     "start_date" : "2026-09-05",
     "status" : "ACTIVE",
-    "updated_at" : "2026-09-05T22:40:00.000000",
+    "updated_at" : "2026-09-05T22:40:00",
     "plan_id" : 2,
     "cancellation_reason" : null,
     "cancelled_at" : null,

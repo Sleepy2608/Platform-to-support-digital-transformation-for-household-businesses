@@ -273,18 +273,14 @@ public class OwnerService {
         java.math.BigDecimal unitPrice = amount.divide(java.math.BigDecimal.valueOf(months), 2, java.math.RoundingMode.HALF_UP);
 
         ServiceInvoice serviceInvoice = ServiceInvoice.builder()
-                .invoiceNo(invoiceNo)
                 .invoiceCode(invoiceNo)
-                .businessId(user.getBusinessId())
-                .subscriptionId(subscription.getId())
-                .planId(subscription.getPlan().getId())
-                .userId(subscription.getUserId())
-                .amount(amount)
-                .totalAmount(amount)
-                .unitPrice(unitPrice)
+                .user(user)
+                .subscription(subscription)
+                .plan(subscription.getPlan())
                 .duration(months)
+                .unitPrice(subscription.getPlan().getMonthlyPrice())
+                .totalAmount(amount)
                 .status("PAID")
-                .dueDate(LocalDateTime.now())
                 .build();
         serviceInvoiceRepository.save(serviceInvoice);
 
