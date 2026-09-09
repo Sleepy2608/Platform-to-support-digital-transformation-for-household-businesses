@@ -189,7 +189,7 @@ public class StockImportService {
     @Transactional
     public StockImportResponse confirm(String username, Long importId) {
         Long businessId = businessContextService.requireBusinessId(username);
-        StockImport stockImport = stockImportRepository.findByIdAndBusinessId(importId, businessId)
+        StockImport stockImport = stockImportRepository.findForUpdateByIdAndBusinessId(importId, businessId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phiếu nhập kho"));
 
         // Idempotency check: chặn confirm lần 2+
@@ -202,8 +202,13 @@ public class StockImportService {
             throw new BadRequestException("Phiếu nhập kho không có sản phẩm nào");
         }
 
-        // Duyệt từng item, gọi InventoryMovementService.stockIn() để tăng tồn kho
-        for (StockImportItem item : items) {
+        // Sắp xếp các item theo productId trước khi lock để tránh deadlock
+        List<StockImportItem> sortedItems = items.stream()
+                .sorted(java.util.Comparator.comparing(StockImportItem::getProductId))
+                .toList();
+
+        // Duyệt từng item theo thứ tự productId, gọi InventoryMovementService.stockIn() để tăng tồn kho
+        for (StockImportItem item : sortedItems) {
             InventoryMovementRequest movementReq = new InventoryMovementRequest();
             movementReq.setProductId(item.getProductId());
             movementReq.setUnitId(item.getUnitId());

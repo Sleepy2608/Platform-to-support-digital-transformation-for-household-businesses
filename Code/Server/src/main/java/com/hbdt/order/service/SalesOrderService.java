@@ -161,7 +161,11 @@ public class SalesOrderService {
                 .note(request.note())
                 .confirmedAt(confirmedAt)
                 .build());
-        for (SalesOrderItem item : pricedItems) {
+        // Sắp xếp items theo productId trước khi xuất kho để tránh deadlock khi lock InventoryBalance
+        List<SalesOrderItem> sortedItems = pricedItems.stream()
+                .sorted(java.util.Comparator.comparing(SalesOrderItem::getProductId))
+                .toList();
+        for (SalesOrderItem item : sortedItems) {
             item.setSalesOrderId(order.getId());
             inventoryMovementService.stockOut(actorUsername, new InventoryMovementRequest(
                     item.getProductId(),
@@ -277,7 +281,11 @@ public class SalesOrderService {
         }
 
         List<SalesOrderItem> items = salesOrderItemRepository.findAllBySalesOrderIdOrderByIdAsc(orderId);
-        for (SalesOrderItem item : items) {
+        // Sắp xếp items theo productId để đảm bảo thứ tự lock nhất quán khi hoàn kho
+        List<SalesOrderItem> sortedItems = items.stream()
+                .sorted(java.util.Comparator.comparing(SalesOrderItem::getProductId))
+                .toList();
+        for (SalesOrderItem item : sortedItems) {
             inventoryMovementService.restoreCancelledSale(
                     actorUsername, item.getProductId(), item.getBaseQuantity(), orderId, order.getOrderCode());
         }
