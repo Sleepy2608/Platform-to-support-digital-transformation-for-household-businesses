@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test:low-stock": "node --no-warnings --test --experimental-strip-types tests/lowStockViewModel.test.ts",
     "test:current-stock": "node --no-warnings --test --experimental-strip-types tests/currentStockViewModel.test.ts",
-    "test:inventory": "npm run test:low-stock && npm run test:current-stock"
+    "test:adjustment": "node --no-warnings --test --experimental-strip-types tests/inventoryAdjustmentViewModel.test.ts",
+    "test:inventory": "npm run test:low-stock && npm run test:current-stock && npm run test:adjustment"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",
