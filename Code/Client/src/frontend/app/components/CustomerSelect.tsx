@@ -134,6 +134,7 @@ export function CustomerSelect({
               <div className="flex items-center gap-2 min-w-0">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-500 flex-shrink-0">
                   <User className="h-4 w-4" />
+
                 </div>
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-800 text-sm truncate">Khách lẻ (Khách vãng lai)</p>
