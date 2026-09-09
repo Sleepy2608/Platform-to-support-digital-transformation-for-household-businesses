@@ -2,6 +2,7 @@ package com.hbdt.customer.service;
 
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.customer.dto.CustomerOptionResponse;
+import com.hbdt.customer.dto.CustomerResponse;
 import com.hbdt.customer.dto.QuickCreateCustomerRequest;
 import com.hbdt.entity.Customer;
 import com.hbdt.product.service.BusinessContextService;
@@ -16,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -85,5 +87,25 @@ class CustomerServiceTest {
                 .hasMessage("Số điện thoại đã được sử dụng cho khách hàng khác");
 
         verify(customerRepository, never()).save(any(Customer.class));
+    }
+
+    @Test
+    void getDetailUsesLedgerBalanceForExistingCustomer() {
+        Customer customer = Customer.builder()
+                .id(44L)
+                .businessId(12L)
+                .customerCode("KH-001")
+                .customerName("Nguyễn Văn An")
+                .debtBalance(BigDecimal.ZERO)
+                .status("ACTIVE")
+                .build();
+        when(businessContextService.requireBusinessId("owner")).thenReturn(12L);
+        when(customerRepository.findByIdAndBusinessId(44L, 12L)).thenReturn(Optional.of(customer));
+        when(debtTransactionRepository.calculateCurrentBalance(44L, 12L))
+                .thenReturn(new BigDecimal("275000"));
+
+        CustomerResponse response = service.getDetail("owner", 44L);
+
+        assertThat(response.debtBalance()).isEqualByComparingTo("275000");
     }
 }

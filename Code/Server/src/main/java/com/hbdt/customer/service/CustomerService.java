@@ -170,10 +170,11 @@ public class CustomerService {
         String newStatus = request.status();
 
         // Guard: không cho INACTIVE nếu còn nợ
-        if ("INACTIVE".equals(newStatus) && customer.getDebtBalance().compareTo(BigDecimal.ZERO) > 0) {
+        BigDecimal currentDebt = resolveDebtBalance(customer);
+        if ("INACTIVE".equals(newStatus) && currentDebt.compareTo(BigDecimal.ZERO) > 0) {
             throw new BadRequestException(
                     "Không thể vô hiệu hóa khách hàng đang có công nợ: " +
-                    customer.getDebtBalance().toPlainString() + " VND");
+                    currentDebt.toPlainString() + " VND");
         }
 
         // Guard: không đổi nếu trạng thái giống nhau
@@ -284,7 +285,7 @@ public class CustomerService {
                 customer.getEmail(),
                 customer.getAddress(),
                 customer.getNote(),
-                customer.getDebtBalance(),
+                resolveDebtBalance(customer),
                 customer.getStatus(),
                 customer.getCreatedAt(),
                 customer.getUpdatedAt()
@@ -298,7 +299,7 @@ public class CustomerService {
                 customer.getCustomerName(),
                 customer.getPhone(),
                 customer.getEmail(),
-                customer.getDebtBalance(),
+                resolveDebtBalance(customer),
                 customer.getStatus(),
                 customer.getCreatedAt()
         );
@@ -310,8 +311,19 @@ public class CustomerService {
                 customer.getCustomerCode(),
                 customer.getCustomerName(),
                 customer.getPhone(),
-                customer.getDebtBalance() != null ? customer.getDebtBalance() : BigDecimal.ZERO
+                resolveDebtBalance(customer)
         );
+    }
+
+    private BigDecimal resolveDebtBalance(Customer customer) {
+        BigDecimal ledgerBalance = debtTransactionRepository.calculateCurrentBalance(
+                customer.getId(), customer.getBusinessId());
+        if (ledgerBalance != null) {
+            return ledgerBalance.setScale(0, RoundingMode.HALF_UP);
+        }
+        return customer.getDebtBalance() != null
+                ? customer.getDebtBalance().setScale(0, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO.setScale(0);
     }
     
     private CustomerPurchaseHistoryResponse toHistoryResponse(SalesOrder order) {
