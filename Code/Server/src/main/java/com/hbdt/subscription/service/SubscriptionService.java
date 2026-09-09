@@ -11,15 +11,13 @@ import com.hbdt.repository.BusinessProfileRepository;
 import com.hbdt.repository.PaymentHistoryRepository;
 import com.hbdt.repository.ServiceInvoiceRepository;
 import com.hbdt.repository.SubscriptionRepository;
+import com.hbdt.repository.UserRepository;
+import com.hbdt.entity.enums.RoleType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.domain.Sort;
-import jakarta.persistence.criteria.Predicate;
 import java.util.stream.Collectors;
-import java.util.ArrayList;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -28,6 +26,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import com.hbdt.subscription.dto.ServiceInvoiceResponse;
@@ -50,14 +49,17 @@ public class SubscriptionService implements ISubscriptionService {
     private final BusinessProfileRepository businessProfileRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final ServiceInvoiceRepository serviceInvoiceRepository;
+    private final UserRepository userRepository;
     public SubscriptionService(SubscriptionRepository subscriptionRepository,
                                BusinessProfileRepository businessProfileRepository,
                                PaymentHistoryRepository paymentHistoryRepository,
-                               ServiceInvoiceRepository serviceInvoiceRepository) {
+                               ServiceInvoiceRepository serviceInvoiceRepository,
+                               UserRepository userRepository) {
         this.subscriptionRepository = subscriptionRepository;
         this.businessProfileRepository = businessProfileRepository;
         this.paymentHistoryRepository = paymentHistoryRepository;
         this.serviceInvoiceRepository = serviceInvoiceRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -213,8 +215,7 @@ public class SubscriptionService implements ISubscriptionService {
             BigDecimal unitPrice = totalAmount.divide(BigDecimal.valueOf(duration), 2, RoundingMode.HALF_UP);
             String invoiceNo = "INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
 
-            User invoiceUser = new User();
-            invoiceUser.setId(subscription.getUserId());
+            User invoiceUser = resolveInvoiceOwner(subscription, null);
 
             ServiceInvoice invoice = ServiceInvoice.builder()
                     .invoiceCode(invoiceNo)
@@ -412,8 +413,14 @@ public class SubscriptionService implements ISubscriptionService {
         List<ServiceInvoice> invoices = serviceInvoiceRepository.findAllWithDetailsAndFilters(
                 normalizedStatus, startDateTime, endDateTime);
 
+        Map<Long, User> ownersByBusinessId = userRepository.findByRoleType(RoleType.BUSINESS_OWNER)
+                .stream()
+                .filter(owner -> owner.getBusinessId() != null)
+                .collect(Collectors.toMap(User::getBusinessId, owner -> owner, (first, ignored) -> first));
+
         return invoices.stream()
-                .map(ServiceInvoiceResponse::fromEntity)
+                .map(invoice -> ServiceInvoiceResponse.fromEntity(
+                        invoice, ownersByBusinessId.get(invoice.getSubscription().getBusinessId())))
                 .collect(Collectors.toList());
     }
 
@@ -434,7 +441,10 @@ public class SubscriptionService implements ISubscriptionService {
     public ServiceInvoiceResponse getManagerInvoiceDetail(Long invoiceId) {
         ServiceInvoice invoice = serviceInvoiceRepository.findWithDetailsById(invoiceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn dịch vụ với ID: " + invoiceId));
-        return ServiceInvoiceResponse.fromEntity(invoice);
+        User owner = userRepository.findFirstByBusinessIdAndRole_Name(
+                        invoice.getSubscription().getBusinessId(), RoleType.BUSINESS_OWNER)
+                .orElse(null);
+        return ServiceInvoiceResponse.fromEntity(invoice, owner);
     }
 
     @Override
@@ -471,8 +481,7 @@ public class SubscriptionService implements ISubscriptionService {
         // totalAmount = unitPrice * duration
         BigDecimal totalAmount = unitPrice.multiply(BigDecimal.valueOf(duration));
 
-        User invoiceUser = new User();
-        invoiceUser.setId(subscription.getUserId());
+        User invoiceUser = resolveInvoiceOwner(subscription, owner);
 
         ServiceInvoice invoice = ServiceInvoice.builder()
                 .invoiceCode("INV-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase(java.util.Locale.ROOT))
@@ -486,6 +495,20 @@ public class SubscriptionService implements ISubscriptionService {
                 .build();
 
         return serviceInvoiceRepository.save(invoice);
+    }
+
+    private User resolveInvoiceOwner(Subscription subscription, User suggestedOwner) {
+        if (suggestedOwner != null && suggestedOwner.getId() != null
+                && subscription.getBusinessId().equals(suggestedOwner.getBusinessId())) {
+            return suggestedOwner;
+        }
+        return userRepository.findFirstByBusinessIdAndRole_Name(
+                        subscription.getBusinessId(), RoleType.BUSINESS_OWNER)
+                .orElseGet(() -> {
+                    User invoiceUser = new User();
+                    invoiceUser.setId(subscription.getUserId());
+                    return invoiceUser;
+                });
     }
 
     /**

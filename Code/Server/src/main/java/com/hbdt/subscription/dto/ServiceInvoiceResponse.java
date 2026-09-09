@@ -27,8 +27,13 @@ public class ServiceInvoiceResponse {
     private LocalDateTime updatedAt;
     private String ownerUsername;
     private String ownerFullName;
+    private Long businessId;
 
     public static ServiceInvoiceResponse fromEntity(ServiceInvoice invoice) {
+        return fromEntity(invoice, invoice != null ? invoice.getUser() : null);
+    }
+
+    public static ServiceInvoiceResponse fromEntity(ServiceInvoice invoice, com.hbdt.entity.User owner) {
         if (invoice == null) {
             return null;
         }
@@ -44,8 +49,9 @@ public class ServiceInvoiceResponse {
                 .status(invoice.getStatus())
                 .createdAt(invoice.getCreatedAt())
                 .updatedAt(invoice.getCreatedAt())
-                .ownerUsername(invoice.getUser() != null ? invoice.getUser().getUsername() : null)
-                .ownerFullName(invoice.getUser() != null ? invoice.getUser().getFullName() : null)
+                .ownerUsername(owner != null ? owner.getUsername() : null)
+                .ownerFullName(owner != null ? owner.getFullName() : null)
+                .businessId(invoice.getSubscription() != null ? invoice.getSubscription().getBusinessId() : null)
                 .build();
     }
 }

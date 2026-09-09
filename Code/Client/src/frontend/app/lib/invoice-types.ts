@@ -12,4 +12,5 @@ export interface ServiceInvoiceResponse {
   updatedAt: string;
   ownerUsername?: string;
   ownerFullName?: string;
+  businessId?: number;
 }

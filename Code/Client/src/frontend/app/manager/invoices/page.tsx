@@ -126,8 +126,12 @@ export default function ManagerInvoiceHistoryPage() {
                     <tr key={invoice.id} className="hover:bg-slate-50/70 transition-colors">
                       <td className="px-5 py-4 font-mono font-bold text-slate-900 text-xs">{invoice.invoiceCode}</td>
                       <td className="px-5 py-4">
-                        <p className="font-bold text-slate-900">{invoice.ownerFullName || '—'}</p>
-                        <p className="font-mono text-xs text-slate-500">@{invoice.ownerUsername || '—'}</p>
+                        <p className="font-bold text-slate-900">
+                          {invoice.ownerFullName || (invoice.businessId ? `Hộ kinh doanh #${invoice.businessId}` : '—')}
+                        </p>
+                        <p className="font-mono text-xs text-slate-500">
+                          {invoice.ownerUsername ? `@${invoice.ownerUsername}` : 'Chưa liên kết tài khoản chủ hộ'}
+                        </p>
                       </td>
                       <td className="px-5 py-4 font-bold text-slate-900">{invoice.planName}</td>
                       <td className="px-5 py-4 text-slate-600">{invoice.duration} tháng</td>
