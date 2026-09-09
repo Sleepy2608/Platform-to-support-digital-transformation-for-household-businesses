@@ -21,26 +21,32 @@
 
 ### 2. Hướng Dẫn Mapping Dữ Liệu Tự Động (Data Mapping Logic)
 
-| Trường trên Mẫu S2-HKD | Nguồn Dữ Liệu Hệ Thống (Database Table / Field) | Ghi Chú Logic |
-| :--- | :--- | :--- |
-| **Cột A (Số hiệu)** | `inventory_transactions.reference_code` | Mã phiếu nhập kho hoặc Mã đơn xuất hàng |
-| **Cột B (Ngày tháng)** | `inventory_transactions.created_at` | Thời điểm phát sinh giao dịch kho |
-| **Cột C (Diễn giải)** | "Nhập hàng từ NCC {{ supplier }}" / "Xuất bán đơn {{ order_code }}" | Lý do nhập/xuất kho |
-| **Cột D (ĐVT)** | `products.unit_name` | Đơn vị tính chính của sản phẩm |
-| **Cột 1 (Đơn giá)** | `inventory_transactions.unit_price` | Giá nhập thực tế hoặc Giá xuất kho tính toán |
-| **Cột 2, 3 (Nhập)** | `quantity`, `amount` | Cập nhật khi tạo phiếu nhập kho (`type = IMPORT`) |
-| **Cột 4, 5 (Xuất)** | `quantity`, `amount` | Cập nhật khi xuất hàng bán (`type = EXPORT`) |
-| **Cột 6, 7 (Tồn)** | `current_stock_qty`, `current_stock_amount` | Tồn kho tính toán tự động sau mỗi giao dịch |
+| Trường trên Mẫu S2-HKD | Nguồn Dữ Liệu Thực Tế (Database Table / Field) | Field DTO API (`InventoryLedgerEntryResponse`) | Ghi Chú Logic Nghiệp Vụ |
+| :--- | :--- | :--- | :--- |
+| **Cột A (Số hiệu)** | `reference_type` & `reference_id` (`stock_imports.import_code` / `sales_orders.order_code` / `DC-{id}`) | `voucherNo` | Mã phiếu nhập kho (`NK-...`), Mã đơn hàng (`HD-...`), hoặc Mã phiếu kiểm kê (`DC-...`) |
+| **Cột B (Ngày tháng)** | `stock_imports.import_date` / `sales_orders.created_at` / `inventory_transactions.created_at` | `voucherDate` | Ngày ghi trên chứng từ gốc phát sinh giao dịch kho |
+| **Cột C (Diễn giải)** | `inventory_transactions.note` | `description` | Lý do nhập/xuất hoặc ghi chú kiểm kê điều chỉnh kho |
+| **Cột D (ĐVT)** | `units.unit_name` (liên kết qua `products.base_unit_id`) | `unitName` | Đơn vị tính cơ sở (chuẩn) của sản phẩm trong kho |
+| **Cột 1 (Đơn giá)** | `inventory_transactions.unit_cost` | `unitCost` | Giá vốn nhập thực tế hoặc giá vốn bình quân gia quyền tại thời điểm xuất/điều chỉnh |
+| **Cột 2, 3 (Nhập)** | `inventory_transactions.quantity_change`, `transaction_value` | `importQuantity`, `importAmount` | Áp dụng khi `transaction_type IN ('STOCK_IN', 'CANCEL_SALE')` hoặc `ADJUSTMENT` có `quantity_change >= 0` |
+| **Cột 4, 5 (Xuất)** | `inventory_transactions.quantity_change`, `transaction_value` | `exportQuantity`, `exportAmount` | Áp dụng khi `transaction_type = 'STOCK_OUT'` hoặc `ADJUSTMENT` có `quantity_change < 0` (`abs(quantity_change)`) |
+| **Cột 6, 7 (Tồn)** | `inventory_transactions.balance_after`, `balance_value` | `balanceAfterQuantity`, `balanceAfterValue` | Số lượng tồn kho và tổng giá trị tồn kho sau mỗi giao dịch |
 
 ---
 
-### 3. Luồng Xử Lý Dữ Liệu Tự Động (Automation Data Flow)
-1. **Input**:
-   - **Giao dịch Nhập**: Phiếu nhập kho từ Nhà cung cấp được lưu.
-   - **Giao dịch Xuất**: Đơn hàng bán ra được duyệt.
-2. **Processing**:
-   - Lấy thông tin tồn đầu kỳ (`init_qty`, `init_amount`).
-   - Nếu là giao dịch **Xuất kho**: Tính toán `unit_price` xuất kho theo thuật toán Bình quân gia quyền hoặc FIFO.
-   - Cập nhật số dư tồn kho thời gian thực:
-     $$\text{Tồn mới} = \text{Tồn cũ} + \text{Số lượng nhập} - \text{Số lượng xuất}$$
-3. **Output**: Ghi nhận một dòng nhật ký kho (`inventory_transactions`) và tự động cập nhật sổ **S2-HKD**.
+### 3. Quy Tắc Kế Toán Sổ S2-HKD (Accounting Rules)
+1. **Số dư đầu kỳ**:
+   - Xác định từ giao dịch cuối cùng (`InventoryTransaction`) trước thời điểm `startDate` (`findFirstBy...CreatedAtLessThanOrderByCreatedAtDescIdDesc`).
+   - Nếu trước kỳ chưa có bất kỳ giao dịch kho nào, số dư đầu kỳ mặc định bằng `0`.
+   - **Tuyệt đối không dùng trực tiếp số tồn kho hiện tại** (`InventoryBalance.quantityOnHand`) để gán cho số dư lịch sử đầu kỳ.
+2. **Loại giao dịch (`transaction_type`)**:
+   - `STOCK_IN`: Nhập kho từ phiếu nhập kho của nhà cung cấp.
+   - `STOCK_OUT`: Xuất kho bán hàng theo đơn đặt hàng.
+   - `CANCEL_SALE`: Hoàn kho hàng bán do hủy đơn đặt hàng.
+   - `ADJUSTMENT`: Điều chỉnh số lượng tồn sau kiểm đếm thực tế (tăng hoặc giảm tồn).
+3. **Trạng thái giá vốn (`cost_status`)**:
+   - `COSTED`: Giao dịch đã được tính toán đơn giá vốn bình quân gia quyền.
+   - `COMPLETED`: Giao dịch điều chỉnh kiểm kê đã hoàn tất cập nhật số dư.
+4. **Công thức số dư cuối kỳ**:
+   $$\text{Số lượng cuối kỳ} = \text{Số lượng đầu kỳ} + \sum \text{Số lượng nhập} - \sum \text{Số lượng xuất}$$
+   $$\text{Giá trị cuối kỳ} = \text{Giá trị đầu kỳ} + \sum \text{Thành tiền nhập} - \sum \text{Thành tiền xuất}$$
