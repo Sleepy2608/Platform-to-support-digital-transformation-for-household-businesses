@@ -34,6 +34,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -234,6 +236,65 @@ class SalesOrderServiceTest {
         assertThatThrownBy(() -> service.cancel("owner", 100L))
                 .isInstanceOf(com.hbdt.common.exception.BadRequestException.class)
                 .hasMessage("Đơn hàng đã được hủy trước đó");
+    }
+
+    @Test
+    void createRollbacksWhenStockOutFails() {
+        // Chuẩn bị: stockOut sẽ ném exception khi xử lý sản phẩm
+        when(businessContextService.requireBusinessId("owner")).thenReturn(5L);
+        when(userRepository.findByUsername("owner")).thenReturn(Optional.of(User.builder().id(7L).build()));
+        when(salesOrderRepository.existsByBusinessIdAndOrderCodeIgnoreCase(5L, "SO-FAIL"))
+                .thenReturn(false);
+        when(productPricingService.snapshotOrderItemPrice(any(), any(SalesOrderItem.class)))
+                .thenAnswer(invocation -> {
+                    SalesOrderItem item = invocation.getArgument(1);
+                    item.setConversionRate(BigDecimal.ONE);
+                    item.setBaseQuantity(item.getQuantity());
+                    item.setUnitPrice(new BigDecimal("50000"));
+                    item.setLineTotal(new BigDecimal("50000"));
+                    return item;
+                });
+        when(salesOrderRepository.save(any(SalesOrder.class))).thenAnswer(inv -> {
+            SalesOrder o = inv.getArgument(0);
+            o.setId(200L);
+            return o;
+        });
+        // stockOut ném exception → toàn bộ @Transactional phải rollback
+        doThrow(new com.hbdt.common.exception.BadRequestException("Sản phẩm chưa có tồn kho"))
+                .when(inventoryMovementService).stockOut(any(), any());
+
+        // paidAmount = 50000 = totalAmount → debtAmount = 0 → không cần customerId
+        // → cho phép luồng đi đến stockOut, và stockOut ném exception
+        assertThatThrownBy(() -> service.create("owner", new CreateSalesOrderRequest(
+                "SO-FAIL", null, "POS", new BigDecimal("50000"), null,
+                List.of(new CreateSalesOrderItemRequest(10L, 2L, BigDecimal.ONE, null))
+        )))
+                .isInstanceOf(com.hbdt.common.exception.BadRequestException.class)
+                .hasMessage("Sản phẩm chưa có tồn kho");
+
+        // salesOrderItemRepository.saveAll() không được gọi vì exception xảy ra trước đó
+        verify(salesOrderItemRepository, never()).saveAll(any());
+    }
+
+    @Test
+    void cancelRollbacksWhenRestoreFails() {
+        // Chuẩn bị: restoreCancelledSale ném exception → trạng thái order không được cập nhật
+        SalesOrder order = order(100L, "SO-ERR", new BigDecimal("200000"),
+                new BigDecimal("200000"), BigDecimal.ZERO, null);
+        when(businessContextService.requireBusinessId("owner")).thenReturn(5L);
+        when(userRepository.findByUsername("owner")).thenReturn(Optional.of(User.builder().id(7L).build()));
+        when(salesOrderRepository.findForUpdateByIdAndBusinessId(100L, 5L)).thenReturn(Optional.of(order));
+        when(salesOrderItemRepository.findAllBySalesOrderIdOrderByIdAsc(100L)).thenReturn(
+                List.of(orderItem()));
+        doThrow(new com.hbdt.common.exception.BadRequestException("Không tìm thấy giao dịch xuất kho gốc của đơn hàng"))
+                .when(inventoryMovementService).restoreCancelledSale(any(), any(), any(), any(), any());
+
+        assertThatThrownBy(() -> service.cancel("owner", 100L))
+                .isInstanceOf(com.hbdt.common.exception.BadRequestException.class)
+                .hasMessage("Không tìm thấy giao dịch xuất kho gốc của đơn hàng");
+
+        // salesOrderRepository.save() không được gọi để cập nhật status = CANCELLED
+        verify(salesOrderRepository, never()).save(any());
     }
 
     @Test
