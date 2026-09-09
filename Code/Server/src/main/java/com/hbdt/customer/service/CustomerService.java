@@ -202,12 +202,18 @@ public class CustomerService {
     @Transactional
     public CustomerOptionResponse quickCreate(String actorUsername, QuickCreateCustomerRequest request) {
         Long businessId = businessContextService.requireBusinessId(actorUsername);
+        String phone = clean(request.phone());
+        if (phone != null && customerRepository.existsByBusinessIdAndPhone(businessId, phone)) {
+            throw new BadRequestException("Số điện thoại đã được sử dụng cho khách hàng khác");
+        }
+
         String code = generateCode(businessId);
         Customer customer = customerRepository.save(Customer.builder()
                 .businessId(businessId)
                 .customerCode(code)
                 .customerName(request.customerName().trim())
-                .phone(clean(request.phone()))
+                .phone(phone)
+                .debtBalance(BigDecimal.ZERO)
                 .status("ACTIVE")
                 .build());
         return toOption(customer);
@@ -324,4 +330,3 @@ public class CustomerService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 }
-
