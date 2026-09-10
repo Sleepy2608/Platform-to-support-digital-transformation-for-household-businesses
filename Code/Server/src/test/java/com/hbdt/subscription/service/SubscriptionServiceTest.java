@@ -7,10 +7,13 @@ import com.hbdt.entity.Subscription;
 import com.hbdt.entity.SubscriptionPlan;
 import com.hbdt.entity.User;
 import com.hbdt.entity.enums.SubscriptionStatus;
+import com.hbdt.entity.enums.RoleType;
+import com.hbdt.subscription.dto.ServiceInvoiceResponse;
 import com.hbdt.repository.BusinessProfileRepository;
 import com.hbdt.repository.PaymentHistoryRepository;
 import com.hbdt.repository.ServiceInvoiceRepository;
 import com.hbdt.repository.SubscriptionRepository;
+import com.hbdt.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +41,8 @@ class SubscriptionServiceTest {
     private PaymentHistoryRepository paymentHistoryRepository;
     @Mock
     private ServiceInvoiceRepository serviceInvoiceRepository;
+    @Mock
+    private UserRepository userRepository;
 
     private SubscriptionService service;
     private User owner;
@@ -50,7 +55,8 @@ class SubscriptionServiceTest {
                 subscriptionRepository,
                 businessProfileRepository,
                 paymentHistoryRepository,
-                serviceInvoiceRepository
+                serviceInvoiceRepository,
+                userRepository
         );
         owner = User.builder().id(1L).businessId(100L).username("owner1").build();
         business = BusinessProfile.builder().id(100L).businessName("Cửa hàng A").build();
@@ -240,6 +246,35 @@ class SubscriptionServiceTest {
         service.processPaymentCallback("tx2", "FAILED");
         assertEquals("FAILED", failed.getStatus());
         assertEquals(SubscriptionStatus.PENDING_PAYMENT, pending.getStatus());
+    }
+
+    @Test
+    void managerInvoiceHistoryResolvesOwnerFromSubscriptionBusiness() {
+        User staleInvoiceUser = User.builder().id(3L).username("old-admin").fullName("Old Admin").build();
+        owner.setFullName("Chủ hộ A");
+        Subscription subscription = activeSubscription(100L);
+        ServiceInvoice invoice = ServiceInvoice.builder()
+                .id(20L)
+                .invoiceCode("INV-001")
+                .user(staleInvoiceUser)
+                .subscription(subscription)
+                .plan(plan)
+                .duration(1)
+                .unitPrice(new BigDecimal("100000"))
+                .totalAmount(new BigDecimal("100000"))
+                .status("PAID")
+                .build();
+
+        when(serviceInvoiceRepository.findAllWithDetailsAndFilters(null, null, null))
+                .thenReturn(List.of(invoice));
+        when(userRepository.findByRoleType(RoleType.BUSINESS_OWNER)).thenReturn(List.of(owner));
+
+        List<ServiceInvoiceResponse> result = service.getManagerInvoiceHistory(null, null, null);
+
+        assertEquals(1, result.size());
+        assertEquals("owner1", result.get(0).getOwnerUsername());
+        assertEquals("Chủ hộ A", result.get(0).getOwnerFullName());
+        assertEquals(100L, result.get(0).getBusinessId());
     }
 
     private Subscription pendingSubscription() {

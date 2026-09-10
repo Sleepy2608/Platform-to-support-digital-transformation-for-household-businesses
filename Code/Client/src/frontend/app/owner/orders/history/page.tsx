@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Ban, Banknote, ChevronLeft, ChevronRight, Eye, FileText, RefreshCw, Search, X } from 'lucide-react';
+import { Ban, Banknote, ChevronLeft, ChevronRight, Eye, FileText, RefreshCw, RotateCcw, Search, X } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
 import { usePathname } from 'next/navigation';
 import SalesInvoicePreview from '@/app/components/SalesInvoicePreview';
@@ -55,6 +55,8 @@ export default function SalesOrderHistoryPage() {
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState('');
   const [source, setSource] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -68,10 +70,18 @@ export default function SalesOrderHistoryPage() {
   const loadOrders = useCallback(async () => {
     setLoading(true);
     setError('');
+    if (fromDate && toDate && fromDate > toDate) {
+      setError('Ngày bắt đầu không được lớn hơn ngày kết thúc.');
+      setOrders(null);
+      setLoading(false);
+      return;
+    }
     const params = new URLSearchParams({ page: String(page), size: '15' });
     if (keyword.trim()) params.set('keyword', keyword.trim());
     if (status) params.set('status', status);
     if (source) params.set('source', source);
+    if (fromDate) params.set('fromDate', fromDate);
+    if (toDate) params.set('toDate', toDate);
     try {
       setOrders(await apiClient.get<PageResponse<SalesOrderSummary>>(`/api/sales-orders?${params}`));
     } catch (err) {
@@ -79,12 +89,21 @@ export default function SalesOrderHistoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [keyword, page, source, status]);
+  }, [keyword, page, source, status, fromDate, toDate]);
 
   useEffect(() => {
     const timer = setTimeout(() => void loadOrders(), 250);
     return () => clearTimeout(timer);
   }, [loadOrders]);
+
+  const resetFilters = () => {
+    setKeyword('');
+    setStatus('');
+    setSource('');
+    setFromDate('');
+    setToDate('');
+    setPage(0);
+  };
 
   const openDetail = async (orderId: number) => {
     setDetailLoading(true);
@@ -172,23 +191,46 @@ export default function SalesOrderHistoryPage() {
   };
 
   return (
-    <div className="min-h-screen p-5 sm:p-8 lg:p-10">
+    <div className="min-h-screen bg-slate-100/70 p-4 sm:p-8 lg:p-10 select-none" style={{ cursor: 'default' }}>
       <div className="mx-auto max-w-7xl space-y-6">
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        {/* Page Title Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div>
-            <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">Danh sách đơn hàng</h1>
-            <p className="mt-2 text-sm text-slate-500">Tra cứu các đơn đã tạo và xem lại giá được lưu tại thời điểm bán.</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight select-none" style={{ userSelect: 'none' }}>
+              Danh sách đơn hàng
+            </h1>
+            <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1 select-none" style={{ userSelect: 'none' }}>
+              Tra cứu các đơn đã tạo và xem lại giá được lưu tại thời điểm bán
+            </p>
           </div>
-        </header>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <span className="px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-bold text-slate-700">
+              Đơn hàng
+            </span>
+          </div>
+        </div>
 
         {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</div>}
 
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="grid gap-3 border-b border-slate-200 p-4 md:grid-cols-[1fr_190px_190px_auto]">
+        <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
+          <div className="grid gap-3 border-b border-slate-200 p-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto] items-end">
             <label className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" /><input value={keyword} onChange={(event) => { setKeyword(event.target.value); setPage(0); }} placeholder="Tìm theo mã đơn hàng..." className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-slate-500" /></label>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-xs text-slate-500 font-medium whitespace-nowrap">Từ ngày:</span>
+              <input type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setPage(0); }} className="flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-slate-500" />
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-xs text-slate-500 font-medium whitespace-nowrap">Đến ngày:</span>
+              <input type="date" value={toDate} onChange={(e) => { setToDate(e.target.value); setPage(0); }} className="flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-slate-500" />
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => void loadOrders()} className="rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50" title="Tải lại"><RefreshCw className="h-4 w-4" /></button>
+              <button onClick={resetFilters} className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50" title="Đặt lại bộ lọc"><RotateCcw className="h-3.5 w-3.5" /> Đặt lại</button>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3 border-b border-slate-200 p-4">
             <select value={source} onChange={(event) => { setSource(event.target.value); setPage(0); }} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><option value="">Tất cả nguồn đơn</option><option value="POS">Bán tại quầy</option><option value="ONLINE">Đơn trực tuyến</option></select>
             <select value={status} onChange={(event) => { setStatus(event.target.value); setPage(0); }} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><option value="">Tất cả trạng thái</option><option value="DRAFT">Nháp</option><option value="CONFIRMED">Đã xác nhận</option><option value="CANCEL_REQUESTED">Chờ Owner duyệt hủy</option><option value="CANCELLED">Đã hủy</option></select>
-            <button onClick={() => void loadOrders()} className="rounded-xl border border-slate-200 p-2.5 text-slate-600 hover:bg-slate-50" title="Tải lại"><RefreshCw className="h-4 w-4" /></button>
           </div>
 
           {loading ? <div className="flex h-64 items-center justify-center text-sm text-slate-500"><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Đang tải đơn hàng...</div> : !orders?.content.length ? <div className="flex h-64 flex-col items-center justify-center gap-3 text-slate-400"><p className="font-semibold">Chưa có đơn hàng phù hợp</p></div> : (

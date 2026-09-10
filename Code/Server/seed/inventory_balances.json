@@ -1,6 +1,6 @@
 {
   "table" : "inventory_balances",
-  "version" : 11,
+  "version" : 12,
   "rows" : [ {
     "id" : 1,
     "average_unit_cost" : 0.00,
@@ -111,8 +111,8 @@
     "business_id" : 5,
     "inventory_value" : 0.00,
     "product_id" : 18,
-    "quantity_on_hand" : 50.000,
-    "updated_at" : "2026-08-27T03:08:35.898774"
+    "quantity_on_hand" : 48.000,
+    "updated_at" : "2026-09-08T08:48:28.865974"
   }, {
     "id" : 15,
     "average_unit_cost" : 0.00,

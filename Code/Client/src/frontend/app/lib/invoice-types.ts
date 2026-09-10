@@ -10,4 +10,7 @@ export interface ServiceInvoiceResponse {
   status: 'PENDING' | 'PAID' | 'FAILED';
   createdAt: string;
   updatedAt: string;
+  ownerUsername?: string;
+  ownerFullName?: string;
+  businessId?: number;
 }

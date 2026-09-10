@@ -1,6 +1,6 @@
 {
   "table" : "sales_order_items",
-  "version" : 9,
+  "version" : 10,
   "rows" : [ {
     "id" : 1,
     "base_quantity" : 2.000,
@@ -177,5 +177,21 @@
     "vat_calculation_rate" : 1.0000,
     "pricing_rule_name" : "giá",
     "product_price_id" : 10
+  }, {
+    "id" : 12,
+    "base_quantity" : 2.000,
+    "conversion_rate" : 1.000000,
+    "created_at" : "2026-09-08T08:48:28.843736",
+    "line_total" : 20000.00,
+    "pit_calculation_rate" : 0.5000,
+    "product_id" : 18,
+    "quantity" : 2.000,
+    "sales_order_id" : 13,
+    "tax_activity_group_id" : 1,
+    "unit_id" : 1,
+    "unit_price" : 10000.00,
+    "vat_calculation_rate" : 1.0000,
+    "pricing_rule_name" : "Giá bán",
+    "product_price_id" : 12
   } ]
 }

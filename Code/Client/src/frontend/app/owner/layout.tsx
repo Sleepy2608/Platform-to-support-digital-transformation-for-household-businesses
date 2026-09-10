@@ -296,7 +296,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                   {MANAGE_NAV_ITEMS.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname.startsWith(item.path) ||
-                      Boolean(item.children?.some(child => pathname === child.href || pathname.startsWith(child.href)));
+                      Boolean(item.children?.some(child => pathname === child.href));
                     const hasInventoryAlertsChild = item.children?.some(child => child.href === '/owner/inventory-alerts');
 
                     return (

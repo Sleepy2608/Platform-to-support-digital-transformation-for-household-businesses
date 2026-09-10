@@ -247,74 +247,85 @@ export default function EmployeeDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
-      {/* Toast */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className={`fixed top-5 right-5 z-[99999] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold border pointer-events-auto transition-all ${
-              toast.type === 'success'
-                ? 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-900/30'
-                : 'bg-red-600 text-white border-red-500 shadow-red-900/30'
-            }`}
-          >
-            {toast.type === 'success'
-              ? <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-white" />
-              : <AlertCircle className="w-5 h-5 flex-shrink-0 text-white" />}
-            <span>{toast.message}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="min-h-screen bg-slate-100/70 p-4 sm:p-8 lg:p-10 select-none" style={{ cursor: 'default' }}>
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Toast */}
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              className={`fixed top-5 right-5 z-[99999] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-semibold border pointer-events-auto transition-all ${
+                toast.type === 'success'
+                  ? 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-900/30'
+                  : 'bg-red-600 text-white border-red-500 shadow-red-900/30'
+              }`}
+            >
+              {toast.type === 'success'
+                ? <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-white" />
+                : <AlertCircle className="w-5 h-5 flex-shrink-0 text-white" />}
+              <span>{toast.message}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {/* Back button + Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
-        <div>
-          <button
-            onClick={() => router.push('/owner/employees')}
-            className="flex items-center gap-1.5 text-slate-500 hover:text-slate-900 text-sm font-medium mb-3 transition cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" /> Quay lại danh sách
-          </button>
-          <h1 className="text-2xl font-bold text-slate-900">{employee.fullName}</h1>
-          <p className="text-slate-500 text-sm">@{employee.username}</p>
+        {/* Page Title Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push('/owner/employees')}
+              className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-slate-500 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+              title="Quay lại danh sách"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight select-none" style={{ userSelect: 'none' }}>
+                {employee.fullName}
+              </h1>
+              <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1 select-none" style={{ userSelect: 'none' }}>
+                @{employee.username} {employee.position && `· ${employee.position}`}
+              </p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+            <span className="px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-bold text-slate-700 mr-1">
+              Nhân viên
+            </span>
+            <button
+              onClick={handleLock}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer shadow-2xs
+                ${employee.status === 'LOCKED'
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                  : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'}`}
+            >
+              {employee.status === 'LOCKED'
+                ? <><LockOpen className="w-4 h-4" /> Mở khóa</>
+                : <><Lock className="w-4 h-4" /> Khóa tài khoản</>}
+            </button>
+            <button
+              onClick={handleResetPassword}
+              className="flex items-center gap-2 px-3.5 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl text-xs sm:text-sm font-bold hover:bg-blue-100 transition cursor-pointer shadow-2xs"
+            >
+              <KeyRound className="w-4 h-4" /> Cấp mật khẩu
+            </button>
+            <button
+              onClick={handleDelete}
+              className="flex items-center gap-2 px-3.5 py-2 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs sm:text-sm font-bold hover:bg-red-100 transition cursor-pointer shadow-2xs"
+            >
+              <Trash2 className="w-4 h-4" /> Xóa
+            </button>
+          </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={handleLock}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition cursor-pointer
-              ${employee.status === 'LOCKED'
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
-                : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'}`}
-          >
-            {employee.status === 'LOCKED'
-              ? <><LockOpen className="w-4 h-4" /> Mở khóa</>
-              : <><Lock className="w-4 h-4" /> Khóa tài khoản</>}
-          </button>
-          <button
-            onClick={handleResetPassword}
-            className="flex items-center gap-2 px-4 py-2.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl text-sm font-semibold hover:bg-blue-100 transition cursor-pointer"
-          >
-            <KeyRound className="w-4 h-4" /> Cấp mật khẩu cho nhân viên
-          </button>
-          <button
-            onClick={handleDelete}
-            className="flex items-center gap-2 px-4 py-2.5 bg-red-50 text-red-700 border border-red-200 rounded-xl text-sm font-semibold hover:bg-red-100 transition cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4" /> Xóa
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Avatar + Read-only Info */}
-        <div className="space-y-5">
-          {/* Avatar Card */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 flex flex-col items-center gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left: Avatar + Read-only Info */}
+          <div className="space-y-5">
+            {/* Avatar Card */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs p-6 flex flex-col items-center gap-4">
             {employee.avatarUrl ? (
               <img
                 src={employee.avatarUrl}
@@ -511,9 +522,10 @@ export default function EmployeeDetailPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
+        </div>
+      </div>
+    );
+  }
 
 // ─────────────────────────────────────────────────────────────
 // Sub-components
