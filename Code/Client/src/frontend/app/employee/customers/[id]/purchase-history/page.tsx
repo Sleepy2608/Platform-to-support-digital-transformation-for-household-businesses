@@ -161,7 +161,6 @@ export default function EmployeePurchaseHistoryPage() {
 
         {/* Header */}
         <header className="flex flex-col gap-1">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Lịch sử giao dịch</p>
           <h1 className="text-3xl font-black tracking-tight text-slate-950">
             {customer ? customer.customerName : `Khách hàng #${customerId}`}
           </h1>

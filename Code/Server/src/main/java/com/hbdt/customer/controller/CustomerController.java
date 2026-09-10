@@ -98,7 +98,7 @@ public class CustomerController {
         return ResponseEntity.ok(ApiResponse.success(
                 "Cập nhật khách hàng thành công",
                 customerService.update(authentication.getName(), id, request)));
-    }
+        }
 
     /**
      * PATCH /api/customers/{id}/status — Đổi trạng thái (Vô hiệu hóa / Kích hoạt lại).

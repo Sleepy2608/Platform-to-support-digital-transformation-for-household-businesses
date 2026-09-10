@@ -11,10 +11,13 @@ import com.hbdt.repository.BusinessProfileRepository;
 import com.hbdt.repository.PaymentHistoryRepository;
 import com.hbdt.repository.ServiceInvoiceRepository;
 import com.hbdt.repository.SubscriptionRepository;
+import com.hbdt.repository.UserRepository;
+import com.hbdt.entity.enums.RoleType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.stream.Collectors;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -23,8 +26,10 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import com.hbdt.subscription.dto.ServiceInvoiceResponse;
 
 @Service
 @Transactional
@@ -44,15 +49,17 @@ public class SubscriptionService implements ISubscriptionService {
     private final BusinessProfileRepository businessProfileRepository;
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final ServiceInvoiceRepository serviceInvoiceRepository;
-
+    private final UserRepository userRepository;
     public SubscriptionService(SubscriptionRepository subscriptionRepository,
                                BusinessProfileRepository businessProfileRepository,
                                PaymentHistoryRepository paymentHistoryRepository,
-                               ServiceInvoiceRepository serviceInvoiceRepository) {
+                               ServiceInvoiceRepository serviceInvoiceRepository,
+                               UserRepository userRepository) {
         this.subscriptionRepository = subscriptionRepository;
         this.businessProfileRepository = businessProfileRepository;
         this.paymentHistoryRepository = paymentHistoryRepository;
         this.serviceInvoiceRepository = serviceInvoiceRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -82,7 +89,12 @@ public class SubscriptionService implements ISubscriptionService {
                 .endDate(endDate)
                 .status(SubscriptionStatus.PENDING_PAYMENT)
                 .build();
-        return subscriptionRepository.save(subscription);
+        subscription = subscriptionRepository.save(subscription);
+        
+        // Create Service Invoice upon registration
+        createInvoiceForSubscription(subscription, owner);
+        
+        return subscription;
     }
 
     @Override
@@ -123,7 +135,15 @@ public class SubscriptionService implements ISubscriptionService {
                 .paymentMethod(paymentMethod.trim().toUpperCase(Locale.ROOT))
                 .status(PAYMENT_PENDING)
                 .build();
-        return paymentHistoryRepository.save(payment);
+        payment = paymentHistoryRepository.save(payment);
+
+        // Ensure an invoice exists for this payment (creates new if previous FAILED, reuses if PENDING)
+        User proxyOwner = new User();
+        proxyOwner.setId(subscription.getUserId());
+        proxyOwner.setBusinessId(subscription.getBusinessId());
+        createInvoiceForSubscription(subscription, proxyOwner);
+
+        return payment;
     }
 
     @Override
@@ -156,6 +176,16 @@ public class SubscriptionService implements ISubscriptionService {
         if (failed) {
             payment.setStatus(PAYMENT_FAILED);
             paymentHistoryRepository.save(payment);
+            
+            // Mark invoice as FAILED
+            java.util.List<ServiceInvoice> existingInvoices = serviceInvoiceRepository.findBySubscriptionId(payment.getSubscriptionId());
+            for (ServiceInvoice inv : existingInvoices) {
+                if ("PENDING".equalsIgnoreCase(inv.getStatus())) {
+                    inv.setStatus("FAILED");
+                    serviceInvoiceRepository.save(inv);
+                    break;
+                }
+            }
             return;
         }
 
@@ -167,25 +197,35 @@ public class SubscriptionService implements ISubscriptionService {
         subscriptionRepository.save(subscription);
         paymentHistoryRepository.save(payment);
 
-        if (!serviceInvoiceRepository.existsBySubscriptionIdAndStatus(subscription.getId(), "PAID")) {
+        // Update PENDING invoice to PAID or create PAID invoice if missing
+        java.util.List<ServiceInvoice> existingInvoices = serviceInvoiceRepository.findBySubscriptionId(subscription.getId());
+        boolean foundPending = false;
+        for (ServiceInvoice inv : existingInvoices) {
+            if ("PENDING".equalsIgnoreCase(inv.getStatus())) {
+                inv.setStatus("PAID");
+                serviceInvoiceRepository.save(inv);
+                foundPending = true;
+                break;
+            }
+        }
+
+        if (!foundPending && !serviceInvoiceRepository.existsBySubscriptionIdAndStatus(subscription.getId(), "PAID")) {
             int duration = invoiceDurationMonths(subscription);
             BigDecimal totalAmount = payment.getAmount();
             BigDecimal unitPrice = totalAmount.divide(BigDecimal.valueOf(duration), 2, RoundingMode.HALF_UP);
             String invoiceNo = "INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
 
+            User invoiceUser = resolveInvoiceOwner(subscription, null);
+
             ServiceInvoice invoice = ServiceInvoice.builder()
-                    .invoiceNo(invoiceNo)
                     .invoiceCode(invoiceNo)
-                    .businessId(subscription.getBusinessId())
-                    .subscriptionId(subscription.getId())
-                    .planId(subscription.getPlan().getId())
-                    .userId(subscription.getUserId())
-                    .amount(totalAmount)
-                    .totalAmount(totalAmount)
-                    .unitPrice(unitPrice)
+                    .user(invoiceUser)
+                    .subscription(subscription)
+                    .plan(subscription.getPlan())
                     .duration(duration)
+                    .unitPrice(unitPrice)
+                    .totalAmount(totalAmount)
                     .status("PAID")
-                    .dueDate(LocalDateTime.now())
                     .build();
             serviceInvoiceRepository.save(invoice);
         }
@@ -356,6 +396,119 @@ public class SubscriptionService implements ISubscriptionService {
             throw new IllegalStateException("Subscription plan price is invalid");
         }
         return amount;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ServiceInvoiceResponse> getManagerInvoiceHistory(String status, LocalDate fromDate, LocalDate toDate) {
+        validateInvoiceFilters(status, fromDate, toDate);
+
+        String normalizedStatus = (status != null && !status.isBlank())
+                ? status.trim().toUpperCase(Locale.ROOT)
+                : null;
+
+        java.time.LocalDateTime startDateTime = fromDate != null ? fromDate.atStartOfDay() : null;
+        java.time.LocalDateTime endDateTime = toDate != null ? toDate.plusDays(1).atStartOfDay() : null;
+
+        List<ServiceInvoice> invoices = serviceInvoiceRepository.findAllWithDetailsAndFilters(
+                normalizedStatus, startDateTime, endDateTime);
+
+        Map<Long, User> ownersByBusinessId = userRepository.findByRoleType(RoleType.BUSINESS_OWNER)
+                .stream()
+                .filter(owner -> owner.getBusinessId() != null)
+                .collect(Collectors.toMap(User::getBusinessId, owner -> owner, (first, ignored) -> first));
+
+        return invoices.stream()
+                .map(invoice -> ServiceInvoiceResponse.fromEntity(
+                        invoice, ownersByBusinessId.get(invoice.getSubscription().getBusinessId())))
+                .collect(Collectors.toList());
+    }
+
+    private void validateInvoiceFilters(String status, LocalDate fromDate, LocalDate toDate) {
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            throw new IllegalArgumentException("Từ ngày (fromDate) không được lớn hơn đến ngày (toDate).");
+        }
+        if (status != null && !status.isBlank()) {
+            String normalized = status.trim().toUpperCase(Locale.ROOT);
+            if (!PAYMENT_PENDING.equals(normalized) && !"PAID".equals(normalized) && !PAYMENT_FAILED.equals(normalized)) {
+                throw new IllegalArgumentException("Trạng thái hóa đơn không hợp lệ: " + status);
+            }
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ServiceInvoiceResponse getManagerInvoiceDetail(Long invoiceId) {
+        ServiceInvoice invoice = serviceInvoiceRepository.findWithDetailsById(invoiceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hóa đơn dịch vụ với ID: " + invoiceId));
+        User owner = userRepository.findFirstByBusinessIdAndRole_Name(
+                        invoice.getSubscription().getBusinessId(), RoleType.BUSINESS_OWNER)
+                .orElse(null);
+        return ServiceInvoiceResponse.fromEntity(invoice, owner);
+    }
+
+    @Override
+    @Transactional
+    public ServiceInvoice createInvoiceForSubscription(Long subscriptionId, User owner) {
+        Subscription subscription = getSubscriptionById(subscriptionId, owner);
+        return createInvoiceForSubscription(subscription, owner);
+    }
+
+    private ServiceInvoice createInvoiceForSubscription(Subscription subscription, User owner) {
+        if (subscription.getId() != null) {
+            java.util.List<ServiceInvoice> existingInvoices = serviceInvoiceRepository.findBySubscriptionId(subscription.getId());
+            for (ServiceInvoice inv : existingInvoices) {
+                if ("PENDING".equalsIgnoreCase(inv.getStatus())) {
+                    return inv; // Trả về hóa đơn đang chờ thanh toán nếu đã có
+                }
+            }
+        }
+
+        SubscriptionPlan plan = subscription.getPlan();
+        if (plan == null) {
+            throw new IllegalStateException("Không tìm thấy gói dịch vụ cho đăng ký này.");
+        }
+
+        int duration = invoiceDurationMonths(subscription);
+        BigDecimal unitPrice = "YEARLY".equalsIgnoreCase(subscription.getBillingCycle())
+                ? plan.getAnnualPrice()
+                : plan.getMonthlyPrice();
+
+        if (unitPrice == null) {
+            unitPrice = BigDecimal.ZERO;
+        }
+        
+        // totalAmount = unitPrice * duration
+        BigDecimal totalAmount = unitPrice.multiply(BigDecimal.valueOf(duration));
+
+        User invoiceUser = resolveInvoiceOwner(subscription, owner);
+
+        ServiceInvoice invoice = ServiceInvoice.builder()
+                .invoiceCode("INV-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase(java.util.Locale.ROOT))
+                .user(invoiceUser)
+                .subscription(subscription)
+                .plan(plan)
+                .duration(duration)
+                .unitPrice(unitPrice)
+                .totalAmount(totalAmount)
+                .status("PENDING")
+                .build();
+
+        return serviceInvoiceRepository.save(invoice);
+    }
+
+    private User resolveInvoiceOwner(Subscription subscription, User suggestedOwner) {
+        if (suggestedOwner != null && suggestedOwner.getId() != null
+                && subscription.getBusinessId().equals(suggestedOwner.getBusinessId())) {
+            return suggestedOwner;
+        }
+        return userRepository.findFirstByBusinessIdAndRole_Name(
+                        subscription.getBusinessId(), RoleType.BUSINESS_OWNER)
+                .orElseGet(() -> {
+                    User invoiceUser = new User();
+                    invoiceUser.setId(subscription.getUserId());
+                    return invoiceUser;
+                });
     }
 
     /**

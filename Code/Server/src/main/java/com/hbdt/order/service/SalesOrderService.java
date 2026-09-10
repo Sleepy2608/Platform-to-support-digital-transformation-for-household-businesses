@@ -35,7 +35,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -288,6 +290,8 @@ public class SalesOrderService {
             String keyword,
             String status,
             String source,
+            LocalDate fromDate,
+            LocalDate toDate,
             int page,
             int size
     ) {
@@ -299,6 +303,8 @@ public class SalesOrderService {
                 normalizeFilter(keyword, false),
                 normalizeFilter(status, true),
                 normalizeFilter(source, true),
+                fromDate != null ? fromDate.atStartOfDay() : null,
+                toDate != null ? toDate.atTime(LocalTime.MAX) : null,
                 PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"))
         ).map(this::toSummaryResponse);
         return SalesOrderPageResponse.from(result);
