@@ -8,11 +8,13 @@
 
 **Viết tắt:** HBDT
 
-**Phiên bản:** 1.1
+**Phiên bản:** 1.2
 
 **Loại tài liệu:** Đặc tả yêu cầu phần mềm
 
 **Môn học:** Lập trình Java
+
+**Cập nhật gần đây:** 10/09/2026
 
 ---
 
@@ -163,18 +165,21 @@ Hệ thống cung cấp các chức năng chính sau.
 - Đăng xuất
 - Đặt lại mật khẩu
 - Xác thực JWT
+- Xử lý refresh token và 401 khi token hết hạn
 - Phân quyền theo vai trò
 
 ### Quản lý gói thuê bao (Quản lý gói thuê bao)
 
 - Đăng ký thuê bao
 - Chọn gói dịch vụ
-- Thanh toán
+- Thanh toán và xác nhận giao dịch
 - Kích hoạt dịch vụ
 - Gia hạn
 - Nâng cấp gói
 - Hạ cấp gói
 - Tạo hóa đơn dịch vụ
+- Quản lý gói đăng ký của Owner từ vai trò Manager
+- Theo dõi trạng thái subscription và lịch sử thay đổi gói
 
 ### Quản lý sản phẩm (Quản lý sản phẩm)
 
@@ -229,11 +234,14 @@ Hệ thống cung cấp các chức năng chính sau.
 ### Báo cáo & Phân tích (Báo cáo và phân tích)
 
 - Báo cáo doanh thu
+- Revenue ledger chi tiết theo ngày / theo hóa đơn
+- Báo cáo lợi nhuận sau khi trừ stock import cost
 - Báo cáo công nợ
 - Báo cáo tồn kho
 - Sản phẩm bán chạy
 - Bảng điều khiển (Dashboard)
 - Biểu đồ
+- Theo dõi stock adjustment và bookkeeping tự động
 
 ### Quản trị viên (Quản trị viên)
 

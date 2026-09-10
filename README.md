@@ -34,7 +34,14 @@
 
 > Các issue cần chỉnh sửa/cập nhật/phát triển/sửa lỗi sẽ được cập nhật ở phần [Issue](https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/issues) trên Github<br>
 > Các issue trên Github sẽ được cập nhật theo tiến độ của Jira và sẽ được test trước khi merge vào nhánh Main<br>
-> Ngày cập nhật lần cuối: 01/09/2026<br>
+> Ngày cập nhật lần cuối: 10/09/2026<br>
+
+### Tính năng mới nhất cập nhật gần đây
+- Quản lý gói đăng ký cho Owner từ vai trò Manager
+- Fix lỗi JWT 401 khi token hết hạn / refresh token không hợp lệ
+- Tích hợp bookkeeping tự động cho tồn kho và doanh thu
+- Phân hệ revenue ledger, lịch sử đơn hàng theo ngày, báo cáo chi tiết cho owner/employee
+- Mở rộng seed data và dữ liệu demo cho manager / account
 
 ---
 
@@ -110,13 +117,13 @@ JDBC URL có `createDatabaseIfNotExist=true` nên database được tạo nếu 
 
 ```
 Platform-to-support-digital-transformation-for-household-businesses/
-├── README.md                                     # Tài liệu giới thiệu tổng quan dự án
-├── docker-compose.yml                            # Cấu hình Docker triển khai toàn bộ hệ thống
-├── Code/                                         # Mã nguồn chính của dự án
-│   ├── AI/                                       # AI Service xử lý đơn hàng bằng ngôn ngữ tự nhiên
-│   ├── Client/                                   # Frontend ứng dụng
+├── README.md                                     # Tổng quan dự án
+├── docker-compose.yml                            # Triển khai Docker toàn hệ thống
+├── Code/
+│   ├── AI/                                       # AI Service (FastAPI) xử lý đơn hàng bằng ngôn ngữ tự nhiên
+│   ├── Client/
 │   │   └── src/
-│   │       └── frontend/
+│   │       └── frontend/                         # Frontend Next.js 16 / TypeScript
 │   │           ├── app/
 │   │           ├── public/
 │   │           ├── tests/
@@ -125,7 +132,7 @@ Platform-to-support-digital-transformation-for-household-businesses/
 │   │           ├── tsconfig.json
 │   │           ├── eslint.config.mjs
 │   │           └── README.md
-│   └── Server/                                   # Backend API Java Spring Boot
+│   └── Server/                                   # Backend Java Spring Boot
 │       ├── Dockerfile
 │       ├── mvnw
 │       ├── mvnw.cmd
@@ -134,7 +141,7 @@ Platform-to-support-digital-transformation-for-household-businesses/
 │       │   ├── create-user.sql
 │       │   ├── init.sql
 │       │   └── migration_employee_profile_fields.sql
-│       ├── seed/                                 # Seed dữ liệu
+│       ├── seed/                                 # Seed dữ liệu nghiệp vụ và demo
 │       │   ├── businesses.json
 │       │   ├── customers.json
 │       │   ├── products.json
@@ -147,14 +154,17 @@ Platform-to-support-digital-transformation-for-household-businesses/
 │       ├── target/
 │       └── uploads/
 ├── docs/                                         # Tài liệu dự án
-│   ├── architecture_design/                      # Thiết kế kiến trúc hệ thống
-│   ├── compliance/                               # Thông tin bộ luật 88
-│   ├── detailed-design/                          # Thiết kế chi tiết (database, diagrams)
-│   ├── requirements/                             # Yêu cầu đề tài
-│   ├── run-guide/                                # Cách chạy dự án
-│   ├── software_requirement_specification/       # Đặc tả yêu cầu phần mềm (SRS)
-│   ├── testing_documents/                        # Kiểm thử dự án
-│   ├── user_requirements/                        # Yêu cầu người dùng
+│   ├── ai-design/                                # Thiết kế AI / pipeline
+│   ├── architecture-design/                      # Thiết kế kiến trúc hệ thống
+│   ├── compliance/                               # Thông tin luật, quy định, mapping
+│   ├── detailed-design/                          # Thiết kế chi tiết, ERD, sơ đồ
+│   ├── installation-guide/                       # Hướng dẫn cài đặt
+│   ├── requirements/                             # Yêu cầu đề tài / phân tích yêu cầu
+│   ├── run-guide/                                # Hướng dẫn chạy trên IDE / VS Code
+│   ├── software-requirement-specification/       # SRS
+│   ├── testing-documents/                        # Tài liệu kiểm thử
+│   ├── user-guides/                              # Hướng dẫn sử dụng theo vai trò
+│   ├── user-requirements/                        # Yêu cầu người dùng
 │   └── workflows/                                # Quy trình nghiệp vụ
 ├── seed/                                         # Seed dữ liệu cấp repo
 │   ├── seed_config.json
@@ -162,8 +172,9 @@ Platform-to-support-digital-transformation-for-household-businesses/
 │   ├── subscription_plans.json
 │   ├── users.json
 │   └── ...
-├── .gitattributes                                # File cấu hình Git
-└── .gitignore                                    # Bỏ qua file nhạy cảm / build output
+├── .gitattributes                                # Cấu hình Git
+├── .gitignore                                    # Bỏ qua file nhạy cảm / build output
+└── .md                                           # Tệp markdown phụ trợ nếu có
 ```
 
 ---
