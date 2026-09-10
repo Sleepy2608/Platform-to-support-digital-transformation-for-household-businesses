@@ -73,6 +73,24 @@ public interface DebtTransactionRepository extends JpaRepository<DebtTransaction
             @Param("businessId") Long businessId,
             @Param("transactionType") String transactionType);
 
+    /** Tính dư nợ hiện tại từ sổ giao dịch ACTIVE (nguồn dữ liệu chuẩn). */
+    @Query("""
+        SELECT COALESCE(SUM(
+            CASE
+                WHEN dt.transactionType = 'DEBT_INCREASE' THEN dt.amount
+                WHEN dt.transactionType IN ('PAYMENT', 'VOID') THEN -dt.amount
+                ELSE 0
+            END
+        ), 0)
+        FROM DebtTransaction dt
+        WHERE dt.customerId = :customerId
+          AND dt.businessId = :businessId
+          AND dt.status = 'ACTIVE'
+        """)
+    BigDecimal calculateCurrentBalance(
+            @Param("customerId") Long customerId,
+            @Param("businessId") Long businessId);
+
     /** Đếm giao dịch theo salesOrderId (dùng để sinh transaction_code) */
     long countBySalesOrderId(Long salesOrderId);
 

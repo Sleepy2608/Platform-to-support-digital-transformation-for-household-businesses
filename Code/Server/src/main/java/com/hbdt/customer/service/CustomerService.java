@@ -170,10 +170,11 @@ public class CustomerService {
         String newStatus = request.status();
 
         // Guard: không cho INACTIVE nếu còn nợ
-        if ("INACTIVE".equals(newStatus) && customer.getDebtBalance().compareTo(BigDecimal.ZERO) > 0) {
+        BigDecimal currentDebt = resolveDebtBalance(customer);
+        if ("INACTIVE".equals(newStatus) && currentDebt.compareTo(BigDecimal.ZERO) > 0) {
             throw new BadRequestException(
                     "Không thể vô hiệu hóa khách hàng đang có công nợ: " +
-                    customer.getDebtBalance().toPlainString() + " VND");
+                    currentDebt.toPlainString() + " VND");
         }
 
         // Guard: không đổi nếu trạng thái giống nhau
@@ -202,12 +203,18 @@ public class CustomerService {
     @Transactional
     public CustomerOptionResponse quickCreate(String actorUsername, QuickCreateCustomerRequest request) {
         Long businessId = businessContextService.requireBusinessId(actorUsername);
+        String phone = clean(request.phone());
+        if (phone != null && customerRepository.existsByBusinessIdAndPhone(businessId, phone)) {
+            throw new BadRequestException("Số điện thoại đã được sử dụng cho khách hàng khác");
+        }
+
         String code = generateCode(businessId);
         Customer customer = customerRepository.save(Customer.builder()
                 .businessId(businessId)
                 .customerCode(code)
                 .customerName(request.customerName().trim())
-                .phone(clean(request.phone()))
+                .phone(phone)
+                .debtBalance(BigDecimal.ZERO)
                 .status("ACTIVE")
                 .build());
         return toOption(customer);
@@ -278,7 +285,7 @@ public class CustomerService {
                 customer.getEmail(),
                 customer.getAddress(),
                 customer.getNote(),
-                customer.getDebtBalance(),
+                resolveDebtBalance(customer),
                 customer.getStatus(),
                 customer.getCreatedAt(),
                 customer.getUpdatedAt()
@@ -292,7 +299,7 @@ public class CustomerService {
                 customer.getCustomerName(),
                 customer.getPhone(),
                 customer.getEmail(),
-                customer.getDebtBalance(),
+                resolveDebtBalance(customer),
                 customer.getStatus(),
                 customer.getCreatedAt()
         );
@@ -304,8 +311,19 @@ public class CustomerService {
                 customer.getCustomerCode(),
                 customer.getCustomerName(),
                 customer.getPhone(),
-                customer.getDebtBalance() != null ? customer.getDebtBalance() : BigDecimal.ZERO
+                resolveDebtBalance(customer)
         );
+    }
+
+    private BigDecimal resolveDebtBalance(Customer customer) {
+        BigDecimal ledgerBalance = debtTransactionRepository.calculateCurrentBalance(
+                customer.getId(), customer.getBusinessId());
+        if (ledgerBalance != null) {
+            return ledgerBalance.setScale(0, RoundingMode.HALF_UP);
+        }
+        return customer.getDebtBalance() != null
+                ? customer.getDebtBalance().setScale(0, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO.setScale(0);
     }
     
     private CustomerPurchaseHistoryResponse toHistoryResponse(SalesOrder order) {
@@ -324,4 +342,3 @@ public class CustomerService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 }
-
