@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { BusinessProfileResponse } from '@/app/lib/business-profile';
+import { formatBusinessAddress } from '@/app/lib/invoice-format';
 
 export interface SalesInvoiceItem {
   id: number;
@@ -34,11 +35,21 @@ const formatQuantity = (val: unknown) => {
   return num.toLocaleString('vi-VN', { maximumFractionDigits: 3 });
 };
 
-const formatDateTime = (val: string) => {
+const formatDate = (val: string) => {
   const date = new Date(val);
-  return Number.isNaN(date.getTime())
-    ? 'Không xác định'
-    : new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(date);
+  if (Number.isNaN(date.getTime())) return 'Không xác định';
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+const formatTime = (val: string) => {
+  const date = new Date(val);
+  if (Number.isNaN(date.getTime())) return '';
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
 };
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
@@ -88,61 +99,69 @@ export async function downloadSalesInvoicePdf(
     doc.setFontSize(size);
   };
 
-  // Header - Store Info
-  const storeName = profile?.store?.storeName || profile?.businessName || 'Cửa hàng';
-  setFont('bold', 12);
-  doc.text(storeName, marginX, y);
-  y += 5;
-
-  const address = [profile?.detailAddress, profile?.wardName, profile?.districtName, profile?.provinceName]
-    .filter(Boolean)
-    .join(', ');
-  if (address) {
-    setFont('normal', 9);
-    const splitAddress = doc.splitTextToSize(address, pageWidth);
-    doc.text(splitAddress, marginX, y);
-    y += splitAddress.length * 4;
-  }
-
-  if (profile?.representative?.phoneNumber) {
-    setFont('normal', 9);
-    doc.text(`SĐT: ${profile.representative.phoneNumber}`, marginX, y);
-    y += 5;
-  }
-
-  y += 3;
-  doc.setDrawColor(220, 220, 220);
-  doc.line(marginX, y, marginX + pageWidth, y);
-  y += 8;
+  const address = formatBusinessAddress(profile);
+  const phone = profile?.representative?.phoneNumber?.trim() || '';
 
   // Title
   setFont('bold', 16);
   doc.text('HÓA ĐƠN BÁN HÀNG', marginX + pageWidth / 2, y, { align: 'center' });
-  y += 8;
+  y += 7;
 
-  // Code & Date
+  // Code & Date & Time (ngày và thời gian được tách riêng, thời gian có label)
   setFont('normal', 9);
   const codeText = `Mã hóa đơn: ${detail.orderCode || 'Không xác định'}`;
-  const dateText = `Ngày tạo: ${formatDateTime(detail.createdAt)}`;
+  const dateText = `Ngày tạo: ${formatDate(detail.createdAt)}`;
+  const timeText = formatTime(detail.createdAt);
+  const dateTimeText = timeText ? `${dateText}    Thời gian: ${timeText}` : dateText;
   doc.text(codeText, marginX, y);
-  doc.text(dateText, marginX + pageWidth, y, { align: 'right' });
+  doc.text(dateTimeText, marginX + pageWidth, y, { align: 'right' });
+  y += 5;
+
+  // Divider
+  doc.setDrawColor(220, 220, 220);
+  doc.line(marginX, y, marginX + pageWidth, y);
   y += 6;
 
-  // Customer & Seller
-  const customerText = `Khách hàng: ${detail.customerId ? `Khách hàng #${detail.customerId}` : 'Khách lẻ'}`;
-  doc.text(customerText, marginX, y);
+  // Customer & Seller section
+  setFont('bold', 8.5);
+  doc.text('KHÁCH HÀNG', marginX, y);
+  y += 4.5;
+
+  setFont('normal', 9);
+  doc.text(`Mã khách hàng: ${detail.customerId ? `#${detail.customerId}` : 'Khách lẻ'}`, marginX, y);
   if (detail.sellerName?.trim()) {
-    doc.text(`Nhân viên: ${detail.sellerName.trim()}`, marginX + pageWidth, y, { align: 'right' });
+    doc.text(`Nhân viên bán hàng: ${detail.sellerName.trim()}`, marginX + pageWidth, y, {
+      align: 'right',
+    });
   }
-  y += 8;
+  y += 4.5;
+
+  if (address) {
+    const addressLabel = 'Địa chỉ: ';
+    const labelWidth = doc.getTextWidth(addressLabel);
+    const splitAddress = doc.splitTextToSize(address, pageWidth - labelWidth);
+    doc.text(addressLabel, marginX, y);
+    doc.text(splitAddress, marginX + labelWidth, y);
+    y += splitAddress.length * 4.5;
+  }
+
+  if (phone) {
+    doc.text(`Số điện thoại: ${phone}`, marginX, y);
+    y += 4.5;
+  }
+
+  // Divider
+  y += 1.5;
+  doc.line(marginX, y, marginX + pageWidth, y);
+  y += 6.5;
 
   // Product Table
   // Columns: STT (12), Sản phẩm (68), ĐVT (20), SL (20), Đơn giá (28), Thành tiền (32)
   const cols = [
     { header: 'STT', width: 12, align: 'center' },
     { header: 'Sản phẩm', width: 68, align: 'left' },
-    { header: 'ĐVT', width: 20, align: 'left' },
-    { header: 'SL', width: 20, align: 'right' },
+    { header: 'ĐVT', width: 20, align: 'center' },
+    { header: 'SL', width: 20, align: 'center' },
     { header: 'Đơn giá', width: 28, align: 'right' },
     { header: 'Thành tiền', width: 32, align: 'right' },
   ];
@@ -191,12 +210,12 @@ export async function downloadSalesInvoicePdf(
     doc.text(splitName, rowX + 2, y + 4.5);
     rowX += cols[1].width;
 
-    // ĐVT
-    doc.text(item.unitName || '—', rowX + 2, y + 4.5);
+    // ĐVT (center)
+    doc.text(item.unitName || '—', rowX + cols[2].width / 2, y + 4.5, { align: 'center' });
     rowX += cols[2].width;
 
-    // Số lượng
-    doc.text(formatQuantity(item.quantity), rowX + cols[3].width - 2, y + 4.5, { align: 'right' });
+    // Số lượng (center)
+    doc.text(formatQuantity(item.quantity), rowX + cols[3].width / 2, y + 4.5, { align: 'center' });
     rowX += cols[3].width;
 
     // Đơn giá
@@ -209,7 +228,11 @@ export async function downloadSalesInvoicePdf(
     y += rowHeight;
   });
 
-  y += 5;
+  // Divider
+  y += 4;
+  doc.setDrawColor(220, 220, 220);
+  doc.line(marginX, y, marginX + pageWidth, y);
+  y += 6;
 
   // Summary
   const summaryX = marginX + pageWidth - 80;
