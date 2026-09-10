@@ -7,6 +7,9 @@ import com.hbdt.entity.User;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
+import com.hbdt.entity.ServiceInvoice;
+import com.hbdt.subscription.dto.ServiceInvoiceResponse;
 
 public interface ISubscriptionService {
 
@@ -31,4 +34,10 @@ public interface ISubscriptionService {
     Subscription cancelSubscription(Long id, User owner, String reason);
 
     void checkAndExpireSubscriptions();
+
+    ServiceInvoice createInvoiceForSubscription(Long subscriptionId, User owner);
+
+    List<ServiceInvoiceResponse> getManagerInvoiceHistory(String status, LocalDate fromDate, LocalDate toDate);
+
+    ServiceInvoiceResponse getManagerInvoiceDetail(Long invoiceId);
 }

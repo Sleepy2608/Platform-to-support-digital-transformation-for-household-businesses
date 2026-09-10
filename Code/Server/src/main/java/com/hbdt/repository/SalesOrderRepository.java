@@ -38,12 +38,16 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long>, J
           and (:keyword is null or lower(salesOrder.orderCode) like lower(concat('%', :keyword, '%')))
           and (:status is null or salesOrder.status = :status)
           and (:source is null or salesOrder.source = :source)
+          and (:startDate is null or salesOrder.createdAt >= :startDate)
+          and (:endDate is null or salesOrder.createdAt <= :endDate)
         """)
     Page<SalesOrder> searchByBusiness(
             @Param("businessId") Long businessId,
             @Param("keyword") String keyword,
             @Param("status") String status,
             @Param("source") String source,
+            @Param("startDate") java.time.LocalDateTime startDate,
+            @Param("endDate") java.time.LocalDateTime endDate,
             Pageable pageable
     );
 

@@ -216,13 +216,14 @@ async function attemptRefresh(): Promise<string> {
 type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown;
   skipAuth?: boolean;
+  responseType?: 'json' | 'blob';
 };
 
 async function request<T = unknown>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { body, skipAuth = false, headers: customHeaders = {}, ...rest } = options;
+  const { body, skipAuth = false, headers: customHeaders = {}, responseType = 'json', ...rest } = options;
 
   const buildHeaders = (token?: string | null): HeadersInit => {
     const h: Record<string, string> = {
@@ -284,20 +285,27 @@ async function request<T = unknown>(
   }
 
   const contentType = response.headers.get('content-type') || '';
+
+  if (!response.ok) {
+    if (contentType.includes('application/json')) {
+      const errorJson = await response.json();
+      if (response.status === 403) {
+        throw new Error(errorJson.message || 'Bạn không có quyền thực hiện thao tác này.');
+      }
+      throw new Error(errorJson.message || `HTTP ${response.status}`);
+    }
+    throw new Error(`HTTP ${response.status}`);
+  }
+
+  if (responseType === 'blob') {
+    return (await response.blob()) as unknown as T;
+  }
+
   if (!contentType.includes('application/json')) {
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return undefined as T;
   }
 
   const json = await response.json();
-
-  if (!response.ok) {
-    if (response.status === 403) {
-      throw new Error(json.message || 'Bạn không có quyền thực hiện thao tác này.');
-    }
-    throw new Error(json.message || `HTTP ${response.status}`);
-  }
-
   return json.data as T;
 }
 

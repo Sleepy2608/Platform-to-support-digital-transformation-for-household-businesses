@@ -7,7 +7,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "service_invoices")
+@Table(name = "service_invoices", indexes = {
+        @Index(name = "idx_service_invoices_user", columnList = "user_id"),
+        @Index(name = "idx_service_invoices_subscription", columnList = "subscription_id"),
+        @Index(name = "idx_service_invoices_plan", columnList = "plan_id")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,51 +23,40 @@ public class ServiceInvoice {
     @Column(columnDefinition = "BIGINT UNSIGNED")
     private Long id;
 
-    @Column(name = "invoice_no", nullable = false, unique = true, length = 50)
-    private String invoiceNo;
-
-    /** Mã hóa đơn hiển thị (khớp invoice_no, phục vụ frontend chi tiết hóa đơn). */
-    @Column(name = "invoice_code", nullable = false, length = 50)
+    @Column(name = "invoice_code", nullable = false, unique = true, length = 50)
     private String invoiceCode;
 
-    @Column(name = "business_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
-    private Long businessId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    private User user;
 
-    @Column(name = "subscription_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
-    private Long subscriptionId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "subscription_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    private Subscription subscription;
 
-    @Column(name = "plan_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
-    private Long planId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "plan_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    private SubscriptionPlan plan;
 
-    @Column(name = "user_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
-    private Long userId;
-
-    @Column(name = "amount", nullable = false, precision = 15, scale = 2)
-    private BigDecimal amount;
-
-    /** Số tháng mà hóa đơn bao phủ (1 cho gói tháng, 12 cho gói năm). */
     @Column(name = "duration", nullable = false)
     private Integer duration;
 
-    /** Đơn giá theo tháng. */
     @Column(name = "unit_price", nullable = false, precision = 18, scale = 2)
     private BigDecimal unitPrice;
 
-    /** Tổng tiền thanh toán (tương đương amount). */
     @Column(name = "total_amount", nullable = false, precision = 18, scale = 2)
     private BigDecimal totalAmount;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "due_date")
-    private LocalDateTime dueDate;
 
     @Column(name = "status", nullable = false, length = 20)
     private String status;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
     }
 }
