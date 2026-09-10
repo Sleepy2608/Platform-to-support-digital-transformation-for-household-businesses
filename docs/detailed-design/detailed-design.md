@@ -8,10 +8,10 @@
 | **Tên dự án (VN)** | Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | **Viết tắt** | HBDT |
 | **Loại tài liệu** | Detailed Design Document |
-| **Phiên bản** | 2.0 |
+| **Phiên bản** | 2.1 |
 | **Ngày tạo** | 12/08/2026 |
-| **Lần cuối cập nhật** | 13/08/2026 |
-| **Trạng thái** | Bản nháp (Draft) |
+| **Lần cuối cập nhật** | 10/09/2026 |
+| **Trạng thái** | Cập nhật theo trạng thái hiện tại của repo |
 | **Tài liệu liên quan** | Các tài liệu trong thư mục docs (URD, SRS, Architecture Design Document, Database Design Document) |
 
 ---
@@ -234,7 +234,10 @@ com.hbdt
 | **Authentication** | `auth` | Đăng nhập, đăng ký, xác thực OTP, refresh token, quên/đặt lại mật khẩu | `AuthController` |
 | **Owner Account** | `owner` | Hồ sơ chủ hộ, avatar, đổi mật khẩu/email/SĐT, khóa tài khoản, thuê bao, hồ sơ kinh doanh | `OwnerController` |
 | **Product & Category** | `product` | CRUD sản phẩm, danh mục, đơn vị tính, nhóm hoạt động tính thuế | `ProductController`, `CategoryController` |
-| **Subscription** | `subscription` | Quản trị gói thuê bao (Admin) + bảng giá công khai | `SubscriptionPlanController`, `PublicSubscriptionPlanController` |
+| **Subscription** | `subscription` | Quản trị gói thuê bao (Admin), bảng giá công khai, lifecycle gói và xác nhận thanh toán | `SubscriptionPlanController`, `PublicSubscriptionPlanController`, `SubscriptionController` |
+| **Manager Support** | `manager` / `subscription` | Quản lý gói đăng ký của Owner, theo dõi trạng thái giao dịch và hỗ trợ vận hành | `Manager*Controller`, `SubscriptionController` |
+| **Revenue Ledger & Bookkeeping** | `revenue`, `accounting`, `bookkeeping` | Tính toán doanh thu, lợi nhuận, stock import cost deduction, hạch toán tự động | `RevenueLedgerController`, `SalesBookkeepingService` |
+| **Inventory & Stock Import** | `inventory`, `stock` | Tạo phiếu nhập kho, xác nhận, điều chỉnh kho, cảnh báo tồn kho thấp | `StockImportController`, `StockImportService` |
 | **Admin Management** | `admin` | Quản lý tài khoản Administrator | `AdminUserController` |
 | **Reference Data** | `controller` | Địa giới hành chính (tỉnh/huyện/xã) — public | `ReferenceController` |
 | **Common/Infra** | `common` | ApiResponse, exception, JWT, audit log, OTP, rate limit, mail, upload ảnh | — |

@@ -5,9 +5,9 @@
 | **Tên tài liệu** | Hướng dẫn Cài đặt Hệ thống (Installation Guide) – Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Mã issue/ticket** | HBDT-95 |  
-| **Phiên bản** | 1.0 |
-| **Cập nhật lần cuối** | 07/09/2026 |
-| **Trạng thái** | Hoàn thiện để làm đầu vào cho SRS, thiết kế và kiểm thử |
+| **Phiên bản** | 1.1 |
+| **Cập nhật lần cuối** | 10/09/2026 |
+| **Trạng thái** | Đồng bộ với cấu hình hiện tại của repo và luồng dev local trên Windows |
 
 ---
 
@@ -56,34 +56,40 @@ cd Platform-to-support-digital-transformation-for-household-businesses
 ```
 
 ### 2.2 Cấu hình biến môi trường Backend (`Code/Server/.env`)
-Sao chép file mẫu:
-```bat
-copy Code\Server\.env.example Code\Server\.env
-```
-Nội dung file cấu hình `Code/Server/.env`:
+Hiện tại repo có file mẫu `Code/Server/.env.example`, nhưng khi chạy local bạn nên tạo file `.env` theo cấu hình thực của backend hiện tại. Một template khởi chạy đúng cho môi trường dev là:
+
 ```env
-# Cấu hình kết nối MySQL local
 DB_HOST=localhost
 DB_PORT=3306
 DB_NAME=household_business_platform
 DB_USERNAME=root
 DB_PASSWORD=root
 
-# Bật khởi tạo tài khoản demo mẫu (admin / owner)
 APP_SEED_DEMO_USERS_ENABLED=true
-
-# Khóa bí mật JWT dùng trong môi trường Dev (tối thiểu 256 bits)
-JWT_SECRET=dev-secret-key-hbdt-platform-256-bits-long-minimum-change-in-production
-
-# Bật chế độ OTP in ra console log (không cần gửi email thật)
+APP_SEED_ROLES_ENABLED=true
+APP_REFERENCE_DATA_ENABLED=true
 OTP_DEV_MODE=true
+OTP_TTL_MINUTES=5
+
+JWT_SECRET=dev-secret-key-hbdt-platform-256-bits-long-minimum-change-in-production
+JWT_ACCESS_EXPIRATION_MS=900000
+JWT_REFRESH_EXPIRATION_MS=604800000
+
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+
+SERVER_PORT=8080
+SPRING_PROFILES_ACTIVE=dev
 ```
 
 > [!TIP]
-> **Đặc quyền chế độ Dev của HBDT:**
-> 1. `createDatabaseIfNotExist=true`: Bạn **không cần tạo database bằng tay**, Spring Boot tự tạo database `household_business_platform` nếu chưa có.
-> 2. `ddl-auto=update`: Hibernate tự tạo bảng và cập nhật cột theo Java Entity.
-> 3. `OTP_DEV_MODE=true`: Mã xác thực OTP sẽ được in thẳng ra màn hình console log của Spring Boot, lập trình viên không cần mất công cấu hình tài khoản Gmail SMTP khi test local.
+> **Lưu ý thiết yếu khi chạy local:**
+> 1. `spring.datasource.url` trong [Code/Server/src/main/resources/application-dev.properties](Code/Server/src/main/resources/application-dev.properties) đã có `createDatabaseIfNotExist=true`, nên bạn không cần tạo database bằng tay nếu tài khoản MySQL có quyền tạo schema.
+> 2. `spring.jpa.hibernate.ddl-auto=update` cho phép Hibernate tự đồng bộ schema với entity khi chạy local.
+> 3. `app.otp.dev-mode=true` làm OTP xuất ra console log thay vì gửi email thật, rất phù hợp với môi trường phát triển.
+> 4. `Code/Server/.env.example` chỉ là mẫu tối thiểu; nếu có trường muốn override trong dev thì nên bổ sung thêm như `JWT_*`, `MAIL_*`, `OTP_*` để phù hợp với thực tế hiện tại.
 
 ### 2.3 Cấu hình IDE IntelliJ IDEA (Khuyến nghị cho Backend)
 1. **Mở dự án:** Chọn menu `File` → `Open` → Chọn thư mục `Code/Server` (hoặc mở root repository).
@@ -94,6 +100,7 @@ OTP_DEV_MODE=true
 4. **Nạp biến môi trường `.env`:**
    - Chạy thử `HbdtApplication` một lần để tạo Run Configuration.
    - Chọn `Edit Configurations...` → Tại mục **Environment variables**, trỏ đến file `Code/Server/.env` (hoặc cài đặt plugin *EnvFile* trong IntelliJ).
+5. **Đảm bảo đường dẫn dự án hợp lệ:** Không đặt project dưới thư mục chứa tiếng Việt hoặc khoảng trắng; ưu tiên `D:\Projects\Platform-to-support-digital-transformation-for-household-businesses`.
 
 ### 2.4 Khởi chạy Backend (Spring Boot API)
 **Cách 1: Khởi chạy bằng IntelliJ IDEA (Đơn giản nhất)**
@@ -127,7 +134,7 @@ HBDT trang bị cơ chế **Seek Data** để các thành viên trao đổi dữ
   - Nhập **Database Key** do Trưởng nhóm cung cấp để mở khóa tính năng Snapshot / Restore dữ liệu mẫu.
 
 ### 2.6 Khởi chạy Phân hệ AI Service (`Code/AI` - Tùy chọn)
-Phân hệ AI hỗ trợ bóc tách ngôn ngữ tự nhiên từ tin nhắn thoại/văn bản tiếng Việt để tự động lập đơn hàng:
+Phân hệ AI hỗ trợ bóc tách ngôn ngữ tự nhiên từ tin nhắn thoại/văn bản tiếng Việt để tự động lập đơn hàng. Hướng dẫn chạy thực tế theo repo hiện tại:
 ```bat
 cd Code/AI
 python -m venv venv
@@ -136,6 +143,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 - Endpoint AI: `http://localhost:8000`
+- Trong môi trường dev, AI service nên chạy độc lập bên cạnh backend và frontend, không cần phụ thuộc vào Docker Compose nếu Docker config hiện tại chưa đồng bộ với cấu trúc thư mục hiện nay.
 
 ### 2.7 Khởi chạy Frontend (Next.js 16 App Router)
 Mở một cửa sổ Terminal mới:
@@ -147,6 +155,9 @@ npm run dev
 - Giao diện người dùng: `http://localhost:3000/`
 - Trang Đăng nhập Chủ hộ / Nhân viên / Quản lý: `http://localhost:3000/login`
 - Trang Đăng nhập Quản trị viên hệ thống: `http://localhost:3000/admin/login`
+
+> [!IMPORTANT]
+> Port frontend theo luồng dev hiện tại là `3000`, không phải port `5173` như trong một số cấu hình Docker cũ. Nếu bạn dùng Docker Compose ở repo, hãy kiểm tra lại file [docker-compose.yml](docker-compose.yml) vì cấu hình hiện tại còn đang là phiên bản legacy và có thể không đồng bộ hoàn toàn với cấu trúc hiện tại của repo.
 
 ---
 
@@ -176,27 +187,36 @@ npm run dev
 | `APP_PUBLIC_BASE_URL` | Domain URL (vd: `https://api.hbdt.vn`) | Domain phục vụ truy xuất tài nguyên tĩnh/ảnh |
 
 ### 3.3 Triển khai trọn gói bằng Docker Compose
-Dự án cung cấp sẵn file `docker-compose.yml` để đóng gói và vận hành đồng bộ 4 dịch vụ:
-```bash
-# Đóng gói file JAR backend
-cd Code/Server
-mvn clean package -DskipTests
+Repo hiện có file [docker-compose.yml](docker-compose.yml), nhưng cấu hình này đang là phiên bản legacy và chưa hoàn toàn khớp với cấu trúc hiện tại của project. Theo tình trạng hiện tại, luồng chạy đáng tin cậy nhất vẫn là:
 
-# Build và khởi chạy các container ngầm
-cd ../..
-docker compose up -d --build
-```
-Kiểm tra container đang chạy:
+1. Chạy backend ở `Code/Server`
+2. Chạy AI service ở `Code/AI`
+3. Chạy frontend ở `Code/Client/src/frontend`
+4. Chỉ dùng Docker Compose nếu bạn đã cập nhật lại các đường dẫn và service config cho đúng repo hiện tại.
+
+Nếu vẫn muốn dùng Docker Compose, nên kiểm tra lại trước khi chạy:
 ```bash
-docker compose ps
+cd Platform-to-support-digital-transformation-for-household-businesses
+docker compose config
 ```
+
+Lưu ý: file hiện tại đang tham chiếu các context như `./ai-service` và `5173:80`, trong khi repo thực tế hiện đang là `Code/AI`, `Code/Client/src/frontend` và port dev frontend là `3000`.
 
 ### 3.4 Quy trình cập nhật phiên bản (Rolling Update)
 ```bash
 git pull origin main
-cd Code/Server && mvn clean package -DskipTests && cd ../..
-docker compose down
-docker compose up -d --build
+cd Code/Server
+./mvnw clean package -DskipTests
+cd ../..
+```
+Sau đó khởi động lại từng service theo luồng dev local:
+```bash
+cd Code/Server
+./mvnw spring-boot:run
+cd Code/AI
+uvicorn main:app --reload --port 8000
+cd Code/Client/src/frontend
+npm run dev
 ```
 
 ---
