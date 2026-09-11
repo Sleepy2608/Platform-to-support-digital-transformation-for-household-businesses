@@ -91,4 +91,40 @@ public interface RevenueLedgerRepository extends JpaRepository<RevenueLedgerEntr
             @Param("productId") Long productId,
             @Param("keyword") String keyword
     );
+
+    interface OrderPaymentSummaryProjection {
+        BigDecimal getTotalPaid();
+        BigDecimal getTotalDebt();
+    }
+
+    @Query("""
+        SELECT 
+            COALESCE(SUM(s.paidAmount), 0) AS totalPaid,
+            COALESCE(SUM(s.debtAmount), 0) AS totalDebt
+        FROM SalesOrder s
+        WHERE s.businessId = :businessId
+          AND s.id IN (
+              SELECT DISTINCT r.salesOrderId
+              FROM RevenueLedgerEntry r
+              WHERE r.businessId = :businessId
+                AND (:status IS NULL OR r.status = :status)
+                AND (:fromDateTime IS NULL OR r.confirmedAt >= :fromDateTime)
+                AND (:toDateTime IS NULL OR r.confirmedAt <= :toDateTime)
+                AND (:productId IS NULL OR r.productId = :productId)
+                AND (
+                      :keyword IS NULL OR :keyword = ''
+                      OR LOWER(r.orderCode) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                      OR LOWER(r.customerName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                      OR LOWER(r.productName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                )
+          )
+    """)
+    OrderPaymentSummaryProjection calculateOrderPaymentSummary(
+            @Param("businessId") Long businessId,
+            @Param("status") String status,
+            @Param("fromDateTime") LocalDateTime fromDateTime,
+            @Param("toDateTime") LocalDateTime toDateTime,
+            @Param("productId") Long productId,
+            @Param("keyword") String keyword
+    );
 }
