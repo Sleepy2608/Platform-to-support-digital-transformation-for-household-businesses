@@ -28,8 +28,11 @@ import { apiClient } from '@/app/lib/apiClient';
 
 interface RevenueSummary {
   totalRevenue: number;
+  totalPaid: number;
+  totalDebt: number;
   totalImportCost: number;
-  netRevenue: number;
+  expectedProfit: number;
+  actualProfit: number;
   totalQuantity: number;
   totalOrders: number;
   totalItems: number;
@@ -51,6 +54,9 @@ interface RevenueLedgerItem {
   unitPrice: number;
   lineTotal: number;
   orderTotalAmount: number;
+  orderPaidAmount: number;
+  orderDebtAmount: number;
+  orderPaymentStatus: string;
   status: string;
 }
 
@@ -234,6 +240,28 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
     }
   };
 
+  const renderPaymentBadge = (status: string) => {
+    if (status === 'PAID') {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+          Đã thanh toán đủ
+        </span>
+      );
+    } else if (status === 'PARTIALLY_PAID') {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+          Trả góp / 1 phần
+        </span>
+      );
+    } else {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+          Chưa thanh toán
+        </span>
+      );
+    }
+  };
+
   const dateTabs: { id: DatePreset; label: string; icon: React.ElementType }[] = [
     { id: 'all', label: 'Tất cả thời gian', icon: Layers },
     { id: 'today', label: 'Hôm nay', icon: Clock },
@@ -250,10 +278,10 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight select-none">
-              Sổ chi tiết doanh thu & Chi phí nhập kho
+              Sổ chi tiết doanh thu & Dòng tiền thực tế
             </h1>
             <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1 select-none">
-              Tự động tổng hợp doanh thu bán hàng, khấu trừ tiền nhập kho và đối soát lợi nhuận
+              Tự động đối soát doanh thu bán hàng, công nợ khách hàng, chi phí nhập kho và lợi nhuận thực tế
             </p>
           </div>
           <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -293,88 +321,124 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
           })}
         </div>
 
-        {/* Metric Cards: 5 Thẻ Thống Kê Tài Chính Rõ Ràng */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          {/* Tổng Doanh Thu Bán */}
-          <div className="p-5 bg-white border border-slate-200/80 rounded-2xl shadow-2xs relative overflow-hidden">
+        {/* Metric Cards: 6 Thẻ Thống Kê Tài Chính Phân Biệt Rõ Ràng */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
+          
+          {/* 1. Tổng doanh thu bán hàng */}
+          <div className="p-4 sm:p-5 bg-white border border-slate-200/80 rounded-2xl shadow-2xs relative overflow-hidden">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                1. Doanh thu bán hàng
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                1. Tổng doanh thu bán
               </span>
-              <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg">
-                <ArrowUpRight className="w-4 h-4" />
+              <div className="p-1.5 bg-slate-100 text-slate-700 rounded-lg">
+                <Receipt className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">
+            <div className="text-lg sm:text-xl font-extrabold text-slate-900 mt-1 truncate">
               {data?.summary ? formatCurrency(data.summary.totalRevenue) : '0 ₫'}
             </div>
-            <p className="text-[11px] text-slate-400 mt-1 font-medium">Từ các đơn hàng đã xác nhận</p>
+            <p className="text-[10px] text-slate-400 mt-1 font-medium truncate">Tổng giá trị đơn đã bán</p>
           </div>
 
-          {/* Tiền Nhập Kho Khấu Trừ */}
-          <div className="p-5 bg-white border border-slate-200/80 rounded-2xl shadow-2xs relative overflow-hidden">
+          {/* 2. Đã thu từ khách hàng */}
+          <div className="p-4 sm:p-5 bg-white border border-slate-200/80 rounded-2xl shadow-2xs relative overflow-hidden">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                2. Tiền nhập kho (-)
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                2. Đã thu từ khách
+              </span>
+              <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg">
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="text-lg sm:text-xl font-extrabold text-emerald-600 mt-1 truncate">
+              {data?.summary ? formatCurrency(data.summary.totalPaid) : '0 ₫'}
+            </div>
+            <p className="text-[10px] text-slate-400 mt-1 font-medium truncate">Số tiền thực tế đã thu</p>
+          </div>
+
+          {/* 3. Công nợ khách hàng */}
+          <div className="p-4 sm:p-5 bg-white border border-slate-200/80 rounded-2xl shadow-2xs relative overflow-hidden">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                3. Công nợ khách hàng
+              </span>
+              <div className="p-1.5 bg-amber-50 text-amber-600 rounded-lg">
+                <AlertCircle className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="text-lg sm:text-xl font-extrabold text-amber-600 mt-1 truncate">
+              {data?.summary ? formatCurrency(data.summary.totalDebt) : '0 ₫'}
+            </div>
+            <p className="text-[10px] text-slate-400 mt-1 font-medium truncate">Tiền khách còn nợ (1 - 2)</p>
+          </div>
+
+          {/* 4. Tiền vốn (Nhập kho) */}
+          <div className="p-4 sm:p-5 bg-white border border-slate-200/80 rounded-2xl shadow-2xs relative overflow-hidden">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                4. Tiền vốn (Nhập kho)
               </span>
               <div className="p-1.5 bg-rose-50 text-rose-600 rounded-lg">
-                <ArrowDownRight className="w-4 h-4" />
+                <ArrowDownRight className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-extrabold text-rose-600 mt-1">
+            <div className="text-lg sm:text-xl font-extrabold text-rose-600 mt-1 truncate">
               - {data?.summary ? formatCurrency(data.summary.totalImportCost) : '0 ₫'}
             </div>
-            <p className="text-[11px] text-slate-400 mt-1 font-medium">Chi phí nhập hàng trong kỳ</p>
+            <p className="text-[10px] text-slate-400 mt-1 font-medium truncate">Chi phí nhập hàng trong kỳ</p>
           </div>
 
-          {/* Doanh Thu Thuần / Lợi Nhuận Gộp */}
-          <div className="p-5 bg-white border-2 border-slate-900 rounded-2xl shadow-xs relative overflow-hidden">
+          {/* 5. Lợi nhuận dự kiến */}
+          <div className="p-4 sm:p-5 bg-white border border-slate-200/80 rounded-2xl shadow-2xs relative overflow-hidden">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-900">
-                3. Doanh thu sau trừ nhập
-              </span>
-              <div className="p-1.5 bg-slate-900 text-white rounded-lg">
-                <DollarSign className="w-4 h-4" />
-              </div>
-            </div>
-            <div className={`text-xl sm:text-2xl font-black mt-1 ${
-              data?.summary && data.summary.netRevenue >= 0 ? 'text-emerald-600' : 'text-rose-600'
-            }`}>
-              {data?.summary ? formatCurrency(data.summary.netRevenue) : '0 ₫'}
-            </div>
-            <p className="text-[11px] text-slate-500 mt-1 font-bold">Doanh thu bán - Tiền nhập</p>
-          </div>
-
-          {/* Tổng Đơn Hàng */}
-          <div className="p-5 bg-white border border-slate-200/80 rounded-2xl shadow-2xs relative overflow-hidden">
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Số đơn bán
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                5. Lợi nhuận dự kiến
               </span>
               <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
-                <Receipt className="w-4 h-4" />
+                <TrendingUp className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">
-              {data?.summary ? data.summary.totalOrders.toLocaleString('vi-VN') : '0'}
+            <div className={`text-lg sm:text-xl font-extrabold mt-1 truncate ${
+              data?.summary && data.summary.expectedProfit >= 0 ? 'text-blue-600' : 'text-rose-600'
+            }`}>
+              {data?.summary ? formatCurrency(data.summary.expectedProfit) : '0 ₫'}
             </div>
-            <p className="text-[11px] text-slate-400 mt-1 font-medium">Đơn hàng phát sinh</p>
+            <p className="text-[10px] text-slate-400 mt-1 font-medium truncate">Thu đủ 100%: Doanh thu - Vốn</p>
           </div>
 
-          {/* Số Lượng Bán */}
-          <div className="p-5 bg-white border border-slate-200/80 rounded-2xl shadow-2xs relative overflow-hidden">
+          {/* 6. Lợi nhuận thực tế đã thu (CARD NỔI BẬT NHẤT) */}
+          <div className="p-4 sm:p-5 bg-white border-2 border-slate-900 rounded-2xl shadow-xs relative overflow-hidden">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Số lượng đã bán
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-900">
+                6. Lợi nhuận thực tế
               </span>
-              <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg">
-                <Package className="w-4 h-4" />
+              <div className="p-1.5 bg-slate-900 text-white rounded-lg">
+                <DollarSign className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1">
-              {data?.summary ? data.summary.totalQuantity.toLocaleString('vi-VN') : '0'}
+            <div className={`text-lg sm:text-xl font-black mt-1 truncate ${
+              data?.summary && data.summary.actualProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'
+            }`}>
+              {data?.summary ? formatCurrency(data.summary.actualProfit) : '0 ₫'}
             </div>
-            <p className="text-[11px] text-slate-400 mt-1 font-medium">Sản phẩm xuất kho bán</p>
+            <p className="text-[10px] text-slate-500 mt-1 font-bold truncate">Dòng tiền thực: Đã thu - Vốn</p>
+          </div>
+
+        </div>
+
+        {/* Sub-bar: Thông số vận hành đơn hàng */}
+        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 bg-white border border-slate-200/80 rounded-2xl text-xs font-semibold text-slate-600 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <Receipt className="w-4 h-4 text-slate-500" />
+            <span>Tổng số đơn hàng: <strong className="text-slate-900">{data?.summary ? data.summary.totalOrders.toLocaleString('vi-VN') : 0}</strong> đơn</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Package className="w-4 h-4 text-slate-500" />
+            <span>Tổng số lượng sản phẩm bán: <strong className="text-slate-900">{data?.summary ? data.summary.totalQuantity.toLocaleString('vi-VN') : 0}</strong> sp</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ClipboardList className="w-4 h-4 text-slate-500" />
+            <span>Số dòng chi tiết bán: <strong className="text-slate-900">{data?.summary ? data.summary.totalItems.toLocaleString('vi-VN') : 0}</strong> dòng</span>
           </div>
         </div>
 
@@ -393,7 +457,7 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
                 </h2>
                 <p className="text-xs text-slate-500 font-medium mt-0.5 select-none">
                   {viewMode === 'sales'
-                    ? 'Chi tiết từng mặt hàng và đơn giá trong các đơn hàng đã xác nhận'
+                    ? 'Chi tiết từng mặt hàng, tổng tiền đơn, số tiền khách đã trả và còn nợ'
                     : 'Chi tiết các phiếu nhập kho đã xác nhận trong khoảng thời gian lọc'}
                 </p>
               </div>
@@ -552,13 +616,16 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
                         <th className="px-4 py-3.5 text-right">Số lượng</th>
                         <th className="px-4 py-3.5 text-right">Đơn giá</th>
                         <th className="px-4 py-3.5 text-right">Thành tiền</th>
-                        <th className="px-4 py-3.5 text-right">Tổng tiền đơn</th>
+                        <th className="px-4 py-3.5 text-right">Tổng đơn</th>
+                        <th className="px-4 py-3.5 text-right">Đã thu</th>
+                        <th className="px-4 py-3.5 text-right">Còn nợ</th>
+                        <th className="px-4 py-3.5 text-center">TT Thanh toán</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
                       {loading && (!data || data.items.length === 0) ? (
                         <tr>
-                          <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
+                          <td colSpan={11} className="px-4 py-12 text-center text-slate-400">
                             <div className="inline-flex items-center gap-2 text-xs font-semibold">
                               <RefreshCw className="w-4 h-4 animate-spin text-slate-900" />
                               Đang tải dữ liệu doanh thu...
@@ -567,7 +634,7 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
                         </tr>
                       ) : !data || data.items.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="px-4 py-12 text-center text-slate-400">
+                          <td colSpan={11} className="px-4 py-12 text-center text-slate-400">
                             <FileSpreadsheet className="w-10 h-10 mx-auto mb-2 text-slate-300" />
                             <p className="text-xs font-semibold text-slate-500">Chưa có giao dịch bán hàng nào trong kỳ.</p>
                             <p className="text-[11px] text-slate-400 mt-0.5">Dữ liệu sẽ tự động xuất hiện khi đơn hàng được xác nhận.</p>
@@ -602,6 +669,15 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
                             </td>
                             <td className="px-4 py-3.5 text-right font-bold text-slate-900 whitespace-nowrap">
                               {formatCurrency(item.orderTotalAmount)}
+                            </td>
+                            <td className="px-4 py-3.5 text-right font-bold text-emerald-700 whitespace-nowrap">
+                              {formatCurrency(item.orderPaidAmount)}
+                            </td>
+                            <td className="px-4 py-3.5 text-right font-bold text-amber-700 whitespace-nowrap">
+                              {formatCurrency(item.orderDebtAmount)}
+                            </td>
+                            <td className="px-4 py-3.5 text-center whitespace-nowrap">
+                              {renderPaymentBadge(item.orderPaymentStatus)}
                             </td>
                           </tr>
                         ))
