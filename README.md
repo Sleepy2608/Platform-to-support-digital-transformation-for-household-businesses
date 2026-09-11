@@ -1,5 +1,5 @@
 <p align="center">
-<h1 align="center"> Platform to Support Digital Transformation for Household Businesses </h1>
+  <h1 align="center"> Platform to Support Digital Transformation for Household Businesses </h1>
 </p>
 
 <p align="center"><em>
@@ -16,25 +16,23 @@
 | STT | Họ và Tên | MSSV | Vai trò | Nhiệm vụ được giao |
 | :---: | :--- | :---: | :---: | :--- |
 | 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Leader | Repository & Git Management, Docs (Installation/Run Guide, User Manual, Technical Documentation, SRS, Compliance), Authorization, Password Encoder and Security, Admin Account Management, User Account Management (Basic CRUD, Profile), Payment Process, Subscription Pricing & Plans, Revenue Reports (Revenue Ledger, Platform Analytics, Trend Analysis) |
-| 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer | Register/Login UI, Owner Account Management, Searching Engine, Image Uploads (Avatar, Products), CRUD (Customer, Owner Employee, Product), Automatic Bookkeeping |
+| 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer | Register/Login UI, Owner Account Management, Searching Engine, Image Uploads (Avatar, Products), CRUD (Customer, Owner Employee, Product), Automatic Bookkeeping (Debt, Sales, Inventory) |
 | 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger | Database Management, Docs (Data Model, AI), Audit Log, Measurement & Product Pricing Rules, Product Stock Management (Automatic Update, Debt History/Searching), Service Invoice Management, Order Management (At-counter Order, Confirm/Cancel Order, Confirm Debt/Debt Payment), AI Service |
 | 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager | Database Management, Docs (ERD, Data Model, Diagram, User Requirements), CRUD (Category, Product, Subcription), Product Stock Management (Low Stock Alert) |
 | 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Feature Developer | Employee Account Management, Product Stock Management (Stock Import), Feature Plans Management |
 | 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer | Manage purchase package payments, Manager Account Management, Subscription Features (Pricing Plans, Notifications), RBAC, Service Invoice Management |
 
-> **Ghi chú:**
-> - Mọi người đều được giao task có backend code bằng Java (Vai trò trên chỉ bao gồm các vai trò khác ngoài Backend Developer)
-> - Nhiệm vụ được giao sẽ được dựa vào nhiệm vụ được giao trên [Jira](https://java-project-platform-for-household-business.atlassian.net/jira/software/projects/SCRUM/summary) hoặc ở phần [Issue](https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/issues) trên Github
+> Mọi người đều được giao task có backend code bằng Java (Vai trò trên chỉ bao gồm các vai trò khác ngoài Backend Developer).
 
 ---
 
 ## Tiến độ triển khai dự án (Project Deployment Progress)
 
-*Tiến độ: Sprint 6 + 7*
+*Tiến độ: Sprint 7*
 
-> Các issue cần chỉnh sửa/cập nhật/phát triển/sửa lỗi sẽ được cập nhật ở phần [Issue](https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/issues) trên Github<br>
-> Các issue trên Github sẽ được cập nhật theo tiến độ của Jira và sẽ được test trước khi merge vào nhánh Main<br>
-> Ngày cập nhật lần cuối: 10/09/2026<br>
+> Nhiệm vụ được giao sẽ được dựa vào nhiệm vụ được giao trên [Issue](https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/issues) trên Github và cập nhật tiến độ ở [Jira](https://java-project-platform-for-household-business.atlassian.net/jira/software/projects/SCRUM/summary).<br>
+> Các issue trên Github sẽ được cập nhật theo tiến độ của Jira và sẽ được test trước khi merge vào nhánh Main.<br>
+> Ngày cập nhật lần cuối: 12/09/2026.
 
 ### Tính năng mới nhất cập nhật gần đây
 - Quản lý gói đăng ký cho Owner từ vai trò Manager
@@ -231,3 +229,9 @@ npm run dev
   * Local: http://localhost:3000/
   * Network: http://[IP_ADDRESS]/
 > Lưu ý: Trang đăng nhập vào Manager/Owner/Employee được chạy ở url `http://localhost:3000/login` còn trang Admin được chạy ở url `http://localhost:3000/admin/login`.
+
+---
+
+<p align="center">
+  <b>Đồ án môn Lập Trình Java ☕︎</b>
+</p>
