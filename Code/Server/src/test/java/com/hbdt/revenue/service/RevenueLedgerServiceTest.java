@@ -173,8 +173,13 @@ class RevenueLedgerServiceTest {
         when(summaryProj.getTotalOrders()).thenReturn(1L);
         when(summaryProj.getTotalItems()).thenReturn(1L);
 
+        RevenueLedgerRepository.OrderPaymentSummaryProjection paymentProj = mock(RevenueLedgerRepository.OrderPaymentSummaryProjection.class);
+        when(paymentProj.getTotalPaid()).thenReturn(new BigDecimal("70000.00"));
+
         when(revenueLedgerRepository.calculateSummary(eq(1L), eq("ACTIVE"), any(), any(), isNull(), eq("SO-001")))
                 .thenReturn(summaryProj);
+        when(revenueLedgerRepository.calculateOrderPaymentSummary(eq(1L), eq("ACTIVE"), any(), any(), isNull(), eq("SO-001")))
+                .thenReturn(paymentProj);
 
         when(stockImportRepository.calculateTotalImportCost(eq(1L), any(), any()))
                 .thenReturn(new BigDecimal("30000.00"));
@@ -193,8 +198,11 @@ class RevenueLedgerServiceTest {
 
         assertThat(response.items()).hasSize(1);
         assertThat(response.summary().totalRevenue()).isEqualByComparingTo("100000.00");
+        assertThat(response.summary().totalPaid()).isEqualByComparingTo("70000.00");
+        assertThat(response.summary().totalDebt()).isEqualByComparingTo("30000.00");
         assertThat(response.summary().totalImportCost()).isEqualByComparingTo("30000.00");
-        assertThat(response.summary().netRevenue()).isEqualByComparingTo("70000.00");
+        assertThat(response.summary().expectedProfit()).isEqualByComparingTo("70000.00");
+        assertThat(response.summary().actualProfit()).isEqualByComparingTo("40000.00");
         assertThat(response.summary().totalOrders()).isEqualTo(1L);
     }
 }

@@ -4,8 +4,11 @@ import java.math.BigDecimal;
 
 public record RevenueLedgerSummaryResponse(
         BigDecimal totalRevenue,
+        BigDecimal totalPaid,
+        BigDecimal totalDebt,
         BigDecimal totalImportCost,
-        BigDecimal netRevenue,
+        BigDecimal expectedProfit,
+        BigDecimal actualProfit,
         BigDecimal totalQuantity,
         Long totalOrders,
         Long totalItems

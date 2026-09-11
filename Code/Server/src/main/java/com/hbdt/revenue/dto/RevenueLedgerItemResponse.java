@@ -19,6 +19,9 @@ public record RevenueLedgerItemResponse(
         BigDecimal unitPrice,
         BigDecimal lineTotal,
         BigDecimal orderTotalAmount,
+        BigDecimal orderPaidAmount,
+        BigDecimal orderDebtAmount,
+        String orderPaymentStatus,
         String status
 ) {
 }

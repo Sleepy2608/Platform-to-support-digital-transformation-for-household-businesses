@@ -18,8 +18,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class RevenueLedgerService {
@@ -201,7 +202,22 @@ public class RevenueLedgerService {
                 normalizedKeyword
         );
 
+        RevenueLedgerRepository.OrderPaymentSummaryProjection paymentProj = revenueLedgerRepository.calculateOrderPaymentSummary(
+                businessId,
+                "ACTIVE",
+                fromDateTime,
+                toDateTime,
+                productId,
+                normalizedKeyword
+        );
+
         BigDecimal totalRevenue = summaryProj != null && summaryProj.getTotalRevenue() != null ? summaryProj.getTotalRevenue() : BigDecimal.ZERO;
+        BigDecimal totalPaid = paymentProj != null && paymentProj.getTotalPaid() != null ? paymentProj.getTotalPaid() : BigDecimal.ZERO;
+        BigDecimal totalDebt = totalRevenue.subtract(totalPaid);
+        if (totalDebt.compareTo(BigDecimal.ZERO) < 0) {
+            totalDebt = BigDecimal.ZERO;
+        }
+
         BigDecimal totalQuantity = summaryProj != null && summaryProj.getTotalQuantity() != null ? summaryProj.getTotalQuantity() : BigDecimal.ZERO;
         Long totalOrders = summaryProj != null && summaryProj.getTotalOrders() != null ? summaryProj.getTotalOrders() : 0L;
         Long totalItems = summaryProj != null && summaryProj.getTotalItems() != null ? summaryProj.getTotalItems() : 0L;
@@ -211,12 +227,16 @@ public class RevenueLedgerService {
             totalImportCost = BigDecimal.ZERO;
         }
 
-        BigDecimal netRevenue = totalRevenue.subtract(totalImportCost);
+        BigDecimal expectedProfit = totalRevenue.subtract(totalImportCost);
+        BigDecimal actualProfit = totalPaid.subtract(totalImportCost);
 
         RevenueLedgerSummaryResponse summary = new RevenueLedgerSummaryResponse(
                 totalRevenue,
+                totalPaid,
+                totalDebt,
                 totalImportCost,
-                netRevenue,
+                expectedProfit,
+                actualProfit,
                 totalQuantity,
                 totalOrders,
                 totalItems
@@ -248,11 +268,26 @@ public class RevenueLedgerService {
                 ))
                 .toList();
 
-        Page<RevenueLedgerItemResponse> dtoPage = entriesPage.map(this::toItemResponse);
+        List<Long> orderIds = entriesPage.getContent().stream()
+                .map(RevenueLedgerEntry::getSalesOrderId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        Map<Long, SalesOrder> orderMap = orderIds.isEmpty()
+                ? Collections.emptyMap()
+                : salesOrderRepository.findAllById(orderIds).stream()
+                        .collect(Collectors.toMap(SalesOrder::getId, Function.identity(), (a, b) -> a));
+
+        Page<RevenueLedgerItemResponse> dtoPage = entriesPage.map(entry -> toItemResponse(entry, orderMap.get(entry.getSalesOrderId())));
         return RevenueLedgerPageResponse.of(dtoPage, stockImports, summary);
     }
 
-    private RevenueLedgerItemResponse toItemResponse(RevenueLedgerEntry entry) {
+    private RevenueLedgerItemResponse toItemResponse(RevenueLedgerEntry entry, SalesOrder order) {
+        BigDecimal paidAmount = order != null && order.getPaidAmount() != null ? order.getPaidAmount() : BigDecimal.ZERO;
+        BigDecimal debtAmount = order != null && order.getDebtAmount() != null ? order.getDebtAmount() : BigDecimal.ZERO;
+        String paymentStatus = order != null && order.getPaymentStatus() != null ? order.getPaymentStatus().name() : "UNPAID";
+
         return new RevenueLedgerItemResponse(
                 entry.getId(),
                 entry.getSalesOrderId(),
@@ -269,6 +304,9 @@ public class RevenueLedgerService {
                 entry.getUnitPrice(),
                 entry.getLineTotal(),
                 entry.getOrderTotalAmount(),
+                paidAmount,
+                debtAmount,
+                paymentStatus,
                 entry.getStatus()
         );
     }
