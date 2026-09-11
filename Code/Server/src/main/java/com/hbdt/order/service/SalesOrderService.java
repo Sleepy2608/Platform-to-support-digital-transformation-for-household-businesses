@@ -4,6 +4,7 @@ import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
 import com.hbdt.entity.SalesOrder;
 import com.hbdt.entity.SalesOrderItem;
+import com.hbdt.entity.Customer;
 import com.hbdt.entity.Product;
 import com.hbdt.entity.Unit;
 import com.hbdt.entity.User;
@@ -121,8 +122,9 @@ public class SalesOrderService {
         }
         BigDecimal debtAmount = totalAmount.subtract(paidAmount);
         BigDecimal customerDebtBefore = BigDecimal.ZERO;
+        Customer debtCustomer = null;
         if (request.customerId() != null) {
-            (debtAmount.signum() > 0
+            debtCustomer = (debtAmount.signum() > 0
                     ? customerRepository.findActiveForUpdate(request.customerId(), businessId)
                     : customerRepository.findByIdAndBusinessIdAndStatus(request.customerId(), businessId, "ACTIVE"))
                     .orElseThrow(() -> new BadRequestException(
@@ -167,9 +169,11 @@ public class SalesOrderService {
         List<SalesOrderItem> savedItems = salesOrderItemRepository.saveAll(pricedItems);
         revenueLedgerService.recordRevenueForOrder(order, savedItems);
         if (debtAmount.signum() > 0) {
+            BigDecimal balanceAfter = customerDebtBefore.add(debtAmount);
             recordDebtTransaction(
-                    order, actor.getId(), "DEBT_INCREASE", debtAmount, customerDebtBefore.add(debtAmount),
+                    order, actor.getId(), "DEBT_INCREASE", debtAmount, balanceAfter,
                     "Phát sinh công nợ từ đơn " + order.getOrderCode(), "DEBT-SO-" + order.getId());
+            debtCustomer.setDebtBalance(balanceAfter);
         }
         return toResponse(order, savedItems);
     }
@@ -205,7 +209,7 @@ public class SalesOrderService {
         if (normalizedPayment.compareTo(order.getDebtAmount()) > 0) {
             throw new BadRequestException("Số tiền thanh toán không được vượt quá số còn nợ");
         }
-        customerRepository.findActiveForUpdate(order.getCustomerId(), businessId)
+        Customer customer = customerRepository.findActiveForUpdate(order.getCustomerId(), businessId)
                 .orElseThrow(() -> new BadRequestException("Khách hàng không còn hoạt động"));
         BigDecimal balanceBefore = currentCustomerDebt(businessId, order.getCustomerId());
         BigDecimal balanceAfter = balanceBefore.subtract(normalizedPayment);
@@ -222,6 +226,7 @@ public class SalesOrderService {
                 order, actor.getId(), "PAYMENT", normalizedPayment, balanceAfter,
                 "Thanh toán công nợ đơn " + order.getOrderCode(),
                 "PAY-SO-" + order.getId() + "-" + shortId());
+        customer.setDebtBalance(balanceAfter);
         return toResponse(order, salesOrderItemRepository.findAllBySalesOrderIdOrderByIdAsc(orderId));
     }
 
@@ -266,7 +271,7 @@ public class SalesOrderService {
                     actorUsername, item.getProductId(), item.getBaseQuantity(), orderId, order.getOrderCode());
         }
         if (order.getDebtAmount().signum() > 0 && order.getCustomerId() != null) {
-            customerRepository.findActiveForUpdate(order.getCustomerId(), businessId)
+            Customer customer = customerRepository.findActiveForUpdate(order.getCustomerId(), businessId)
                     .orElseThrow(() -> new BadRequestException("Khách hàng không còn hoạt động"));
             BigDecimal balanceAfter = currentCustomerDebt(businessId, order.getCustomerId())
                     .subtract(order.getDebtAmount());
@@ -276,6 +281,7 @@ public class SalesOrderService {
             recordDebtTransaction(
                     order, actor.getId(), "VOID", order.getDebtAmount(), balanceAfter,
                     "Đảo công nợ do hủy đơn " + order.getOrderCode(), "REV-SO-" + order.getId());
+            customer.setDebtBalance(balanceAfter);
             order.setDebtAmount(BigDecimal.ZERO.setScale(0));
         }
         order.setStatus("CANCELLED");

@@ -107,6 +107,7 @@ public class PaymentService {
                 .build();
 
         debtTransactionRepository.save(transaction);
+        customer.setDebtBalance(balanceAfter);
 
         // 8. Cập nhật SalesOrder
         BigDecimal newPaidAmount = order.getPaidAmount().add(request.amount());
