@@ -32,6 +32,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.hbdt.revenue.service.RevenueLedgerService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -59,6 +60,7 @@ public class SalesOrderService {
     private final InventoryMovementService inventoryMovementService;
     private final CustomerRepository customerRepository;
     private final DebtTransactionRepository debtTransactionRepository;
+    private final RevenueLedgerService revenueLedgerService;
 
     public SalesOrderService(
             SalesOrderRepository salesOrderRepository,
@@ -70,7 +72,8 @@ public class SalesOrderService {
             UnitRepository unitRepository,
             InventoryMovementService inventoryMovementService,
             CustomerRepository customerRepository,
-            DebtTransactionRepository debtTransactionRepository
+            DebtTransactionRepository debtTransactionRepository,
+            RevenueLedgerService revenueLedgerService
     ) {
         this.salesOrderRepository = salesOrderRepository;
         this.salesOrderItemRepository = salesOrderItemRepository;
@@ -82,6 +85,7 @@ public class SalesOrderService {
         this.inventoryMovementService = inventoryMovementService;
         this.customerRepository = customerRepository;
         this.debtTransactionRepository = debtTransactionRepository;
+        this.revenueLedgerService = revenueLedgerService;
     }
 
     @Transactional
@@ -163,6 +167,7 @@ public class SalesOrderService {
             ));
         }
         List<SalesOrderItem> savedItems = salesOrderItemRepository.saveAll(pricedItems);
+        revenueLedgerService.recordRevenueForOrder(order, savedItems);
         if (debtAmount.signum() > 0) {
             BigDecimal balanceAfter = customerDebtBefore.add(debtAmount);
             recordDebtTransaction(
@@ -281,6 +286,7 @@ public class SalesOrderService {
         }
         order.setStatus("CANCELLED");
         salesOrderRepository.save(order);
+        revenueLedgerService.voidRevenueForOrder(businessId, order.getId());
         return toResponse(order, items);
     }
 

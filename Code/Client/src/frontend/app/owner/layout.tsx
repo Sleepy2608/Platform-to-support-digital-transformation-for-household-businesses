@@ -7,7 +7,7 @@ import {
   Store, UserCircle, Lock, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
   Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing, UserSearch,
-  Building2, ShieldCheck, ClipboardList, ShoppingCart, Warehouse,
+  Building2, ShieldCheck, ClipboardList, ShoppingCart, Warehouse, TrendingUp,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -56,7 +56,7 @@ const MANAGE_NAV_ITEMS: Array<{
   },
   {
     label: 'Đơn hàng',
-    href: '/owner/orders/history',
+    href: '/owner/orders/new',
     icon: ReceiptText,
     path: '/owner/orders',
     children: [
@@ -64,6 +64,7 @@ const MANAGE_NAV_ITEMS: Array<{
       { label: 'Danh sách đơn hàng', href: '/owner/orders/history', icon: ListOrdered },
     ],
   },
+  { label: 'Doanh thu', href: '/owner/revenue', icon: TrendingUp, path: '/owner/revenue' },
   { label: 'Khách hàng', href: '/owner/customers', icon: UserSearch, path: '/owner/customers' },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
 ];
