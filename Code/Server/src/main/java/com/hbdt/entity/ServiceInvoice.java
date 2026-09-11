@@ -27,15 +27,15 @@ public class ServiceInvoice {
     private String invoiceCode;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    @JoinColumn(name = "user_id", nullable = false, columnDefinition = "BIGINT UNSIGNED", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "subscription_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    @JoinColumn(name = "subscription_id", nullable = false, columnDefinition = "BIGINT UNSIGNED", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Subscription subscription;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "plan_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
+    @JoinColumn(name = "plan_id", nullable = false, columnDefinition = "BIGINT UNSIGNED", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private SubscriptionPlan plan;
 
     @Column(name = "duration", nullable = false)
