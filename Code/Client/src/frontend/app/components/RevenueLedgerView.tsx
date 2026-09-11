@@ -323,7 +323,7 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
 
         {/* Metric Cards: 6 Thẻ Thống Kê Tài Chính Phân Biệt Rõ Ràng */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
-          
+
           {/* 1. Tổng doanh thu bán hàng */}
           <div className="p-4 sm:p-5 bg-white border border-slate-200/80 rounded-2xl shadow-2xs relative overflow-hidden">
             <div className="flex items-center justify-between mb-1.5">
@@ -389,18 +389,17 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
           </div>
 
           {/* 5. Lợi nhuận dự kiến */}
-          <div className="p-4 sm:p-5 bg-white border border-slate-200/80 rounded-2xl shadow-2xs relative overflow-hidden">
+          <div className="p-4 sm:p-5 bg-white border-2 border-slate-900 rounded-2xl shadow-xs relative overflow-hidden">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-900">
                 5. Lợi nhuận dự kiến
               </span>
               <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
                 <TrendingUp className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className={`text-lg sm:text-xl font-extrabold mt-1 truncate ${
-              data?.summary && data.summary.expectedProfit >= 0 ? 'text-blue-600' : 'text-rose-600'
-            }`}>
+            <div className={`text-lg sm:text-xl font-extrabold mt-1 truncate ${data?.summary && data.summary.expectedProfit >= 0 ? 'text-blue-600' : 'text-rose-600'
+              }`}>
               {data?.summary ? formatCurrency(data.summary.expectedProfit) : '0 ₫'}
             </div>
             <p className="text-[10px] text-slate-400 mt-1 font-medium truncate">Thu đủ 100%: Doanh thu - Vốn</p>
@@ -416,9 +415,8 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
                 <DollarSign className="w-3.5 h-3.5" />
               </div>
             </div>
-            <div className={`text-lg sm:text-xl font-black mt-1 truncate ${
-              data?.summary && data.summary.actualProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'
-            }`}>
+            <div className={`text-lg sm:text-xl font-black mt-1 truncate ${data?.summary && data.summary.actualProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'
+              }`}>
               {data?.summary ? formatCurrency(data.summary.actualProfit) : '0 ₫'}
             </div>
             <p className="text-[10px] text-slate-500 mt-1 font-bold truncate">Dòng tiền thực: Đã thu - Vốn</p>
@@ -444,7 +442,7 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
 
         {/* Main Card */}
         <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
-          
+
           {/* Sub-Header + Chuyển Chế Độ Xem Bán Hàng / Nhập Kho */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div className="flex items-center gap-3">
@@ -468,11 +466,10 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
               <button
                 type="button"
                 onClick={() => setViewMode('sales')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  viewMode === 'sales'
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'sales'
                     ? 'bg-white text-slate-900 shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
-                }`}
+                  }`}
               >
                 <Receipt className="w-3.5 h-3.5" />
                 <span>1. Doanh thu bán hàng ({data?.items ? data.items.length : 0})</span>
@@ -481,11 +478,10 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
               <button
                 type="button"
                 onClick={() => setViewMode('imports')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  viewMode === 'imports'
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'imports'
                     ? 'bg-white text-slate-900 shadow-2xs'
                     : 'text-slate-600 hover:text-slate-900'
-                }`}
+                  }`}
               >
                 <Warehouse className="w-3.5 h-3.5" />
                 <span>2. Tiền nhập kho ({data?.stockImports ? data.stockImports.length : 0})</span>

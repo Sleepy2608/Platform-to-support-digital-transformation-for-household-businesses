@@ -56,7 +56,7 @@ const MANAGE_NAV_ITEMS: Array<{
   },
   {
     label: 'Đơn hàng',
-    href: '/owner/orders/history',
+    href: '/owner/orders/new',
     icon: ReceiptText,
     path: '/owner/orders',
     children: [
