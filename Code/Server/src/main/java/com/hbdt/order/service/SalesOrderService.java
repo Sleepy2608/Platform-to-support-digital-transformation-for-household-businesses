@@ -4,6 +4,7 @@ import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
 import com.hbdt.entity.SalesOrder;
 import com.hbdt.entity.SalesOrderItem;
+import com.hbdt.entity.Customer;
 import com.hbdt.entity.Product;
 import com.hbdt.entity.Unit;
 import com.hbdt.entity.User;
@@ -31,10 +32,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.hbdt.revenue.service.RevenueLedgerService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +60,7 @@ public class SalesOrderService {
     private final InventoryMovementService inventoryMovementService;
     private final CustomerRepository customerRepository;
     private final DebtTransactionRepository debtTransactionRepository;
+    private final RevenueLedgerService revenueLedgerService;
 
     public SalesOrderService(
             SalesOrderRepository salesOrderRepository,
@@ -67,7 +72,8 @@ public class SalesOrderService {
             UnitRepository unitRepository,
             InventoryMovementService inventoryMovementService,
             CustomerRepository customerRepository,
-            DebtTransactionRepository debtTransactionRepository
+            DebtTransactionRepository debtTransactionRepository,
+            RevenueLedgerService revenueLedgerService
     ) {
         this.salesOrderRepository = salesOrderRepository;
         this.salesOrderItemRepository = salesOrderItemRepository;
@@ -79,6 +85,7 @@ public class SalesOrderService {
         this.inventoryMovementService = inventoryMovementService;
         this.customerRepository = customerRepository;
         this.debtTransactionRepository = debtTransactionRepository;
+        this.revenueLedgerService = revenueLedgerService;
     }
 
     @Transactional
@@ -115,8 +122,9 @@ public class SalesOrderService {
         }
         BigDecimal debtAmount = totalAmount.subtract(paidAmount);
         BigDecimal customerDebtBefore = BigDecimal.ZERO;
+        Customer debtCustomer = null;
         if (request.customerId() != null) {
-            (debtAmount.signum() > 0
+            debtCustomer = (debtAmount.signum() > 0
                     ? customerRepository.findActiveForUpdate(request.customerId(), businessId)
                     : customerRepository.findByIdAndBusinessIdAndStatus(request.customerId(), businessId, "ACTIVE"))
                     .orElseThrow(() -> new BadRequestException(
@@ -159,10 +167,13 @@ public class SalesOrderService {
             ));
         }
         List<SalesOrderItem> savedItems = salesOrderItemRepository.saveAll(pricedItems);
+        revenueLedgerService.recordRevenueForOrder(order, savedItems);
         if (debtAmount.signum() > 0) {
+            BigDecimal balanceAfter = customerDebtBefore.add(debtAmount);
             recordDebtTransaction(
-                    order, actor.getId(), "DEBT_INCREASE", debtAmount, customerDebtBefore.add(debtAmount),
+                    order, actor.getId(), "DEBT_INCREASE", debtAmount, balanceAfter,
                     "Phát sinh công nợ từ đơn " + order.getOrderCode(), "DEBT-SO-" + order.getId());
+            debtCustomer.setDebtBalance(balanceAfter);
         }
         return toResponse(order, savedItems);
     }
@@ -198,7 +209,7 @@ public class SalesOrderService {
         if (normalizedPayment.compareTo(order.getDebtAmount()) > 0) {
             throw new BadRequestException("Số tiền thanh toán không được vượt quá số còn nợ");
         }
-        customerRepository.findActiveForUpdate(order.getCustomerId(), businessId)
+        Customer customer = customerRepository.findActiveForUpdate(order.getCustomerId(), businessId)
                 .orElseThrow(() -> new BadRequestException("Khách hàng không còn hoạt động"));
         BigDecimal balanceBefore = currentCustomerDebt(businessId, order.getCustomerId());
         BigDecimal balanceAfter = balanceBefore.subtract(normalizedPayment);
@@ -215,6 +226,7 @@ public class SalesOrderService {
                 order, actor.getId(), "PAYMENT", normalizedPayment, balanceAfter,
                 "Thanh toán công nợ đơn " + order.getOrderCode(),
                 "PAY-SO-" + order.getId() + "-" + shortId());
+        customer.setDebtBalance(balanceAfter);
         return toResponse(order, salesOrderItemRepository.findAllBySalesOrderIdOrderByIdAsc(orderId));
     }
 
@@ -259,7 +271,7 @@ public class SalesOrderService {
                     actorUsername, item.getProductId(), item.getBaseQuantity(), orderId, order.getOrderCode());
         }
         if (order.getDebtAmount().signum() > 0 && order.getCustomerId() != null) {
-            customerRepository.findActiveForUpdate(order.getCustomerId(), businessId)
+            Customer customer = customerRepository.findActiveForUpdate(order.getCustomerId(), businessId)
                     .orElseThrow(() -> new BadRequestException("Khách hàng không còn hoạt động"));
             BigDecimal balanceAfter = currentCustomerDebt(businessId, order.getCustomerId())
                     .subtract(order.getDebtAmount());
@@ -269,10 +281,12 @@ public class SalesOrderService {
             recordDebtTransaction(
                     order, actor.getId(), "VOID", order.getDebtAmount(), balanceAfter,
                     "Đảo công nợ do hủy đơn " + order.getOrderCode(), "REV-SO-" + order.getId());
+            customer.setDebtBalance(balanceAfter);
             order.setDebtAmount(BigDecimal.ZERO.setScale(0));
         }
         order.setStatus("CANCELLED");
         salesOrderRepository.save(order);
+        revenueLedgerService.voidRevenueForOrder(businessId, order.getId());
         return toResponse(order, items);
     }
 
@@ -282,6 +296,8 @@ public class SalesOrderService {
             String keyword,
             String status,
             String source,
+            LocalDate fromDate,
+            LocalDate toDate,
             int page,
             int size
     ) {
@@ -293,6 +309,8 @@ public class SalesOrderService {
                 normalizeFilter(keyword, false),
                 normalizeFilter(status, true),
                 normalizeFilter(source, true),
+                fromDate != null ? fromDate.atStartOfDay() : null,
+                toDate != null ? toDate.atTime(LocalTime.MAX) : null,
                 PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"))
         ).map(this::toSummaryResponse);
         return SalesOrderPageResponse.from(result);

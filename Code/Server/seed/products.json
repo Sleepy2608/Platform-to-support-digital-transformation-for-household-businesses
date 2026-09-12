@@ -1,6 +1,6 @@
 {
   "table" : "products",
-  "version" : 11,
+  "version" : 12,
   "rows" : [ {
     "id" : 5,
     "base_unit_id" : 1,
@@ -202,13 +202,13 @@
     "business_id" : 5,
     "category_id" : 4,
     "created_at" : "2026-08-27T03:08:35.875722",
-    "default_tax_activity_group_id" : null,
+    "default_tax_activity_group_id" : 1,
     "description" : "Rong biển ăn liền vị cay",
     "image_url" : null,
     "product_code" : "SP001",
     "product_name" : "Rong Biển Ăn Liền",
     "status" : "ACTIVE",
-    "updated_at" : "2026-08-27T03:08:35.875722",
+    "updated_at" : "2026-09-08T08:44:03.270964",
     "sale_price" : 15000.00,
     "minimum_stock" : null
   }, {
@@ -217,13 +217,13 @@
     "business_id" : 5,
     "category_id" : 5,
     "created_at" : "2026-08-27T03:08:35.895775",
-    "default_tax_activity_group_id" : null,
+    "default_tax_activity_group_id" : 1,
     "description" : "Nước giải khát có ga",
     "image_url" : null,
     "product_code" : "SP002",
     "product_name" : "Nước Ngọt Cola",
     "status" : "ACTIVE",
-    "updated_at" : "2026-08-27T03:08:35.895775",
+    "updated_at" : "2026-09-08T08:48:04.201906",
     "sale_price" : 12000.00,
     "minimum_stock" : null
   }, {

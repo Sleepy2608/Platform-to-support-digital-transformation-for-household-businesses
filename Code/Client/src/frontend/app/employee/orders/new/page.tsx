@@ -221,18 +221,30 @@ export function CreateOrderPage() {
   };
 
   return (
-    <div className="min-h-screen p-5 sm:p-8 lg:p-10">
+    <div className="min-h-screen bg-slate-100/70 p-4 sm:p-8 lg:p-10 select-none" style={{ cursor: 'default' }}>
       <div className="mx-auto max-w-6xl space-y-6">
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        {/* Page Title Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Bán hàng</p>
-            <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">Tạo đơn tại quầy</h1>
-            <p className="mt-2 text-sm text-slate-500">Tìm sản phẩm, chọn số lượng và xác nhận đơn ngay trên điện thoại hoặc máy tính.</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight select-none" style={{ userSelect: 'none' }}>
+              Tạo đơn tại quầy
+            </h1>
+            <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1 select-none" style={{ userSelect: 'none' }}>
+              Tìm sản phẩm, chọn số lượng và xác nhận đơn ngay trên điện thoại hoặc máy tính
+            </p>
           </div>
-          <button onClick={() => setCartOpen(true)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white">
-            <ShoppingCart className="h-4 w-4" /> Giỏ hàng ({items.length})
-          </button>
-        </header>
+          <div className="flex items-center gap-3 self-start sm:self-auto">
+            <span className="px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-bold text-slate-700">
+              Bán hàng
+            </span>
+            <button
+              onClick={() => setCartOpen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-slate-800 transition cursor-pointer"
+            >
+              <ShoppingCart className="h-4 w-4" /> Giỏ hàng ({items.length})
+            </button>
+          </div>
+        </div>
         {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</div>}
         <AiOrderInput onApply={applyAiProposal} cartHasItems={items.length > 0} />
         <ProductSearchPicker

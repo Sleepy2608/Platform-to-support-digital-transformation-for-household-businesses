@@ -26,6 +26,10 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long>, J
 
     List<SalesOrder> findByCustomerIdAndBusinessId(Long customerId, Long businessId);
 
+    List<SalesOrder> findAllByBusinessIdAndStatus(Long businessId, String status);
+
+    List<SalesOrder> findAllByStatus(String status);
+
     Page<SalesOrder> findAllByBusinessIdOrderByCreatedAtDesc(Long businessId, Pageable pageable);
 
     @Query("""
@@ -34,12 +38,16 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long>, J
           and (:keyword is null or lower(salesOrder.orderCode) like lower(concat('%', :keyword, '%')))
           and (:status is null or salesOrder.status = :status)
           and (:source is null or salesOrder.source = :source)
+          and (:startDate is null or salesOrder.createdAt >= :startDate)
+          and (:endDate is null or salesOrder.createdAt <= :endDate)
         """)
     Page<SalesOrder> searchByBusiness(
             @Param("businessId") Long businessId,
             @Param("keyword") String keyword,
             @Param("status") String status,
             @Param("source") String source,
+            @Param("startDate") java.time.LocalDateTime startDate,
+            @Param("endDate") java.time.LocalDateTime endDate,
             Pageable pageable
     );
 
@@ -64,6 +72,37 @@ public interface SalesOrderRepository extends JpaRepository<SalesOrder, Long>, J
             @Param("businessId") Long businessId,
             @Param("customerId") Long customerId,
             Pageable pageable);
+
+    @Query("""
+        SELECT o FROM SalesOrder o
+        WHERE o.businessId = :businessId
+          AND o.customerId = :customerId
+          AND (:keyword IS NULL OR LOWER(o.orderCode) LIKE LOWER(CONCAT('%', :keyword, '%')))
+          AND (CAST(:startDate as timestamp) IS NULL OR o.createdAt >= :startDate)
+          AND (CAST(:endDate as timestamp) IS NULL OR o.createdAt <= :endDate)
+          AND (:paymentStatus IS NULL OR o.paymentStatus = :paymentStatus)
+        ORDER BY o.createdAt DESC
+        """)
+    Page<SalesOrder> searchCustomerPurchaseHistory(
+            @Param("businessId") Long businessId,
+            @Param("customerId") Long customerId,
+            @Param("keyword") String keyword,
+            @Param("startDate") java.time.LocalDateTime startDate,
+            @Param("endDate") java.time.LocalDateTime endDate,
+            @Param("paymentStatus") PaymentStatus paymentStatus,
+            Pageable pageable
+    );
+
+    @Query("""
+        SELECT COALESCE(SUM(o.totalAmount), 0) FROM SalesOrder o
+        WHERE o.businessId = :businessId
+          AND o.customerId = :customerId
+          AND o.status = 'CONFIRMED'
+        """)
+    java.math.BigDecimal sumTotalAmountByCustomer(
+            @Param("businessId") Long businessId,
+            @Param("customerId") Long customerId
+    );
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             select salesOrder from SalesOrder salesOrder

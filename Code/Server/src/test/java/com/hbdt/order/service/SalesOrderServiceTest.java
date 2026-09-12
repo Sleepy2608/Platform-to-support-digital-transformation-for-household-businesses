@@ -18,6 +18,7 @@ import com.hbdt.repository.DebtTransactionRepository;
 import com.hbdt.repository.UserRepository;
 import com.hbdt.repository.ProductRepository;
 import com.hbdt.repository.UnitRepository;
+import com.hbdt.revenue.service.RevenueLedgerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +51,7 @@ class SalesOrderServiceTest {
     @Mock private InventoryMovementService inventoryMovementService;
     @Mock private CustomerRepository customerRepository;
     @Mock private DebtTransactionRepository debtTransactionRepository;
+    @Mock private RevenueLedgerService revenueLedgerService;
 
     private SalesOrderService service;
 
@@ -58,7 +60,8 @@ class SalesOrderServiceTest {
         service = new SalesOrderService(
                 salesOrderRepository, salesOrderItemRepository, productPricingService,
                 businessContextService, userRepository, productRepository, unitRepository,
-                inventoryMovementService, customerRepository, debtTransactionRepository
+                inventoryMovementService, customerRepository, debtTransactionRepository,
+                revenueLedgerService
         );
     }
 
@@ -68,9 +71,9 @@ class SalesOrderServiceTest {
         when(userRepository.findByUsername("owner")).thenReturn(Optional.of(User.builder().id(7L).build()));
         when(salesOrderRepository.existsByBusinessIdAndOrderCodeIgnoreCase(5L, "SO-001"))
                 .thenReturn(false);
-        when(customerRepository.findActiveForUpdate(22L, 5L))
-                .thenReturn(Optional.of(Customer.builder()
-                        .id(22L).businessId(5L).status("ACTIVE").build()));
+        Customer customer = Customer.builder()
+                .id(22L).businessId(5L).status("ACTIVE").debtBalance(new BigDecimal("50000")).build();
+        when(customerRepository.findActiveForUpdate(22L, 5L)).thenReturn(Optional.of(customer));
         when(debtTransactionRepository.findFirstByBusinessIdAndCustomerIdOrderByIdDesc(5L, 22L))
                 .thenReturn(Optional.of(DebtTransaction.builder().balanceAfter(new BigDecimal("50000")).build()));
         when(productPricingService.snapshotOrderItemPrice(any(), any(SalesOrderItem.class)))
@@ -139,6 +142,7 @@ class SalesOrderServiceTest {
         verify(debtTransactionRepository).save(debtCaptor.capture());
         assertThat(debtCaptor.getValue().getTransactionType()).isEqualTo("DEBT_INCREASE");
         assertThat(debtCaptor.getValue().getBalanceAfter()).isEqualByComparingTo("1780000");
+        assertThat(customer.getDebtBalance()).isEqualByComparingTo("1780000");
     }
 
     @Test
@@ -190,8 +194,9 @@ class SalesOrderServiceTest {
         when(businessContextService.requireBusinessId("owner")).thenReturn(5L);
         when(userRepository.findByUsername("owner")).thenReturn(Optional.of(User.builder().id(7L).build()));
         when(salesOrderRepository.findForUpdateByIdAndBusinessId(100L, 5L)).thenReturn(Optional.of(order));
-        when(customerRepository.findActiveForUpdate(22L, 5L)).thenReturn(Optional.of(
-                Customer.builder().id(22L).businessId(5L).status("ACTIVE").build()));
+        Customer customer = Customer.builder()
+                .id(22L).businessId(5L).status("ACTIVE").debtBalance(new BigDecimal("250000")).build();
+        when(customerRepository.findActiveForUpdate(22L, 5L)).thenReturn(Optional.of(customer));
         when(debtTransactionRepository.findFirstByBusinessIdAndCustomerIdOrderByIdDesc(5L, 22L))
                 .thenReturn(Optional.of(DebtTransaction.builder().balanceAfter(new BigDecimal("250000")).build()));
         when(salesOrderItemRepository.findAllBySalesOrderIdOrderByIdAsc(100L)).thenReturn(List.of(item));
@@ -205,6 +210,7 @@ class SalesOrderServiceTest {
         verify(debtTransactionRepository).save(captor.capture());
         assertThat(captor.getValue().getTransactionType()).isEqualTo("PAYMENT");
         assertThat(captor.getValue().getBalanceAfter()).isEqualByComparingTo("200000");
+        assertThat(customer.getDebtBalance()).isEqualByComparingTo("200000");
     }
 
     @Test

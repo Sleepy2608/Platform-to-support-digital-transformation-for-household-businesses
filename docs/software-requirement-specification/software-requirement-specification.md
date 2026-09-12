@@ -8,11 +8,13 @@
 
 **Viết tắt:** HBDT
 
-**Phiên bản:** 1.1
+**Phiên bản:** 1.3
 
 **Loại tài liệu:** Đặc tả yêu cầu phần mềm
 
 **Môn học:** Lập trình Java
+
+**Cập nhật gần đây:** 12/09/2026
 
 ---
 
@@ -163,18 +165,21 @@ Hệ thống cung cấp các chức năng chính sau.
 - Đăng xuất
 - Đặt lại mật khẩu
 - Xác thực JWT
+- Xử lý refresh token và 401 khi token hết hạn
 - Phân quyền theo vai trò
 
 ### Quản lý gói thuê bao (Quản lý gói thuê bao)
 
 - Đăng ký thuê bao
 - Chọn gói dịch vụ
-- Thanh toán
+- Thanh toán và xác nhận giao dịch
 - Kích hoạt dịch vụ
 - Gia hạn
 - Nâng cấp gói
 - Hạ cấp gói
 - Tạo hóa đơn dịch vụ
+- Quản lý gói đăng ký của Owner từ vai trò Manager
+- Theo dõi trạng thái subscription và lịch sử thay đổi gói
 
 ### Quản lý sản phẩm (Quản lý sản phẩm)
 
@@ -229,11 +234,14 @@ Hệ thống cung cấp các chức năng chính sau.
 ### Báo cáo & Phân tích (Báo cáo và phân tích)
 
 - Báo cáo doanh thu
+- Revenue ledger chi tiết theo ngày / theo hóa đơn
+- Báo cáo lợi nhuận sau khi trừ stock import cost
 - Báo cáo công nợ
 - Báo cáo tồn kho
 - Sản phẩm bán chạy
 - Bảng điều khiển (Dashboard)
 - Biểu đồ
+- Theo dõi stock adjustment và bookkeeping tự động
 
 ### Quản trị viên (Quản trị viên)
 
@@ -2923,14 +2931,25 @@ Các yêu cầu phi chức năng sau đây xác định các thuộc tính chấ
 
 ---
 
-### NFR-02 Kiểm soát truy cập dựa trên vai trò
+### NFR-02 Kiểm soát truy cập dựa trên vai trò (RBAC)
 
 | Thuộc tính | Mô tả |
 |-----------|-------------|
 | ID | NFR-02 |
 | Tên | Kiểm soát truy cập dựa trên vai trò |
-| Mô tả | Hệ thống phải áp dụng kiểm soát truy cập nghiêm ngặt cho ba vai trò: Nhân viên, Chủ hộ kinh doanh và Quản trị viên. |
+| Mô tả | Hệ thống phải áp dụng kiểm soát truy cập nghiêm ngặt dựa trên vai trò (Role-Based Access Control - RBAC) cho 4 vai trò: Nhân viên (Employee), Chủ hộ kinh doanh (Owner), Quản lý vận hành (Manager), và Quản trị viên hệ thống (Admin). |
 | Tiêu chí chấp nhận | Mỗi vai trò chỉ có thể truy cập và thực hiện các chức năng được định nghĩa cho vai trò đó; các chức năng ngoài phạm vi quyền không thể được truy cập hoặc thực thi. |
+
+#### Ma trận Phân quyền (RBAC Matrix)
+
+| Chức năng (Feature) | Employee | Owner | Manager | Admin |
+|---|:---:|:---:|:---:|:---:|
+| Đăng nhập & Tạo đơn bán tại quầy | Yes | Yes | No | No |
+| Duyệt đơn nháp từ AI (Draft Order) | Yes | Yes | No | No |
+| Quản lý Kho & Danh mục sản phẩm | No | Yes | No | No |
+| Xem & Xuất sổ kế toán (S1, S2, S4) | No | Yes | No | No |
+| Quản lý tài khoản Chủ cửa hàng (Owner) | No | No | Yes | Yes |
+| Cấu hình Tham số AI & Bảng giá Gói dịch vụ | No | No | No | Yes |
 
 ---
 

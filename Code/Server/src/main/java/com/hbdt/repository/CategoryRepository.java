@@ -4,10 +4,14 @@ import com.hbdt.entity.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface CategoryRepository extends JpaRepository<Category, Long>, JpaSpecificationExecutor<Category> {
     Optional<Category> findByIdAndBusinessId(Long id, Long businessId);
+
+    List<Category> findAllByBusinessIdAndIdIn(Long businessId, Collection<Long> ids);
 
     boolean existsByBusinessIdAndCategoryCodeIgnoreCase(Long businessId, String categoryCode);
 

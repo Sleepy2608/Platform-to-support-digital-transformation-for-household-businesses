@@ -7,11 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:low-stock": "node --no-warnings --test --experimental-strip-types tests/lowStockViewModel.test.ts"
+    "test:low-stock": "node --no-warnings --test --experimental-strip-types tests/lowStockViewModel.test.ts",
+    "test:current-stock": "node --no-warnings --test --experimental-strip-types tests/currentStockViewModel.test.ts",
+    "test:inventory": "npm run test:low-stock && npm run test:current-stock"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",
     "framer-motion": "^12.42.2",
+    "jspdf": "^4.2.1",
     "lucide-react": "^1.26.0",
     "next": "16.2.11",
     "react": "19.2.4",

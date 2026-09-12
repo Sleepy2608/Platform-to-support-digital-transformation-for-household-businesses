@@ -1,6 +1,6 @@
 {
   "table" : "service_invoices",
-  "version" : 9,
+  "version" : 10,
   "rows" : [ {
     "id" : 1,
     "amount" : 11976000.00,
@@ -9,7 +9,13 @@
     "due_date" : "2026-08-23T14:15:54.691587",
     "invoice_no" : "INV-A4C95D12",
     "status" : "PAID",
-    "subscription_id" : 5
+    "subscription_id" : 5,
+    "duration" : 0,
+    "invoice_code" : "",
+    "total_amount" : 0.00,
+    "unit_price" : 0.00,
+    "plan_id" : 0,
+    "user_id" : 0
   }, {
     "id" : 2,
     "amount" : 11976000.00,
@@ -18,7 +24,13 @@
     "due_date" : "2026-08-25T17:34:34.913944",
     "invoice_no" : "INV-4FEFE0EA",
     "status" : "PAID",
-    "subscription_id" : 5
+    "subscription_id" : 5,
+    "duration" : 0,
+    "invoice_code" : "",
+    "total_amount" : 0.00,
+    "unit_price" : 0.00,
+    "plan_id" : 0,
+    "user_id" : 0
   }, {
     "id" : 3,
     "amount" : 299000.00,
@@ -27,7 +39,13 @@
     "due_date" : "2026-08-30T05:49:48.136242",
     "invoice_no" : "INV-68CE4678",
     "status" : "PAID",
-    "subscription_id" : 11
+    "subscription_id" : 11,
+    "duration" : 0,
+    "invoice_code" : "",
+    "total_amount" : 0.00,
+    "unit_price" : 0.00,
+    "plan_id" : 0,
+    "user_id" : 0
   }, {
     "id" : 4,
     "amount" : 199000.00,
@@ -36,7 +54,13 @@
     "due_date" : "2026-09-02T09:50:55.158765",
     "invoice_no" : "INV-D44FDA38",
     "status" : "PAID",
-    "subscription_id" : 13
+    "subscription_id" : 13,
+    "duration" : 0,
+    "invoice_code" : "",
+    "total_amount" : 0.00,
+    "unit_price" : 0.00,
+    "plan_id" : 0,
+    "user_id" : 0
   }, {
     "id" : 5,
     "amount" : 199000.00,
@@ -45,7 +69,13 @@
     "due_date" : "2026-09-02T09:54:21.985205",
     "invoice_no" : "INV-2482ED84",
     "status" : "PAID",
-    "subscription_id" : 13
+    "subscription_id" : 13,
+    "duration" : 0,
+    "invoice_code" : "",
+    "total_amount" : 0.00,
+    "unit_price" : 0.00,
+    "plan_id" : 0,
+    "user_id" : 0
   }, {
     "id" : 6,
     "amount" : 399000.00,
@@ -54,7 +84,13 @@
     "due_date" : "2026-09-02T09:55:12.922802",
     "invoice_no" : "INV-FAD20DF5",
     "status" : "PAID",
-    "subscription_id" : 14
+    "subscription_id" : 14,
+    "duration" : 0,
+    "invoice_code" : "",
+    "total_amount" : 0.00,
+    "unit_price" : 0.00,
+    "plan_id" : 0,
+    "user_id" : 0
   }, {
     "id" : 7,
     "amount" : 199000.00,
@@ -63,7 +99,13 @@
     "due_date" : "2026-09-02T10:16:40.788755",
     "invoice_no" : "INV-A5870351",
     "status" : "PAID",
-    "subscription_id" : 15
+    "subscription_id" : 15,
+    "duration" : 0,
+    "invoice_code" : "",
+    "total_amount" : 0.00,
+    "unit_price" : 0.00,
+    "plan_id" : 0,
+    "user_id" : 0
   }, {
     "id" : 8,
     "amount" : 199000.00,
@@ -72,6 +114,12 @@
     "due_date" : "2026-09-02T14:47:46.788552",
     "invoice_no" : "INV-A60E3EBA",
     "status" : "PAID",
-    "subscription_id" : 16
+    "subscription_id" : 16,
+    "duration" : 0,
+    "invoice_code" : "",
+    "total_amount" : 0.00,
+    "unit_price" : 0.00,
+    "plan_id" : 0,
+    "user_id" : 0
   } ]
 }

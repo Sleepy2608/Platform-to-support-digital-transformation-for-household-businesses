@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  Store, UserCircle, Lock, Mail, CreditCard,
+  Store, UserCircle, Lock, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
-  Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing,
-  Building2, ShieldCheck,
+  Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing, UserSearch,
+  Building2, ShieldCheck, ClipboardList, ShoppingCart, Warehouse, TrendingUp,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -49,19 +49,24 @@ const MANAGE_NAV_ITEMS: Array<{
     path: '/owner/products',
     children: [
       { label: 'Danh sách sản phẩm', href: '/owner/products', icon: PackageOpen },
+      { label: 'Tồn kho hiện tại', href: '/owner/inventory', icon: Warehouse },
+      { label: 'Nhập kho', href: '/owner/products/stock-import', icon: ClipboardList },
       { label: 'Cảnh báo tồn kho', href: '/owner/inventory-alerts', icon: BellRing },
     ],
   },
   {
     label: 'Đơn hàng',
-    href: '/owner/orders/history',
+    href: '/owner/orders/new',
     icon: ReceiptText,
     path: '/owner/orders',
     children: [
+      { label: 'Tạo đơn tại quầy', href: '/owner/orders/new', icon: ShoppingCart },
       { label: 'Danh sách đơn hàng', href: '/owner/orders/history', icon: ListOrdered },
       { label: 'Tạo đơn hàng', href: '/owner/orders/new', icon: ReceiptText },
     ],
   },
+  { label: 'Doanh thu', href: '/owner/revenue', icon: TrendingUp, path: '/owner/revenue' },
+  { label: 'Khách hàng', href: '/owner/customers', icon: UserSearch, path: '/owner/customers' },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
 ];
 
@@ -293,7 +298,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                   {MANAGE_NAV_ITEMS.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname.startsWith(item.path) ||
-                      Boolean(item.children?.some(child => pathname === child.href || pathname.startsWith(child.href)));
+                      Boolean(item.children?.some(child => pathname === child.href));
                     const hasInventoryAlertsChild = item.children?.some(child => child.href === '/owner/inventory-alerts');
 
                     return (
