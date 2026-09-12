@@ -9,6 +9,18 @@ import org.hibernate.type.SqlTypes;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * Immutable snapshot of a template's configuration at a point in time.
+ *
+ * <p>Core versioning rule: once persisted, a version's
+ * {@code templateSchema} is <b>never</b> modified. Any change to
+ * the template configuration creates a new version row with an
+ * incremented {@code versionNumber}.</p>
+ *
+ * <p>{@link GeneratedReport} links to a specific version (not the
+ * parent template) so that historical reports always reflect the
+ * exact layout they were generated with.</p>
+ */
 @Entity
 @Table(name = "report_template_versions", uniqueConstraints = @UniqueConstraint(
         name = "uk_report_template_versions_number",
@@ -31,9 +43,20 @@ public class ReportTemplateVersion {
     @Column(name = "created_by", columnDefinition = "BIGINT UNSIGNED")
     private Long createdBy;
 
-    @Column(name = "version_number", nullable = false, length = 30)
-    private String versionNumber;
+    /**
+     * Who (admin user ID) authored this particular version.
+     * Distinct from {@code createdBy} which may track the original creator.
+     */
+    @Column(name = "updated_by", columnDefinition = "BIGINT UNSIGNED")
+    private Long updatedBy;
 
+    @Column(name = "version_number", nullable = false)
+    private Integer versionNumber;
+
+    /**
+     * The full template layout/configuration stored as JSON.
+     * This is the immutable "schema" that report generation reads from.
+     */
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "template_schema", nullable = false, columnDefinition = "json")
     private JsonNode templateSchema;
@@ -45,11 +68,26 @@ public class ReportTemplateVersion {
     private LocalDate effectiveTo;
 
     @Column(name = "status", nullable = false, length = 20)
-    private String status;
+    @Builder.Default
+    private String status = "ACTIVE";
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
