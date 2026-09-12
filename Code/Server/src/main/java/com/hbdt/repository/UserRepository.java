@@ -69,4 +69,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByBusinessIdAndRole_Name(Long businessId, RoleType roleType);
 
     List<User> findAllByBusinessIdAndStatus(Long businessId, UserStatus status);
+
+    @Query("select u from User u join fetch u.role r where u.status = :status and u.businessId is not null and r.name in :roles")
+    List<User> findAnnouncementRecipients(@Param("status") UserStatus status,
+            @Param("roles") java.util.Collection<RoleType> roles);
 }
