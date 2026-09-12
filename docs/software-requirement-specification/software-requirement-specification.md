@@ -1701,11 +1701,11 @@ HBDT-07.3
 
 ### Tên yêu cầu
 
-Ghi nhận công nợ
+Ghi nhận công nợ tự động (Automatic Debt Bookkeeping)
 
 ### Mô tả
 
-Nhân viên có thể ghi nhận công nợ khách hàng trong quá trình thanh toán.
+Hệ thống tự động phát sinh và ghi nhận giao dịch công nợ khi đơn bán hàng được xác nhận mà khách hàng chưa thanh toán đủ số tiền.
 
 ### Độ ưu tiên
 
@@ -1713,18 +1713,26 @@ P0 – Bắt buộc
 
 ### Tác nhân
 
-Nhân viên
+Nhân viên bán hàng, Chủ hộ kinh doanh, Hệ thống (tự động)
 
-### Luồng chính
+### Quy tắc nghiệp vụ
 
-1. Nhân viên tạo đơn hàng.
-2. Khách hàng chọn mua chịu.
-3. Khoản công nợ chưa thanh toán được ghi nhận.
-4. Số dư công nợ của khách hàng được cập nhật.
+1. **Phát sinh công nợ theo thanh toán ban đầu**:
+   - `paidAmount = totalAmount`: Khách trả đủ ngay → Không phát sinh nợ, không tạo `DebtTransaction`.
+   - `paidAmount = 0`: Mua chịu toàn bộ → Phát sinh nợ = `totalAmount`. Bắt buộc phải chọn khách hàng (`customerId != null`).
+   - `0 < paidAmount < totalAmount`: Mua chịu một phần → Phát sinh nợ = `totalAmount - paidAmount`. Bắt buộc phải chọn khách hàng (`customerId != null`).
+2. **Ghi sổ nhật ký công nợ**:
+   - Hệ thống tự động tạo đúng một bản ghi `DebtTransaction` với loại `transactionType = DEBT_INCREASE`, trạng thái `status = ACTIVE`.
+   - `balanceAfter` được tính bằng số dư nợ hiện tại của khách hàng cộng thêm số nợ mới phát sinh.
+   - `Customer.debtBalance` được cập nhật đồng bộ chính xác với `balanceAfter`.
+3. **Đảo nợ khi hủy đơn**:
+   - Khi đơn hàng có công nợ bị hủy (`CANCELLED`), hệ thống tự động tạo giao dịch `DebtTransaction` loại `VOID` để đảo đúng số tiền nợ còn lại của đơn (`salesOrder.debtAmount`), giảm nợ khách hàng về trạng thái trước đó.
 
 ### Tiêu chí chấp nhận
 
-Số dư công nợ được cập nhật ngay lập tức.
+- [x] Đơn hàng có công nợ nhưng không chọn khách hàng phải bị từ chối với lỗi rõ ràng.
+- [x] Giao dịch loại `DEBT_INCREASE` được tạo tự động với đầy đủ `transactionCode`, `amount`, `balanceAfter`, `status = ACTIVE`.
+- [x] Số dư công nợ của khách hàng `Customer.debtBalance` khớp hoàn toàn với `balanceAfter`.
 
 ---
 
@@ -1736,23 +1744,66 @@ HBDT-07.4
 
 ### Tên yêu cầu
 
-Thanh toán công nợ
+Thanh toán và khấu trừ công nợ khách hàng
 
 ### Mô tả
 
-Chủ hộ kinh doanh phải ghi nhận các khoản thanh toán công nợ.
+Chủ hộ kinh doanh hoặc nhân viên ghi nhận các khoản thu nợ từ khách hàng theo từng đơn bán hàng thông qua API thanh toán.
 
 ### Độ ưu tiên
 
 P0 – Bắt buộc
 
+### Tác nhân
+
+Chủ hộ kinh doanh, Nhân viên thu ngân
+
+### API Endpoint
+
+`POST /api/payments`
+
+**Payload:**
+```json
+{
+  "orderId": 1,
+  "amount": 500000.00,
+  "paymentMethod": "CASH",
+  "referenceNumber": "REF-12345",
+  "notes": "Khách trả tiền mặt đợt 1"
+}
+```
+
+### Quy tắc kiểm tra tính hợp lệ (Validation Rules)
+
+1. Đơn hàng phải tồn tại thuộc hộ kinh doanh hiện tại và đang ở trạng thái `CONFIRMED`. Đơn ở trạng thái khác (như `DRAFT`, `CANCELLED`) không được phép thu nợ.
+2. Số tiền thanh toán `amount` phải > 0.
+3. `amount` không được vượt quá số tiền còn nợ (`debtAmount`) của đơn hàng.
+4. `amount` không được vượt quá tổng số dư công nợ (`debtBalance`) hiện tại của khách hàng.
+5. `paymentMethod` bắt buộc là một trong hai hình thức: `CASH` (tiền mặt) hoặc `BANK_TRANSFER` (chuyển khoản ngân hàng).
+
+### Luồng xử lý và Cập nhật trạng thái
+
+1. Hệ thống tạo một bản ghi `DebtTransaction` với:
+   - `transactionType = PAYMENT`
+   - `amount = request.amount`
+   - `balanceAfter = currentBalance - request.amount`
+   - `status = ACTIVE`
+2. Cập nhật đơn hàng `SalesOrder`:
+   - `paidAmount = paidAmount + amount`
+   - `debtAmount = debtAmount - amount`
+   - `paymentStatus`: chuyển thành `PAID` nếu `debtAmount == 0`, hoặc `PARTIALLY_PAID` nếu `debtAmount > 0`
+   - `lastPaymentAt`: ghi nhận thời điểm thanh toán
+3. Cập nhật `Customer.debtBalance = balanceAfter`.
+
 ### Tiêu chí chấp nhận
 
-Số dư chưa thanh toán giảm chính xác.
+- [x] Thanh toán thành công cập nhật chính xác số dư nợ của khách hàng và đơn hàng.
+- [x] Bị từ chối nếu thanh toán số tiền <= 0 hoặc vượt nợ của đơn / khách hàng.
+- [x] Ghi nhận đầy đủ phương thức thanh toán và mã tham chiếu.
 
 ---
 
-## HBDT-07.5 Lịch sử công nợ
+## HBDT-07.5 Lịch sử và Báo cáo tổng quan công nợ
 
 ### Mã yêu cầu
 
@@ -1760,19 +1811,50 @@ HBDT-07.5
 
 ### Tên yêu cầu
 
-Lịch sử công nợ
+Lịch sử giao dịch và Tổng quan công nợ khách hàng
 
 ### Mô tả
 
-Hệ thống phải lưu trữ tất cả giao dịch công nợ.
+Hệ thống cung cấp danh sách chi tiết các biến động công nợ của khách hàng và đơn hàng, đồng thời tổng hợp các chỉ số công nợ theo thời gian thực.
 
 ### Độ ưu tiên
 
 P0 – Bắt buộc
 
+### Tác nhân
+
+Chủ hộ kinh doanh, Nhân viên kế toán / bán hàng
+
+### API Endpoints
+
+1. **Lịch sử công nợ theo khách hàng**:
+   `GET /api/payments/customers/{customerId}/history?page=0&size=20`
+   - Sắp xếp mặc định: `transactionDate DESC, id DESC` (giao dịch mới nhất lên đầu).
+   - Hỗ trợ phân trang an toàn: kiểm tra `page >= 0`, `1 <= size <= 100`.
+   - Mỗi bản ghi trả về: `transactionCode`, `orderCode`, `customerId`, `customerName`, `transactionType` (`DEBT_INCREASE`, `PAYMENT`, `ADJUSTMENT`, `VOID`), `amount`, `paymentMethod`, `referenceNumber`, `transactionDate`, `balanceAfter`, `createdBy`, `status` (`ACTIVE`, `VOIDED`), `notes`.
+   - Các giao dịch `VOID` (đảo nợ khi hủy đơn) vẫn hiển thị trong lịch sử để đảm bảo tính minh bạch kiểm toán.
+
+2. **Lịch sử thanh toán theo đơn hàng**:
+   `GET /api/payments/orders/{orderId}`
+   - Trả về danh sách các lần thanh toán (`PAYMENT`) của đơn hàng kèm thông tin người thu và phương thức.
+
+3. **Báo cáo tổng quan công nợ khách hàng**:
+   `GET /api/payments/customers/{customerId}/debt-summary`
+   - Trả về 4 chỉ số tài chính cốt lõi:
+     - `totalDebtIncreased`: Tổng số nợ phát sinh từ các đơn hàng (`sum(DEBT_INCREASE)`).
+     - `totalPaid`: Tổng số tiền khách đã trả nợ (`sum(PAYMENT)`).
+     - `totalVoid`: Tổng số tiền nợ đã được đảo do hủy đơn hàng (`sum(VOID)`).
+     - `currentBalance`: Số dư công nợ hiện tại của khách hàng (= `totalDebtIncreased - totalPaid - totalVoid + totalAdjusted`).
+
+4. **Tổng quan thanh toán của đơn hàng**:
+   `GET /api/payments/orders/{orderId}/summary`
+   - Trả về `totalAmount`, `paidAmount`, `debtAmount`, `paymentStatus`.
+
 ### Tiêu chí chấp nhận
 
-Lịch sử công nợ có thể được tìm kiếm.
+- [x] Lịch sử sắp xếp chuẩn theo ngày giờ và ID giảm dần.
+- [x] Tổng hợp công nợ tính toán chính xác tuyệt đối, bao gồm cả các khoản đảo nợ (`totalVoid`).
+- [x] Cô lập dữ liệu chặt chẽ theo tenant (`businessId`), không cho phép xem lịch sử khách hàng của hộ kinh doanh khác.
 
 ---
 
@@ -3112,10 +3194,9 @@ Hệ thống sử dụng MySQL để lưu trữ tất cả dữ liệu kinh doan
 | 9 | `product_units` | Nhiều đơn vị tính cho mỗi sản phẩm | `product_units` → `products` |
 | 10 | `inventory_transactions` | Ghi nhận nhập/xuất kho | `inventory_transactions` → `products`, `businesses` |
 | 11 | `inventory_balance` | Số lượng tồn kho hiện tại | `inventory_balance` → `products`, `product_units` |
-| 12 | `customers` | Thông tin khách hàng | `customers` → `businesses` |
-| 13 | `customer_debts` | Ghi nhận công nợ khách hàng | `customer_debts` → `customers`, `orders` |
-| 14 | `debt_payments` | Lịch sử thanh toán công nợ | `debt_payments` → `customers` |
-| 15 | `orders` | Đơn bán hàng | `orders` → `businesses`, `customers`, `users` |
+| 12 | `customers` | Thông tin khách hàng và số dư công nợ | `customers` → `businesses` |
+| 13 | `debt_transactions` | Sổ nhật ký giao dịch công nợ (phát sinh nợ, thanh toán, điều chỉnh, đảo nợ) | `debt_transactions` → `businesses`, `customers`, `orders`, `users` |
+| 14 | `orders` | Đơn bán hàng | `orders` → `businesses`, `customers`, `users` |
 | 16 | `order_items` | Chi tiết sản phẩm trong đơn hàng | `order_items` → `orders`, `products` |
 | 17 | `draft_orders` | Đơn hàng nháp do AI tạo | `draft_orders` → `businesses`, `customers` |
 | 18 | `draft_order_items` | Chi tiết sản phẩm trong đơn nháp | `draft_order_items` → `draft_orders`, `products` |
