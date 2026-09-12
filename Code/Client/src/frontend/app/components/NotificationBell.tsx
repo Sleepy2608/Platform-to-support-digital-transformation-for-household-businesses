@@ -311,7 +311,7 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
                       <div className="flex items-start justify-between gap-2">
                         <p className={`text-sm text-slate-900 ${notification.read ? 'font-semibold' : 'font-black'}`}>{notification.title}</p>
                       </div>
-                      <p className="mt-1 line-clamp-3 text-xs leading-5 text-slate-600">{notification.content}</p>
+                      <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5 text-slate-600">{notification.content}</p>
                       <div className="mt-2 flex items-center justify-between gap-2">
                         <time className="text-[11px] font-medium text-slate-400">{formatRelativeTime(notification.createdAt)}</time>
                         {!notification.read && (
