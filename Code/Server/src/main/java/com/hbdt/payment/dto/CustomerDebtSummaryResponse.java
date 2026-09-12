@@ -8,6 +8,8 @@ public record CustomerDebtSummaryResponse(
         String customerName,
         BigDecimal totalDebtIncreased,
         BigDecimal totalPaid,
+        BigDecimal totalVoid,
         BigDecimal currentBalance
 ) {
 }
+
