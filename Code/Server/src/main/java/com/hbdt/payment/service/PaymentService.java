@@ -1,5 +1,8 @@
 package com.hbdt.payment.service;
 
+import com.hbdt.common.dto.PageResponse;
+import com.hbdt.common.exception.ResourceNotFoundException;
+import com.hbdt.debt.service.DebtBookkeepingService;
 import com.hbdt.entity.Customer;
 import com.hbdt.entity.DebtTransaction;
 import com.hbdt.entity.SalesOrder;
@@ -7,12 +10,11 @@ import com.hbdt.entity.User;
 import com.hbdt.entity.enums.DebtTransactionStatus;
 import com.hbdt.entity.enums.DebtTransactionType;
 import com.hbdt.entity.enums.PaymentMethod;
-import com.hbdt.entity.enums.PaymentStatus;
+import com.hbdt.order.service.SalesOrderService;
 import com.hbdt.payment.dto.CreatePaymentRequest;
 import com.hbdt.payment.dto.CustomerDebtSummaryResponse;
 import com.hbdt.payment.dto.OrderPaymentSummaryResponse;
 import com.hbdt.payment.dto.PaymentResponse;
-import com.hbdt.common.dto.PageResponse;
 import com.hbdt.repository.CustomerRepository;
 import com.hbdt.repository.DebtTransactionRepository;
 import com.hbdt.repository.SalesOrderRepository;
@@ -25,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -35,15 +36,21 @@ public class PaymentService {
     private final DebtTransactionRepository debtTransactionRepository;
     private final CustomerRepository customerRepository;
     private final UserRepository userRepository;
+    private final DebtBookkeepingService debtBookkeepingService;
+    private final SalesOrderService salesOrderService;
 
     public PaymentService(SalesOrderRepository salesOrderRepository,
                           DebtTransactionRepository debtTransactionRepository,
                           CustomerRepository customerRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          DebtBookkeepingService debtBookkeepingService,
+                          SalesOrderService salesOrderService) {
         this.salesOrderRepository = salesOrderRepository;
         this.debtTransactionRepository = debtTransactionRepository;
         this.customerRepository = customerRepository;
         this.userRepository = userRepository;
+        this.debtBookkeepingService = debtBookkeepingService;
+        this.salesOrderService = salesOrderService;
     }
 
     // ==================== Tạo giao dịch thanh toán ====================
@@ -53,74 +60,26 @@ public class PaymentService {
         User user = findUserByUsername(username);
         Long businessId = user.getBusinessId();
 
-        // 1. Validate order
+        // 1. Validate và lock order (tránh race condition)
         SalesOrder order = salesOrderRepository.findForUpdateByIdAndBusinessId(request.salesOrderId(), businessId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm thấy đơn hàng hoặc đơn hàng không thuộc cửa hàng của bạn"));
 
-        validateOrderForPayment(order);
-
-        // 2. Validate customer
-        Customer customer = validateCustomer(order, request.customerId(), businessId);
-
-        // 3. Validate payment method
+        // 2. Parse payment method
         PaymentMethod method = parsePaymentMethod(request.paymentMethod());
-        if (method == PaymentMethod.BANK_TRANSFER
-                && (request.referenceNumber() == null || request.referenceNumber().isBlank())) {
-            throw new IllegalArgumentException(
-                    "Mã tham chiếu (referenceNumber) là bắt buộc khi thanh toán bằng chuyển khoản");
-        }
+        LocalDateTime paymentDate = request.paymentDate() != null ? request.paymentDate() : LocalDateTime.now();
 
-        // 4. Tính số tiền còn phải trả
-        BigDecimal remainingAmount = order.getTotalAmount().subtract(order.getPaidAmount());
-        if (request.amount().compareTo(remainingAmount) > 0) {
-            throw new IllegalArgumentException(
-                    String.format("Số tiền thanh toán (%s) vượt quá số tiền còn phải trả (%s)",
-                            request.amount(), remainingAmount));
-        }
+        // 3. Hợp nhất: Ủy thác toàn bộ nghiệp vụ kiểm tra và khóa khách hàng cho SalesOrderService
+        DebtTransaction transaction = salesOrderService.processOrderPayment(
+                order, request.customerId(), user.getId(), businessId,
+                request.amount(), method, request.referenceNumber(),
+                paymentDate, request.note()
+        );
 
-        // 5. Tính số dư công nợ khách hàng trước giao dịch
-        BigDecimal customerDebtBefore = calculateCustomerDebt(customer.getId(), businessId);
-        BigDecimal balanceAfter = customerDebtBefore.subtract(request.amount());
+        Customer customer = customerRepository.findById(transaction.getCustomerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy khách hàng"));
 
-        // 6. Sinh mã giao dịch
-        String transactionCode = generateTransactionCode(request.salesOrderId());
-
-        // 7. Tạo DebtTransaction
-        LocalDateTime paymentDate = request.paymentDate() != null
-                ? request.paymentDate() : LocalDateTime.now();
-
-        DebtTransaction transaction = DebtTransaction.builder()
-                .businessId(businessId)
-                .customerId(customer.getId())
-                .salesOrderId(order.getId())
-                .createdBy(user.getId())
-                .transactionCode(transactionCode)
-                .transactionType(DebtTransactionType.PAYMENT.name())
-                .amount(request.amount())
-                .paymentMethod(method.name())
-                .referenceNumber(request.referenceNumber())
-                .transactionDate(paymentDate)
-                .balanceAfter(balanceAfter)
-                .description(request.note())
-                .status(DebtTransactionStatus.ACTIVE)
-                .build();
-
-        debtTransactionRepository.save(transaction);
-        customer.setDebtBalance(balanceAfter);
-
-        // 8. Cập nhật SalesOrder
-        BigDecimal newPaidAmount = order.getPaidAmount().add(request.amount());
-        BigDecimal newDebtAmount = order.getTotalAmount().subtract(newPaidAmount);
-        PaymentStatus newPaymentStatus = determinePaymentStatus(newPaidAmount, order.getTotalAmount());
-
-        order.setPaidAmount(newPaidAmount);
-        order.setDebtAmount(newDebtAmount);
-        order.setPaymentStatus(newPaymentStatus);
-        order.setLastPaymentAt(paymentDate);
-        salesOrderRepository.save(order);
-
-        // 9. Build response
+        // 4. Build response (order đã được cập nhật paidAmount / debtAmount / paymentStatus / lastPaymentAt)
         return buildPaymentResponse(transaction, order, customer, user);
     }
 
@@ -180,12 +139,15 @@ public class PaymentService {
 
     public PageResponse<PaymentResponse> getCustomerPaymentHistory(
             String username, Long customerId, int page, int size) {
+        if (page < 0) throw new IllegalArgumentException("page phải >= 0");
+        if (size < 1 || size > 100) throw new IllegalArgumentException("size phải trong khoảng 1–100");
+
         User user = findUserByUsername(username);
         Long businessId = user.getBusinessId();
 
-        // Validate customer
+        // Validate customer belongs to business
         customerRepository.findByIdAndBusinessId(customerId, businessId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm thấy khách hàng hoặc khách hàng không thuộc cửa hàng của bạn"));
 
         Pageable pageable = PageRequest.of(page, size);
@@ -202,7 +164,7 @@ public class PaymentService {
         Long businessId = user.getBusinessId();
 
         Customer customer = customerRepository.findByIdAndBusinessId(customerId, businessId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         "Không tìm thấy khách hàng hoặc khách hàng không thuộc cửa hàng của bạn"));
 
         BigDecimal totalDebt = debtTransactionRepository
@@ -211,7 +173,8 @@ public class PaymentService {
                 .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.PAYMENT.name());
         BigDecimal totalVoided = debtTransactionRepository
                 .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.VOID.name());
-        BigDecimal currentBalance = totalDebt.subtract(totalPaid).subtract(totalVoided);
+        // Dùng calculateCustomerDebt (SSOT) để lấy số dư chính xác nhất
+        BigDecimal currentBalance = debtBookkeepingService.calculateCustomerDebt(customerId, businessId);
 
         return new CustomerDebtSummaryResponse(
                 customer.getId(),
@@ -219,6 +182,7 @@ public class PaymentService {
                 customer.getCustomerName(),
                 totalDebt,
                 totalPaid,
+                totalVoided,
                 currentBalance
         );
     }
@@ -230,37 +194,6 @@ public class PaymentService {
                 .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người dùng"));
     }
 
-    private void validateOrderForPayment(SalesOrder order) {
-        // Chỉ cho thanh toán đơn đã xác nhận (CONFIRMED) hoặc đang hoạt động
-        String status = order.getStatus();
-        if (!"CONFIRMED".equalsIgnoreCase(status)) {
-            throw new IllegalArgumentException(
-                    "Không thể ghi nhận thanh toán cho đơn hàng ở trạng thái: " + status);
-        }
-        // Đã thanh toán đủ
-        if (order.getPaymentStatus() == PaymentStatus.PAID) {
-            throw new IllegalArgumentException("Đơn hàng đã được thanh toán đầy đủ");
-        }
-    }
-
-    private Customer validateCustomer(SalesOrder order, Long requestCustomerId, Long businessId) {
-        Long customerId = requestCustomerId != null ? requestCustomerId : order.getCustomerId();
-
-        if (customerId == null) {
-            throw new IllegalArgumentException(
-                    "Đơn hàng phải có khách hàng để ghi nhận thanh toán/công nợ");
-        }
-
-        // Kiểm tra customerId khớp với đơn hàng nếu đơn đã có customer
-        if (order.getCustomerId() != null && !order.getCustomerId().equals(customerId)) {
-            throw new IllegalArgumentException(
-                    "Khách hàng trong yêu cầu thanh toán không khớp với khách hàng của đơn hàng");
-        }
-
-        return customerRepository.findActiveForUpdate(customerId, businessId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Không tìm thấy khách hàng hoặc khách hàng không thuộc cửa hàng của bạn"));
-    }
 
     private PaymentMethod parsePaymentMethod(String method) {
         try {
@@ -270,32 +203,6 @@ public class PaymentService {
                     "Phương thức thanh toán không hợp lệ: " + method
                             + ". Chỉ hỗ trợ: CASH, BANK_TRANSFER");
         }
-    }
-
-    private BigDecimal calculateCustomerDebt(Long customerId, Long businessId) {
-        BigDecimal totalDebt = debtTransactionRepository
-                .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.DEBT_INCREASE.name());
-        BigDecimal totalPaid = debtTransactionRepository
-                .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.PAYMENT.name());
-        BigDecimal totalVoided = debtTransactionRepository
-                .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.VOID.name());
-        return totalDebt.subtract(totalPaid).subtract(totalVoided);
-    }
-
-    private PaymentStatus determinePaymentStatus(BigDecimal paidAmount, BigDecimal totalAmount) {
-        if (paidAmount.compareTo(BigDecimal.ZERO) == 0) {
-            return PaymentStatus.UNPAID;
-        } else if (paidAmount.compareTo(totalAmount) >= 0) {
-            return PaymentStatus.PAID;
-        } else {
-            return PaymentStatus.PARTIALLY_PAID;
-        }
-    }
-
-    private String generateTransactionCode(Long salesOrderId) {
-        long count = debtTransactionRepository.countBySalesOrderId(salesOrderId);
-        String datePart = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        return String.format("PAY-%s-%04d", datePart, count + 1);
     }
 
     private PaymentResponse buildPaymentResponse(DebtTransaction tx, SalesOrder order,
@@ -329,6 +236,9 @@ public class PaymentService {
         String createdByUsername = tx.getCreatedBy() != null
                 ? userRepository.findById(tx.getCreatedBy()).map(User::getUsername).orElse(null)
                 : null;
+        String customerName = tx.getCustomerId() != null
+                ? customerRepository.findById(tx.getCustomerId()).map(Customer::getCustomerName).orElse(null)
+                : null;
 
         return new PaymentResponse(
                 tx.getId(),
@@ -336,7 +246,7 @@ public class PaymentService {
                 order.getId(),
                 order.getOrderCode(),
                 tx.getCustomerId(),
-                null,
+                customerName,
                 tx.getAmount(),
                 tx.getPaymentMethod(),
                 tx.getReferenceNumber(),
@@ -372,6 +282,9 @@ public class PaymentService {
         String createdByUsername = tx.getCreatedBy() != null
                 ? userRepository.findById(tx.getCreatedBy()).map(User::getUsername).orElse(null)
                 : null;
+        String customerName = tx.getCustomerId() != null
+                ? customerRepository.findById(tx.getCustomerId()).map(Customer::getCustomerName).orElse(null)
+                : null;
 
         return new PaymentResponse(
                 tx.getId(),
@@ -379,7 +292,7 @@ public class PaymentService {
                 tx.getSalesOrderId(),
                 orderCode,
                 tx.getCustomerId(),
-                null,
+                customerName,
                 tx.getAmount(),
                 tx.getPaymentMethod(),
                 tx.getReferenceNumber(),

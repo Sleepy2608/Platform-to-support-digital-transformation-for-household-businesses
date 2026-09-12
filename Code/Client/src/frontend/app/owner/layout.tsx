@@ -7,7 +7,7 @@ import {
   Store, UserCircle, Lock, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
   Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing, UserSearch,
-  Building2, ShieldCheck, ClipboardList, ShoppingCart, Warehouse, TrendingUp,
+  Building2, ShieldCheck, ClipboardList, ShoppingCart, Warehouse, TrendingUp, History, BookOpen,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -50,6 +50,8 @@ const MANAGE_NAV_ITEMS: Array<{
     children: [
       { label: 'Danh sách sản phẩm', href: '/owner/products', icon: PackageOpen },
       { label: 'Tồn kho hiện tại', href: '/owner/inventory', icon: Warehouse },
+      { label: 'Lịch sử biến động kho', href: '/owner/inventory?tab=transactions', icon: History },
+      { label: 'Sổ kho S2-HKD', href: '/owner/inventory?tab=bookkeeping', icon: BookOpen },
       { label: 'Nhập kho', href: '/owner/products/stock-import', icon: ClipboardList },
       { label: 'Cảnh báo tồn kho', href: '/owner/inventory-alerts', icon: BellRing },
     ],

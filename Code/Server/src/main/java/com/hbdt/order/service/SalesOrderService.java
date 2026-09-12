@@ -2,37 +2,40 @@ package com.hbdt.order.service;
 
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
+import com.hbdt.debt.service.DebtBookkeepingService;
+import com.hbdt.entity.Customer;
+import com.hbdt.entity.DebtTransaction;
+import com.hbdt.entity.Product;
 import com.hbdt.entity.SalesOrder;
 import com.hbdt.entity.SalesOrderItem;
-import com.hbdt.entity.Customer;
-import com.hbdt.entity.Product;
 import com.hbdt.entity.Unit;
 import com.hbdt.entity.User;
-import com.hbdt.entity.DebtTransaction;
+import com.hbdt.entity.enums.PaymentMethod;
 import com.hbdt.entity.enums.PaymentStatus;
 import com.hbdt.inventory.dto.InventoryMovementRequest;
 import com.hbdt.inventory.service.InventoryMovementService;
 import com.hbdt.order.dto.CreateSalesOrderItemRequest;
 import com.hbdt.order.dto.CreateSalesOrderRequest;
 import com.hbdt.order.dto.SalesOrderItemResponse;
-import com.hbdt.order.dto.SalesOrderResponse;
 import com.hbdt.order.dto.SalesOrderPageResponse;
+import com.hbdt.order.dto.SalesOrderResponse;
 import com.hbdt.order.dto.SalesOrderSummaryResponse;
 import com.hbdt.pricing.service.ProductPricingService;
 import com.hbdt.product.service.BusinessContextService;
 import com.hbdt.repository.CustomerRepository;
-import com.hbdt.repository.DebtTransactionRepository;
+import com.hbdt.repository.ProductRepository;
 import com.hbdt.repository.SalesOrderItemRepository;
 import com.hbdt.repository.SalesOrderRepository;
-import com.hbdt.repository.UserRepository;
-import com.hbdt.repository.ProductRepository;
 import com.hbdt.repository.UnitRepository;
+import com.hbdt.repository.UserRepository;
+import com.hbdt.revenue.service.RevenueLedgerService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.hbdt.revenue.service.RevenueLedgerService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -42,11 +45,11 @@ import java.time.LocalTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 public class SalesOrderService {
 
+    private static final Logger log = LoggerFactory.getLogger(SalesOrderService.class);
     private static final int QUANTITY_SCALE = 3;
     private static final BigDecimal MAX_ORDER_QUANTITY = new BigDecimal("999999999999999.999");
 
@@ -59,8 +62,9 @@ public class SalesOrderService {
     private final UnitRepository unitRepository;
     private final InventoryMovementService inventoryMovementService;
     private final CustomerRepository customerRepository;
-    private final DebtTransactionRepository debtTransactionRepository;
     private final RevenueLedgerService revenueLedgerService;
+    private final SalesBookkeepingService salesBookkeepingService;
+    private final DebtBookkeepingService debtBookkeepingService;
 
     public SalesOrderService(
             SalesOrderRepository salesOrderRepository,
@@ -72,8 +76,9 @@ public class SalesOrderService {
             UnitRepository unitRepository,
             InventoryMovementService inventoryMovementService,
             CustomerRepository customerRepository,
-            DebtTransactionRepository debtTransactionRepository,
-            RevenueLedgerService revenueLedgerService
+            RevenueLedgerService revenueLedgerService,
+            SalesBookkeepingService salesBookkeepingService,
+            DebtBookkeepingService debtBookkeepingService
     ) {
         this.salesOrderRepository = salesOrderRepository;
         this.salesOrderItemRepository = salesOrderItemRepository;
@@ -84,8 +89,9 @@ public class SalesOrderService {
         this.unitRepository = unitRepository;
         this.inventoryMovementService = inventoryMovementService;
         this.customerRepository = customerRepository;
-        this.debtTransactionRepository = debtTransactionRepository;
         this.revenueLedgerService = revenueLedgerService;
+        this.salesBookkeepingService = salesBookkeepingService;
+        this.debtBookkeepingService = debtBookkeepingService;
     }
 
     @Transactional
@@ -117,11 +123,15 @@ public class SalesOrderService {
         BigDecimal paidAmount = request.paidAmount() == null
                 ? BigDecimal.ZERO
                 : request.paidAmount().setScale(0, RoundingMode.HALF_UP);
+        if (paidAmount.signum() < 0) {
+            throw new BadRequestException("Số tiền đã trả không được nhỏ hơn 0");
+        }
         if (paidAmount.compareTo(totalAmount) > 0) {
             throw new BadRequestException("Số tiền đã trả không được lớn hơn tổng tiền đơn hàng");
         }
         BigDecimal debtAmount = totalAmount.subtract(paidAmount);
-        BigDecimal customerDebtBefore = BigDecimal.ZERO;
+
+        // Validate khách hàng nếu có công nợ
         Customer debtCustomer = null;
         if (request.customerId() != null) {
             debtCustomer = (debtAmount.signum() > 0
@@ -129,9 +139,6 @@ public class SalesOrderService {
                     : customerRepository.findByIdAndBusinessIdAndStatus(request.customerId(), businessId, "ACTIVE"))
                     .orElseThrow(() -> new BadRequestException(
                             "Khách hàng không tồn tại, đã ngừng sử dụng hoặc không thuộc hộ kinh doanh"));
-            if (debtAmount.signum() > 0) {
-                customerDebtBefore = currentCustomerDebt(businessId, request.customerId());
-            }
         }
         if (debtAmount.signum() > 0 && request.customerId() == null) {
             throw new BadRequestException("Đơn hàng có công nợ bắt buộc phải chọn khách hàng");
@@ -155,7 +162,12 @@ public class SalesOrderService {
                 .note(request.note())
                 .confirmedAt(confirmedAt)
                 .build());
-        for (SalesOrderItem item : pricedItems) {
+
+        // Sắp xếp items theo productId trước khi xuất kho để tránh deadlock khi lock InventoryBalance
+        List<SalesOrderItem> sortedItems = pricedItems.stream()
+                .sorted(java.util.Comparator.comparing(SalesOrderItem::getProductId))
+                .toList();
+        for (SalesOrderItem item : sortedItems) {
             item.setSalesOrderId(order.getId());
             inventoryMovementService.stockOut(actorUsername, new InventoryMovementRequest(
                     item.getProductId(),
@@ -167,14 +179,19 @@ public class SalesOrderService {
             ));
         }
         List<SalesOrderItem> savedItems = salesOrderItemRepository.saveAll(pricedItems);
+
+        // ── HBDT-63: Ghi sổ doanh thu ─────────────────────────────────────────
         revenueLedgerService.recordRevenueForOrder(order, savedItems);
-        if (debtAmount.signum() > 0) {
-            BigDecimal balanceAfter = customerDebtBefore.add(debtAmount);
-            recordDebtTransaction(
-                    order, actor.getId(), "DEBT_INCREASE", debtAmount, balanceAfter,
-                    "Phát sinh công nợ từ đơn " + order.getOrderCode(), "DEBT-SO-" + order.getId());
-            debtCustomer.setDebtBalance(balanceAfter);
+
+        // ── HBDT-66: Ghi nhận công nợ tự động ────────────────────────────────
+        if (debtAmount.signum() > 0 && debtCustomer != null) {
+            debtBookkeepingService.recordDebtIncrease(order, debtCustomer, actor.getId(), debtAmount);
         }
+
+        // ── HBDT-59: Ghi sổ kế toán tự động ──────────────────────────────────
+        // Chạy trong cùng @Transactional — nếu ghi sổ thất bại, đơn hàng cũng rollback.
+        salesBookkeepingService.recordSaleFromOrder(order);
+
         return toResponse(order, savedItems);
     }
 
@@ -193,11 +210,34 @@ public class SalesOrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
         SalesOrder order = salesOrderRepository.findForUpdateByIdAndBusinessId(orderId, businessId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn hàng"));
-        if (!"CONFIRMED".equals(order.getStatus())) {
-            throw new BadRequestException("Chỉ có thể thanh toán đơn hàng đang ở trạng thái đã xác nhận");
+
+        processOrderPayment(
+                order, order.getCustomerId(), actor.getId(), businessId,
+                paymentAmount, PaymentMethod.CASH, null, LocalDateTime.now(),
+                "Thanh toán công nợ đơn " + order.getOrderCode()
+        );
+
+        return toResponse(order, salesOrderItemRepository.findAllBySalesOrderIdOrderByIdAsc(orderId));
+    }
+
+    @Transactional
+    public DebtTransaction processOrderPayment(
+            SalesOrder order, Long requestCustomerId, Long actorId, Long businessId,
+            BigDecimal paymentAmount, PaymentMethod paymentMethod,
+            String referenceNumber, LocalDateTime paymentDate, String note
+    ) {
+        if (!"CONFIRMED".equalsIgnoreCase(order.getStatus())) {
+            throw new BadRequestException("Chỉ có thể thanh toán đơn hàng đang ở trạng thái đã xác nhận (CONFIRMED)");
         }
-        if (order.getCustomerId() == null) {
+        if (order.getPaymentStatus() == PaymentStatus.PAID) {
+            throw new BadRequestException("Đơn hàng đã được thanh toán đầy đủ");
+        }
+        Long customerId = requestCustomerId != null ? requestCustomerId : order.getCustomerId();
+        if (customerId == null) {
             throw new BadRequestException("Đơn hàng không gắn với khách hàng công nợ");
+        }
+        if (order.getCustomerId() != null && !order.getCustomerId().equals(customerId)) {
+            throw new BadRequestException("Khách hàng trong yêu cầu thanh toán không khớp với khách hàng của đơn hàng");
         }
         if (paymentAmount == null || paymentAmount.signum() <= 0) {
             throw new BadRequestException("Số tiền thanh toán phải lớn hơn 0");
@@ -206,28 +246,19 @@ public class SalesOrderService {
         if (normalizedPayment.signum() <= 0) {
             throw new BadRequestException("Số tiền thanh toán sau khi làm tròn phải lớn hơn 0");
         }
-        if (normalizedPayment.compareTo(order.getDebtAmount()) > 0) {
-            throw new BadRequestException("Số tiền thanh toán không được vượt quá số còn nợ");
+        if (order.getDebtAmount() != null && normalizedPayment.compareTo(order.getDebtAmount()) > 0) {
+            throw new BadRequestException("Số tiền thanh toán không được vượt quá số còn nợ của đơn hàng");
         }
-        Customer customer = customerRepository.findActiveForUpdate(order.getCustomerId(), businessId)
+        Customer customer = customerRepository.findActiveForUpdate(customerId, businessId)
                 .orElseThrow(() -> new BadRequestException("Khách hàng không còn hoạt động"));
-        BigDecimal balanceBefore = currentCustomerDebt(businessId, order.getCustomerId());
-        BigDecimal balanceAfter = balanceBefore.subtract(normalizedPayment);
-        if (balanceAfter.signum() < 0) {
-            throw new BadRequestException("Số tiền thanh toán vượt quá tổng công nợ của khách hàng");
-        }
 
-        order.setPaidAmount(order.getPaidAmount().add(normalizedPayment));
-        order.setDebtAmount(order.getDebtAmount().subtract(normalizedPayment));
-        order.setPaymentStatus(determinePaymentStatus(order.getPaidAmount(), order.getTotalAmount()));
-        order.setLastPaymentAt(LocalDateTime.now());
-        salesOrderRepository.save(order);
-        recordDebtTransaction(
-                order, actor.getId(), "PAYMENT", normalizedPayment, balanceAfter,
-                "Thanh toán công nợ đơn " + order.getOrderCode(),
-                "PAY-SO-" + order.getId() + "-" + shortId());
-        customer.setDebtBalance(balanceAfter);
-        return toResponse(order, salesOrderItemRepository.findAllBySalesOrderIdOrderByIdAsc(orderId));
+        PaymentMethod method = paymentMethod != null ? paymentMethod : PaymentMethod.CASH;
+        LocalDateTime txDate = paymentDate != null ? paymentDate : LocalDateTime.now();
+
+        return debtBookkeepingService.recordPayment(
+                order, customer, actorId, normalizedPayment,
+                method, referenceNumber, txDate, note
+        );
     }
 
     @Transactional
@@ -266,27 +297,35 @@ public class SalesOrderService {
         }
 
         List<SalesOrderItem> items = salesOrderItemRepository.findAllBySalesOrderIdOrderByIdAsc(orderId);
-        for (SalesOrderItem item : items) {
+        // Sắp xếp items theo productId để đảm bảo thứ tự lock nhất quán khi hoàn kho
+        List<SalesOrderItem> sortedItems = items.stream()
+                .sorted(java.util.Comparator.comparing(SalesOrderItem::getProductId))
+                .toList();
+        for (SalesOrderItem item : sortedItems) {
             inventoryMovementService.restoreCancelledSale(
                     actorUsername, item.getProductId(), item.getBaseQuantity(), orderId, order.getOrderCode());
         }
-        if (order.getDebtAmount().signum() > 0 && order.getCustomerId() != null) {
+
+        // ── HBDT-66: Đảo công nợ qua nguồn chân lý duy nhất ─────────────────
+        if (order.getDebtAmount() != null && order.getDebtAmount().signum() > 0
+                && order.getCustomerId() != null) {
             Customer customer = customerRepository.findActiveForUpdate(order.getCustomerId(), businessId)
                     .orElseThrow(() -> new BadRequestException("Khách hàng không còn hoạt động"));
-            BigDecimal balanceAfter = currentCustomerDebt(businessId, order.getCustomerId())
-                    .subtract(order.getDebtAmount());
-            if (balanceAfter.signum() < 0) {
-                throw new BadRequestException("Dữ liệu công nợ không nhất quán, không thể hủy đơn");
-            }
-            recordDebtTransaction(
-                    order, actor.getId(), "VOID", order.getDebtAmount(), balanceAfter,
-                    "Đảo công nợ do hủy đơn " + order.getOrderCode(), "REV-SO-" + order.getId());
-            customer.setDebtBalance(balanceAfter);
-            order.setDebtAmount(BigDecimal.ZERO.setScale(0));
+            debtBookkeepingService.recordDebtVoid(
+                    order, customer, actor.getId(),
+                    "Đảo công nợ do hủy đơn " + order.getOrderCode()
+            );
         }
+
         order.setStatus("CANCELLED");
         salesOrderRepository.save(order);
+
+        // ── HBDT-63: Đảo bút toán doanh thu ──────────────────────────────────
         revenueLedgerService.voidRevenueForOrder(businessId, order.getId());
+
+        // ── HBDT-59: Đảo bút toán kế toán khi hủy đơn ────────────────────────
+        salesBookkeepingService.handleOrderCancellation(order.getId());
+
         return toResponse(order, items);
     }
 
@@ -315,6 +354,8 @@ public class SalesOrderService {
         ).map(this::toSummaryResponse);
         return SalesOrderPageResponse.from(result);
     }
+
+    // ── Private helpers ────────────────────────────────────────────────────────
 
     private List<CreateSalesOrderItemRequest> mergeDuplicateLines(List<CreateSalesOrderItemRequest> items) {
         Map<String, CreateSalesOrderItemRequest> merged = new LinkedHashMap<>();
@@ -381,39 +422,6 @@ public class SalesOrderService {
         }
         String normalized = value.trim();
         return uppercase ? normalized.toUpperCase() : normalized;
-    }
-
-    private BigDecimal currentCustomerDebt(Long businessId, Long customerId) {
-        return debtTransactionRepository.findFirstByBusinessIdAndCustomerIdOrderByIdDesc(businessId, customerId)
-                .map(DebtTransaction::getBalanceAfter)
-                .orElse(BigDecimal.ZERO)
-                .setScale(0, RoundingMode.HALF_UP);
-    }
-
-    private void recordDebtTransaction(
-            SalesOrder order,
-            Long actorId,
-            String type,
-            BigDecimal amount,
-            BigDecimal balanceAfter,
-            String description,
-            String transactionCode
-    ) {
-        debtTransactionRepository.save(DebtTransaction.builder()
-                .businessId(order.getBusinessId())
-                .customerId(order.getCustomerId())
-                .salesOrderId(order.getId())
-                .createdBy(actorId)
-                .transactionCode(transactionCode)
-                .transactionType(type)
-                .amount(amount.setScale(0, RoundingMode.HALF_UP))
-                .balanceAfter(balanceAfter.setScale(0, RoundingMode.HALF_UP))
-                .description(description)
-                .build());
-    }
-
-    private String shortId() {
-        return UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
     private PaymentStatus determinePaymentStatus(BigDecimal paidAmount, BigDecimal totalAmount) {

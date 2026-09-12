@@ -350,24 +350,67 @@ products 1 ─── N inventory_transactions
 
 `inventory_transactions` là nhật ký gốc. `inventory_balances` là số dư hiện tại được lưu để đọc nhanh.
 
-### 6.5. Công nợ và thanh toán
+### 6.5. Công nợ và thanh toán 
 
 ```text
+businesses 1 ─── N debt_transactions
 customers 1 ─── N debt_transactions
 sales_orders 1 ─── N debt_transactions
 users 1 ─── N debt_transactions
 ```
 
-Trong phạm vi thiết kế:
+#### 6.5.1. Bảng `debt_transactions` (Sổ nhật ký công nợ)
 
-- `sales_orders.paid_amount` lưu số tiền thanh toán lũy kế; `sales_orders.debt_amount` lưu số còn phải trả;
-- `sales_orders.payment_status` lưu trạng thái thanh toán (`UNPAID`, `PARTIALLY_PAID`, `PAID`);
-- `sales_orders.last_payment_at` lưu thời điểm thanh toán gần nhất;
-- `debt_transactions` lưu lịch sử phát sinh nợ, trả nợ (`PAYMENT`), điều chỉnh và hủy giao dịch (`status = ACTIVE/VOIDED`);
-- `transaction_code`, `payment_method` (`CASH`/`BANK_TRANSFER`), `reference_number` và `transaction_date` hỗ trợ nhật ký thanh toán công nợ;
-- REST API hỗ trợ ghi nhận thanh toán cho từng đơn hàng (`POST /api/payments`), tra cứu theo đơn (`GET /api/payments/orders/{orderId}`) và theo khách hàng (`GET /api/payments/customers/{customerId}/history`).
+| Cột | Kiểu dữ liệu | Null | Ràng buộc / Ý nghĩa |
+|---|---|---|---|
+| `id` | `BIGINT UNSIGNED` | Không | Khóa chính tự tăng |
+| `business_id` | `BIGINT UNSIGNED` | Không | **FK → businesses**, multi-tenant partition |
+| `customer_id` | `BIGINT UNSIGNED` | Không | **FK → customers**, định danh khách hàng nợ |
+| `sales_order_id` | `BIGINT UNSIGNED` | Có | **FK → sales_orders**, đơn hàng phát sinh nợ/thanh toán |
+| `created_by` | `BIGINT UNSIGNED` | Có | **FK → users**, người dùng thực hiện giao dịch |
+| `transaction_code` | `VARCHAR(50)` | Có | Mã giao dịch nghiệp vụ (ví dụ `DTX-...`) |
+| `transaction_type` | `VARCHAR(30)` | Không | Enum loại giao dịch: `DEBT_INCREASE`, `PAYMENT`, `ADJUSTMENT`, `VOID` |
+| `amount` | `DECIMAL(18,2)` | Không | Số tiền giao dịch (luôn dương) |
+| `payment_method` | `VARCHAR(30)` | Có | Phương thức thanh toán: `CASH`, `BANK_TRANSFER` |
+| `reference_number` | `VARCHAR(100)` | Có | Số tham chiếu hóa đơn / mã giao dịch ngân hàng |
+| `transaction_date` | `DATETIME` | Không | Thời điểm phát sinh nghiệp vụ (bất biến) |
+| `balance_after` | `DECIMAL(18,2)` | Không | **SSOT snapshot**: Số dư nợ của khách hàng ngay sau giao dịch này |
+| `status` | `VARCHAR(20)` | Không | Trạng thái giao dịch: `ACTIVE`, `VOIDED` |
+| `description` | `VARCHAR(500)` | Có | Diễn giải, lý do phát sinh / điều chỉnh / hủy |
+| `created_at` | `DATETIME` | Không | Thời điểm tạo bản ghi hệ thống |
 
-Thiết kế chưa hỗ trợ phân bổ một khoản thanh toán cho nhiều đơn hàng hoặc hoàn tiền phức tạp. Nếu yêu cầu này xuất hiện, cần bổ sung mô hình thanh toán riêng.
+**Chỉ mục và Ràng buộc:**
+- Unique Constraint: `(business_id, transaction_code)` chống trùng mã trong cùng hộ kinh doanh.
+- Composite Index: `(business_id, customer_id)` tra cứu nhanh theo khách hàng.
+- Composite Index: `(business_id, sales_order_id)` tra cứu nhanh theo đơn hàng.
+- Composite Index: `(business_id, customer_id, transaction_date DESC, id DESC)` tối ưu sắp xếp lịch sử công nợ.
+
+#### 6.5.2. Nguyên lý Single Source of Truth (SSOT) cho công nợ
+
+1. **Công thức số dư nợ**:
+   - `Customer.debtBalance` được đồng bộ chính xác với `balance_after` của giao dịch mới nhất (`transactionDate DESC, id DESC`).
+   - Tổng hợp số dư: `CurrentBalance = sum(DEBT_INCREASE) - sum(PAYMENT) - sum(VOID) + sum(ADJUSTMENT)` (chỉ tính giao dịch `status = ACTIVE`).
+2. **Quy tắc phát sinh công nợ khi tạo đơn hàng (`SalesOrderService`)**:
+   - `paidAmount = totalAmount`: Khách trả đủ ngay → Không phát sinh nợ, không tạo `DebtTransaction`.
+   - `paidAmount = 0`: Mua chịu toàn bộ → Phát sinh nợ = `totalAmount`. Bắt buộc phải có `customerId`. Tạo 1 `DebtTransaction` loại `DEBT_INCREASE`.
+   - `0 < paidAmount < totalAmount`: Mua chịu một phần → Phát sinh nợ = `totalAmount - paidAmount`. Bắt buộc phải có `customerId`. Tạo 1 `DebtTransaction` loại `DEBT_INCREASE`.
+3. **Quy tắc thanh toán công nợ (`POST /api/payments` qua `PaymentService`)**:
+   - Chỉ cho phép thanh toán đơn hàng có trạng thái `CONFIRMED`.
+   - Số tiền thanh toán `amount` phải > 0.
+   - `amount` không được vượt quá `debtAmount` còn lại của đơn hàng.
+   - `amount` không được vượt quá tổng công nợ `debtBalance` hiện tại của khách hàng.
+   - Phương thức thanh toán bắt buộc hợp lệ: `CASH` hoặc `BANK_TRANSFER`.
+   - Hỗ trợ thanh toán một phần (`paymentStatus = PARTIALLY_PAID`) hoặc toàn bộ (`paymentStatus = PAID`).
+   - Tạo 1 `DebtTransaction` loại `PAYMENT`, cập nhật `sales_orders.paid_amount`, `sales_orders.debt_amount`, `sales_orders.last_payment_at`, và `Customer.debtBalance`.
+4. **Quy tắc hủy đơn hàng có công nợ**:
+   - Nếu đơn hàng có nợ (`debtAmount > 0`) bị hủy: Hệ thống tự động tạo một giao dịch loại `VOID` với số tiền bằng `debtAmount` còn lại để đảo nợ.
+   - Cập nhật `sales_orders.debt_amount = 0`, giảm `Customer.debtBalance` tương ứng. Giao dịch `VOID` được ghi nhận với trạng thái `ACTIVE` của bản ghi đảo nợ để khấu trừ số dư.
+5. **Danh mục REST API hoàn thiện**:
+   - `POST /api/payments`: Ghi nhận thanh toán công nợ cho đơn hàng.
+   - `GET /api/payments/orders/{orderId}`: Danh sách lịch sử thanh toán của đơn hàng.
+   - `GET /api/payments/orders/{orderId}/summary`: Tổng quan thanh toán và dư nợ của đơn hàng.
+   - `GET /api/payments/customers/{customerId}/history`: Lịch sử công nợ khách hàng (có phân trang `page`, `size`, sắp xếp `transactionDate DESC, id DESC`).
+   - `GET /api/payments/customers/{customerId}/debt-summary`: Báo cáo tổng nợ phát sinh (`totalDebtIncreased`), tổng đã trả (`totalPaid`), tổng đã đảo (`totalVoid`), và số dư nợ hiện tại (`currentBalance`).
 
 ### 6.6. AI Draft Order
 
@@ -754,7 +797,7 @@ Danh sách file seed (`Code/Server/seed/`, bản plaintext chạy thực tế):
 | `subscriptions.json` | subscriptions | 1 | đăng ký gói |
 | `audit_logs.json` | audit_logs | 7 | nhật ký kiểm toán |
 | `terms_consents.json` | terms_consents | 2 | ⭐ đồng thuận điều khoản |
-| `debt_transactions.json` | debt_transactions | 0 | chưa có dữ liệu |
+| `debt_transactions.json` | debt_transactions | 6 | Dữ liệu lịch sử công nợ, thanh toán và đảo nợ mẫu (version 7) |
 | `test_huy.json` / `test_huy3.json` | test_huy / test_huy3 | 4 / 12 | bảng test, không có entity |
 | `seed_config.json` | seed_config | 11 | cấu hình seed |
 
@@ -824,6 +867,56 @@ BEGIN
 5. Ghi audit_logs.
 COMMIT
 ```
+
+### 13.5. Ghi nhận thanh toán công nợ (HBDT-66)
+
+```text
+BEGIN
+1. Kiểm tra quyền truy cập của business hiện tại.
+2. Khóa và kiểm tra đơn hàng sales_orders (phải ở trạng thái CONFIRMED).
+3. Kiểm tra số tiền: amount > 0, amount <= sales_orders.debt_amount.
+4. Khóa và kiểm tra khách hàng customers: amount <= customers.debt_balance.
+5. Cập nhật sales_orders:
+   - paid_amount = paid_amount + amount
+   - debt_amount = debt_amount - amount
+   - payment_status = (debt_amount == 0) ? 'PAID' : 'PARTIALLY_PAID'
+   - last_payment_at = NOW()
+6. Lấy số dư hiện tại của khách hàng (từ giao dịch mới nhất hoặc customers.debt_balance).
+7. Tính balance_after = current_balance - amount.
+8. Tạo bản ghi debt_transactions:
+   - transaction_type = 'PAYMENT'
+   - amount = amount
+   - payment_method = CASH / BANK_TRANSFER
+   - balance_after = balance_after
+   - status = 'ACTIVE'
+9. Cập nhật customers.debt_balance = balance_after.
+10. Ghi audit_logs.
+COMMIT
+```
+
+### 13.6. Hủy đơn hàng có phát sinh công nợ (HBDT-66)
+
+```text
+BEGIN
+1. Kiểm tra quyền truy cập của business hiện tại.
+2. Khóa và kiểm tra đơn hàng sales_orders (chỉ cho phép hủy nếu chưa CANCELLED).
+3. Nếu đơn hàng có nợ còn lại (debt_amount > 0) và có customer_id:
+   a. Lấy số dư hiện tại của khách hàng.
+   b. Tính balance_after = current_balance - debt_amount.
+   c. Tạo bản ghi debt_transactions loại đảo nợ:
+      - transaction_type = 'VOID'
+      - amount = debt_amount
+      - balance_after = balance_after
+      - status = 'ACTIVE' (để khấu trừ công nợ đã phát sinh)
+   d. Cập nhật customers.debt_balance = balance_after.
+   e. Cập nhật sales_orders.debt_amount = 0.
+4. Cập nhật sales_orders.status = 'CANCELLED'.
+5. Hoàn trả tồn kho (tạo inventory_transactions nhập lại kho).
+6. Cập nhật inventory_balances.
+7. Ghi audit_logs.
+COMMIT
+```
+
 
 ---
 
@@ -1036,6 +1129,13 @@ ORDER BY TABLE_NAME;
 | Tình huống | Kết quả mong đợi |
 |---|---|
 | Đơn có nợ nhưng không có khách hàng | Bị từ chối |
+| Thanh toán nợ với số tiền amount <= 0 | Bị từ chối |
+| Thanh toán nợ cho đơn hàng chưa CONFIRMED | Bị từ chối |
+| Thanh toán vượt quá debtAmount còn lại của đơn hàng | Bị từ chối |
+| Thanh toán vượt quá tổng debtBalance của khách hàng | Bị từ chối |
+| Thanh toán với paymentMethod không hợp lệ (ngoài CASH, BANK_TRANSFER) | Bị từ chối |
+| Hủy đơn hàng có công nợ | Tự động tạo giao dịch VOID, giảm nợ khách hàng và xóa debtAmount đơn hàng về 0 |
+| Phân trang lịch sử công nợ với page < 0 hoặc size < 1 / size > 100 | Bị từ chối |
 | Hai phiên bản biểu mẫu `ACTIVE` chồng thời gian | Bị từ chối |
 | Hai phiên bản cùng `activity_code` chồng thời gian | Bị từ chối |
 | Dòng điều chỉnh sổ không có lý do | Bị từ chối |

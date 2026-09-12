@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  AlertCircle,
   ArrowRight,
   CheckCircle2,
   Minus,
@@ -12,6 +13,11 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CustomerSelect, CustomerOption } from '@/app/components/CustomerSelect';
+import {
+  calculateOrderDebt,
+  calculateProjectedCustomerDebt,
+  validateOrderCheckout,
+} from '@/app/lib/debtBookkeepingViewModel';
 
 export type { CustomerOption };
 
@@ -97,9 +103,17 @@ export function OrderCartDrawer({
     () => items.reduce((sum, item) => sum + parseQuantity(item.quantity), 0),
     [items],
   );
-  const parsedPaid = paidAmount.trim() === '' ? totalAmount : Number(paidAmount);
-  const paid = Number.isFinite(parsedPaid) ? Math.round(parsedPaid) : Number.NaN;
-  const debtAmount = Math.max(0, Math.round(totalAmount - (Number.isFinite(paid) ? paid : 0)));
+
+  const { paidAmount: paid, debtAmount, paymentStatus } = useMemo(
+    () => calculateOrderDebt(totalAmount, paidAmount),
+    [totalAmount, paidAmount],
+  );
+
+  const projectedCustomerDebt = useMemo(() => {
+    if (!selectedCustomer) return 0;
+    return calculateProjectedCustomerDebt(selectedCustomer.debtBalance || 0, debtAmount);
+  }, [selectedCustomer, debtAmount]);
+
   const hasInvalidItem = items.some((item) => !item.resolved || item.resolving || Boolean(item.error));
 
   const handleCheckout = async (event: React.FormEvent) => {
@@ -113,12 +127,10 @@ export function OrderCartDrawer({
       setCheckoutError('Có sản phẩm chưa được thiết lập giá hoặc đang chờ tính giá');
       return;
     }
-    if (!Number.isFinite(paid) || paid < 0 || paid > totalAmount) {
-      setCheckoutError('Số tiền khách trả phải từ 0 đến tổng tiền đơn hàng');
-      return;
-    }
-    if (debtAmount > 0 && !selectedCustomer) {
-      setCheckoutError('Đơn còn nợ bắt buộc phải chọn khách hàng cụ thể');
+
+    const validation = validateOrderCheckout(totalAmount, paid, selectedCustomer?.id);
+    if (!validation.valid) {
+      setCheckoutError(validation.error || 'Dữ liệu đơn hàng không hợp lệ');
       return;
     }
 
@@ -286,12 +298,32 @@ export function OrderCartDrawer({
                     <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Mã đơn hàng</span>
                     <input required maxLength={50} value={orderCode} onChange={(event) => setOrderCode(event.target.value)} placeholder="Ví dụ: DH-001" className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-slate-500" />
                   </label>
-                  <div className="sm:col-span-2">
+                  <div className="sm:col-span-2 space-y-2">
                     <CustomerSelect
                       value={selectedCustomer}
                       onChange={setSelectedCustomer}
                       requiredDebtWarning={debtAmount > 0 && !selectedCustomer}
                     />
+                    {selectedCustomer && debtAmount > 0 && (
+                      <div className="rounded-xl border border-amber-200 bg-amber-50/90 p-3 text-xs space-y-1 text-amber-900">
+                        <div className="flex items-center gap-1.5 font-bold text-amber-800">
+                          <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+                          <span>Cảnh báo công nợ phát sinh</span>
+                        </div>
+                        <div className="flex justify-between text-[11px] text-amber-800/80">
+                          <span>Công nợ hiện tại:</span>
+                          <span className="font-semibold">{formatVnd(selectedCustomer.debtBalance || 0)}</span>
+                        </div>
+                        <div className="flex justify-between text-[11px] text-amber-800/80">
+                          <span>Ghi nợ mới từ đơn này:</span>
+                          <span className="font-semibold text-rose-600">+{formatVnd(debtAmount)}</span>
+                        </div>
+                        <div className="flex justify-between border-t border-amber-200/60 pt-1 text-xs font-bold text-amber-950">
+                          <span>Dự kiến số dư nợ sau đơn:</span>
+                          <span className="font-black text-rose-700">{formatVnd(projectedCustomerDebt)}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <label>
                     <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Nguồn đơn</span>
@@ -308,16 +340,44 @@ export function OrderCartDrawer({
                     </div>
                     {paidAmount && <span className="mt-1 block text-xs font-semibold text-slate-500">{formatMoneyInput(paidAmount)} ₫</span>}
                   </label>
-                  <label>
+                  <label className="sm:col-span-2">
                     <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Ghi chú</span>
-                    <input maxLength={500} value={note} onChange={(event) => setNote(event.target.value)} placeholder="Ghi chú giao hàng..." className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-slate-500" />
+                    <input maxLength={500} value={note} onChange={(event) => setNote(event.target.value)} placeholder="Ghi chú giao hàng hoặc thỏa thuận công nợ..." className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-slate-500" />
                   </label>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white p-4">
-                  <div className="flex justify-between text-xs text-slate-500"><span>Số lượng sản phẩm</span><strong>{formatQuantity(totalQuantity)} món</strong></div>
-                  <div className="mt-2 flex justify-between text-xs text-slate-500"><span>Còn nợ</span><strong>{formatVnd(debtAmount)}</strong></div>
-                  <div className="mt-3 flex items-end justify-between border-t border-slate-100 pt-3"><span className="font-bold text-slate-800">Tổng thanh toán</span><strong className="text-xl font-black text-emerald-700">{formatVnd(totalAmount)}</strong></div>
+                <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
+                  <div className="flex justify-between text-xs text-slate-500">
+                    <span>Số lượng sản phẩm</span>
+                    <strong>{formatQuantity(totalQuantity)} món</strong>
+                  </div>
+                  <div className="flex justify-between text-xs text-slate-500">
+                    <span>Tổng tiền hàng</span>
+                    <strong className="text-slate-800">{formatVnd(totalAmount)}</strong>
+                  </div>
+                  <div className="flex justify-between text-xs text-slate-500">
+                    <span>Khách trả trước</span>
+                    <strong className="text-emerald-700">{formatVnd(paid)}</strong>
+                  </div>
+                  <div className="flex justify-between text-xs text-slate-500">
+                    <span>Ghi nợ đơn này</span>
+                    <strong className={debtAmount > 0 ? 'text-amber-700 font-bold' : 'text-slate-700'}>
+                      {formatVnd(debtAmount)}
+                    </strong>
+                  </div>
+                  <div className="flex items-end justify-between border-t border-slate-100 pt-2.5">
+                    <div>
+                      <span className="block font-bold text-slate-800">Tổng thanh toán</span>
+                      <span className="text-[10px] font-semibold text-slate-400">
+                        {paymentStatus === 'PAID'
+                          ? '✓ Khách trả đủ'
+                          : paymentStatus === 'PARTIALLY_PAID'
+                          ? '⚠️ Trả một phần'
+                          : '⚠️ Mua chịu toàn bộ'}
+                      </span>
+                    </div>
+                    <strong className="text-xl font-black text-emerald-700">{formatVnd(totalAmount)}</strong>
+                  </div>
                 </div>
 
                 <button type="submit" disabled={submitting || hasInvalidItem} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3.5 text-sm font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40">
