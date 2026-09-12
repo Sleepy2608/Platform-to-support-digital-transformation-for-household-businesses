@@ -33,16 +33,24 @@ services:
       DB_USERNAME: root
       DB_PASSWORD: root
       JWT_SECRET: dev-only-secret-change-in-production
+      AI_SERVICE_URL: http://ai-service:8000
+      AI_SERVICE_API_SECRET: ${AI_SERVICE_API_SECRET:-}
     ports:
       - "8080:8080"
 
   ai-service:
     build:
-      context: ./ai-service
+      context: ./Code/AI
     container_name: agritrade-ai-service
     restart: unless-stopped
+    environment:
+      BAI_API_KEY: ${BAI_API_KEY:-}
+      BAI_MODEL: ${BAI_MODEL:-}
+      BAI_BASE_URL: ${BAI_BASE_URL:-https://api.b.ai/v1}
+      BAI_TIMEOUT_SECONDS: ${BAI_TIMEOUT_SECONDS:-25}
+      AI_SERVICE_API_SECRET: ${AI_SERVICE_API_SECRET:-}
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
 
   frontend:
     build:

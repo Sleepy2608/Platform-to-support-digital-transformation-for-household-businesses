@@ -1,32 +1,16 @@
 """
-AgriTrade AI Service
-====================
-Xử lý câu lệnh đặt hàng bằng ngôn ngữ tự nhiên tiếng Việt.
-
-SCRUM-48  AI Text Input
-SCRUM-50  Natural Language Order Parser
-SCRUM-51  Product & Customer Matching
-SCRUM-52  Ambiguity Detection
-SCRUM-53  Draft Order Generation
-SCRUM-56  AI Fallback & Logging
+B.ai extraction service.
+Spring Boot owns catalog matching, pricing, review and order confirmation.
 """
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 from src.router import ai_router
 
 app = FastAPI(
-    title="AgriTrade AI Service",
-    description="NLP order parsing service for Vietnamese household businesses",
-    version="0.1.0",
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    title="HBDT AI Service",
+    description="B.ai: Vietnamese order extraction",
+    version="0.2.0",
 )
 
 app.include_router(ai_router, prefix="/api/v1/ai")

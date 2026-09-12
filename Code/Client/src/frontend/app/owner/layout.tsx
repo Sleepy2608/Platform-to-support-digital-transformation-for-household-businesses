@@ -62,6 +62,7 @@ const MANAGE_NAV_ITEMS: Array<{
     children: [
       { label: 'Tạo đơn tại quầy', href: '/owner/orders/new', icon: ShoppingCart },
       { label: 'Danh sách đơn hàng', href: '/owner/orders/history', icon: ListOrdered },
+      { label: 'Tạo đơn hàng', href: '/owner/orders/new', icon: ReceiptText },
     ],
   },
   { label: 'Doanh thu', href: '/owner/revenue', icon: TrendingUp, path: '/owner/revenue' },
