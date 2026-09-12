@@ -134,6 +134,13 @@ public class NotificationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
     }
 
+    @Transactional
+    public void notifyAnnouncement(String title, String content) {
+        for (User user : userRepository.findAnnouncementRecipients(UserStatus.ACTIVE, LOW_STOCK_RECIPIENTS)) {
+            saveAndPublish(user, GENERAL_NOTIFICATION, title, content);
+        }
+    }
+
     private List<User> lowStockRecipients(Long businessId) {
         return userRepository.findAllByBusinessIdAndStatus(businessId, UserStatus.ACTIVE).stream()
                 .filter(user -> user.getRole() != null

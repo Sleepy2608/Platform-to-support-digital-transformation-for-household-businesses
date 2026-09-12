@@ -37,7 +37,7 @@ public class NotificationStreamService {
                         .name("notification")
                         .id(String.valueOf(notification.id()))
                         .data(notification));
-            } catch (IOException exception) {
+            } catch (IOException | IllegalStateException exception) {
                 remove(userId, emitter);
             }
         });
