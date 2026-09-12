@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Mẫu Báo cáo Tài chính | HBDT Admin</title>
+    <meta name="description" content="Trang quản trị mẫu báo cáo tài chính — tạo, chỉnh sửa, quản lý phiên bản và trạng thái mẫu báo cáo.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="admin-template.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- HEADER                                                             -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<header class="app-header">
+    <div class="header-brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 17H5a2 2 0 00-2 2 2 2 0 002 2h2a2 2 0 002-2zm12-2h-4a2 2 0 00-2 2 2 2 0 002 2h2a2 2 0 002-2zM9 1v2M15 1v2M9 7h6m-8 4h10"/>
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+        </svg>
+        <h1>Quản lý Mẫu Báo cáo</h1>
+    </div>
+    <div class="header-actions">
+        <span class="admin-badge">ADMIN</span>
+    </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- MAIN CONTENT                                                       -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<main class="main-content">
+
+    <!-- Toolbar: Search, Filters, Create Button -->
+    <section class="toolbar">
+        <div class="toolbar-left">
+            <div class="search-box">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="text" id="searchInput" placeholder="Tìm kiếm theo tên hoặc mã mẫu..." autocomplete="off">
+            </div>
+            <select id="filterType" class="filter-select">
+                <option value="">Tất cả loại</option>
+                <option value="REVENUE_LEDGER">Sổ doanh thu</option>
+                <option value="EXPENSE_LEDGER">Sổ chi phí</option>
+                <option value="DEBT_REPORT">Báo cáo công nợ</option>
+                <option value="CASH_FLOW">Lưu chuyển tiền tệ</option>
+                <option value="TAX_SUMMARY">Tổng hợp thuế</option>
+                <option value="BALANCE_SHEET">Bảng cân đối</option>
+            </select>
+            <select id="filterStatus" class="filter-select">
+                <option value="">Tất cả trạng thái</option>
+                <option value="ACTIVE">Đang hoạt động</option>
+                <option value="INACTIVE">Ngừng hoạt động</option>
+            </select>
+        </div>
+        <button id="btnCreate" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14"/>
+            </svg>
+            Tạo mẫu mới
+        </button>
+    </section>
+
+    <!-- Template Table -->
+    <section class="table-card">
+        <div class="table-wrapper">
+            <table id="templateTable">
+                <thead>
+                    <tr>
+                        <th>Mã mẫu</th>
+                        <th>Tên mẫu báo cáo</th>
+                        <th>Loại</th>
+                        <th>Phiên bản</th>
+                        <th>Trạng thái</th>
+                        <th>Cập nhật lần cuối</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="templateTableBody">
+                    <!-- Rows injected by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+            </svg>
+            <p>Chưa có mẫu báo cáo nào</p>
+            <button class="btn btn-ghost" onclick="$('#btnCreate').click()">Tạo mẫu đầu tiên</button>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <div class="spinner"></div>
+            <p>Đang tải dữ liệu...</p>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="pagination">
+            <button id="btnPrev" class="btn btn-ghost btn-sm" disabled>← Trước</button>
+            <span id="pageInfo" class="page-info">Trang 1 / 1</span>
+            <button id="btnNext" class="btn btn-ghost btn-sm" disabled>Sau →</button>
+        </div>
+    </section>
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Create / Edit Template                                      -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="templateModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 id="modalTitle">Tạo mẫu báo cáo mới</h2>
+            <button class="modal-close" id="btnCloseModal">&times;</button>
+        </div>
+        <form id="templateForm" class="modal-body">
+            <input type="hidden" id="editTemplateId">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="inputName">Tên mẫu <span class="required">*</span></label>
+                    <input type="text" id="inputName" required maxlength="255" placeholder="VD: Sổ doanh thu quý 4">
+                </div>
+                <div class="form-group">
+                    <label for="inputCode">Mã mẫu <span class="required">*</span></label>
+                    <input type="text" id="inputCode" required maxlength="50" placeholder="VD: RL-Q4-2026">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="inputType">Loại mẫu <span class="required">*</span></label>
+                    <select id="inputType" required>
+                        <option value="">Chọn loại mẫu...</option>
+                        <option value="REVENUE_LEDGER">Sổ doanh thu</option>
+                        <option value="EXPENSE_LEDGER">Sổ chi phí</option>
+                        <option value="DEBT_REPORT">Báo cáo công nợ</option>
+                        <option value="CASH_FLOW">Lưu chuyển tiền tệ</option>
+                        <option value="TAX_SUMMARY">Tổng hợp thuế</option>
+                        <option value="BALANCE_SHEET">Bảng cân đối</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="inputFormCode">Mã biểu mẫu chính thức</label>
+                    <input type="text" id="inputFormCode" maxlength="50" placeholder="VD: Mẫu B01-DNN">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="inputLegalBasis">Căn cứ pháp lý</label>
+                <input type="text" id="inputLegalBasis" maxlength="255" placeholder="VD: Thông tư 133/2016/TT-BTC">
+            </div>
+
+            <div class="form-group">
+                <label for="inputDescription">Mô tả</label>
+                <textarea id="inputDescription" maxlength="1000" rows="2" placeholder="Mô tả ngắn gọn về mẫu báo cáo..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="inputConfig">Cấu hình JSON <span class="required">*</span></label>
+                <div class="json-editor-toolbar">
+                    <button type="button" class="btn btn-ghost btn-xs" id="btnFormatJson">Format JSON</button>
+                    <button type="button" class="btn btn-ghost btn-xs" id="btnSampleJson">Mẫu JSON</button>
+                </div>
+                <textarea id="inputConfig" rows="10" required
+                    placeholder='{"title": "...", "fields": [{"key": "totalRevenue", "label": "Doanh thu", "type": "currency"}]}'></textarea>
+                <p class="field-hint" id="jsonError"></p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" id="btnCancelModal">Hủy</button>
+                <button type="submit" class="btn btn-primary" id="btnSubmit">
+                    <span class="btn-text">Lưu mẫu</span>
+                    <span class="btn-loading" style="display:none;">
+                        <span class="spinner-sm"></span> Đang lưu...
+                    </span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: Version History                                             -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="versionModal" class="modal-overlay" style="display:none;">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h2 id="versionModalTitle">Lịch sử phiên bản</h2>
+            <button class="modal-close" id="btnCloseVersionModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="versionList" class="version-list">
+                <!-- Version cards injected by JS -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- TOAST NOTIFICATION                                                 -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div id="toastContainer" class="toast-container"></div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="admin-template.js"></script>
+</body>
+</html>
