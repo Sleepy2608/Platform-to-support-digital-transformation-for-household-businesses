@@ -11,6 +11,7 @@ import {
   PaymentMethod,
   CreatePaymentRequest
 } from '@/app/lib/payment';
+import { validatePaymentAmount } from '@/app/lib/debtBookkeepingViewModel';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -77,12 +78,9 @@ export default function PaymentModal({ isOpen, onClose, orderId, onSuccess }: Pa
     e.preventDefault();
     setError('');
 
-    if (isInvalidAmount) {
-      if (numericAmount <= 0) {
-        setError('Số tiền thanh toán phải lớn hơn 0');
-      } else if (isOverpaid) {
-        setError(`Số tiền thanh toán (${numericAmount.toLocaleString('vi-VN')} đ) vượt quá số tiền còn phải trả (${remaining.toLocaleString('vi-VN')} đ)`);
-      }
+    const validation = validatePaymentAmount(numericAmount, remaining);
+    if (!validation.valid) {
+      setError(validation.error || 'Số tiền thanh toán không hợp lệ');
       return;
     }
 
@@ -108,9 +106,19 @@ export default function PaymentModal({ isOpen, onClose, orderId, onSuccess }: Pa
       if (onSuccess) onSuccess();
       setTimeout(() => {
         onClose();
-      }, 1200);
+      }, 1000);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Đã xảy ra lỗi khi ghi nhận thanh toán';
+      let msg = 'Đã xảy ra lỗi khi ghi nhận thanh toán';
+      if (err instanceof Error) {
+        msg = err.message;
+      } else if (typeof err === 'object' && err !== null) {
+        const anyErr = err as Record<string, unknown>;
+        if (typeof anyErr.message === 'string') {
+          msg = anyErr.message;
+        } else if (typeof anyErr.error === 'string') {
+          msg = anyErr.error;
+        }
+      }
       setError(msg);
     } finally {
       setSubmitting(false);

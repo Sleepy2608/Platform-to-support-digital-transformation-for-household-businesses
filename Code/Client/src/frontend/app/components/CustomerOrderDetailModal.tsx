@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { X, RefreshCw } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { X, RefreshCw, CreditCard } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
+import PaymentModal from '@/app/components/payment/PaymentModal';
+import PaymentHistoryList from '@/app/components/payment/PaymentHistoryList';
 
 interface SalesOrderItem {
   id: number;
@@ -30,6 +32,7 @@ interface SalesOrderDetail {
 interface Props {
   orderId: number;
   onClose: () => void;
+  onPaymentSuccess?: () => void;
 }
 
 const fmt = (v: number) => `${Number(v || 0).toLocaleString('vi-VN')} ₫`;
@@ -37,25 +40,34 @@ const fmtNum = (v: number) => Number(v || 0).toLocaleString('vi-VN');
 const fmtDate = (v: string) =>
   new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(v));
 
-export default function CustomerOrderDetailModal({ orderId, onClose }: Props) {
+export default function CustomerOrderDetailModal({ orderId, onClose, onPaymentSuccess }: Props) {
   const [detail, setDetail] = useState<SalesOrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentRefreshKey, setPaymentRefreshKey] = useState(0);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      setDetail(await apiClient.get<SalesOrderDetail>(`/api/sales-orders/${orderId}`));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể tải chi tiết đơn hàng');
+    } finally {
+      setLoading(false);
+    }
+  }, [orderId]);
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        setDetail(await apiClient.get<SalesOrderDetail>(`/api/sales-orders/${orderId}`));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Không thể tải chi tiết đơn hàng');
-      } finally {
-        setLoading(false);
-      }
-    };
     void load();
-  }, [orderId]);
+  }, [load]);
+
+  const handlePaymentCompleted = () => {
+    void load();
+    setPaymentRefreshKey((k) => k + 1);
+    onPaymentSuccess?.();
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
@@ -68,12 +80,24 @@ export default function CustomerOrderDetailModal({ orderId, onClose }: Props) {
             </h2>
             {detail && <p className="text-xs text-slate-500">{fmtDate(detail.createdAt)}</p>}
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {detail && detail.status === 'CONFIRMED' && detail.debtAmount > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowPaymentModal(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1.5 text-xs font-bold transition-all shadow-xs cursor-pointer"
+              >
+                <CreditCard className="h-3.5 w-3.5" />
+                <span>Thanh toán nợ ({fmt(detail.debtAmount)})</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Body */}
@@ -149,10 +173,24 @@ export default function CustomerOrderDetailModal({ orderId, onClose }: Props) {
                   <strong className="text-slate-800">Ghi chú:</strong> {detail.note}
                 </div>
               )}
+
+              {/* Order Payment History */}
+              <div className="pt-2">
+                <PaymentHistoryList orderId={orderId} refreshTrigger={paymentRefreshKey} />
+              </div>
             </div>
           ) : null}
         </div>
       </div>
+
+      {showPaymentModal && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          orderId={orderId}
+          onClose={() => setShowPaymentModal(false)}
+          onSuccess={handlePaymentCompleted}
+        />
+      )}
     </div>
   );
 }
