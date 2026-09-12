@@ -10,6 +10,7 @@ import {
   CartResolvedPrice,
   CartUnit,
   CheckoutData,
+  CustomerOption,
   InitialCheckout,
   OrderCartDrawer,
 } from '@/app/components/OrderCartDrawer';
@@ -27,9 +28,16 @@ export function CreateOrderPage() {
   const [initialCheckout, setInitialCheckout] = useState<InitialCheckout>();
   const [cartSession, setCartSession] = useState(0);
 
-  const applyAiProposal = (proposal: AiOrderProposal) => {
+  const applyAiProposal = async (proposal: AiOrderProposal) => {
     if (!proposal.readyToApply || items.length > 0 || proposal.paymentType === 'UNKNOWN'
         || proposal.items.length === 0 || proposal.items.some((item) => !item.product || !item.price || !item.quantity)) return;
+    let selectedCustomer: CustomerOption | undefined = proposal.customer || undefined;
+    if (!selectedCustomer && proposal.customerNeedsCreation && proposal.customerName) {
+      selectedCustomer = await apiClient.post<CustomerOption>('/api/customers/quick', {
+        customerName: proposal.customerName,
+        phone: '',
+      });
+    }
     Object.values(resolveTimers.current).forEach(clearTimeout);
     resolveTimers.current = {};
     const proposedItems: CartItem[] = proposal.items.map((item) => ({
@@ -42,7 +50,7 @@ export function CreateOrderPage() {
     setItems(proposedItems);
     setInitialCheckout({
       orderCode: `AI-${crypto.randomUUID().slice(0, 18)}`,
-      customer: proposal.customer || undefined,
+      customer: selectedCustomer,
       paymentType: proposal.paymentType,
       note: `Đơn được hỗ trợ nhập bằng AI. Thanh toán: ${proposal.paymentType === 'DEBT' ? 'ghi nợ' : proposal.paymentType === 'TRANSFER' ? 'chuyển khoản' : 'tiền mặt'}.`,
     });

@@ -54,14 +54,16 @@ public class AiService {
                 .forEach(issues::add);
         if (!"CREATE_ORDER".equals(parsed.intent()) || parsed.items().isEmpty()) {
             issues.add("Chưa nhận được yêu cầu tạo đơn. Hãy nhập sản phẩm, số lượng và đơn vị tính.");
-            return new AiParseOrderResponse("bai", false, parsed.customerName(), null,
+            return new AiParseOrderResponse("bai", false, parsed.customerName(), null, false,
                     parsed.paymentType(), List.of(), issues, "Chưa tạo bản đề xuất đơn hàng.");
         }
         if ("UNKNOWN".equals(parsed.paymentType())) {
             issues.add("Chưa rõ cách thanh toán. Hãy nói rõ tiền mặt, chuyển khoản hoặc ghi nợ.");
         }
-        CustomerOptionResponse customer = resolveCustomer(actor, parsed.customerName(), issues);
-        if ("DEBT".equals(parsed.paymentType()) && customer == null) {
+        CustomerResolution customerResolution = resolveCustomer(actor, parsed.customerName(), issues);
+        CustomerOptionResponse customer = customerResolution.customer();
+        if ("DEBT".equals(parsed.paymentType()) && customer == null
+                && !customerResolution.needsCreation()) {
             issues.add("Ghi nợ cần xác định một khách hàng đã đăng ký.");
         }
         List<AiParseOrderResponse.Item> items = new ArrayList<>();
@@ -82,8 +84,10 @@ public class AiService {
             }
         }
         List<String> uniqueIssues = issues.stream().distinct().toList();
-        return new AiParseOrderResponse("bai", uniqueIssues.isEmpty(), parsed.customerName(), customer,
-                parsed.paymentType(), items, uniqueIssues,
+        String proposedCustomerName = customerResolution.needsCreation()
+                ? customerResolution.customerName() : parsed.customerName();
+        return new AiParseOrderResponse("bai", uniqueIssues.isEmpty(), proposedCustomerName, customer,
+                customerResolution.needsCreation(), parsed.paymentType(), items, uniqueIssues,
                 "Bản đề xuất chưa lưu. Kiểm tra thông tin và xác nhận tại giỏ hàng.");
     }
 
@@ -137,22 +141,58 @@ public class AiService {
                 product, units, price, issues);
     }
 
-    private CustomerOptionResponse resolveCustomer(String actor, String name, List<String> issues) {
-        if (name == null || name.isBlank()) return null;
+    private CustomerResolution resolveCustomer(String actor, String name, List<String> issues) {
+        if (name == null || name.isBlank()) return new CustomerResolution(null, false, null);
         // Remove only an address prefix, never parts inside a real name.
         String query = name.trim().replaceFirst("(?iu)^(anh|chị|ông|bà|bác|chú|cô|em)\\s+", "");
         List<CustomerOptionResponse> candidates = customerService.searchOptions(actor, query, 50);
         if (candidates.size() < 50) {
             var exact = candidates.stream().filter(c ->
-                    normalize(c.customerName()).equals(normalize(name))
-                    || normalize(c.customerName()).equals(normalize(query))).toList();
-            if (exact.size() == 1) return exact.getFirst();
-            if (candidates.size() == 1) return candidates.getFirst();
+                    sameCustomerName(c.customerName(), name, query)).toList();
+            if (exact.size() == 1) return new CustomerResolution(exact.getFirst(), false, null);
+            if (candidates.size() == 1) {
+                return new CustomerResolution(candidates.getFirst(), false, null);
+            }
+        }
+        // Speech/text input often omits accents and spaces ("ngocthang" vs "Ngọc Thắng").
+        // Only use the fallback when the complete, bounded customer list has one exact compact match.
+        if (candidates.isEmpty()) {
+            List<CustomerOptionResponse> allCustomers = customerService.searchOptions(actor, null, 50);
+            if (allCustomers.size() < 50) {
+                var compactMatches = allCustomers.stream()
+                        .filter(c -> sameCustomerName(c.customerName(), name, query))
+                        .toList();
+                if (compactMatches.size() == 1) {
+                    return new CustomerResolution(compactMatches.getFirst(), false, null);
+                }
+                if (compactMatches.isEmpty()) {
+                    return new CustomerResolution(null, true, query);
+                }
+                issues.add("Có nhiều khách hàng phù hợp với " + name + ". Hãy nhập tên đầy đủ.");
+                return new CustomerResolution(null, false, null);
+            }
         }
         issues.add(candidates.isEmpty()
                 ? "Không tìm thấy khách hàng " + name + ". Hãy đăng ký hoặc nhập tên đầy đủ."
                 : "Có nhiều khách hàng phù hợp với " + name + ". Hãy nhập tên đầy đủ.");
-        return null;
+        return new CustomerResolution(null, false, null);
+    }
+
+    private record CustomerResolution(CustomerOptionResponse customer, boolean needsCreation,
+                                      String customerName) {}
+
+    private boolean sameCustomerName(String customerName, String spokenName, String query) {
+        String normalizedCustomer = normalize(customerName);
+        String normalizedSpoken = normalize(spokenName);
+        String normalizedQuery = normalize(query);
+        return normalizedCustomer.equals(normalizedSpoken)
+                || normalizedCustomer.equals(normalizedQuery)
+                || compact(normalizedCustomer).equals(compact(normalizedSpoken))
+                || compact(normalizedCustomer).equals(compact(normalizedQuery));
+    }
+
+    private String compact(String value) {
+        return value.replace(" ", "");
     }
 
     private void validateExtraction(AiExtraction parsed) {

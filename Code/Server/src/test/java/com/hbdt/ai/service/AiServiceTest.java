@@ -44,7 +44,7 @@ class AiServiceTest {
         when(client.extract(anyString())).thenReturn(extraction("DEBT", "anh Ba", 5));
         catalog(100);
         when(customers.searchOptions("owner", "Ba", 50))
-                .thenReturn(List.of(new CustomerOptionResponse(7L, "KH7", "Ba", null)));
+                .thenReturn(List.of(new CustomerOptionResponse(7L, "KH7", "Ba", null, BigDecimal.ZERO)));
         var result = service.parseOrder("owner", request);
         assertTrue(result.readyToApply());
         assertEquals(7L, result.customer().id());
@@ -79,11 +79,41 @@ class AiServiceTest {
         when(client.extract(anyString())).thenReturn(extraction("DEBT", "anh Ba", 5));
         catalog(100);
         when(customers.searchOptions("owner", "Ba", 50)).thenReturn(List.of(
-                new CustomerOptionResponse(7L, "KH7", "Ba", null),
-                new CustomerOptionResponse(8L, "KH8", "Ba", null)));
+                new CustomerOptionResponse(7L, "KH7", "Ba", null, BigDecimal.ZERO),
+                new CustomerOptionResponse(8L, "KH8", "Ba", null, BigDecimal.ZERO)));
         var result = service.parseOrder("owner", request);
         assertFalse(result.readyToApply());
         assertNull(result.customer());
+    }
+
+    @Test
+    void matchesCustomerWhenAiOmitsAccentsAndSpaces() {
+        when(client.extract(anyString())).thenReturn(extraction("CASH", "ngocthang", 5));
+        catalog(100);
+        when(customers.searchOptions("owner", "ngocthang", 50)).thenReturn(List.of());
+        when(customers.searchOptions("owner", null, 50)).thenReturn(List.of(
+                new CustomerOptionResponse(7L, "KH7", "Ngọc Thắng", null, BigDecimal.ZERO)));
+
+        var result = service.parseOrder("owner", request);
+
+        assertTrue(result.readyToApply());
+        assertNotNull(result.customer());
+        assertEquals(7L, result.customer().id());
+    }
+
+    @Test
+    void marksUnknownCustomerForCreationWithoutBlockingProposal() {
+        when(client.extract(anyString())).thenReturn(extraction("CASH", "chị Ngọc Mới", 5));
+        catalog(100);
+        when(customers.searchOptions("owner", "Ngọc Mới", 50)).thenReturn(List.of());
+        when(customers.searchOptions("owner", null, 50)).thenReturn(List.of());
+
+        var result = service.parseOrder("owner", request);
+
+        assertTrue(result.readyToApply());
+        assertNull(result.customer());
+        assertTrue(result.customerNeedsCreation());
+        assertEquals("Ngọc Mới", result.customerName());
     }
 
     @Test

@@ -13,6 +13,7 @@ public record AiParseOrderResponse(
         boolean readyToApply,
         String customerName,
         CustomerOptionResponse customer,
+        boolean customerNeedsCreation,
         String paymentType,
         List<Item> items,
         List<String> ambiguities,

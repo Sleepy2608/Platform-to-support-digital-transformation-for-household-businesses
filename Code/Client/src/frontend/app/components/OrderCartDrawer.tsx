@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   ArrowRight,
   CheckCircle2,
@@ -96,7 +96,9 @@ export function OrderCartDrawer({
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerOption | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerOption | null>(
+    initialCheckout?.customer ?? null,
+  );
 
   const totalAmount = useMemo(
     () => Math.round(items.reduce((sum, item) => sum + Number(item.resolved?.lineTotal || 0), 0)),

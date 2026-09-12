@@ -10,6 +10,7 @@ export interface AiOrderProposal {
   readyToApply: boolean;
   customerName: string | null;
   customer: { id: number; customerCode: string; customerName: string; phone?: string } | null;
+  customerNeedsCreation: boolean;
   paymentType: 'CASH' | 'TRANSFER' | 'DEBT' | 'UNKNOWN';
   items: {
     requestedProductName: string;
@@ -28,12 +29,13 @@ export interface AiOrderProposal {
 }
 
 export function AiOrderInput({ onApply, cartHasItems }: {
-  onApply: (proposal: AiOrderProposal) => void;
+  onApply: (proposal: AiOrderProposal) => Promise<void>;
   cartHasItems: boolean;
 }) {
   const [text, setText] = useState('');
   const [proposal, setProposal] = useState<AiOrderProposal | null>(null);
   const [loading, setLoading] = useState(false);
+  const [applying, setApplying] = useState(false);
   const [error, setError] = useState('');
   const revision = useRef(0);
 
@@ -51,6 +53,20 @@ export function AiOrderInput({ onApply, cartHasItems }: {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const apply = async () => {
+    if (!proposal) return;
+    setApplying(true);
+    setError('');
+    try {
+      await onApply(proposal);
+      setProposal(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể đưa gợi ý vào giỏ hàng.');
+    } finally {
+      setApplying(false);
     }
   };
 
@@ -77,6 +93,11 @@ export function AiOrderInput({ onApply, cartHasItems }: {
             Khách: <strong>{proposal.customer?.customerName || proposal.customerName || 'Khách lẻ'}</strong>
             {' · '}Thanh toán: <strong>{({ CASH: 'Tiền mặt', TRANSFER: 'Chuyển khoản', DEBT: 'Ghi nợ', UNKNOWN: 'Chưa rõ' })[proposal.paymentType]}</strong>
           </p>
+          {proposal.customerNeedsCreation && proposal.customerName && (
+            <p className="rounded-lg bg-blue-50 p-2 text-sm font-semibold text-blue-800">
+              Khách hàng “{proposal.customerName}” chưa tồn tại và sẽ được tạo khi đưa đơn vào giỏ.
+            </p>
+          )}
           <ul className="divide-y divide-slate-100">
             {proposal.items.map((item, index) => (
               <li key={index} className="flex flex-wrap justify-between gap-2 py-2 text-sm">
@@ -94,10 +115,10 @@ export function AiOrderInput({ onApply, cartHasItems }: {
           )}
           <p className="text-xs text-slate-500">{proposal.message}</p>
           {cartHasItems && <p className="text-sm text-amber-800">Giỏ đang có hàng. Hoàn tất hoặc xóa giỏ hiện tại trước khi dùng gợi ý này.</p>}
-          <button type="button" disabled={!proposal.readyToApply || cartHasItems}
-            onClick={() => { onApply(proposal); setProposal(null); }}
+          <button type="button" disabled={!proposal.readyToApply || cartHasItems || applying}
+            onClick={() => void apply()}
             className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white disabled:opacity-40">
-            Đưa vào giỏ để kiểm tra
+            {applying ? 'Đang chuẩn bị giỏ hàng…' : 'Đưa vào giỏ để kiểm tra'}
           </button>
         </div>
       )}

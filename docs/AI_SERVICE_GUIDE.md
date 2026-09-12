@@ -9,6 +9,8 @@ API dùng giao thức Chat Completions tại `https://api.b.ai/v1/chat/completio
 - Trích xuất câu đặt hàng tiếng Việt cho Employee và Owner bằng model B.ai được cấu hình.
 - Đối chiếu sản phẩm, khách hàng, đơn vị, giá và tồn kho từ backend theo tài khoản đăng nhập.
 - Hiển thị bản đề xuất trên trang tạo đơn, đưa vào giỏ để chỉnh sửa và xác nhận.
+- Tự chọn khách hàng đã tồn tại; tên viết liền/không dấu vẫn được đối chiếu khi chỉ có một kết quả.
+- Nếu khách hàng chưa tồn tại, hệ thống chỉ tạo khách hàng khi người dùng bấm đưa đề xuất vào giỏ.
 - Phát hiện dữ liệu thiếu, nhiều kết quả phù hợp và lỗi dịch vụ; luôn có luồng nhập thủ công.
 
 **Bản đề xuất chỉ nằm trong phản hồi/trạng thái giao diện, chưa được lưu thành đơn DRAFT trong database.**
@@ -61,9 +63,11 @@ Giữ nguyên `AI_SERVICE_API_SECRET` dùng chung giữa Python và backend khi 
 Trong `Code/Server/.env`:
 
 ```dotenv
-AI_SERVICE_URL=http://localhost:8000
+AI_SERVICE_URL=http://127.0.0.1:8000
 AI_SERVICE_API_SECRET=<cùng secret với Code/AI/.env>
 AI_SERVICE_TIMEOUT_SECONDS=35
+AI_SERVICE_AUTO_START=true
+AI_SERVICE_WORK_DIR=../AI
 ```
 
 Các file `.env` đã được Git bỏ qua. Docker build AI loại trừ `.env` và môi trường Python riêng.
@@ -71,16 +75,24 @@ Không đặt B.ai key vào frontend hoặc biến `NEXT_PUBLIC_*`.
 
 ## Chạy local trên Windows
 
-Tại thư mục `Code/AI`, dùng Python 3.12:
+Tại thư mục `Code/AI`, dùng Python 3.12 để thiết lập môi trường một lần:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-Môi trường `.venv` đã được tạo và cài thư viện trong phiên tích hợp này.
-Có thể bỏ qua hai lệnh đầu nếu đang dùng workspace hiện tại.
+Sau đó chỉ cần chạy `HbdtApplication` trong IntelliJ hoặc khởi động Spring Boot như bình thường.
+Ở profile `dev`, backend tự kiểm tra `http://127.0.0.1:8000/health`; nếu AI service chưa chạy,
+backend sẽ mở Uvicorn từ `Code/AI/.venv` và đóng tiến trình đó khi backend dừng.
+Nếu AI service đã chạy sẵn, backend sử dụng tiến trình hiện có và không mở thêm.
+
+Để tắt cơ chế này, đặt `AI_SERVICE_AUTO_START=false`. Nếu IntelliJ dùng working directory khác,
+đặt `AI_SERVICE_WORK_DIR` thành đường dẫn tuyệt đối tới `Code/AI`. Có thể chạy AI thủ công khi cần:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000
+```
 
 Khởi động backend theo cấu hình database của dự án bằng Java 21, sau đó chạy frontend.
 Chủ hộ mở `/owner/orders/new`; nhân viên mở `/employee/orders/new`.
