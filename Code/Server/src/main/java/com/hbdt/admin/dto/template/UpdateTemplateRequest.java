@@ -20,6 +20,7 @@ public class UpdateTemplateRequest {
 
     @NotBlank(message = "Tên mẫu báo cáo không được để trống")
     @Size(max = 255, message = "Tên mẫu báo cáo tối đa 255 ký tự")
+    @com.fasterxml.jackson.annotation.JsonAlias("templateName")
     private String name;
 
     @Size(max = 50, message = "Mã biểu mẫu tối đa 50 ký tự")

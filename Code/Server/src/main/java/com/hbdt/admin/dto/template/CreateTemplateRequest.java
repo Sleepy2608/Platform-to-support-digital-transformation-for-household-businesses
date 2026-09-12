@@ -19,6 +19,7 @@ public class CreateTemplateRequest {
 
     @NotBlank(message = "Tên mẫu báo cáo không được để trống")
     @Size(max = 255, message = "Tên mẫu báo cáo tối đa 255 ký tự")
+    @com.fasterxml.jackson.annotation.JsonAlias("templateName")
     private String name;
 
     @NotBlank(message = "Mã mẫu không được để trống")
@@ -26,6 +27,7 @@ public class CreateTemplateRequest {
     private String templateCode;
 
     @NotNull(message = "Loại mẫu báo cáo không được để trống")
+    @com.fasterxml.jackson.annotation.JsonAlias("templateType")
     private TemplateType type;
 
     @Size(max = 50, message = "Mã biểu mẫu tối đa 50 ký tự")
