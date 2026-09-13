@@ -6,9 +6,13 @@ import com.hbdt.product.dto.ProductUnitResponse;
 import com.hbdt.pricing.dto.ResolvedPriceResponse;
 import java.math.BigDecimal;
 import java.util.List;
+import java.time.LocalDateTime;
 
-/** Review-only proposal: no order is persisted by the parsing endpoint. */
+/** AI proposal persisted for human review before an order can be created. */
 public record AiParseOrderResponse(
+        Long draftId,
+        String status,
+        LocalDateTime createdAt,
         String provider,
         boolean readyToApply,
         String customerName,

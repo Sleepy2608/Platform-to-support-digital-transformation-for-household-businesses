@@ -12,6 +12,11 @@ import com.hbdt.product.service.ProductService;
 import com.hbdt.product.service.ProductUnitService;
 import com.hbdt.pricing.dto.ResolvedPriceResponse;
 import com.hbdt.pricing.service.ProductPricingService;
+import com.hbdt.repository.AiOrderDraftRepository;
+import com.hbdt.repository.UserRepository;
+import com.hbdt.notification.service.NotificationService;
+import com.hbdt.entity.User;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,12 +36,25 @@ class AiServiceTest {
     @Mock ProductUnitService units;
     @Mock ProductPricingService prices;
     @Mock CustomerService customers;
+    @Mock AiOrderDraftRepository drafts;
+    @Mock UserRepository users;
+    @Mock NotificationService notifications;
     AiService service;
     private final AiParseOrderRequest request = new AiParseOrderRequest("Lấy 5 bao xi măng cho anh Ba, ghi nợ");
 
     @BeforeEach
     void setUp() {
-        service = new AiService(client, business, products, units, prices, customers);
+        lenient().when(business.requireBusinessId("owner")).thenReturn(5L);
+        lenient().when(users.findByUsername("owner")).thenReturn(java.util.Optional.of(
+                User.builder().id(7L).businessId(5L).fullName("Chủ cửa hàng").build()));
+        lenient().when(drafts.save(any())).thenAnswer(invocation -> {
+            var draft = (com.hbdt.entity.AiOrderDraft) invocation.getArgument(0);
+            draft.setId(99L);
+            draft.setCreatedAt(java.time.LocalDateTime.now());
+            return draft;
+        });
+        service = new AiService(client, business, products, units, prices, customers,
+                drafts, users, notifications, new ObjectMapper());
     }
 
     @Test
@@ -50,6 +68,9 @@ class AiServiceTest {
         assertEquals(7L, result.customer().id());
         assertEquals(new BigDecimal("85000"), result.items().getFirst().price().unitPrice());
         assertEquals(10L, result.items().getFirst().product().id());
+        assertEquals(99L, result.draftId());
+        assertEquals("PENDING", result.status());
+        verify(notifications).notifyAiDraftCreated(5L, 7L, 99L, "Chủ cửa hàng");
         var inOrder = inOrder(business, client, products);
         inOrder.verify(business).requireBusinessId("owner");
         inOrder.verify(client).extract(request.text());
@@ -60,7 +81,7 @@ class AiServiceTest {
     void rejectsMissingBusinessBeforeBillableRequest() {
         when(business.requireBusinessId("outsider")).thenThrow(new IllegalStateException("No business"));
         assertThrows(IllegalStateException.class, () -> service.parseOrder("outsider", request));
-        verifyNoInteractions(client, products, units, prices, customers);
+        verifyNoInteractions(client, products, units, prices, customers, drafts, users, notifications);
     }
 
     @Test

@@ -3,7 +3,13 @@ package com.hbdt.ai.service;
 import com.hbdt.ai.dto.AiExtraction;
 import com.hbdt.ai.dto.AiParseOrderRequest;
 import com.hbdt.ai.dto.AiParseOrderResponse;
+import com.hbdt.ai.dto.AiDraftRejectRequest;
+import com.hbdt.ai.dto.AiBookkeepingDraftResponse;
+import com.hbdt.revenue.dto.BusinessOperationsReportResponse;
 import com.hbdt.common.exception.BadRequestException;
+import com.hbdt.common.exception.ResourceNotFoundException;
+import com.hbdt.entity.AiOrderDraft;
+import com.hbdt.entity.User;
 import com.hbdt.customer.dto.CustomerOptionResponse;
 import com.hbdt.customer.service.CustomerService;
 import com.hbdt.product.dto.ProductResponse;
@@ -14,6 +20,11 @@ import com.hbdt.product.service.ProductUnitService;
 import com.hbdt.pricing.dto.ResolvePriceRequest;
 import com.hbdt.pricing.dto.ResolvedPriceResponse;
 import com.hbdt.pricing.service.ProductPricingService;
+import com.hbdt.notification.service.NotificationService;
+import com.hbdt.repository.AiOrderDraftRepository;
+import com.hbdt.repository.UserRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -22,6 +33,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AiService {
@@ -31,18 +43,29 @@ public class AiService {
     private final ProductUnitService unitService;
     private final ProductPricingService pricingService;
     private final CustomerService customerService;
+    private final AiOrderDraftRepository draftRepository;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
+    private final ObjectMapper objectMapper;
 
     public AiService(AiExtractionClient extractionClient, BusinessContextService businessContext,
                      ProductService productService, ProductUnitService unitService,
-                     ProductPricingService pricingService, CustomerService customerService) {
+                     ProductPricingService pricingService, CustomerService customerService,
+                     AiOrderDraftRepository draftRepository, UserRepository userRepository,
+                     NotificationService notificationService, ObjectMapper objectMapper) {
         this.extractionClient = extractionClient;
         this.businessContext = businessContext;
         this.productService = productService;
         this.unitService = unitService;
         this.pricingService = pricingService;
         this.customerService = customerService;
+        this.draftRepository = draftRepository;
+        this.userRepository = userRepository;
+        this.notificationService = notificationService;
+        this.objectMapper = objectMapper;
     }
 
+    @Transactional
     public AiParseOrderResponse parseOrder(String actor, AiParseOrderRequest request) {
         // Validate ownership before the paid API call. Never accept a tenant ID from the model/client.
         businessContext.requireBusinessId(actor);
@@ -54,7 +77,7 @@ public class AiService {
                 .forEach(issues::add);
         if (!"CREATE_ORDER".equals(parsed.intent()) || parsed.items().isEmpty()) {
             issues.add("Chưa nhận được yêu cầu tạo đơn. Hãy nhập sản phẩm, số lượng và đơn vị tính.");
-            return new AiParseOrderResponse("bai", false, parsed.customerName(), null, false,
+            return new AiParseOrderResponse(null, null, null, "bai", false, parsed.customerName(), null, false,
                     parsed.paymentType(), List.of(), issues, "Chưa tạo bản đề xuất đơn hàng.");
         }
         if ("UNKNOWN".equals(parsed.paymentType())) {
@@ -86,9 +109,70 @@ public class AiService {
         List<String> uniqueIssues = issues.stream().distinct().toList();
         String proposedCustomerName = customerResolution.needsCreation()
                 ? customerResolution.customerName() : parsed.customerName();
-        return new AiParseOrderResponse("bai", uniqueIssues.isEmpty(), proposedCustomerName, customer,
+        AiParseOrderResponse proposal = new AiParseOrderResponse(null, "PENDING", null, "bai",
+                uniqueIssues.isEmpty(), proposedCustomerName, customer,
                 customerResolution.needsCreation(), parsed.paymentType(), items, uniqueIssues,
-                "Bản đề xuất chưa lưu. Kiểm tra thông tin và xác nhận tại giỏ hàng.");
+                "Đơn nháp đã được lưu. Kiểm tra thông tin và xác nhận tại giỏ hàng.");
+        User user = requireUser(actor);
+        AiOrderDraft draft = new AiOrderDraft();
+        draft.setBusinessId(user.getBusinessId());
+        draft.setCreatedBy(user.getId());
+        draft.setStatus("PENDING");
+        draft.setSourceText(request.text().trim());
+        draft.setProposalJson(writeProposal(proposal));
+        draft = draftRepository.save(draft);
+        notificationService.notifyAiDraftCreated(user.getBusinessId(), user.getId(), draft.getId(), user.getFullName());
+        return withDraftMetadata(proposal, draft);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AiParseOrderResponse> listDrafts(String actor) {
+        Long businessId = businessContext.requireBusinessId(actor);
+        return draftRepository.findTop50ByBusinessIdAndStatusOrderByCreatedAtDesc(businessId, "PENDING")
+                .stream().map(this::readProposal).toList();
+    }
+
+    @Transactional
+    public AiParseOrderResponse rejectDraft(String actor, Long draftId, AiDraftRejectRequest request) {
+        User user = requireUser(actor);
+        AiOrderDraft draft = draftRepository.findByIdAndBusinessId(draftId, user.getBusinessId())
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn nháp AI"));
+        if (!"PENDING".equals(draft.getStatus())) {
+            throw new BadRequestException("Đơn nháp AI đã được xử lý trước đó");
+        }
+        draft.setStatus("REJECTED");
+        draft.setRejectionReason(request.reason().trim());
+        draft.setReviewedBy(user.getId());
+        draft.setReviewedAt(java.time.LocalDateTime.now());
+        return readProposal(draftRepository.save(draft));
+    }
+
+    private User requireUser(String actor) {
+        businessContext.requireBusinessId(actor);
+        return userRepository.findByUsername(actor)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
+    }
+
+    private String writeProposal(AiParseOrderResponse proposal) {
+        try {
+            return objectMapper.writeValueAsString(proposal);
+        } catch (JsonProcessingException error) {
+            throw new AiUnavailableException("Không thể lưu đơn nháp AI.");
+        }
+    }
+
+    private AiParseOrderResponse readProposal(AiOrderDraft draft) {
+        try {
+            return withDraftMetadata(objectMapper.readValue(draft.getProposalJson(), AiParseOrderResponse.class), draft);
+        } catch (JsonProcessingException error) {
+            throw new AiUnavailableException("Dữ liệu đơn nháp AI không hợp lệ.");
+        }
+    }
+
+    private AiParseOrderResponse withDraftMetadata(AiParseOrderResponse p, AiOrderDraft draft) {
+        return new AiParseOrderResponse(draft.getId(), draft.getStatus(), draft.getCreatedAt(),
+                p.provider(), p.readyToApply(), p.customerName(), p.customer(), p.customerNeedsCreation(),
+                p.paymentType(), p.items(), p.ambiguities(), p.message());
     }
 
     private AiParseOrderResponse.Item resolveItem(String actor, AiExtraction.Item item) {
@@ -239,5 +323,24 @@ public class AiService {
 
     public boolean isConfigured() {
         return extractionClient.isConfigured();
+    }
+
+    public AiBookkeepingDraftResponse draftBookkeeping(
+            String actor, BusinessOperationsReportResponse report) {
+        businessContext.requireBusinessId(actor);
+        Map<String, Object> safeMetrics = new java.util.LinkedHashMap<>();
+        safeMetrics.put("fromDate", String.valueOf(report.fromDate()));
+        safeMetrics.put("toDate", String.valueOf(report.toDate()));
+        safeMetrics.put("salesRevenue", report.salesRevenue());
+        safeMetrics.put("cashCollected", report.cashCollected());
+        safeMetrics.put("debtIncurred", report.debtIncurred());
+        safeMetrics.put("debtCollected", report.debtCollected());
+        safeMetrics.put("closingReceivables", report.closingReceivables());
+        safeMetrics.put("stockPurchaseValue", report.stockPurchaseValue());
+        safeMetrics.put("netOperatingCashFlow", report.netOperatingCashFlow());
+        safeMetrics.put("confirmedOrders", report.confirmedOrders());
+        safeMetrics.put("confirmedStockImports", report.confirmedStockImports());
+        safeMetrics.put("accountingStandard", "TT88/2021/TT-BTC; báo cáo quản trị, cần chủ hộ duyệt");
+        return extractionClient.draftBookkeeping(safeMetrics);
     }
 }

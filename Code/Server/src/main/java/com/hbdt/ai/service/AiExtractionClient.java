@@ -1,6 +1,7 @@
 package com.hbdt.ai.service;
 
 import com.hbdt.ai.dto.AiExtraction;
+import com.hbdt.ai.dto.AiBookkeepingDraftResponse;
 import java.time.Duration;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +50,27 @@ public class AiExtractionClient {
             throw new AiUnavailableException(message);
         } catch (RestClientException exception) {
             throw new AiUnavailableException("Không kết nối được AI service. Vui lòng tạo đơn thủ công.");
+        }
+    }
+
+    public AiBookkeepingDraftResponse draftBookkeeping(Map<String, Object> report) {
+        if (apiSecret.isBlank()) {
+            throw new AiUnavailableException("Chưa cấu hình kết nối AI service.");
+        }
+        try {
+            AiBookkeepingDraftResponse result = client.postForObject(
+                    serviceUrl + "/api/v1/ai/draft-bookkeeping",
+                    new HttpEntity<>(Map.of("report", report), headers()),
+                    AiBookkeepingDraftResponse.class);
+            if (result == null || result.summary() == null
+                    || result.observations() == null || result.warnings() == null) {
+                throw new AiUnavailableException("AI chưa tạo được nhận xét báo cáo hợp lệ.");
+            }
+            return result;
+        } catch (HttpStatusCodeException exception) {
+            throw new AiUnavailableException("AI chưa sẵn sàng để tạo nhận xét báo cáo.");
+        } catch (RestClientException exception) {
+            throw new AiUnavailableException("Không kết nối được AI service.");
         }
     }
 
