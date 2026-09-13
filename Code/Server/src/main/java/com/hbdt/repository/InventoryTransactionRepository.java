@@ -6,8 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public interface InventoryTransactionRepository extends JpaRepository<InventoryTransaction, Long> {
+    List<InventoryTransaction> findAllByBusinessIdAndCreatedAtLessThanEqualOrderByCreatedAtAscIdAsc(
+            Long businessId, LocalDateTime to);
+
     List<InventoryTransaction> findAllByBusinessIdAndProductIdOrderByCreatedAtDesc(
             Long businessId,
             Long productId
