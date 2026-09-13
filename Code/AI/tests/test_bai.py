@@ -99,6 +99,19 @@ class BaiClientTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(error.exception.code, "BAI_TIMEOUT")
         self.assertEqual(calls, 1)
 
+    async def test_bookkeeping_draft_preserves_backend_as_source_of_numbers(self):
+        def handle(request):
+            sent = json.loads(request.content)
+            self.assertIn('Không sửa', sent['messages'][0]['content'])
+            self.assertEqual(json.loads(sent['messages'][1]['content'])['salesRevenue'], 100000)
+            return httpx.Response(200, json={"choices": [{"finish_reason": "stop", "message": {
+                "content": json.dumps({"summary": "Doanh thu trong kỳ là 100.000 đồng.",
+                    "observations": ["Có một đơn đã xác nhận."],
+                    "warnings": ["Cần đối chiếu chứng từ trước khi xác nhận."]}, ensure_ascii=False)}}]})
+        result = await BaiClient(self.settings, httpx.MockTransport(handle)).draft_bookkeeping(
+            {"salesRevenue": 100000, "confirmedOrders": 1})
+        self.assertIn("100.000", result.summary)
+
 
 class ConfigurationTests(unittest.TestCase):
     def test_bai_credentials_are_isolated_from_previous_provider(self):
@@ -134,8 +147,8 @@ class RouterTests(unittest.TestCase):
             result = self.client.post("/api/v1/ai/parse-order", headers=headers, json={"text": "Lấy 5 bao xi măng"})
             self.assertEqual(result.status_code, 401)
 
-    def test_empty_text_and_unimplemented_audio_rejected(self):
-        for data in [{"text": "   "}, {"text": "Lấy xi măng", "audio_base64": "unused"},
+    def test_empty_text_and_unknown_fields_rejected(self):
+        for data in [{"text": "   "}, {"text": "Lấy xi măng", "unsupported_field": "unused"},
                      {"text": "Lấy xi măng", "business_id": 123}]:
             result = self.client.post("/api/v1/ai/parse-order", headers={"X-API-Secret": "internal-secret"}, json=data)
             self.assertEqual(result.status_code, 422)

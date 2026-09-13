@@ -6,7 +6,7 @@ from urllib.parse import urlsplit
 import httpx
 
 from src.config import Settings
-from src.models import ExtractedOrder
+from src.models import BookkeepingDraft, ExtractedOrder
 
 
 class BaiError(Exception):
@@ -120,3 +120,67 @@ class BaiClient:
             return order
         except (ValueError, KeyError, IndexError, TypeError):
             raise BaiError("BAI_INVALID_OUTPUT", "Kết quả BAI không hợp lệ. Vui lòng diễn đạt lại hoặc tạo đơn thủ công.") from None
+
+    async def draft_bookkeeping(self, report: dict) -> BookkeepingDraft:
+        """Explain deterministic totals; the model must never recalculate authoritative amounts."""
+        prompt = """Bạn hỗ trợ chủ hộ đọc BÁO CÁO QUẢN TRỊ đã được backend tính sẵn.
+Chỉ trả JSON đúng schema. Không sửa, làm tròn, suy đoán hoặc tạo thêm số liệu.
+Nêu ngắn gọn biến động doanh thu, tiền đã thu, công nợ và giá trị nhập hàng.
+Nếu dữ liệu chưa đủ để kết luận lợi nhuận hoặc thuế, ghi rõ trong warnings.
+Không tuyên bố báo cáo đã hợp lệ để kê khai thuế; luôn yêu cầu chủ hộ đối chiếu chứng từ.
+Schema: """ + json.dumps(BookkeepingDraft.model_json_schema(), ensure_ascii=False)
+        payload = {
+            "model": self.settings.model,
+            "messages": [{"role": "system", "content": prompt},
+                         {"role": "user", "content": json.dumps(report, ensure_ascii=False)}],
+            "temperature": 0, "max_tokens": 1200, "stream": False,
+        }
+        if self.settings.model == "qwen3.8-flash":
+            payload["enable_thinking"] = False
+        content = await self._complete(payload)
+        try:
+            return BookkeepingDraft.model_validate_json(content)
+        except ValueError:
+            raise BaiError("BAI_INVALID_OUTPUT", "AI chưa tạo được nhận xét báo cáo hợp lệ.") from None
+
+    async def _complete(self, payload: dict) -> str:
+        missing = self.settings.missing_bai_settings()
+        if missing:
+            raise BaiError("BAI_NOT_CONFIGURED", "Chưa cấu hình " + ", ".join(missing) + ".", 503)
+        parsed_url = urlsplit(self.settings.base_url)
+        if (parsed_url.scheme != "https" or not parsed_url.hostname
+                or parsed_url.username or parsed_url.password or parsed_url.query or parsed_url.fragment):
+            raise BaiError("BAI_CONFIG_INVALID", "BAI_BASE_URL phải là URL HTTPS hợp lệ.", 503)
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(self.settings.timeout_seconds, connect=5.0),
+                                         transport=self.transport, follow_redirects=False) as client:
+                response = await client.post(self.settings.base_url + "/chat/completions",
+                    headers={"Authorization": "Bearer " + self.settings.api_key}, json=payload)
+        except httpx.TimeoutException:
+            raise BaiError("BAI_TIMEOUT", "BAI phản hồi quá thời gian.", 504) from None
+        except httpx.RequestError:
+            raise BaiError("BAI_UNAVAILABLE", "Không kết nối được BAI.", 503) from None
+        if response.status_code in (401, 403):
+            raise BaiError("BAI_AUTH_FAILED", "BAI từ chối API key hoặc quyền truy cập model.", 503)
+        quota_exceeded = response.status_code in (402, 429)
+        if response.status_code == 400:
+            try:
+                body = response.json()
+                provider_error = body.get("error") if isinstance(body, dict) else None
+                quota_exceeded = isinstance(provider_error, dict) and provider_error.get("code") == "insufficient_user_quota"
+            except ValueError:
+                pass
+        if quota_exceeded:
+            raise BaiError("BAI_QUOTA_EXCEEDED", "BAI đã hết hạn mức hoặc đang giới hạn lượt gọi.", 503)
+        if response.status_code != 200:
+            raise BaiError("BAI_REQUEST_FAILED", "BAI chưa xử lý được yêu cầu.")
+        try:
+            choice = response.json()["choices"][0]
+            if choice.get("finish_reason") != "stop":
+                raise ValueError("Incomplete completion")
+            content = choice["message"]["content"].strip()
+            if content.startswith("```json\n") and content.endswith("```"):
+                content = content[8:-3].strip()
+            return content
+        except (ValueError, KeyError, IndexError, TypeError, AttributeError):
+            raise BaiError("BAI_INVALID_OUTPUT", "Kết quả BAI không hợp lệ.") from None

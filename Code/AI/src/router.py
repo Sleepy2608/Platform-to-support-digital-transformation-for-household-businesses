@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Header, HTTPException
 
 from src.config import Settings, get_settings
-from src.models import ExtractedOrder, ParseOrderRequest
+from src.models import BookkeepingDraft, BookkeepingDraftRequest, ExtractedOrder, ParseOrderRequest
 from src.services.bai_client import BaiClient, BaiError
 
 
@@ -48,3 +48,15 @@ def readiness(settings: Annotated[Settings, Depends(get_settings)]):
                                          "message": "Thiếu cấu hình: " + ", ".join(missing)})
     return {"status": "configured", "provider": "bai", "model": settings.model,
             "live_verified": False}
+
+
+@ai_router.post("/draft-bookkeeping", response_model=BookkeepingDraft)
+async def draft_bookkeeping(
+    request: BookkeepingDraftRequest, settings: Annotated[Settings, Depends(get_settings)]
+) -> BookkeepingDraft:
+    try:
+        return await BaiClient(settings).draft_bookkeeping(request.report)
+    except BaiError as error:
+        raise HTTPException(error.status_code, detail={
+            "code": error.code, "message": error.message
+        }) from None
