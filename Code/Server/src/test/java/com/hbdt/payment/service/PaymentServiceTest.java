@@ -54,12 +54,8 @@ class PaymentServiceTest {
         when(userRepository.findByUsername("owner")).thenReturn(Optional.of(user));
         when(salesOrderRepository.findForUpdateByIdAndBusinessId(100L, 5L)).thenReturn(Optional.of(order));
         when(customerRepository.findActiveForUpdate(22L, 5L)).thenReturn(Optional.of(customer));
-        when(debtTransactionRepository.sumAmountByCustomerIdAndType(22L, 5L, "DEBT_INCREASE"))
-                .thenReturn(new BigDecimal("300000"));
-        when(debtTransactionRepository.sumAmountByCustomerIdAndType(22L, 5L, "PAYMENT"))
-                .thenReturn(new BigDecimal("50000"));
-        when(debtTransactionRepository.sumAmountByCustomerIdAndType(22L, 5L, "VOID"))
-                .thenReturn(BigDecimal.ZERO);
+        when(debtTransactionRepository.calculateCurrentBalance(22L, 5L))
+                .thenReturn(new BigDecimal("250000"));
         when(debtTransactionRepository.save(any(DebtTransaction.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 

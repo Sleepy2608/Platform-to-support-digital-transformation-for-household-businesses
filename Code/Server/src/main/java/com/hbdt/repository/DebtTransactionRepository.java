@@ -11,7 +11,9 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Repository
 public interface DebtTransactionRepository extends JpaRepository<DebtTransaction, Long> {
@@ -63,29 +65,51 @@ public interface DebtTransactionRepository extends JpaRepository<DebtTransaction
     @Query("""
         SELECT COALESCE(SUM(dt.amount), 0)
         FROM DebtTransaction dt
+        LEFT JOIN SalesOrder so ON so.id = dt.salesOrderId AND so.businessId = dt.businessId
         WHERE dt.customerId = :customerId
           AND dt.businessId = :businessId
           AND dt.transactionType = :transactionType
           AND dt.status = 'ACTIVE'
+          AND (dt.salesOrderId IS NULL OR (so.id IS NOT NULL
+               AND (so.confirmedAt IS NULL OR dt.transactionDate >= so.confirmedAt)))
         """)
     BigDecimal sumAmountByCustomerIdAndType(
             @Param("customerId") Long customerId,
             @Param("businessId") Long businessId,
             @Param("transactionType") String transactionType);
 
+    @Query("""
+        SELECT COALESCE(SUM(dt.amount), 0)
+        FROM DebtTransaction dt
+        LEFT JOIN SalesOrder so ON so.id = dt.salesOrderId AND so.businessId = dt.businessId
+        WHERE dt.customerId = :customerId
+          AND dt.businessId = :businessId
+          AND dt.transactionType IN :transactionTypes
+          AND dt.status = 'ACTIVE'
+          AND (dt.salesOrderId IS NULL OR (so.id IS NOT NULL
+               AND (so.confirmedAt IS NULL OR dt.transactionDate >= so.confirmedAt)))
+        """)
+    BigDecimal sumAmountByCustomerIdAndTypes(
+            @Param("customerId") Long customerId,
+            @Param("businessId") Long businessId,
+            @Param("transactionTypes") Collection<String> transactionTypes);
+
     /** Tính dư nợ hiện tại từ sổ giao dịch ACTIVE (nguồn dữ liệu chuẩn). */
     @Query("""
         SELECT COALESCE(SUM(
             CASE
-                WHEN dt.transactionType = 'DEBT_INCREASE' THEN dt.amount
-                WHEN dt.transactionType IN ('PAYMENT', 'VOID') THEN -dt.amount
+                WHEN dt.transactionType IN ('DEBT_INCREASE', 'ADJUSTMENT') THEN dt.amount
+                WHEN dt.transactionType IN ('PAYMENT', 'DEBT_PAYMENT', 'VOID', 'DEBT_REVERSAL') THEN -dt.amount
                 ELSE 0
             END
         ), 0)
         FROM DebtTransaction dt
+        LEFT JOIN SalesOrder so ON so.id = dt.salesOrderId AND so.businessId = dt.businessId
         WHERE dt.customerId = :customerId
           AND dt.businessId = :businessId
           AND dt.status = 'ACTIVE'
+          AND (dt.salesOrderId IS NULL OR (so.id IS NOT NULL
+               AND (so.confirmedAt IS NULL OR dt.transactionDate >= so.confirmedAt)))
         """)
     BigDecimal calculateCurrentBalance(
             @Param("customerId") Long customerId,
@@ -95,4 +119,18 @@ public interface DebtTransactionRepository extends JpaRepository<DebtTransaction
     long countBySalesOrderId(Long salesOrderId);
 
     Optional<DebtTransaction> findFirstByBusinessIdAndCustomerIdOrderByIdDesc(Long businessId, Long customerId);
+
+    @Query("""
+        SELECT dt FROM DebtTransaction dt
+        LEFT JOIN SalesOrder so ON so.id = dt.salesOrderId AND so.businessId = dt.businessId
+        WHERE dt.businessId = :businessId
+          AND dt.status = 'ACTIVE'
+          AND (:toDateTime IS NULL OR dt.transactionDate <= :toDateTime)
+          AND (dt.salesOrderId IS NULL OR (so.id IS NOT NULL
+               AND (so.confirmedAt IS NULL OR dt.transactionDate >= so.confirmedAt)))
+        ORDER BY dt.transactionDate ASC, dt.id ASC
+        """)
+    List<DebtTransaction> findForAccountingReport(
+            @Param("businessId") Long businessId,
+            @Param("toDateTime") LocalDateTime toDateTime);
 }

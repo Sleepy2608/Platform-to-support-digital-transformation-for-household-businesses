@@ -31,7 +31,7 @@
     "sales_order_id" : 6,
     "transaction_code" : "PAY-SO-6-111B4B20",
     "transaction_date" : "2026-08-23T14:39:34.077245",
-    "transaction_type" : "DEBT_PAYMENT",
+    "transaction_type" : "PAYMENT",
     "status" : "ACTIVE"
   }, {
     "id" : 3,
@@ -63,7 +63,7 @@
     "sales_order_id" : 8,
     "transaction_code" : "PAY-SO-8-CE9A1201",
     "transaction_date" : "2026-08-23T14:54:55.054381",
-    "transaction_type" : "DEBT_PAYMENT",
+    "transaction_type" : "PAYMENT",
     "status" : "ACTIVE"
   }, {
     "id" : 5,
@@ -79,7 +79,7 @@
     "sales_order_id" : 8,
     "transaction_code" : "REV-SO-8",
     "transaction_date" : "2026-08-24T06:34:38.695164",
-    "transaction_type" : "DEBT_REVERSAL",
+    "transaction_type" : "VOID",
     "status" : "ACTIVE"
   }, {
     "id" : 6,
@@ -95,7 +95,7 @@
     "sales_order_id" : 6,
     "transaction_code" : "REV-SO-6",
     "transaction_date" : "2026-08-24T06:34:54.782628",
-    "transaction_type" : "DEBT_REVERSAL",
+    "transaction_type" : "VOID",
     "status" : "ACTIVE"
   } ]
 }

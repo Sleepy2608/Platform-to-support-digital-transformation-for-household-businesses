@@ -208,10 +208,10 @@ public class PaymentService {
         BigDecimal totalDebt = debtTransactionRepository
                 .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.DEBT_INCREASE.name());
         BigDecimal totalPaid = debtTransactionRepository
-                .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.PAYMENT.name());
-        BigDecimal totalVoided = debtTransactionRepository
-                .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.VOID.name());
-        BigDecimal currentBalance = totalDebt.subtract(totalPaid).subtract(totalVoided);
+                .sumAmountByCustomerIdAndTypes(customerId, businessId,
+                        java.util.List.of(DebtTransactionType.PAYMENT.name(), "DEBT_PAYMENT"));
+        BigDecimal currentBalance = debtTransactionRepository
+                .calculateCurrentBalance(customerId, businessId);
 
         return new CustomerDebtSummaryResponse(
                 customer.getId(),
@@ -273,13 +273,7 @@ public class PaymentService {
     }
 
     private BigDecimal calculateCustomerDebt(Long customerId, Long businessId) {
-        BigDecimal totalDebt = debtTransactionRepository
-                .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.DEBT_INCREASE.name());
-        BigDecimal totalPaid = debtTransactionRepository
-                .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.PAYMENT.name());
-        BigDecimal totalVoided = debtTransactionRepository
-                .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.VOID.name());
-        return totalDebt.subtract(totalPaid).subtract(totalVoided);
+        return debtTransactionRepository.calculateCurrentBalance(customerId, businessId);
     }
 
     private PaymentStatus determinePaymentStatus(BigDecimal paidAmount, BigDecimal totalAmount) {
