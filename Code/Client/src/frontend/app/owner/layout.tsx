@@ -64,7 +64,10 @@ const MANAGE_NAV_ITEMS: Array<{
       { label: 'Danh sách đơn hàng', href: '/owner/orders/history', icon: ListOrdered },
     ],
   },
-  { label: 'Doanh thu', href: '/owner/revenue', icon: TrendingUp, path: '/owner/revenue' },
+  { label: 'Doanh thu', href: '/owner/revenue', icon: TrendingUp, path: '/owner/revenue', children: [
+    { label: 'Doanh thu cửa hàng', href: '/owner/revenue', icon: ReceiptText },
+    { label: 'Mặt hàng bán chạy', href: '/owner/revenue/products', icon: TrendingUp },
+  ] },
   { label: 'Khách hàng', href: '/owner/customers', icon: UserSearch, path: '/owner/customers' },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
 ];
@@ -327,13 +330,15 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                           <div className="ml-5 mt-1 border-l border-slate-200 pl-3">
                             {item.children.map((child) => {
                               const ChildIcon = child.icon;
-                              const childActive = pathname === child.href || (child.href !== '/owner/products' && pathname.startsWith(child.href));
+                              const childActive = pathname === child.href ||
+                                (!['/owner/products', '/owner/revenue'].includes(child.href) && pathname.startsWith(`${child.href}/`));
                               const isAlertChild = child.href === '/owner/inventory-alerts';
 
                               return (
                                 <Link
                                   key={child.href}
                                   href={child.href}
+                                  aria-current={childActive ? 'page' : undefined}
                                   onClick={() => setSidebarOpen(false)}
                                   className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
                                     childActive
