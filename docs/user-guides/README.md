@@ -6,13 +6,13 @@
 | **Mã issue/ticket** | HBDT-98 |  
 | **Môn học** | Lập trình Java / Đồ án phát triển phần mềm |
 | **Tài liệu** | Tổng quan Thư mục Hướng dẫn Sử dụng Hệ thống (User Manual Guides) |
-| **Phiên bản** | 1.1 — 07/09/2026 |
+| **Phiên bản** | 1.2 — 10/09/2026 |
 
 ---
 
 ## 1. Giới thiệu thư mục User Guides
 
-Thư mục `docs/user-guides` chứa toàn bộ tài liệu hướng dẫn vận hành và sử dụng hệ thống **Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform)**. Tài liệu được phân chia chi tiết theo **4 vai trò người dùng (Role-Based Access Control - RBAC)** trong hệ thống.
+Thư mục `docs/user-guides` chứa toàn bộ tài liệu hướng dẫn vận hành và sử dụng hệ thống **Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform)**. Tài liệu được cập nhật theo trạng thái hiện tại của repo, bao gồm các tính năng mới trong 2 tuần gần đây như quản lý gói đăng ký của Owner, revenue ledger, stock import, bookkeeping tự động và xử lý JWT 401/refresh token.
 
 ---
 
@@ -21,8 +21,8 @@ Thư mục `docs/user-guides` chứa toàn bộ tài liệu hướng dẫn vận
 | File tài liệu | Vai trò áp dụng | Mô tả ngắn gọn | Đường dẫn giao diện |
 |---|---|---|---|
 | **[admin-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/admin-manual-guide.md)** | Quản trị viên hệ thống (`ADMIN`) | Quản lý toàn bộ tài khoản, phê duyệt hộ kinh doanh, quản lý gói thuê bao, giám sát Audit Log và cơ chế mã hóa Seek Data. | `/admin/login`<br>`/admin/accounts`<br>`/admin/seed` |
-| **[manager-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/manager-manual-guide.md)** | Quản lý / Chuyên viên (`MANAGER`) | Phê duyệt hồ sơ hộ kinh doanh, đối soát hóa đơn dịch vụ, quản lý danh mục biểu mẫu Thông tư 88 và thuế khoán. | `/manager` |
-| **[owner-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/owner-manual-guide.md)** | Chủ Hộ Kinh Doanh (`BUSINESS_OWNER`) | Thiết lập cửa hàng, Onboarding gói cước, quản lý sản phẩm & tồn kho, phân quyền nhân viên, bán hàng POS/AI, xuất báo cáo thuế TT88. | `/login`<br>`/onboarding`<br>`/owner/products`<br>`/owner/orders` |
+| **[manager-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/manager-manual-guide.md)** | Quản lý / Chuyên viên (`MANAGER`) | Phê duyệt hồ sơ hộ kinh doanh, quản lý gói đăng ký của Owner, theo dõi revenue ledger, kiểm tra stock import và bookkeeping, hỗ trợ thanh toán / xác nhận gói. | `/login`<br>`/manager`<br>`/owner/subscription` |
+| **[owner-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/owner-manual-guide.md)** | Chủ Hộ Kinh Doanh (`BUSINESS_OWNER`) | Thiết lập cửa hàng, Onboarding gói cước, quản lý sản phẩm & tồn kho, phân quyền nhân viên, bán hàng POS/AI, xem lịch sử đơn hiệu, xuất báo cáo thuế TT88. | `/login`<br>`/onboarding`<br>`/owner/products`<br>`/owner/orders`<br>`/owner/revenue` |
 | **[employee-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/employee-manual-guide.md)** | Nhân viên cửa hàng (`EMPLOYEE`) | Lập đơn bán hàng tại quầy (POS), quét mã vạch, sử dụng trợ lý giọng nói AI, tra cứu giá & cảnh báo tồn kho thấp. | `/login`<br>`/employee/orders`<br>`/employee/inventory-alerts` |
 
 ---
@@ -89,6 +89,8 @@ Thư mục `docs/user-guides` chứa toàn bộ tài liệu hướng dẫn vận
 - `http://localhost:3000/owner/employees` : Quản lý và phân quyền tài khoản nhân viên.
 - `http://localhost:3000/owner/inventory-alerts` : Quản lý cảnh báo tồn kho thấp.
 - `http://localhost:3000/owner/account` : Cài đặt thông tin hộ kinh doanh, thuế & gói dịch vụ.
+- `http://localhost:3000/owner/subscription` : Xem, chọn và xác nhận gói thuê bao / gia hạn dịch vụ.
+- `http://localhost:3000/owner/revenue` : Xem revenue ledger, lợi nhuận, chi phí nhập hàng và doanh thu theo ngày.
 
 ### 5.4 Khu vực Nhân Viên Cửa Hàng (`/employee`)
 - `http://localhost:3000/employee/orders` : Giao diện bán hàng POS tại quầy & trợ lý AI.

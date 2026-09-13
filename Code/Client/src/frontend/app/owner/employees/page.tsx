@@ -335,67 +335,70 @@ export default function EmployeesPage() {
       </AnimatePresence>
 
       <FeatureGate feature="EMPLOYEE_MANAGEMENT" fallback="locked">
-        <div className="min-h-screen bg-slate-50 p-4 sm:p-8">
+        <div className="min-h-screen bg-slate-100/70 p-4 sm:p-8 lg:p-10 select-none" style={{ cursor: 'default' }}>
+          <div className="max-w-7xl mx-auto space-y-6">
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <div className="flex items-center gap-2.5 mb-1">
-            <div className="p-2 bg-slate-900 text-white rounded-xl">
-              <Users className="w-5 h-5" />
+          {/* Page Title Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight select-none" style={{ userSelect: 'none' }}>
+                Quản lý nhân viên
+              </h1>
+              <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1 select-none" style={{ userSelect: 'none' }}>
+                {data ? `${data.totalElements} nhân viên trong cửa hàng` : 'Quản lý tài khoản, phân quyền và thông tin nhân viên'}
+              </p>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Quản lý nhân viên</h1>
+            <div className="flex items-center gap-3 self-start sm:self-auto">
+              <span className="px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-bold text-slate-700">
+                Nhân viên
+              </span>
+              <button
+                id="btn-create-employee"
+                onClick={() => setShowCreate(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-xs sm:text-sm font-bold hover:bg-slate-800 transition-colors shadow-xs cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                Thêm nhân viên
+              </button>
+            </div>
           </div>
-          <p className="text-slate-500 text-sm pl-0.5">
-            {data ? `${data.totalElements} nhân viên trong cửa hàng` : 'Đang tải...'}
-          </p>
-        </div>
-        <button
-          id="btn-create-employee"
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800 transition-colors shadow-sm cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          Thêm nhân viên
-        </button>
-      </div>
 
-      {/* Search & Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            id="search-employees"
-            type="text"
-            placeholder="Tìm kiếm theo tên hoặc username..."
-            value={keyword}
-            onChange={(e) => { setKeyword(e.target.value); setPage(0); }}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-400 transition"
-          />
-        </div>
-        <select
-          id="filter-status"
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value as EmployeeStatus | ''); setPage(0); }}
-          className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/20 cursor-pointer"
-        >
-          <option value="">Tất cả trạng thái</option>
-          <option value="ACTIVE">Đang làm việc</option>
-          <option value="INACTIVE">Tạm nghỉ</option>
-          <option value="LOCKED">Bị khóa</option>
-          <option value="DEACTIVATED">Đã nghỉ</option>
-        </select>
-        <button
-          onClick={fetchEmployees}
-          className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer"
-          title="Tải lại"
-        >
-          <RefreshCw className="w-4 h-4" />
-        </button>
-      </div>
+          {/* Search & Filter Bar */}
+          <div className="flex flex-col sm:flex-row gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                id="search-employees"
+                type="text"
+                placeholder="Tìm kiếm theo tên hoặc username..."
+                value={keyword}
+                onChange={(e) => { setKeyword(e.target.value); setPage(0); }}
+                className="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400 transition"
+              />
+            </div>
+            <select
+              id="filter-status"
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value as EmployeeStatus | ''); setPage(0); }}
+              className="px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:bg-white focus:ring-2 focus:ring-slate-900/10 cursor-pointer"
+            >
+              <option value="">Tất cả trạng thái</option>
+              <option value="ACTIVE">Đang làm việc</option>
+              <option value="INACTIVE">Tạm nghỉ</option>
+              <option value="LOCKED">Bị khóa</option>
+              <option value="DEACTIVATED">Đã nghỉ</option>
+            </select>
+            <button
+              onClick={fetchEmployees}
+              className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition cursor-pointer shadow-2xs"
+              title="Tải lại"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
 
-      {/* Table Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+          {/* Table Card */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-2xs overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <Loader2 className="w-7 h-7 text-slate-400 animate-spin" />
@@ -747,7 +750,7 @@ export default function EmployeesPage() {
       </AnimatePresence>
 
       {/* ─── Floating Action Menu Portal (z-[9999], escapes all table overflows) ─── */}
-      {mounted && actionMenu && typeof document !== 'undefined' && createPortal(
+      {mounted && actionMenu && createPortal(
         <div className="fixed inset-0 z-[9999] pointer-events-auto">
           {/* Backdrop */}
           <div
@@ -821,8 +824,9 @@ export default function EmployeesPage() {
         </div>,
         document.body
       )}
-      </div>
-    </FeatureGate>
+          </div>
+        </div>
+      </FeatureGate>
     </>
   );
 }

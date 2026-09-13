@@ -7,7 +7,7 @@ import {
   Store, UserCircle, Lock, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
   Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing, UserSearch,
-  Building2, ShieldCheck, ClipboardList, ShoppingCart, Warehouse, History, BookOpen,
+  Building2, ShieldCheck, ClipboardList, ShoppingCart, Warehouse, TrendingUp, History, BookOpen,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -58,7 +58,7 @@ const MANAGE_NAV_ITEMS: Array<{
   },
   {
     label: 'Đơn hàng',
-    href: '/owner/orders/history',
+    href: '/owner/orders/new',
     icon: ReceiptText,
     path: '/owner/orders',
     children: [
@@ -66,6 +66,7 @@ const MANAGE_NAV_ITEMS: Array<{
       { label: 'Danh sách đơn hàng', href: '/owner/orders/history', icon: ListOrdered },
     ],
   },
+  { label: 'Doanh thu', href: '/owner/revenue', icon: TrendingUp, path: '/owner/revenue' },
   { label: 'Khách hàng', href: '/owner/customers', icon: UserSearch, path: '/owner/customers' },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
 ];
@@ -298,7 +299,7 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                   {MANAGE_NAV_ITEMS.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname.startsWith(item.path) ||
-                      Boolean(item.children?.some(child => pathname === child.href || pathname.startsWith(child.href)));
+                      Boolean(item.children?.some(child => pathname === child.href));
                     const hasInventoryAlertsChild = item.children?.some(child => child.href === '/owner/inventory-alerts');
 
                     return (

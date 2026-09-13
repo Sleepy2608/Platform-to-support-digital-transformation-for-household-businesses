@@ -24,7 +24,7 @@ public interface DebtTransactionRepository extends JpaRepository<DebtTransaction
         WHERE dt.salesOrderId = :salesOrderId
           AND dt.businessId = :businessId
           AND dt.status = :status
-        ORDER BY dt.createdAt DESC
+        ORDER BY dt.transactionDate DESC, dt.id DESC
         """)
     List<DebtTransaction> findBySalesOrderIdAndBusinessIdAndStatus(
             @Param("salesOrderId") Long salesOrderId,
@@ -37,7 +37,7 @@ public interface DebtTransactionRepository extends JpaRepository<DebtTransaction
         WHERE dt.customerId = :customerId
           AND dt.businessId = :businessId
           AND dt.status = :status
-        ORDER BY dt.createdAt DESC
+        ORDER BY dt.transactionDate DESC, dt.id DESC
         """)
     Page<DebtTransaction> findByCustomerIdAndBusinessIdAndStatus(
             @Param("customerId") Long customerId,
@@ -73,8 +73,32 @@ public interface DebtTransactionRepository extends JpaRepository<DebtTransaction
             @Param("businessId") Long businessId,
             @Param("transactionType") String transactionType);
 
+    /** Tính dư nợ hiện tại từ sổ giao dịch ACTIVE (nguồn dữ liệu chuẩn). */
+    @Query("""
+        SELECT COALESCE(SUM(
+            CASE
+                WHEN dt.transactionType = 'DEBT_INCREASE' THEN dt.amount
+                WHEN dt.transactionType IN ('PAYMENT', 'VOID') THEN -dt.amount
+                ELSE 0
+            END
+        ), 0)
+        FROM DebtTransaction dt
+        WHERE dt.customerId = :customerId
+          AND dt.businessId = :businessId
+          AND dt.status = 'ACTIVE'
+        """)
+    BigDecimal calculateCurrentBalance(
+            @Param("customerId") Long customerId,
+            @Param("businessId") Long businessId);
+
     /** Đếm giao dịch theo salesOrderId (dùng để sinh transaction_code) */
     long countBySalesOrderId(Long salesOrderId);
 
-    Optional<DebtTransaction> findFirstByBusinessIdAndCustomerIdOrderByIdDesc(Long businessId, Long customerId);
+    boolean existsBySalesOrderIdAndBusinessIdAndTransactionTypeAndStatus(
+            Long salesOrderId, Long businessId, String transactionType, DebtTransactionStatus status);
+
+    Optional<DebtTransaction> findBySalesOrderIdAndBusinessIdAndTransactionTypeAndStatus(
+            Long salesOrderId, Long businessId, String transactionType, DebtTransactionStatus status);
+
+    Optional<DebtTransaction> findByBusinessIdAndTransactionCode(Long businessId, String transactionCode);
 }

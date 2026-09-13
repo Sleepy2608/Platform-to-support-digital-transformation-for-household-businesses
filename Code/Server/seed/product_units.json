@@ -1,6 +1,6 @@
 {
   "table" : "product_units",
-  "version" : 9,
+  "version" : 10,
   "rows" : [ {
     "id" : 1,
     "is_base_unit" : false,
@@ -100,5 +100,14 @@
     "status" : "ACTIVE",
     "unit_id" : 1,
     "updated_at" : "2026-08-30T06:04:39.392061"
+  }, {
+    "id" : 12,
+    "is_base_unit" : false,
+    "conversion_rate" : 1.000000,
+    "created_at" : "2026-09-08T08:45:37.689099",
+    "product_id" : 17,
+    "status" : "ACTIVE",
+    "unit_id" : 1,
+    "updated_at" : "2026-09-08T08:45:37.689099"
   } ]
 }

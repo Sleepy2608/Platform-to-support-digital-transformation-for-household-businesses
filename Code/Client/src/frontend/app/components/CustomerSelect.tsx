@@ -14,6 +14,7 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { apiClient } from '@/app/lib/apiClient';
 import { useDebounce } from '@/app/lib/useDebounce';
 
@@ -77,9 +78,13 @@ export function CustomerSelect({
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+
+    const fetchTimer = window.setTimeout(() => {
       void fetchOptions(debouncedKeyword);
-    }
+    }, 0);
+
+    return () => window.clearTimeout(fetchTimer);
   }, [isOpen, debouncedKeyword, fetchOptions]);
 
   const handleSelectCustomer = (customer: CustomerOption | null) => {
@@ -368,15 +373,20 @@ function QuickCustomerModal({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+
+    const resetTimer = window.setTimeout(() => {
       setName(initialName.trim());
       setPhone('');
       setError('');
-    }
+    }, 0);
+
+    return () => window.clearTimeout(resetTimer);
   }, [isOpen, initialName]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!name.trim()) {
       setError('Vui lòng nhập tên khách hàng');
       return;
@@ -397,7 +407,11 @@ function QuickCustomerModal({
     }
   };
 
-  return (
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
@@ -441,7 +455,7 @@ function QuickCustomerModal({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ví dụ: Nguyễn Văn An"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-semibold outline-none focus:border-slate-400 focus:bg-white transition-all"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-slate-400 transition-all"
                   autoFocus
                 />
               </label>
@@ -454,7 +468,7 @@ function QuickCustomerModal({
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="Ví dụ: 0912345678"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-semibold outline-none focus:border-slate-400 focus:bg-white transition-all"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-slate-400 transition-all"
                 />
               </label>
 
@@ -479,6 +493,7 @@ function QuickCustomerModal({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

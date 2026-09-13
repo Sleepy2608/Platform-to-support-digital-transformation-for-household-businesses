@@ -38,83 +38,115 @@ export default function EmployeeCustomerDirectoryPage() {
   }, [keyword, search]);
 
   return (
-    <div className="min-h-screen p-5 sm:p-8 lg:p-10">
-      <div className="mx-auto max-w-3xl space-y-6">
-        {/* Header */}
-        <header>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Khách hàng</p>
-          <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">Tra cứu khách hàng</h1>
-          <p className="mt-2 text-sm text-slate-500">Tìm kiếm khách hàng theo tên hoặc số điện thoại để xem lịch sử giao dịch.</p>
-        </header>
+    <div className="min-h-screen bg-slate-100/70 p-4 sm:p-8 lg:p-10 select-none" style={{ cursor: 'default' }}>
+      <div className="max-w-4xl mx-auto space-y-6">
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-          <input
-            autoFocus
-            type="text"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder="Nhập tên khách hàng, số điện thoại hoặc mã KH..."
-            className="w-full rounded-2xl border border-slate-200 bg-white py-4 pl-12 pr-4 text-sm shadow-sm outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-100 transition-all"
-          />
+        {/* Page Title Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight select-none" style={{ userSelect: 'none' }}>
+              Tra cứu khách hàng
+            </h1>
+            <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1 select-none" style={{ userSelect: 'none' }}>
+              Tìm kiếm khách hàng theo tên hoặc số điện thoại để xem lịch sử giao dịch
+            </p>
+          </div>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <span className="px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-bold text-slate-700">
+              Khách hàng
+            </span>
+          </div>
         </div>
 
-        {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</div>
-        )}
+        {/* Main Section Card */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
 
-        {/* Results */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          {loading ? (
-            <div className="flex h-48 items-center justify-center gap-2 text-sm text-slate-500">
-              <RefreshCw className="h-4 w-4 animate-spin" /> Đang tìm kiếm...
+          {/* Section Header */}
+          <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+            <div className="p-2.5 bg-slate-100 text-slate-900 rounded-xl border border-slate-200/80 shadow-2xs">
+              <UserCircle className="w-5 h-5" />
             </div>
-          ) : customers.length === 0 ? (
-            <div className="flex h-48 flex-col items-center justify-center gap-2 text-slate-400">
-              <UserCircle className="h-10 w-10 opacity-40" />
-              <p className="font-semibold">{keyword ? 'Không tìm thấy khách hàng phù hợp' : 'Nhập từ khóa để tìm kiếm'}</p>
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 select-none" style={{ userSelect: 'none', cursor: 'default' }}>
+                Danh sách khách hàng
+              </h2>
+              <p className="text-xs text-slate-500 font-medium mt-0.5 select-none" style={{ userSelect: 'none' }}>
+                Tìm kiếm và chọn khách hàng để xem thông tin lịch sử mua hàng
+              </p>
             </div>
-          ) : (
-            <ul className="divide-y divide-slate-100">
-              {customers.map((c) => (
-                <li key={c.id}>
-                  <Link
-                    href={`/employee/customers/${c.id}/purchase-history`}
-                    className="flex items-center justify-between px-5 py-4 hover:bg-slate-50/70 transition-colors group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 font-black text-sm">
-                        {c.customerName.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-900">{c.customerName}</p>
-                        <div className="mt-0.5 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                          <span className="flex items-center gap-1">
-                            <Hash className="h-3 w-3" />{c.customerCode}
-                          </span>
-                          {c.phone && (
+          </div>
+
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              autoFocus
+              type="text"
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              placeholder="Nhập tên khách hàng, số điện thoại hoặc mã KH..."
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:bg-white focus:border-slate-400 focus:ring-2 focus:ring-slate-100 transition-all"
+            />
+          </div>
+
+          {error && (
+            <div className="p-4 border rounded-xl text-xs sm:text-sm font-medium flex items-start gap-2.5 bg-rose-50 border-rose-200 text-rose-800">
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Results List Box */}
+          <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white">
+            {loading ? (
+              <div className="flex h-48 items-center justify-center gap-2 text-sm text-slate-500 font-medium">
+                <RefreshCw className="h-4 w-4 animate-spin" /> Đang tìm kiếm...
+              </div>
+            ) : customers.length === 0 ? (
+              <div className="flex h-48 flex-col items-center justify-center gap-2 text-slate-400">
+                <UserCircle className="h-10 w-10 opacity-40" />
+                <p className="font-semibold text-sm">{keyword ? 'Không tìm thấy khách hàng phù hợp' : 'Nhập từ khóa để tìm kiếm'}</p>
+              </div>
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {customers.map((c) => (
+                  <li key={c.id}>
+                    <Link
+                      href={`/employee/customers/${c.id}/purchase-history`}
+                      className="flex items-center justify-between px-5 py-4 hover:bg-slate-50/80 transition-colors group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-800 border border-slate-200/80 font-bold text-sm shadow-2xs">
+                          {c.customerName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-900 text-sm">{c.customerName}</p>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
                             <span className="flex items-center gap-1">
-                              <Phone className="h-3 w-3" />{c.phone}
+                              <Hash className="h-3 w-3 text-slate-400" />{c.customerCode}
                             </span>
-                          )}
+                            {c.phone && (
+                              <span className="flex items-center gap-1">
+                                <Phone className="h-3 w-3 text-slate-400" />{c.phone}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 group-hover:text-slate-700 transition-colors">
-                      <span>Xem lịch sử</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-          {customers.length > 0 && (
-            <div className="border-t border-slate-100 bg-slate-50 px-5 py-2.5 text-xs text-slate-500">
-              Hiển thị {customers.length} khách hàng {keyword && `cho "${keyword}"`}
-            </div>
-          )}
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 group-hover:text-slate-900 transition-colors">
+                        <span>Xem lịch sử</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {customers.length > 0 && (
+              <div className="border-t border-slate-100 bg-slate-50/60 px-5 py-3 text-xs font-medium text-slate-500 flex items-center justify-between">
+                <span>Hiển thị {customers.length} khách hàng {keyword && `cho "${keyword}"`}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

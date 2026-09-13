@@ -185,34 +185,32 @@ export default function LowStockAlertDashboard({ canConfigure }: { canConfigure:
   };
 
   return (
-    <div className="min-h-screen bg-[#ededed] px-4 py-5 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-5">
-        <header className="relative overflow-hidden rounded-3xl bg-white border border-slate-200 px-5 py-6 text-slate-900 shadow-sm sm:px-7 sm:py-7">
-          <div className="pointer-events-none absolute -right-12 -top-20 h-56 w-56 rounded-full bg-slate-50 blur-2xl" />
-          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-2xl">
-              <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-amber-600">
-                <BellRing className="h-4 w-4" /> Quản lý kho
-              </div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-                Cảnh báo tồn kho thấp
-              </h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
-                Theo dõi sản phẩm sắp hết, thiết lập ngưỡng và chủ động lên kế hoạch nhập hàng.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2 lg:shrink-0">
+    <div className="min-h-screen bg-slate-100/70 p-4 sm:p-8 lg:p-10 select-none" style={{ cursor: 'default' }}>
+      <div className="mx-auto max-w-7xl space-y-6">
+        {/* Page Title Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight select-none" style={{ userSelect: 'none' }}>
+              Cảnh báo tồn kho thấp
+            </h1>
+            <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1 select-none" style={{ userSelect: 'none' }}>
+              Theo dõi sản phẩm sắp hết, thiết lập ngưỡng và chủ động lên kế hoạch nhập hàng
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
+            <span className="px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs font-bold text-slate-700">
+              Kho hàng
+            </span>
             {canConfigure && (
-              <Link href="/owner/products" className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800">
+              <Link href="/owner/products/stock-import/new" className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-slate-950 px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition hover:bg-slate-800 shadow-xs cursor-pointer">
                 <Warehouse className="h-4 w-4" /> Đi đến nhập kho
               </Link>
             )}
-            <button onClick={() => void loadData()} disabled={refreshing} className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60">
+            <button onClick={() => void loadData()} disabled={refreshing} className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-700 transition hover:bg-slate-50 shadow-2xs disabled:opacity-60 cursor-pointer">
               <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} /> Làm mới
             </button>
-            </div>
           </div>
-        </header>
+        </div>
 
         {(message || liveNotification) && (
           <div className={`rounded-xl border px-4 py-3 text-sm font-semibold ${message?.type === 'error' ? 'border-red-200 bg-red-50 text-red-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
@@ -227,7 +225,7 @@ export default function LowStockAlertDashboard({ canConfigure }: { canConfigure:
         </section>
 
         {canConfigure && (
-          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xs">
             <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
               <h2 className="font-bold text-slate-900">Cấu hình ngưỡng theo sản phẩm</h2>
               <p className="mt-1 text-xs text-slate-500">Cảnh báo xuất hiện khi tồn thực tế nhỏ hơn ngưỡng.</p>

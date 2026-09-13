@@ -34,6 +34,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.role.name = :roleType")
     List<User> findByRoleType(@Param("roleType") RoleType roleType);
 
+    Optional<User> findFirstByBusinessIdAndRole_Name(Long businessId, RoleType roleType);
+
     // ===== Employee Management queries (HBDT-14) =====
 
     /** Danh sách nhân viên thuộc cửa hàng, có tìm kiếm theo tên/username */

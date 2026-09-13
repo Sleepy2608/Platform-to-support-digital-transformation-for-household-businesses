@@ -7,13 +7,12 @@ import com.hbdt.customer.dto.CustomerPurchaseHistoryPageResponse;
 import com.hbdt.customer.dto.CustomerPurchaseHistoryResponse;
 import com.hbdt.customer.dto.CustomerPurchaseSummaryResponse;
 import com.hbdt.customer.dto.*;
+import com.hbdt.debt.service.DebtBookkeepingService;
 import com.hbdt.entity.Customer;
-import com.hbdt.entity.DebtTransaction;
 import com.hbdt.entity.SalesOrder;
 import com.hbdt.entity.enums.PaymentStatus;
 import com.hbdt.product.service.BusinessContextService;
 import com.hbdt.repository.CustomerRepository;
-import com.hbdt.repository.DebtTransactionRepository;
 import com.hbdt.repository.SalesOrderRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,16 +31,16 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
     private final BusinessContextService businessContextService;
     private final SalesOrderRepository salesOrderRepository;
-    private final DebtTransactionRepository debtTransactionRepository;
+    private final DebtBookkeepingService debtBookkeepingService;
 
     public CustomerService(CustomerRepository customerRepository, 
                            BusinessContextService businessContextService,
                            SalesOrderRepository salesOrderRepository,
-                           DebtTransactionRepository debtTransactionRepository) {
+                           DebtBookkeepingService debtBookkeepingService) {
         this.customerRepository = customerRepository;
         this.businessContextService = businessContextService;
         this.salesOrderRepository = salesOrderRepository;
-        this.debtTransactionRepository = debtTransactionRepository;
+        this.debtBookkeepingService = debtBookkeepingService;
     }
 
     // ===== CRUD APIs (HBDT-47) =====
@@ -170,10 +169,11 @@ public class CustomerService {
         String newStatus = request.status();
 
         // Guard: không cho INACTIVE nếu còn nợ
-        if ("INACTIVE".equals(newStatus) && customer.getDebtBalance().compareTo(BigDecimal.ZERO) > 0) {
+        BigDecimal currentDebt = resolveDebtBalance(customer);
+        if ("INACTIVE".equals(newStatus) && currentDebt.compareTo(BigDecimal.ZERO) > 0) {
             throw new BadRequestException(
                     "Không thể vô hiệu hóa khách hàng đang có công nợ: " +
-                    customer.getDebtBalance().toPlainString() + " VND");
+                    currentDebt.toPlainString() + " VND");
         }
 
         // Guard: không đổi nếu trạng thái giống nhau
@@ -202,12 +202,18 @@ public class CustomerService {
     @Transactional
     public CustomerOptionResponse quickCreate(String actorUsername, QuickCreateCustomerRequest request) {
         Long businessId = businessContextService.requireBusinessId(actorUsername);
+        String phone = clean(request.phone());
+        if (phone != null && customerRepository.existsByBusinessIdAndPhone(businessId, phone)) {
+            throw new BadRequestException("Số điện thoại đã được sử dụng cho khách hàng khác");
+        }
+
         String code = generateCode(businessId);
         Customer customer = customerRepository.save(Customer.builder()
                 .businessId(businessId)
                 .customerCode(code)
                 .customerName(request.customerName().trim())
-                .phone(clean(request.phone()))
+                .phone(phone)
+                .debtBalance(BigDecimal.ZERO)
                 .status("ACTIVE")
                 .build());
         return toOption(customer);
@@ -253,10 +259,8 @@ public class CustomerService {
             totalPurchased = BigDecimal.ZERO;
         }
         
-        BigDecimal totalDebt = debtTransactionRepository.findFirstByBusinessIdAndCustomerIdOrderByIdDesc(businessId, customerId)
-                .map(DebtTransaction::getBalanceAfter)
-                .orElse(BigDecimal.ZERO)
-                .setScale(0, RoundingMode.HALF_UP);
+        // Dùng calculateCurrentBalance (SSOT) — an toàn với concurrent writes
+        BigDecimal totalDebt = debtBookkeepingService.calculateCustomerDebt(customerId, businessId);
                 
         return new CustomerPurchaseSummaryResponse(totalPurchased.setScale(0, RoundingMode.HALF_UP), totalDebt);
     }
@@ -278,7 +282,7 @@ public class CustomerService {
                 customer.getEmail(),
                 customer.getAddress(),
                 customer.getNote(),
-                customer.getDebtBalance(),
+                resolveDebtBalance(customer),
                 customer.getStatus(),
                 customer.getCreatedAt(),
                 customer.getUpdatedAt()
@@ -292,7 +296,7 @@ public class CustomerService {
                 customer.getCustomerName(),
                 customer.getPhone(),
                 customer.getEmail(),
-                customer.getDebtBalance(),
+                resolveDebtBalance(customer),
                 customer.getStatus(),
                 customer.getCreatedAt()
         );
@@ -304,8 +308,19 @@ public class CustomerService {
                 customer.getCustomerCode(),
                 customer.getCustomerName(),
                 customer.getPhone(),
-                customer.getDebtBalance() != null ? customer.getDebtBalance() : BigDecimal.ZERO
+                resolveDebtBalance(customer)
         );
+    }
+
+    private BigDecimal resolveDebtBalance(Customer customer) {
+        BigDecimal ledgerBalance = debtBookkeepingService.calculateCustomerDebt(
+                customer.getId(), customer.getBusinessId());
+        if (ledgerBalance != null) {
+            return ledgerBalance.setScale(0, RoundingMode.HALF_UP);
+        }
+        return customer.getDebtBalance() != null
+                ? customer.getDebtBalance().setScale(0, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO.setScale(0);
     }
     
     private CustomerPurchaseHistoryResponse toHistoryResponse(SalesOrder order) {
@@ -324,4 +339,3 @@ public class CustomerService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 }
-
