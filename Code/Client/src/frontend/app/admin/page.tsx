@@ -67,7 +67,7 @@ export default function AdminDashboard() {
     {
       name: 'Môi trường',
       value: 'Development',
-      subText: 'Phiên bản v1.0.0',
+      subText: 'Phiên bản v2.1.0',
       icon: Shield,
       color: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
     },

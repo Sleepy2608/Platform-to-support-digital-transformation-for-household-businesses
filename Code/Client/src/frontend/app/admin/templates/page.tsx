@@ -1,10 +1,10 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Plus, Pencil, RefreshCw, Search, Clock,
   X, Check, Pause, Play, ChevronLeft, ChevronRight, AlertTriangle,
-  Table, Trash2, RotateCcw, Columns, Eye
+  Table, Trash2, RotateCcw, Columns, Eye, ChevronDown, Filter
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '@/app/lib/apiClient';
@@ -204,6 +204,102 @@ const inputClass =
 
 const PAGE_SIZE = 10;
 
+// ─── Custom Filter Select Component ─────────────────────────────────────────
+
+interface FilterOption {
+  value: string;
+  label: string;
+}
+
+function CustomFilterSelect({
+  options,
+  value,
+  onChange,
+  placeholder = 'Tất cả',
+  icon: Icon,
+}: {
+  options: FilterOption[];
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  icon?: React.ElementType;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const selectedOption = options.find((opt) => opt.value === value) || options[0];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative flex-shrink-0" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center justify-between gap-2.5 rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm font-medium transition-all cursor-pointer min-w-[170px] sm:min-w-[190px] select-none ${
+          isOpen
+            ? 'border-zinc-500 bg-zinc-800/90 text-white ring-2 ring-zinc-500/20 shadow-lg'
+            : value
+              ? 'border-zinc-700/90 bg-zinc-800/80 text-white hover:border-zinc-600'
+              : 'border-zinc-800/90 bg-zinc-950/80 text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900'
+        }`}
+      >
+        <div className="flex items-center gap-2 truncate">
+          {Icon && <Icon className="w-4 h-4 text-zinc-400 flex-shrink-0" />}
+          <span className="truncate">{selectedOption?.label || placeholder}</span>
+        </div>
+        <ChevronDown
+          className={`w-4 h-4 text-zinc-400 flex-shrink-0 transition-transform duration-200 ${
+            isOpen ? 'rotate-180 text-white' : ''
+          }`}
+        />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 sm:right-auto sm:left-0 top-full mt-1.5 z-50 min-w-[210px] rounded-xl border border-zinc-700/80 bg-zinc-900/95 p-1.5 shadow-2xl backdrop-blur-md"
+          >
+            {options.map((opt) => {
+              const isSelected = opt.value === value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs sm:text-sm font-medium transition-all text-left cursor-pointer ${
+                    isSelected
+                      ? 'bg-zinc-800 text-white font-bold'
+                      : 'text-zinc-300 hover:bg-zinc-800/60 hover:text-white'
+                  }`}
+                >
+                  <span className="truncate">{opt.label}</span>
+                  {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // ─── Page Component ───────────────────────────────────────────────────────────
 
 export default function FinancialTemplateManagementPage() {
@@ -280,9 +376,17 @@ export default function FinancialTemplateManagementPage() {
       const params = new URLSearchParams();
       params.set('page', String(page));
       params.set('size', String(PAGE_SIZE));
-      if (debouncedKeyword.trim()) params.set('keyword', debouncedKeyword.trim());
-      if (filterType) params.set('templateType', filterType);
-      if (filterStatus) params.set('status', filterStatus);
+      if (debouncedKeyword.trim()) {
+        params.set('search', debouncedKeyword.trim());
+        params.set('keyword', debouncedKeyword.trim());
+      }
+      if (filterType) {
+        params.set('type', filterType);
+        params.set('templateType', filterType);
+      }
+      if (filterStatus) {
+        params.set('status', filterStatus);
+      }
 
       const res = await apiClient.get<PageData<TemplateListItem>>(
         `/api/admin/templates?${params.toString()}`
@@ -304,6 +408,26 @@ export default function FinancialTemplateManagementPage() {
   useEffect(() => {
     void loadTemplates(0);
   }, [loadTemplates]);
+
+  // Client-side fallback filter to guarantee instantaneous and reliable UI responsiveness
+  const displayedTemplates = useMemo(() => {
+    let list = [...templates];
+    if (filterType) {
+      list = list.filter((t) => t.templateType === filterType);
+    }
+    if (filterStatus) {
+      list = list.filter((t) => t.status === filterStatus);
+    }
+    if (debouncedKeyword.trim()) {
+      const kw = debouncedKeyword.trim().toLowerCase();
+      list = list.filter(
+        (t) =>
+          t.templateName.toLowerCase().includes(kw) ||
+          t.templateCode.toLowerCase().includes(kw)
+      );
+    }
+    return list;
+  }, [templates, filterType, filterStatus, debouncedKeyword]);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // API: Toggle status (ACTIVE / INACTIVE)
@@ -617,41 +741,32 @@ export default function FinancialTemplateManagementPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap sm:flex-nowrap">
-          <select
+        <div className="flex items-center gap-2.5 flex-shrink-0 flex-wrap sm:flex-nowrap">
+          <CustomFilterSelect
+            options={TYPE_OPTIONS}
             value={filterType}
-            onChange={(e) => {
-              setFilterType(e.target.value);
+            onChange={(val) => {
+              setFilterType(val);
               setCurrentPage(0);
             }}
-            className="rounded-xl border border-zinc-700/80 bg-zinc-950 px-3.5 py-2.5 text-sm text-white outline-none focus:border-zinc-400 cursor-pointer"
-          >
-            {TYPE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            placeholder="Tất cả loại báo cáo"
+            icon={Filter}
+          />
 
-          <select
+          <CustomFilterSelect
+            options={STATUS_OPTIONS}
             value={filterStatus}
-            onChange={(e) => {
-              setFilterStatus(e.target.value);
+            onChange={(val) => {
+              setFilterStatus(val);
               setCurrentPage(0);
             }}
-            className="rounded-xl border border-zinc-700/80 bg-zinc-950 px-3.5 py-2.5 text-sm text-white outline-none focus:border-zinc-400 cursor-pointer"
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            placeholder="Tất cả trạng thái"
+          />
 
           <button
             onClick={() => loadTemplates(currentPage)}
             disabled={loading}
-            className="rounded-xl border border-zinc-700/80 p-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors flex-shrink-0 cursor-pointer disabled:opacity-50"
+            className="rounded-xl border border-zinc-800 bg-zinc-950/80 p-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800 hover:border-zinc-700 transition-all flex-shrink-0 cursor-pointer disabled:opacity-50"
             title="Tải lại"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -684,7 +799,7 @@ export default function FinancialTemplateManagementPage() {
                     </div>
                   </td>
                 </tr>
-              ) : templates.length === 0 ? (
+              ) : displayedTemplates.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-20 text-center text-zinc-500 text-sm">
                     {keyword || filterType || filterStatus
@@ -693,7 +808,7 @@ export default function FinancialTemplateManagementPage() {
                   </td>
                 </tr>
               ) : (
-                templates.map((tmpl) => (
+                displayedTemplates.map((tmpl) => (
                   <tr key={tmpl.id} className="hover:bg-zinc-800/20 transition-colors">
                     <td className="p-4 pl-6 font-mono text-xs text-zinc-300">
                       {tmpl.templateCode}
