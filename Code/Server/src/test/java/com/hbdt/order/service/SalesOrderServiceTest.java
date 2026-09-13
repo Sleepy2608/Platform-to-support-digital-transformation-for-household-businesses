@@ -52,6 +52,7 @@ class SalesOrderServiceTest {
     @Mock private CustomerRepository customerRepository;
     @Mock private DebtTransactionRepository debtTransactionRepository;
     @Mock private RevenueLedgerService revenueLedgerService;
+    @Mock private com.hbdt.repository.AiOrderDraftRepository aiOrderDraftRepository;
 
     private SalesOrderService service;
 
@@ -61,7 +62,7 @@ class SalesOrderServiceTest {
                 salesOrderRepository, salesOrderItemRepository, productPricingService,
                 businessContextService, userRepository, productRepository, unitRepository,
                 inventoryMovementService, customerRepository, debtTransactionRepository,
-                revenueLedgerService
+                revenueLedgerService, aiOrderDraftRepository
         );
     }
 
@@ -71,11 +72,14 @@ class SalesOrderServiceTest {
         when(userRepository.findByUsername("owner")).thenReturn(Optional.of(User.builder().id(7L).build()));
         when(salesOrderRepository.existsByBusinessIdAndOrderCodeIgnoreCase(5L, "SO-001"))
                 .thenReturn(false);
+        com.hbdt.entity.AiOrderDraft aiDraft = com.hbdt.entity.AiOrderDraft.builder()
+                .id(55L).businessId(5L).status("PENDING").build();
+        when(aiOrderDraftRepository.findByIdAndBusinessId(55L, 5L)).thenReturn(Optional.of(aiDraft));
         Customer customer = Customer.builder()
                 .id(22L).businessId(5L).status("ACTIVE").debtBalance(new BigDecimal("50000")).build();
         when(customerRepository.findActiveForUpdate(22L, 5L)).thenReturn(Optional.of(customer));
-        when(debtTransactionRepository.findFirstByBusinessIdAndCustomerIdOrderByIdDesc(5L, 22L))
-                .thenReturn(Optional.of(DebtTransaction.builder().balanceAfter(new BigDecimal("50000")).build()));
+        when(debtTransactionRepository.calculateCurrentBalance(22L, 5L))
+                .thenReturn(new BigDecimal("50000"));
         when(productPricingService.snapshotOrderItemPrice(any(), any(SalesOrderItem.class)))
                 .thenAnswer(invocation -> {
                     SalesOrderItem item = invocation.getArgument(1);
@@ -116,7 +120,7 @@ class SalesOrderServiceTest {
         ));
 
         SalesOrderResponse response = service.create("owner", new CreateSalesOrderRequest(
-                " SO-001 ", 22L, "POS", new BigDecimal("100000"), null,
+                55L, " SO-001 ", 22L, "POS", new BigDecimal("100000"), null,
                 List.of(
                         new CreateSalesOrderItemRequest(10L, 2L, BigDecimal.ONE, null),
                         new CreateSalesOrderItemRequest(10L, 3L, new BigDecimal("10"), null),
@@ -143,6 +147,9 @@ class SalesOrderServiceTest {
         assertThat(debtCaptor.getValue().getTransactionType()).isEqualTo("DEBT_INCREASE");
         assertThat(debtCaptor.getValue().getBalanceAfter()).isEqualByComparingTo("1780000");
         assertThat(customer.getDebtBalance()).isEqualByComparingTo("1780000");
+        assertThat(aiDraft.getStatus()).isEqualTo("CONFIRMED");
+        assertThat(aiDraft.getSalesOrderId()).isEqualTo(100L);
+        verify(aiOrderDraftRepository).save(aiDraft);
     }
 
     @Test
@@ -151,7 +158,7 @@ class SalesOrderServiceTest {
         when(userRepository.findByUsername("owner")).thenReturn(Optional.of(User.builder().id(7L).build()));
 
         CreateSalesOrderRequest request = new CreateSalesOrderRequest(
-                "SO-002", null, "POS", BigDecimal.ZERO, null,
+                null, "SO-002", null, "POS", BigDecimal.ZERO, null,
                 List.of(new CreateSalesOrderItemRequest(
                         10L, 2L, new BigDecimal("19.0001"), null
                 ))
@@ -177,7 +184,7 @@ class SalesOrderServiceTest {
                 });
 
         CreateSalesOrderRequest request = new CreateSalesOrderRequest(
-                "SO-DEBT", null, "POS", BigDecimal.ZERO, null,
+                null, "SO-DEBT", null, "POS", BigDecimal.ZERO, null,
                 List.of(new CreateSalesOrderItemRequest(10L, 2L, BigDecimal.ONE, null))
         );
 
@@ -197,8 +204,8 @@ class SalesOrderServiceTest {
         Customer customer = Customer.builder()
                 .id(22L).businessId(5L).status("ACTIVE").debtBalance(new BigDecimal("250000")).build();
         when(customerRepository.findActiveForUpdate(22L, 5L)).thenReturn(Optional.of(customer));
-        when(debtTransactionRepository.findFirstByBusinessIdAndCustomerIdOrderByIdDesc(5L, 22L))
-                .thenReturn(Optional.of(DebtTransaction.builder().balanceAfter(new BigDecimal("250000")).build()));
+        when(debtTransactionRepository.calculateCurrentBalance(22L, 5L))
+                .thenReturn(new BigDecimal("250000"));
         when(salesOrderItemRepository.findAllBySalesOrderIdOrderByIdAsc(100L)).thenReturn(List.of(item));
         mockOrderItemDisplay();
 

@@ -5,6 +5,7 @@ import { ShoppingCart } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
 import { ProductSearchPicker, SearchProduct } from '@/app/components/ProductSearchPicker';
 import { AiOrderInput, AiOrderProposal } from '@/app/components/AiOrderInput';
+import { FeatureGate } from '@/app/components/FeatureGate';
 import {
   CartItem,
   CartResolvedPrice,
@@ -27,6 +28,7 @@ export function CreateOrderPage() {
   const [error, setError] = useState('');
   const [initialCheckout, setInitialCheckout] = useState<InitialCheckout>();
   const [cartSession, setCartSession] = useState(0);
+  const [activeAiDraftId, setActiveAiDraftId] = useState<number | null>(null);
 
   const applyAiProposal = async (proposal: AiOrderProposal) => {
     if (!proposal.readyToApply || items.length > 0 || proposal.paymentType === 'UNKNOWN'
@@ -54,6 +56,7 @@ export function CreateOrderPage() {
       paymentType: proposal.paymentType,
       note: `Đơn được hỗ trợ nhập bằng AI. Thanh toán: ${proposal.paymentType === 'DEBT' ? 'ghi nợ' : proposal.paymentType === 'TRANSFER' ? 'chuyển khoản' : 'tiền mặt'}.`,
     });
+    setActiveAiDraftId(proposal.draftId);
     setCartSession((value) => value + 1);
     setCartOpen(true);
     setError('');
@@ -210,10 +213,12 @@ export function CreateOrderPage() {
     Object.values(resolveTimers.current).forEach(clearTimeout);
     resolveTimers.current = {};
     setItems([]);
+    setActiveAiDraftId(null);
   };
 
   const checkout = async (data: CheckoutData) => {
     const result = await apiClient.post<SalesOrderResponse>('/api/sales-orders', {
+      aiDraftId: activeAiDraftId,
       orderCode: data.orderCode,
       customerId: data.customerId,
       source: data.source,
@@ -254,7 +259,9 @@ export function CreateOrderPage() {
           </div>
         </div>
         {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</div>}
-        <AiOrderInput onApply={applyAiProposal} cartHasItems={items.length > 0} />
+        <FeatureGate feature="AI_ASSISTANT" fallback="locked">
+          <AiOrderInput onApply={applyAiProposal} cartHasItems={items.length > 0} />
+        </FeatureGate>
         <ProductSearchPicker
           onSelectProduct={(product) => void addProduct(product)}
           selectedIds={items.map((item) => item.productId)}

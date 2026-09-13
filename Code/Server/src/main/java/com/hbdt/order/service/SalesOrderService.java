@@ -9,6 +9,7 @@ import com.hbdt.entity.Product;
 import com.hbdt.entity.Unit;
 import com.hbdt.entity.User;
 import com.hbdt.entity.DebtTransaction;
+import com.hbdt.entity.AiOrderDraft;
 import com.hbdt.entity.enums.PaymentStatus;
 import com.hbdt.inventory.dto.InventoryMovementRequest;
 import com.hbdt.inventory.service.InventoryMovementService;
@@ -27,6 +28,7 @@ import com.hbdt.repository.SalesOrderRepository;
 import com.hbdt.repository.UserRepository;
 import com.hbdt.repository.ProductRepository;
 import com.hbdt.repository.UnitRepository;
+import com.hbdt.repository.AiOrderDraftRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -61,6 +63,7 @@ public class SalesOrderService {
     private final CustomerRepository customerRepository;
     private final DebtTransactionRepository debtTransactionRepository;
     private final RevenueLedgerService revenueLedgerService;
+    private final AiOrderDraftRepository aiOrderDraftRepository;
 
     public SalesOrderService(
             SalesOrderRepository salesOrderRepository,
@@ -73,7 +76,8 @@ public class SalesOrderService {
             InventoryMovementService inventoryMovementService,
             CustomerRepository customerRepository,
             DebtTransactionRepository debtTransactionRepository,
-            RevenueLedgerService revenueLedgerService
+            RevenueLedgerService revenueLedgerService,
+            AiOrderDraftRepository aiOrderDraftRepository
     ) {
         this.salesOrderRepository = salesOrderRepository;
         this.salesOrderItemRepository = salesOrderItemRepository;
@@ -86,6 +90,7 @@ public class SalesOrderService {
         this.customerRepository = customerRepository;
         this.debtTransactionRepository = debtTransactionRepository;
         this.revenueLedgerService = revenueLedgerService;
+        this.aiOrderDraftRepository = aiOrderDraftRepository;
     }
 
     @Transactional
@@ -93,6 +98,14 @@ public class SalesOrderService {
         Long businessId = businessContextService.requireBusinessId(actorUsername);
         User actor = userRepository.findByUsername(actorUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
+        AiOrderDraft aiDraft = null;
+        if (request.aiDraftId() != null) {
+            aiDraft = aiOrderDraftRepository.findByIdAndBusinessId(request.aiDraftId(), businessId)
+                    .orElseThrow(() -> new BadRequestException("Đơn nháp AI không tồn tại hoặc không thuộc cửa hàng"));
+            if (!"PENDING".equals(aiDraft.getStatus())) {
+                throw new BadRequestException("Đơn nháp AI đã được xử lý trước đó");
+            }
+        }
         String orderCode = request.orderCode().trim();
         if (salesOrderRepository.existsByBusinessIdAndOrderCodeIgnoreCase(businessId, orderCode)) {
             throw new BadRequestException("Mã đơn hàng đã tồn tại");
@@ -174,6 +187,13 @@ public class SalesOrderService {
                     order, actor.getId(), "DEBT_INCREASE", debtAmount, balanceAfter,
                     "Phát sinh công nợ từ đơn " + order.getOrderCode(), "DEBT-SO-" + order.getId());
             debtCustomer.setDebtBalance(balanceAfter);
+        }
+        if (aiDraft != null) {
+            aiDraft.setStatus("CONFIRMED");
+            aiDraft.setReviewedBy(actor.getId());
+            aiDraft.setReviewedAt(LocalDateTime.now());
+            aiDraft.setSalesOrderId(order.getId());
+            aiOrderDraftRepository.save(aiDraft);
         }
         return toResponse(order, savedItems);
     }
@@ -384,10 +404,8 @@ public class SalesOrderService {
     }
 
     private BigDecimal currentCustomerDebt(Long businessId, Long customerId) {
-        return debtTransactionRepository.findFirstByBusinessIdAndCustomerIdOrderByIdDesc(businessId, customerId)
-                .map(DebtTransaction::getBalanceAfter)
-                .orElse(BigDecimal.ZERO)
-                .setScale(0, RoundingMode.HALF_UP);
+        BigDecimal balance = debtTransactionRepository.calculateCurrentBalance(customerId, businessId);
+        return (balance == null ? BigDecimal.ZERO : balance).setScale(0, RoundingMode.HALF_UP);
     }
 
     private void recordDebtTransaction(

@@ -1,11 +1,14 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import { Loader2, Sparkles } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Loader2, Sparkles, X } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
 import type { CartResolvedPrice, CartUnit } from './OrderCartDrawer';
 
 export interface AiOrderProposal {
+  draftId: number | null;
+  status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | null;
+  createdAt: string | null;
   provider: string;
   readyToApply: boolean;
   customerName: string | null;
@@ -37,7 +40,24 @@ export function AiOrderInput({ onApply, cartHasItems }: {
   const [loading, setLoading] = useState(false);
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState('');
+  const [drafts, setDrafts] = useState<AiOrderProposal[]>([]);
   const revision = useRef(0);
+
+  const loadDrafts = async () => {
+    try {
+      setDrafts(await apiClient.get<AiOrderProposal[]>('/api/ai/drafts'));
+    } catch {
+      // Parsing errors remain the primary feedback; the queue can be retried on refresh.
+    }
+  };
+
+  useEffect(() => {
+    let active = true;
+    void apiClient.get<AiOrderProposal[]>('/api/ai/drafts')
+      .then((items) => { if (active) setDrafts(items); })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, []);
 
   const parse = async () => {
     const requestRevision = ++revision.current;
@@ -46,7 +66,10 @@ export function AiOrderInput({ onApply, cartHasItems }: {
     setProposal(null);
     try {
       const result = await apiClient.post<AiOrderProposal>('/api/ai/parse-order', { text: text.trim() });
-      if (revision.current === requestRevision) setProposal(result);
+      if (revision.current === requestRevision) {
+        setProposal(result);
+        if (result.draftId) setDrafts((current) => [result, ...current.filter((item) => item.draftId !== result.draftId)]);
+      }
     } catch (err) {
       if (revision.current === requestRevision) {
         setError(err instanceof Error ? err.message : 'Chưa thể xử lý câu đặt hàng. Bạn có thể tạo đơn thủ công.');
@@ -67,6 +90,19 @@ export function AiOrderInput({ onApply, cartHasItems }: {
       setError(err instanceof Error ? err.message : 'Không thể đưa gợi ý vào giỏ hàng.');
     } finally {
       setApplying(false);
+    }
+  };
+
+  const reject = async (draft: AiOrderProposal) => {
+    if (!draft.draftId) return;
+    const reason = window.prompt('Nhập lý do từ chối đơn nháp AI:');
+    if (!reason?.trim()) return;
+    try {
+      await apiClient.post(`/api/ai/drafts/${draft.draftId}/reject`, { reason: reason.trim() });
+      setDrafts((current) => current.filter((item) => item.draftId !== draft.draftId));
+      if (proposal?.draftId === draft.draftId) setProposal(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không thể từ chối đơn nháp AI.');
     }
   };
 
@@ -120,6 +156,25 @@ export function AiOrderInput({ onApply, cartHasItems }: {
             className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white disabled:opacity-40">
             {applying ? 'Đang chuẩn bị giỏ hàng…' : 'Đưa vào giỏ để kiểm tra'}
           </button>
+        </div>
+      )}
+      {drafts.length > 0 && (
+        <div className="mt-4 rounded-xl border border-indigo-100 bg-white p-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-bold text-slate-900">Đơn nháp đang chờ duyệt ({drafts.length})</p>
+            <button type="button" onClick={() => void loadDrafts()} className="text-xs font-bold text-indigo-700">Làm mới</button>
+          </div>
+          <ul className="mt-2 divide-y divide-slate-100">
+            {drafts.map((draft) => (
+              <li key={draft.draftId} className="flex items-center justify-between gap-3 py-3">
+                <button type="button" onClick={() => setProposal(draft)} className="min-w-0 text-left text-sm">
+                  <span className="font-bold text-slate-800">#{draft.draftId} · {draft.customer?.customerName || draft.customerName || 'Khách lẻ'}</span>
+                  <span className="mt-0.5 block truncate text-xs text-slate-500">{draft.items.map((item) => `${item.quantity ?? '?'} ${item.product?.productName || item.requestedProductName}`).join(', ')}</span>
+                </button>
+                <button type="button" title="Từ chối" onClick={() => void reject(draft)} className="rounded-lg p-2 text-red-600 hover:bg-red-50"><X className="h-4 w-4" /></button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </section>
