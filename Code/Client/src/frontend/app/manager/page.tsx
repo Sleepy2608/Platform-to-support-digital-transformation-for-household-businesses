@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Lock, LogOut, MessageSquare, Search, Shield, Store, Unlock, Users } from 'lucide-react';
 import Link from 'next/link';
+import { Lock, LogOut, MessageSquare, Search, Shield, Store, Unlock, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { clearAuth, getAccessToken } from '../lib/apiClient';
 
@@ -124,12 +124,19 @@ export default function ManagerDashboard() {
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/manager/feedback"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 shadow-xs transition-colors hover:bg-slate-50"
+           <div className="flex flex-wrap items-center gap-3">
+             <Link
+               href="/manager/feedback"
+               className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 shadow-xs transition-colors hover:bg-slate-50"
+             >
+               <MessageSquare className="h-4 w-4" /> Quản lý phản hồi
+             </Link>
+             <Link
+              id="manager-analytics-link"
+              href="/manager/analytics"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 shadow-xs transition-colors hover:bg-slate-50"
             >
-              <MessageSquare className="h-4 w-4" /> Quản lý phản hồi
+              Thống kê nền tảng
             </Link>
             <Link
               id="manager-invoice-history-link"

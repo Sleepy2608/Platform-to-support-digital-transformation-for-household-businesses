@@ -10,10 +10,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Collection;
-import java.util.Optional;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface DebtTransactionRepository extends JpaRepository<DebtTransaction, Long> {
@@ -26,7 +26,7 @@ public interface DebtTransactionRepository extends JpaRepository<DebtTransaction
         WHERE dt.salesOrderId = :salesOrderId
           AND dt.businessId = :businessId
           AND dt.status = :status
-        ORDER BY dt.createdAt DESC
+        ORDER BY dt.transactionDate DESC, dt.id DESC
         """)
     List<DebtTransaction> findBySalesOrderIdAndBusinessIdAndStatus(
             @Param("salesOrderId") Long salesOrderId,
@@ -39,7 +39,7 @@ public interface DebtTransactionRepository extends JpaRepository<DebtTransaction
         WHERE dt.customerId = :customerId
           AND dt.businessId = :businessId
           AND dt.status = :status
-        ORDER BY dt.createdAt DESC
+        ORDER BY dt.transactionDate DESC, dt.id DESC
         """)
     Page<DebtTransaction> findByCustomerIdAndBusinessIdAndStatus(
             @Param("customerId") Long customerId,
@@ -117,6 +117,14 @@ public interface DebtTransactionRepository extends JpaRepository<DebtTransaction
 
     /** Đếm giao dịch theo salesOrderId (dùng để sinh transaction_code) */
     long countBySalesOrderId(Long salesOrderId);
+
+    boolean existsBySalesOrderIdAndBusinessIdAndTransactionTypeAndStatus(
+            Long salesOrderId, Long businessId, String transactionType, DebtTransactionStatus status);
+
+    Optional<DebtTransaction> findBySalesOrderIdAndBusinessIdAndTransactionTypeAndStatus(
+            Long salesOrderId, Long businessId, String transactionType, DebtTransactionStatus status);
+
+    Optional<DebtTransaction> findByBusinessIdAndTransactionCode(Long businessId, String transactionCode);
 
     Optional<DebtTransaction> findFirstByBusinessIdAndCustomerIdOrderByIdDesc(Long businessId, Long customerId);
 
