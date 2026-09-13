@@ -1,6 +1,7 @@
 package com.hbdt.entity;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.hbdt.entity.enums.ReportStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -37,6 +38,12 @@ public class GeneratedReport {
     @Column(name = "reviewed_by", columnDefinition = "BIGINT UNSIGNED")
     private Long reviewedBy;
 
+    @Column(name = "edited_by", columnDefinition = "BIGINT UNSIGNED")
+    private Long editedBy;
+
+    @Column(name = "rejected_by", columnDefinition = "BIGINT UNSIGNED")
+    private Long rejectedBy;
+
     @Column(name = "reporting_period_from", nullable = false)
     private LocalDate reportingPeriodFrom;
 
@@ -56,8 +63,10 @@ public class GeneratedReport {
     @Column(name = "file_url", length = 500)
     private String fileUrl;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private String status;
+    @Builder.Default
+    private ReportStatus status = ReportStatus.DRAFT;
 
     @Column(name = "rejection_reason", length = 1000)
     private String rejectionReason;
@@ -70,4 +79,10 @@ public class GeneratedReport {
 
     @Column(name = "reviewed_at")
     private LocalDateTime reviewedAt;
+
+    @Column(name = "confirmed_at")
+    private LocalDateTime confirmedAt;
+
+    @Column(name = "edited_at")
+    private LocalDateTime editedAt;
 }
