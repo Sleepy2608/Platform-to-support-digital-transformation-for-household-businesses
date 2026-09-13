@@ -24,6 +24,7 @@ import java.util.Set;
 public class NotificationService {
 
     private static final String GENERAL_NOTIFICATION = "GENERAL";
+    private static final String AI_DRAFT_NOTIFICATION = "AI_DRAFT";
     private static final Set<RoleType> LOW_STOCK_RECIPIENTS =
             Set.of(RoleType.BUSINESS_OWNER, RoleType.EMPLOYEE);
 
@@ -94,6 +95,17 @@ public class NotificationService {
             resolved = true;
         }
         return resolved;
+    }
+
+    @Transactional
+    public void notifyAiDraftCreated(Long businessId, Long actorId, Long draftId, String actorName) {
+        String title = "Đơn nháp AI mới · #" + draftId;
+        String content = actorName + " vừa tạo một đơn nháp bằng AI. Hãy mở trang tạo đơn để kiểm tra, chỉnh sửa, xác nhận hoặc từ chối.";
+        userRepository.findAllByBusinessIdAndStatus(businessId, UserStatus.ACTIVE).stream()
+                .filter(user -> user.getRole() != null
+                        && LOW_STOCK_RECIPIENTS.contains(user.getRole().getName())
+                        && !user.getId().equals(actorId))
+                .forEach(user -> saveAndPublish(user, AI_DRAFT_NOTIFICATION, title, content));
     }
 
     @Transactional(readOnly = true)
