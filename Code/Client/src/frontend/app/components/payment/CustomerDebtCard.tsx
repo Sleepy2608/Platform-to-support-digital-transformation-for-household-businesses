@@ -90,7 +90,7 @@ export default function CustomerDebtCard({ customerId, refreshTrigger }: Custome
         </span>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 text-center">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
         <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-2.5">
           <span className="block text-[11px] text-slate-500">Tổng phát sinh nợ</span>
           <span className="font-semibold text-xs text-slate-800 dark:text-slate-200">
@@ -101,6 +101,12 @@ export default function CustomerDebtCard({ customerId, refreshTrigger }: Custome
           <span className="block text-[11px] text-slate-500">Đã thanh toán</span>
           <span className="font-semibold text-xs text-emerald-600 dark:text-emerald-400">
             {formatVND(summary.totalPaid)}
+          </span>
+        </div>
+        <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-2.5">
+          <span className="block text-[11px] text-slate-500">Tổng đã đảo</span>
+          <span className="font-semibold text-xs text-amber-600 dark:text-amber-400">
+            {formatVND(summary.totalVoid)}
           </span>
         </div>
         <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-2.5">

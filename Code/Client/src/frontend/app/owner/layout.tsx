@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Store, UserCircle, Lock, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
   Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing, UserSearch,
-  Building2, ShieldCheck, ClipboardList, ShoppingCart, Warehouse, TrendingUp,
+  Building2, ShieldCheck, ClipboardList, ShoppingCart, Warehouse, TrendingUp, History, BookOpen,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -51,6 +51,8 @@ const MANAGE_NAV_ITEMS: Array<{
       { label: 'Danh sách sản phẩm', href: '/owner/products', icon: PackageOpen },
       { label: 'Tồn kho hiện tại', href: '/owner/inventory', icon: Warehouse },
       { label: 'Nhập kho', href: '/owner/products/stock-import', icon: ClipboardList },
+      { label: 'Lịch sử biến động kho', href: '/owner/inventory?tab=transactions', icon: History },
+      { label: 'Sổ kho', href: '/owner/inventory?tab=bookkeeping', icon: BookOpen },
       { label: 'Cảnh báo tồn kho', href: '/owner/inventory-alerts', icon: BellRing },
     ],
   },
@@ -68,6 +70,126 @@ const MANAGE_NAV_ITEMS: Array<{
   { label: 'Khách hàng', href: '/owner/customers', icon: UserSearch, path: '/owner/customers' },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
 ];
+
+function isChildActive(childHref: string, pathname: string, searchParams: URLSearchParams | null): boolean {
+  const [childPath, childQuery] = childHref.split('?');
+
+  if (childQuery) {
+    if (pathname !== childPath) return false;
+    const childParams = new URLSearchParams(childQuery);
+    const expectedTab = childParams.get('tab');
+    const actualTab = searchParams?.get('tab');
+    return expectedTab === actualTab;
+  }
+
+  if (childPath === '/owner/inventory') {
+    if (pathname !== '/owner/inventory') return false;
+    const actualTab = searchParams?.get('tab');
+    return !actualTab || actualTab === 'balances';
+  }
+
+  if (childPath === '/owner/products') {
+    return pathname === '/owner/products';
+  }
+
+  if (childPath === '/owner/products/stock-import') {
+    return pathname === '/owner/products/stock-import' || pathname.startsWith('/owner/products/stock-import/');
+  }
+
+  if (childPath === '/owner/orders/history') {
+    return pathname === '/owner/orders/history' || pathname.startsWith('/owner/orders/history/');
+  }
+
+  if (childPath === '/owner/orders/new') {
+    return pathname === '/owner/orders/new';
+  }
+
+  return pathname === childPath || pathname.startsWith(childPath + '/');
+}
+
+function OwnerManageNav({
+  setSidebarOpen,
+  lowStockCount,
+}: {
+  setSidebarOpen: (open: boolean) => void;
+  lowStockCount: number;
+}) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  return (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1.5">
+        QUẢN LÝ CỬA HÀNG
+      </p>
+      {MANAGE_NAV_ITEMS.map((item) => {
+        const Icon = item.icon;
+        const isActive = item.children
+          ? item.children.some(child => isChildActive(child.href, pathname, searchParams))
+          : (pathname === item.path || pathname.startsWith(item.path + '/'));
+        const hasInventoryAlertsChild = item.children?.some(child => child.href === '/owner/inventory-alerts');
+
+        return (
+          <div key={item.path}>
+            <Link
+              href={item.href}
+              onClick={() => setSidebarOpen(false)}
+              className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
+                ${isActive
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                <span>{item.label}</span>
+                {hasInventoryAlertsChild && lowStockCount > 0 && !isActive && (
+                  <span className="rounded-full px-2 py-0.5 text-[10px] font-black bg-red-100 text-red-700">
+                    {lowStockCount > 99 ? '99+' : lowStockCount}
+                  </span>
+                )}
+              </div>
+              <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'rotate-90' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
+            </Link>
+
+            {isActive && item.children && (
+              <div className="ml-5 mt-1 border-l border-slate-200 pl-3 space-y-0.5">
+                {item.children.map((child) => {
+                  const ChildIcon = child.icon;
+                  const childActive = isChildActive(child.href, pathname, searchParams);
+                  const isAlertChild = child.href === '/owner/inventory-alerts';
+
+                  return (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                        childActive
+                          ? 'bg-slate-100 text-slate-950 font-bold shadow-2xs'
+                          : 'text-slate-500 hover:bg-slate-100/70 hover:text-slate-900'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <ChildIcon className={`h-3.5 w-3.5 flex-shrink-0 ${childActive ? 'text-slate-900' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                        <span>{child.label}</span>
+                      </div>
+                      {isAlertChild && lowStockCount > 0 && (
+                        <span className="rounded-full px-1.5 py-0.2 text-[10px] font-black bg-red-100 text-red-700">
+                          {lowStockCount > 99 ? '99+' : lowStockCount}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function OwnerLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -290,75 +412,9 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
               {/* Navigation Menu */}
               <nav className="flex flex-col gap-3">
                 {/* Quản lý cửa hàng */}
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1.5">
-                    QUẢN LÝ CỬA HÀNG
-                  </p>
-                  {MANAGE_NAV_ITEMS.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = pathname.startsWith(item.path) ||
-                      Boolean(item.children?.some(child => pathname === child.href));
-                    const hasInventoryAlertsChild = item.children?.some(child => child.href === '/owner/inventory-alerts');
-
-                    return (
-                      <div key={item.path}>
-                        <Link
-                          href={item.href}
-                          onClick={() => setSidebarOpen(false)}
-                          className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
-                            ${isActive
-                              ? 'bg-slate-900 text-white shadow-sm'
-                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                            }`}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                            <span>{item.label}</span>
-                            {hasInventoryAlertsChild && lowStockCount > 0 && !isActive && (
-                              <span className="rounded-full px-2 py-0.5 text-[10px] font-black bg-red-100 text-red-700">
-                                {lowStockCount > 99 ? '99+' : lowStockCount}
-                              </span>
-                            )}
-                          </div>
-                          <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'rotate-90' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
-                        </Link>
-
-                        {isActive && item.children && (
-                          <div className="ml-5 mt-1 border-l border-slate-200 pl-3">
-                            {item.children.map((child) => {
-                              const ChildIcon = child.icon;
-                              const childActive = pathname === child.href || (child.href !== '/owner/products' && pathname.startsWith(child.href));
-                              const isAlertChild = child.href === '/owner/inventory-alerts';
-
-                              return (
-                                <Link
-                                  key={child.href}
-                                  href={child.href}
-                                  onClick={() => setSidebarOpen(false)}
-                                  className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
-                                    childActive
-                                      ? 'bg-slate-100 text-slate-950 font-bold'
-                                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <ChildIcon className="h-3.5 w-3.5" />
-                                    <span>{child.label}</span>
-                                  </div>
-                                  {isAlertChild && lowStockCount > 0 && (
-                                    <span className="rounded-full px-1.5 py-0.2 text-[10px] font-black bg-red-100 text-red-700">
-                                      {lowStockCount > 99 ? '99+' : lowStockCount}
-                                    </span>
-                                  )}
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                <Suspense fallback={<div className="h-20 animate-pulse bg-slate-100 rounded-xl" />}>
+                  <OwnerManageNav setSidebarOpen={setSidebarOpen} lowStockCount={lowStockCount} />
+                </Suspense>
 
                 {/* Cài đặt tài khoản */}
                 <div>
