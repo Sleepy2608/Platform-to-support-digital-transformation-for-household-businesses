@@ -17,6 +17,9 @@ import java.util.List;
 @Repository
 public interface RevenueLedgerRepository extends JpaRepository<RevenueLedgerEntry, Long>, JpaSpecificationExecutor<RevenueLedgerEntry> {
 
+    List<RevenueLedgerEntry> findAllByBusinessIdAndStatusAndConfirmedAtBetweenOrderByConfirmedAtAscIdAsc(
+            Long businessId, String status, LocalDateTime from, LocalDateTime to);
+
     interface RevenueSummaryProjection {
         BigDecimal getTotalRevenue();
         BigDecimal getTotalQuantity();
