@@ -89,6 +89,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
                     // Manager routes
                     .requestMatchers("/api/manager/**").hasRole("MANAGER")
+                    // Platform Analytics - chỉ ADMIN và MANAGER
+                    .requestMatchers("/api/platform/analytics/**").hasAnyRole("ADMIN", "MANAGER")
                     // Owner routes
                     .requestMatchers("/api/owner/**").hasAnyRole("BUSINESS_OWNER", "OWNER")
                     // Product import - chỉ chủ hộ kinh doanh
