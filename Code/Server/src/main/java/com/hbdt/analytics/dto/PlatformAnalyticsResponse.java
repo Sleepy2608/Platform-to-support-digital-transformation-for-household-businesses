@@ -15,6 +15,7 @@ public class PlatformAnalyticsResponse {
 
     private long totalOwners;
     private long activeUsers;
+    private long newUsers;
     private long newSubscriptions;
     private LocalDate startDate;
     private LocalDate endDate;
