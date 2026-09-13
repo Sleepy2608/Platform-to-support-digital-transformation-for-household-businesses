@@ -1,6 +1,6 @@
 {
   "table" : "customers",
-  "version" : 10,
+  "version" : 11,
   "rows" : [ {
     "id" : 1,
     "address" : null,
@@ -37,8 +37,8 @@
     "note" : null,
     "phone" : "0889123321",
     "status" : "ACTIVE",
-    "updated_at" : "2026-08-23T14:51:15.18141",
-    "debt_balance" : 0.00,
+    "updated_at" : "2026-09-11T20:22:44.28565",
+    "debt_balance" : 200000.00,
     "email" : null
   }, {
     "id" : 4,

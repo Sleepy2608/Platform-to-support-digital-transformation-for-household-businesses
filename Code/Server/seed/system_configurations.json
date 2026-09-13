@@ -1,6 +1,6 @@
 {
   "table" : "system_configurations",
-  "version" : 4,
+  "version" : 5,
   "rows" : [ {
     "id" : 1,
     "config_key" : "inventory.low-stock.5.6",

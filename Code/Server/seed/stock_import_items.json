@@ -1,0 +1,27 @@
+{
+  "table" : "stock_import_items",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "base_quantity" : 10.000,
+    "conversion_rate" : 1.000000,
+    "created_at" : "2026-09-11T20:21:23.580105",
+    "line_total" : 200000.00,
+    "product_id" : 14,
+    "purchase_price" : 20000.00,
+    "quantity" : 10.000,
+    "stock_import_id" : 1,
+    "unit_id" : 2
+  }, {
+    "id" : 2,
+    "base_quantity" : 2.000,
+    "conversion_rate" : 1.000000,
+    "created_at" : "2026-09-13T14:51:59.948847",
+    "line_total" : 0.00,
+    "product_id" : 16,
+    "purchase_price" : 0.00,
+    "quantity" : 2.000,
+    "stock_import_id" : 2,
+    "unit_id" : 1
+  } ]
+}
