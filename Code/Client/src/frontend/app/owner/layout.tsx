@@ -8,6 +8,7 @@ import {
   AlertTriangle, LogOut, Menu, X, ChevronRight,
   Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing, UserSearch,
   Building2, ShieldCheck, ClipboardList, ShoppingCart, Warehouse, TrendingUp,
+  FileBarChart,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -65,6 +66,7 @@ const MANAGE_NAV_ITEMS: Array<{
     ],
   },
   { label: 'Doanh thu', href: '/owner/revenue', icon: TrendingUp, path: '/owner/revenue' },
+  { label: 'Báo cáo tài chính', href: '/owner/reports', icon: FileBarChart, path: '/owner/reports' },
   { label: 'Khách hàng', href: '/owner/customers', icon: UserSearch, path: '/owner/customers' },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
 ];
