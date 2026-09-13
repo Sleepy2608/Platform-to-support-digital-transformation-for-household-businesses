@@ -1,5 +1,6 @@
 package com.hbdt.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +31,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByPhone(String phone);
 
     long countByStatus(UserStatus status);
+
+    long countByRole_NameAndStatus(RoleType roleType, UserStatus status);
+
+    long countByRole_NameAndStatusIn(RoleType roleType, Collection<UserStatus> statuses);
 
     @Query("SELECT u FROM User u WHERE u.role.name = :roleType")
     List<User> findByRoleType(@Param("roleType") RoleType roleType);
