@@ -5,9 +5,6 @@ import { ShoppingCart } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
 import { useDebounce } from '@/app/lib/useDebounce';
 import {
-  MOCK_CUSTOMERS,
-} from './FastSalesMockData';
-import {
   FastSalesCartItem,
   FastSalesCategory,
   FastSalesCustomer,
@@ -63,6 +60,9 @@ export function FastSalesView() {
 
   // Customer State (null represents "Khách mua lẻ")
   const [selectedCustomer, setSelectedCustomer] = useState<FastSalesCustomer | null>(null);
+
+  // Payment Mode State ('PAY_NOW' vs 'DEBT')
+  const [paymentMode, setPaymentMode] = useState<'PAY_NOW' | 'DEBT'>('PAY_NOW');
 
   // Mobile Tab State ('products' vs 'cart')
   const [activeTab, setActiveTab] = useState<'products' | 'cart'>('products');
@@ -271,7 +271,8 @@ export function FastSalesView() {
             <FastSalesCustomerSection
               selectedCustomer={selectedCustomer}
               onSelectCustomer={setSelectedCustomer}
-              customers={MOCK_CUSTOMERS}
+              paymentMode={paymentMode}
+              onPaymentModeChange={setPaymentMode}
             />
 
             {/* Cart Items List */}
@@ -340,7 +341,9 @@ export function FastSalesView() {
         title="Đơn hàng Fast Sales"
         message={`Đơn hàng với tổng tiền ${totalAmount.toLocaleString(
           'vi-VN'
-        )} ₫ (${totalQuantity} sản phẩm) đã được chuẩn bị sẵn sàng trên giao diện.`}
+        )} ₫ (${totalQuantity} sản phẩm) - Khách hàng: ${
+          selectedCustomer ? selectedCustomer.customerName : 'Khách mua lẻ'
+        } (${paymentMode === 'PAY_NOW' ? 'Thanh toán ngay' : 'Ghi nhận công nợ'}).`}
         confirmLabel="Đóng"
         cancelLabel="Kiểm tra lại"
         onConfirm={() => setShowOrderSuccessModal(false)}
