@@ -6,6 +6,7 @@ import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.entity.Category;
 import com.hbdt.entity.InventoryBalance;
 import com.hbdt.entity.Product;
+import com.hbdt.entity.ProductPrice;
 import com.hbdt.entity.ProductUnit;
 import com.hbdt.entity.TaxActivityGroup;
 import com.hbdt.entity.Unit;
@@ -18,6 +19,7 @@ import com.hbdt.product.dto.ReferenceOption;
 import com.hbdt.repository.CategoryRepository;
 import com.hbdt.repository.InventoryBalanceRepository;
 import com.hbdt.repository.ProductRepository;
+import com.hbdt.repository.ProductPriceRepository;
 import com.hbdt.repository.ProductUnitRepository;
 import com.hbdt.repository.TaxActivityGroupRepository;
 import com.hbdt.repository.UnitRepository;
@@ -49,6 +51,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductUnitRepository productUnitRepository;
+    private final ProductPriceRepository productPriceRepository;
     private final CategoryRepository categoryRepository;
     private final UnitRepository unitRepository;
     private final InventoryBalanceRepository inventoryBalanceRepository;
@@ -61,6 +64,7 @@ public class ProductService {
 
     public ProductService(ProductRepository productRepository,
                           ProductUnitRepository productUnitRepository,
+                          ProductPriceRepository productPriceRepository,
                           CategoryRepository categoryRepository,
                           UnitRepository unitRepository,
                           InventoryBalanceRepository inventoryBalanceRepository,
@@ -72,6 +76,7 @@ public class ProductService {
                           LowStockAlertService lowStockAlertService) {
         this.productRepository = productRepository;
         this.productUnitRepository = productUnitRepository;
+        this.productPriceRepository = productPriceRepository;
         this.categoryRepository = categoryRepository;
         this.unitRepository = unitRepository;
         this.inventoryBalanceRepository = inventoryBalanceRepository;
@@ -264,7 +269,7 @@ public class ProductService {
 
         List<ProductImageResponse> images = productImageService.getImagesByProductId(product.getId());
         String publicImageUrl = imageStorageService.toPublicUrl(product.getImageUrl());
-        BigDecimal salePrice = product.getSalePrice() != null ? product.getSalePrice() : BigDecimal.ZERO;
+        CurrentSalesPrice currentSalesPrice = currentSalesPrice(product, unit);
 
         return new ProductResponse(
                 product.getId(),
@@ -274,7 +279,9 @@ public class ProductService {
                 category == null ? null : category.getCategoryName(),
                 product.getBaseUnitId(),
                 unit == null ? null : unit.getUnitName(),
-                salePrice,
+                currentSalesPrice.price(),
+                currentSalesPrice.unitId(),
+                currentSalesPrice.unitName(),
                 product.getDefaultTaxActivityGroupId(),
                 taxGroup == null ? null : taxGroup.getActivityName(),
                 publicImageUrl,
@@ -285,6 +292,42 @@ public class ProductService {
                 product.getCreatedAt(),
                 product.getUpdatedAt()
         );
+    }
+
+    private CurrentSalesPrice currentSalesPrice(Product product, Unit declaredBaseUnit) {
+        BigDecimal legacyPrice = product.getSalePrice() != null ? product.getSalePrice() : BigDecimal.ZERO;
+        List<ProductUnit> configuredUnits = productUnitRepository
+                .findAllByProductIdAndStatusOrderByBaseUnitDesc(product.getId(), ACTIVE);
+        ProductUnit preferredUnit = configuredUnits.stream()
+                .filter(productUnit -> productUnit.getUnitId().equals(product.getBaseUnitId()))
+                .findFirst()
+                .orElseGet(() -> configuredUnits.stream()
+                        .filter(productUnit -> Boolean.TRUE.equals(productUnit.getBaseUnit()))
+                        .findFirst()
+                        .orElse(configuredUnits.isEmpty() ? null : configuredUnits.get(0)));
+
+        if (preferredUnit != null) {
+            ProductPrice currentPrice = productPriceRepository
+                    .findFirstByProductUnitIdAndStatusOrderByEffectiveFromDesc(preferredUnit.getId(), ACTIVE)
+                    .orElse(null);
+            if (currentPrice != null) {
+                Unit salesUnit = unitRepository.findById(preferredUnit.getUnitId()).orElse(declaredBaseUnit);
+                return new CurrentSalesPrice(
+                        preferredUnit.getUnitId(),
+                        salesUnit == null ? null : salesUnit.getUnitName(),
+                        currentPrice.getSalePrice()
+                );
+            }
+        }
+
+        return new CurrentSalesPrice(
+                product.getBaseUnitId(),
+                declaredBaseUnit == null ? null : declaredBaseUnit.getUnitName(),
+                legacyPrice
+        );
+    }
+
+    private record CurrentSalesPrice(Long unitId, String unitName, BigDecimal price) {
     }
 
     private Unit activateOrCreateDefaultUnit() {

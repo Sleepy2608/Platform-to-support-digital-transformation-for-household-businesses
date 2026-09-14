@@ -3,11 +3,15 @@ package com.hbdt.imports.service;
 import com.hbdt.entity.Category;
 import com.hbdt.entity.InventoryBalance;
 import com.hbdt.entity.Product;
+import com.hbdt.entity.ProductPrice;
+import com.hbdt.entity.ProductUnit;
 import com.hbdt.entity.Unit;
 import com.hbdt.imports.dto.*;
 import com.hbdt.repository.CategoryRepository;
 import com.hbdt.repository.InventoryBalanceRepository;
 import com.hbdt.repository.ProductRepository;
+import com.hbdt.repository.ProductPriceRepository;
+import com.hbdt.repository.ProductUnitRepository;
 import com.hbdt.repository.UnitRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -28,6 +32,8 @@ import java.util.*;
 public class ProductImportService {
 
     private final ProductRepository productRepository;
+    private final ProductUnitRepository productUnitRepository;
+    private final ProductPriceRepository productPriceRepository;
     private final CategoryRepository categoryRepository;
     private final UnitRepository unitRepository;
     private final InventoryBalanceRepository inventoryBalanceRepository;
@@ -39,7 +45,7 @@ public class ProductImportService {
      * Process product import from file
      */
     @Transactional
-    public ProductImportResponse importProducts(Long businessId, byte[] fileBytes, String fileName) {
+    public ProductImportResponse importProducts(Long businessId, Long actorId, byte[] fileBytes, String fileName) {
         log.info("Starting product import for businessId: {}, file: {}", businessId, fileName);
 
         // 1. Parse file
@@ -60,7 +66,7 @@ public class ProductImportService {
 
         // 3. Save valid products
         if (!result.getSuccessfulRows().isEmpty()) {
-            saveProducts(businessId, result.getSuccessfulRows());
+            saveProducts(businessId, actorId, result.getSuccessfulRows());
         }
 
         log.info("Product import completed: {} success, {} errors", result.getSuccessCount(), result.getErrorCount());
@@ -197,14 +203,13 @@ public class ProductImportService {
         } else {
             row.setStatus(row.getStatus().trim().toUpperCase());
         }
-        if (row.getSalePrice() == null) row.setSalePrice(BigDecimal.ZERO);
         if (row.getQuantityOnHand() == null) row.setQuantityOnHand(BigDecimal.ZERO);
     }
 
     /**
      * Save products to database
      */
-    private void saveProducts(Long businessId, List<ProductImportRequest> validRows) {
+    private void saveProducts(Long businessId, Long actorId, List<ProductImportRequest> validRows) {
         Map<String, Category> categoryMap = loadCategories(businessId);
         Map<String, Unit> unitMap = loadUnits();
 
@@ -237,6 +242,31 @@ public class ProductImportService {
         // Batch save products
         products = productRepository.saveAll(products);
         log.info("Saved {} products", products.size());
+
+        List<ProductUnit> baseUnits = products.stream()
+                .map(product -> ProductUnit.builder()
+                        .productId(product.getId())
+                        .unitId(product.getBaseUnitId())
+                        .conversionRate(BigDecimal.ONE)
+                        .baseUnit(true)
+                        .status("ACTIVE")
+                        .build())
+                .toList();
+        baseUnits = productUnitRepository.saveAll(baseUnits);
+
+        List<ProductPrice> productPrices = new ArrayList<>();
+        for (int i = 0; i < baseUnits.size(); i++) {
+            productPrices.add(ProductPrice.builder()
+                    .productUnitId(baseUnits.get(i).getId())
+                    .minimumQuantity(new BigDecimal("1.000"))
+                    .salePrice(validRows.get(i).getSalePrice())
+                    .ruleName("Giá bán")
+                    .changedBy(actorId)
+                    .status("ACTIVE")
+                    .build());
+        }
+        productPriceRepository.saveAll(productPrices);
+        log.info("Created {} base units and current prices", baseUnits.size());
 
         // Create inventory balances
         for (int i = 0; i < products.size(); i++) {
