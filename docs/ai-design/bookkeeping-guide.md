@@ -19,14 +19,29 @@ Owner và Employee vào mục **Doanh thu** để xem:
 
 1. **Doanh thu bán hàng**: sổ chi tiết theo từng mặt hàng của đơn đã xác nhận, tham chiếu mẫu S1-HKD của Thông tư 88/2021/TT-BTC.
 2. **Tiền nhập kho**: các phiếu nhập đã xác nhận và tổng giá trị nhập hàng trong kỳ.
-3. **Công nợ**: dư đầu kỳ, nợ phát sinh, tiền đã thu, điều chỉnh và dư cuối kỳ theo từng khách hàng.
-4. **Hoạt động kinh doanh**: doanh thu, tiền thu, công nợ, giá trị nhập hàng và dòng tiền hoạt động.
+3. **S2-HKD**: số lượng và giá trị nhập, xuất, tồn được tính theo dữ liệu kho.
+4. **S4-HKD**: nghĩa vụ thuế phải nộp, đã nộp và còn phải nộp.
+5. **Công nợ**: dư đầu kỳ, nợ phát sinh, tiền đã thu, điều chỉnh và dư cuối kỳ theo từng khách hàng.
+6. **Hoạt động kinh doanh**: doanh thu, tiền thu, công nợ, giá trị nhập hàng và dòng tiền hoạt động.
+7. **Biểu mẫu**: dữ liệu được ghép vào phiên bản biểu mẫu `ACTIVE` mới nhất do Admin cấu hình.
 
 Trong tab **Hoạt động kinh doanh**, Owner có thể yêu cầu AI tạo nhận xét, sau đó **Xác nhận báo cáo** hoặc **Yêu cầu chỉnh sửa** kèm lý do. Employee được xem báo cáo nhưng không có quyền duyệt. Kết quả kiểm tra được lưu theo kỳ và theo dấu vân tay dữ liệu. Khi các tổng số của kỳ thay đổi, bản báo cáo mới quay lại trạng thái `DRAFT` để được kiểm tra lại.
 
 Tính năng AI dùng entitlement `AI_ASSISTANT`. Mặc định gói VIP có quyền; Employee dùng quyền của gói mà cửa hàng đang đăng ký. Với cơ sở dữ liệu đã có, Admin cần kiểm tra ma trận gói - tính năng vì seeder giữ nguyên cấu hình đã tùy chỉnh.
 
 “Báo cáo công nợ” và “Báo cáo hoạt động kinh doanh” là báo cáo quản trị của hệ thống, không phải tên biểu mẫu chính thức trong Thông tư 88. Dòng tiền hoạt động cũng không phải lợi nhuận kế toán vì chưa bao gồm đầy đủ giá vốn hàng đã bán và các chi phí vận hành.
+
+## Tự động điền biểu mẫu
+
+Admin định nghĩa mỗi cột bằng `key`, `label`, `type` và `required`. Khi Owner hoặc Employee mở tab **Biểu mẫu**, backend thực hiện các bước:
+
+1. Chọn biểu mẫu `ACTIVE` được cập nhật gần nhất của từng loại.
+2. Lấy phiên bản mà `currentVersionId` đang trỏ tới; nếu liên kết bị thiếu thì dùng phiên bản có số lớn nhất.
+3. Lấy dữ liệu bán hàng, kho, công nợ, dòng tiền hoặc nghĩa vụ thuế đã được backend tính.
+4. Chỉ đưa giá trị vào cột có `key` tương ứng trong schema.
+5. Cảnh báo cột chưa có nguồn dữ liệu và trường bắt buộc đang thiếu; hệ thống không tự tạo số liệu để lấp chỗ trống.
+
+Các nguồn đang được hỗ trợ gồm `REVENUE_LEDGER`, `INVENTORY_LEDGER`, `DEBT_REPORT`, `CASH_FLOW`, `TAX_SUMMARY` và `TAX_OBLIGATION_LEDGER`. `EXPENSE_LEDGER`, `BALANCE_SHEET` và biểu mẫu cũ `ACCOUNTING_BOOK` chỉ hiển thị cảnh báo cho đến khi hệ thống có đủ dữ liệu nguồn đáng tin cậy. Người dùng có thể xuất từng biểu mẫu đã điền ra CSV.
 
 ## Kiểm tra nhanh
 
@@ -38,6 +53,7 @@ Tính năng AI dùng entitlement `AI_ASSISTANT`. Mặc định gói VIP có quy�
 6. Nhập một câu đặt hàng ở trang tạo đơn; kiểm tra đơn xuất hiện trong **Đơn nháp đang chờ duyệt** và tài khoản Owner/Employee khác nhận thông báo thời gian thực.
 7. Chỉnh sửa giỏ rồi xác nhận; kiểm tra đơn nháp chuyển sang `CONFIRMED`. Tạo một nháp khác và từ chối kèm lý do; kiểm tra nháp không còn trong danh sách chờ.
 8. Ở tab **Hoạt động kinh doanh**, dùng **Tạo nhận xét bằng AI**, đối chiếu nhận xét với số liệu rồi thử xác nhận hoặc yêu cầu chỉnh sửa bằng tài khoản Owner.
+9. Admin tạo một mẫu `REVENUE_LEDGER`, `INVENTORY_LEDGER` hoặc `TAX_OBLIGATION_LEDGER`, giữ trạng thái `ACTIVE`; mở tab **Biểu mẫu** bằng Owner/Employee và kiểm tra cột, số dòng, cảnh báo cùng file CSV xuất ra.
 
 ## Phiên bản pháp lý
 

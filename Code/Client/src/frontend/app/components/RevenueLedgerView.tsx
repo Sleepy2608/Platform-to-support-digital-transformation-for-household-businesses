@@ -194,12 +194,35 @@ interface ProductOption {
   productCode: string;
 }
 
+interface FilledTemplateColumn {
+  key: string;
+  label: string;
+  type: 'text' | 'currency' | 'number' | 'date';
+  required: boolean;
+}
+
+interface FilledTemplateReport {
+  templateId: number;
+  templateVersionId: number | null;
+  versionNumber: number | null;
+  templateCode: string;
+  templateName: string;
+  templateType: string;
+  officialFormCode: string | null;
+  legalBasis: string | null;
+  columns: FilledTemplateColumn[];
+  rows: Array<Record<string, unknown>>;
+  warnings: string[];
+}
+
 type DatePreset = 'all' | 'today' | 'yesterday' | '7days' | 'thisMonth';
-type ViewMode = 'sales' | 'imports' | 'inventory' | 'tax' | 'debts' | 'operations';
+type ViewMode = 'sales' | 'imports' | 'inventory' | 'tax' | 'debts' | 'operations' | 'templates';
 
 export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee' }) {
   const [data, setData] = useState<RevenuePageResponse | null>(null);
   const [statutoryBooks, setStatutoryBooks] = useState<StatutoryBooks | null>(null);
+  const [filledTemplates, setFilledTemplates] = useState<FilledTemplateReport[]>([]);
+  const [templateLoadError, setTemplateLoadError] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [reviewing, setReviewing] = useState(false);
@@ -237,6 +260,7 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
   const loadLedger = useCallback(async () => {
     setLoading(true);
     setError('');
+    setTemplateLoadError('');
     const params = new URLSearchParams({
       page: String(page),
       size: '15',
@@ -250,12 +274,18 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
       const bookParams = new URLSearchParams();
       if (fromDate) bookParams.set('fromDate', fromDate);
       if (toDate) bookParams.set('toDate', toDate);
-      const [res, books] = await Promise.all([
+      const [res, books, templates] = await Promise.all([
         apiClient.get<RevenuePageResponse>(`/api/revenue-ledger?${params.toString()}`),
         apiClient.get<StatutoryBooks>(`/api/accounting/books${bookParams.size ? `?${bookParams.toString()}` : ''}`),
+        apiClient.get<FilledTemplateReport[]>(`/api/accounting/template-reports${bookParams.size ? `?${bookParams.toString()}` : ''}`)
+          .catch((err) => {
+            setTemplateLoadError(err instanceof Error ? err.message : 'Không thể tải biểu mẫu đã điền');
+            return [] as FilledTemplateReport[];
+          }),
       ]);
       setData(res);
       setStatutoryBooks(books);
+      setFilledTemplates(templates);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể tải sổ chi tiết doanh thu');
     } finally {
@@ -461,6 +491,32 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
     } catch {
       return dateStr;
     }
+  };
+
+  const formatTemplateValue = (value: unknown, column: FilledTemplateColumn) => {
+    if (value === null || value === undefined || value === '') return '—';
+    if (column.type === 'currency' && typeof value === 'number') return formatCurrency(value);
+    if (column.type === 'number' && typeof value === 'number') return value.toLocaleString('vi-VN');
+    if (column.type === 'date' && typeof value === 'string') {
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleDateString('vi-VN');
+    }
+    return String(value);
+  };
+
+  const exportFilledTemplate = (report: FilledTemplateReport) => {
+    const escapeCell = (value: unknown) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+    const rows = [
+      report.columns.map((column) => column.label),
+      ...report.rows.map((row) => report.columns.map((column) => row[column.key])),
+    ];
+    const csv = `\uFEFF${rows.map((row) => row.map(escapeCell).join(',')).join('\r\n')}`;
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${report.templateCode}-v${report.versionNumber ?? 0}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const renderPaymentBadge = (status: string) => {
@@ -680,6 +736,7 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
                   {viewMode === 'tax' && 'S4-HKD · Sổ nghĩa vụ thuế'}
                   {viewMode === 'debts' && 'Báo cáo công nợ phải thu'}
                   {viewMode === 'operations' && 'Báo cáo hoạt động kinh doanh'}
+                  {viewMode === 'templates' && 'Biểu mẫu được điền tự động'}
                 </h2>
                 <p className="text-xs text-slate-500 font-medium mt-0.5 select-none">
                   {viewMode === 'sales' && 'Biểu S1-HKD tham chiếu Thông tư 88/2021/TT-BTC'}
@@ -688,6 +745,7 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
                   {viewMode === 'tax' && 'Thuế GTGT và TNCN tính từ doanh thu đã phân loại trên S1-HKD'}
                   {viewMode === 'debts' && 'Báo cáo quản trị được tổng hợp từ phát sinh nợ và các lần thu nợ'}
                   {viewMode === 'operations' && 'Bản tổng hợp quản trị cần Owner kiểm tra trước khi sử dụng'}
+                  {viewMode === 'templates' && 'Dùng phiên bản biểu mẫu ACTIVE mới nhất do Admin cấu hình'}
                 </p>
               </div>
             </div>
@@ -765,6 +823,18 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
                 <BookOpenCheck className="w-3.5 h-3.5" />
                 <span>6. Hoạt động kinh doanh</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => { setViewMode('templates'); setProductId(''); setKeyword(''); setPage(0); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewMode === 'templates'
+                    ? 'bg-white text-slate-900 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                  }`}
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                <span>7. Biểu mẫu ({filledTemplates.length})</span>
+              </button>
             </div>
           </div>
 
@@ -797,13 +867,14 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
                   {viewMode === 'tax' && 'Tổng hợp theo sắc thuế'}
                   {viewMode === 'debts' && 'Tên / mã khách hàng'}
                   {viewMode === 'operations' && 'Từ khóa giao dịch'}
+                  {viewMode === 'templates' && 'Theo cấu hình Admin'}
                 </label>
                 <div className="relative">
                   <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
                     value={keyword}
-                    disabled={viewMode === 'operations' || viewMode === 'inventory' || viewMode === 'tax'}
+                    disabled={viewMode === 'operations' || viewMode === 'inventory' || viewMode === 'tax' || viewMode === 'templates'}
                     onChange={(e) => {
                       setKeyword(e.target.value);
                       setPage(0);
@@ -813,6 +884,7 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
                         : viewMode === 'debts' ? 'Tìm khách hàng...'
                           : viewMode === 'inventory' ? 'Tổng hợp nhập - xuất - tồn'
                             : viewMode === 'tax' ? 'Tổng hợp GTGT và TNCN'
+                              : viewMode === 'templates' ? 'Cột được lấy từ phiên bản biểu mẫu'
                           : 'Tổng hợp theo khoảng thời gian'}
                     className="w-full bg-slate-50/80 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-xs sm:text-sm text-slate-900 placeholder-slate-400 font-medium focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all disabled:opacity-50"
                   />
@@ -1362,6 +1434,69 @@ export default function RevenueLedgerView({ role }: { role: 'owner' | 'employee'
                 Báo cáo này phục vụ quản trị nội bộ. “Dòng tiền hoạt động” không phải lợi nhuận kế toán vì hệ thống chưa phân bổ giá vốn
                 theo lượng hàng thực tế đã bán và chưa ghi nhận đầy đủ các chi phí vận hành khác.
               </p>
+            </div>
+          )}
+
+          {viewMode === 'templates' && (
+            <div className="space-y-5 pt-2">
+              {templateLoadError && (
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-800">
+                  {templateLoadError}
+                </div>
+              )}
+              {filledTemplates.length === 0 && (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
+                  Chưa có biểu mẫu ACTIVE có phiên bản hợp lệ. Admin cần tạo hoặc kích hoạt biểu mẫu trước.
+                </div>
+              )}
+              {filledTemplates.map((report) => (
+                <section key={report.templateId} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                  <div className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 className="font-extrabold text-slate-950">{report.templateName}</h3>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {report.officialFormCode || report.templateCode} · Phiên bản {report.versionNumber ?? '—'}
+                        {report.legalBasis ? ` · ${report.legalBasis}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 self-start">
+                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
+                        {report.rows.length} dòng đã điền
+                      </span>
+                      <button type="button" disabled={report.rows.length === 0} onClick={() => exportFilledTemplate(report)} className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-bold text-blue-700 disabled:opacity-40">
+                        <FileSpreadsheet className="h-3.5 w-3.5" /> Xuất CSV
+                      </button>
+                    </div>
+                  </div>
+                  {report.warnings.length > 0 && (
+                    <div className="border-b border-amber-200 bg-amber-50 px-5 py-3 text-xs text-amber-900">
+                      {report.warnings.map((warning) => <p key={warning}>• {warning}</p>)}
+                    </div>
+                  )}
+                  {report.columns.length > 0 && report.rows.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-max text-left text-xs text-slate-700">
+                        <thead className="border-b border-slate-200 bg-white text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                          <tr>{report.columns.map((column) => <th key={column.key} className="px-4 py-3">{column.label}</th>)}</tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {report.rows.map((row, rowIndex) => (
+                            <tr key={`${report.templateId}-${rowIndex}`} className="hover:bg-slate-50">
+                              {report.columns.map((column) => (
+                                <td key={column.key} className={`px-4 py-3 ${column.type === 'currency' || column.type === 'number' ? 'text-right' : ''}`}>
+                                  {formatTemplateValue(row[column.key], column)}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="px-5 py-8 text-center text-sm text-slate-500">Chưa có dữ liệu có thể điền vào biểu mẫu này.</div>
+                  )}
+                </section>
+              ))}
             </div>
           )}
 

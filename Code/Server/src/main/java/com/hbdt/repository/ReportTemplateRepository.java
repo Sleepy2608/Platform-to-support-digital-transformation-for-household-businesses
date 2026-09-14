@@ -21,5 +21,7 @@ public interface ReportTemplateRepository
 
     List<ReportTemplate> findAllByOrderByTemplateCodeAsc();
 
+    List<ReportTemplate> findAllByStatusOrderByUpdatedAtDesc(TemplateStatus status);
+
     Optional<ReportTemplate> findByTemplateTypeAndStatus(TemplateType type, TemplateStatus status);
 }
