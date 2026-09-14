@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { ShoppingCart } from 'lucide-react';
+import { apiClient } from '@/app/lib/apiClient';
+import { useDebounce } from '@/app/lib/useDebounce';
 import {
-  MOCK_CATEGORIES,
   MOCK_CUSTOMERS,
-  MOCK_PRODUCTS,
 } from './FastSalesMockData';
 import {
   FastSalesCartItem,
+  FastSalesCategory,
   FastSalesCustomer,
   FastSalesProduct,
 } from './FastSalesTypes';
@@ -19,25 +20,46 @@ import { FastSalesCart } from './FastSalesCart';
 import { FastSalesOrderSummary } from './FastSalesOrderSummary';
 import { FastSalesConfirmModal } from './FastSalesConfirmModal';
 
-export function FastSalesView() {
-  // Products and Category State
-  const [products] = useState<FastSalesProduct[]>(MOCK_PRODUCTS);
-  const [categories] = useState(MOCK_CATEGORIES);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number>(0);
+interface BackendProductItem {
+  id: number;
+  productCode: string;
+  productName: string;
+  categoryId?: number;
+  categoryName?: string;
+  baseUnitId?: number;
+  baseUnitName?: string;
+  salePrice?: number | string;
+  quantityOnHand?: number | string;
+  imageUrl?: string;
+  status: 'ACTIVE' | 'INACTIVE';
+}
 
-  // Cart State (Initialized with 1 sample item to demonstrate layout)
-  const [cartItems, setCartItems] = useState<FastSalesCartItem[]>([
-    {
-      productId: 101,
-      productCode: 'SP001',
-      productName: 'Sữa tươi tiệt trùng Vinamilk 1L',
-      unitName: 'Hộp',
-      unitPrice: 38000,
-      quantity: 2,
-      quantityOnHand: 45,
-    },
-  ]);
+interface PageResponse<T> {
+  content?: T[];
+  data?: T[];
+  totalElements?: number;
+  totalPages?: number;
+  page?: number;
+  size?: number;
+}
+
+interface BackendCategoryItem {
+  id: number;
+  categoryName: string;
+}
+
+export function FastSalesView() {
+  // Products and Categories State
+  const [products, setProducts] = useState<FastSalesProduct[]>([]);
+  const [categories, setCategories] = useState<FastSalesCategory[]>([{ id: 0, name: 'Tất cả' }]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 250);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
+
+  // Cart State
+  const [cartItems, setCartItems] = useState<FastSalesCartItem[]>([]);
 
   // Customer State (null represents "Khách mua lẻ")
   const [selectedCustomer, setSelectedCustomer] = useState<FastSalesCustomer | null>(null);
@@ -49,7 +71,78 @@ export function FastSalesView() {
   const [showClearCartModal, setShowClearCartModal] = useState(false);
   const [showOrderSuccessModal, setShowOrderSuccessModal] = useState(false);
 
-  // Cart helper maps
+  // ─── Fetch Categories ───────────────────────────────────────────────────────
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await apiClient.get<PageResponse<BackendCategoryItem> | BackendCategoryItem[]>(
+        '/api/categories?size=100'
+      );
+      const list = Array.isArray(res) ? res : res.content || res.data || [];
+      const mapped: FastSalesCategory[] = [
+        { id: 0, name: 'Tất cả' },
+        ...list.map((c) => ({ id: c.id, name: c.categoryName })),
+      ];
+      setCategories(mapped);
+    } catch {
+      // Keep default 'Tất cả' if category endpoint is not accessible
+      setCategories([{ id: 0, name: 'Tất cả' }]);
+    }
+  }, []);
+
+  // ─── Fetch Products from API ────────────────────────────────────────────────
+  const fetchProducts = useCallback(async (keyword: string, catId: number) => {
+    setLoading(true);
+    setError('');
+    try {
+      const params = new URLSearchParams({
+        page: '0',
+        size: '50',
+      });
+      if (keyword.trim()) {
+        params.set('keyword', keyword.trim());
+      }
+      if (catId > 0) {
+        params.set('categoryId', String(catId));
+      }
+
+      const res = await apiClient.get<PageResponse<BackendProductItem>>(`/api/products?${params}`);
+      const rawList = res.content || res.data || [];
+
+      const mappedProducts: FastSalesProduct[] = rawList.map((p) => ({
+        id: p.id,
+        productCode: p.productCode || '',
+        productName: p.productName || '',
+        categoryId: p.categoryId,
+        categoryName: p.categoryName,
+        unitName: p.baseUnitName || 'SP',
+        salePrice: Number(p.salePrice || 0),
+        quantityOnHand: Number(p.quantityOnHand || 0),
+        imageUrl: p.imageUrl,
+        status: p.status || 'ACTIVE',
+      }));
+
+      setProducts(mappedProducts);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Không thể kết nối đến máy chủ để tải danh sách sản phẩm'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void fetchCategories();
+      void fetchProducts(debouncedSearch, selectedCategoryId);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchCategories, fetchProducts, debouncedSearch, selectedCategoryId]);
+
+  // Cart helper map
   const cartProductQuantities = useMemo(() => {
     const map: Record<number, number> = {};
     cartItems.forEach((item) => {
@@ -70,7 +163,7 @@ export function FastSalesView() {
   const discount = 0;
   const totalAmount = Math.max(0, subtotal - discount);
 
-  // Cart Operations
+  // Cart Operations (Reused from Task 1)
   const handleAddToCart = (product: FastSalesProduct) => {
     if (product.quantityOnHand <= 0) return;
 
@@ -166,6 +259,9 @@ export function FastSalesView() {
               onCategorySelect={setSelectedCategoryId}
               onAddToCart={handleAddToCart}
               cartProductQuantities={cartProductQuantities}
+              loading={loading}
+              error={error}
+              onRetry={() => void fetchProducts(debouncedSearch, selectedCategoryId)}
             />
           </section>
 
@@ -242,13 +338,13 @@ export function FastSalesView() {
         onCancel={() => setShowClearCartModal(false)}
       />
 
-      {/* Task 1 Mock Order Modal */}
+      {/* Task Mock Order Modal */}
       <FastSalesConfirmModal
         isOpen={showOrderSuccessModal}
-        title="Giao diện Fast Sales (Task 1)"
+        title="Đơn hàng Fast Sales"
         message={`Đơn hàng với tổng tiền ${totalAmount.toLocaleString(
           'vi-VN'
-        )} ₫ (${totalQuantity} sản phẩm) đã được chuẩn bị sẵn sàng trên giao diện. Tính năng kết nối API tạo đơn hàng (POST /api/sales-orders) sẽ được triển khai ở các task tiếp theo.`}
+        )} ₫ (${totalQuantity} sản phẩm) đã được chuẩn bị sẵn sàng trên giao diện.`}
         confirmLabel="Đóng"
         cancelLabel="Kiểm tra lại"
         onConfirm={() => setShowOrderSuccessModal(false)}
