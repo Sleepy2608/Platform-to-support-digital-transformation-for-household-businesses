@@ -217,13 +217,54 @@ type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown;
   skipAuth?: boolean;
   responseType?: 'json' | 'blob';
+  cacheTtlMs?: number;
+  skipCache?: boolean;
 };
+
+type CacheEntry = {
+  expiresAt: number;
+  value: unknown;
+};
+
+const DEFAULT_GET_CACHE_TTL_MS = 20_000;
+const getCache = new Map<string, CacheEntry>();
+
+function clearGetCache() {
+  getCache.clear();
+}
+
+function createGetCacheKey(path: string, token?: string | null) {
+  return `${token ? 'auth' : 'public'}:${path}`;
+}
+
+function shouldUseGetCache(method?: string, responseType?: RequestOptions['responseType'], skipCache?: boolean) {
+  return !skipCache && (method || 'GET').toUpperCase() === 'GET' && responseType !== 'blob';
+}
 
 async function request<T = unknown>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { body, skipAuth = false, headers: customHeaders = {}, responseType = 'json', ...rest } = options;
+  const {
+    body,
+    skipAuth = false,
+    headers: customHeaders = {},
+    responseType = 'json',
+    cacheTtlMs = DEFAULT_GET_CACHE_TTL_MS,
+    skipCache = false,
+    ...rest
+  } = options;
+  const method = (rest.method || 'GET').toUpperCase();
+  const accessToken = skipAuth ? null : getAccessToken();
+  const cacheEnabled = shouldUseGetCache(method, responseType, skipCache);
+  const cacheKey = cacheEnabled ? createGetCacheKey(path, accessToken) : '';
+
+  if (cacheEnabled && cacheKey) {
+    const cached = getCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.value as T;
+    }
+  }
 
   const buildHeaders = (token?: string | null): HeadersInit => {
     const h: Record<string, string> = {
@@ -249,7 +290,7 @@ async function request<T = unknown>(
       body: buildBody(),
     });
 
-  let response = await doFetch(skipAuth ? null : getAccessToken());
+  let response = await doFetch(accessToken);
 
   // 401 means the access token may be expired. A 403 is an authorization or
   // subscription denial and must be shown to the user, not treated as a bad token.
@@ -310,7 +351,16 @@ async function request<T = unknown>(
   }
 
   const json = await response.json();
-  return json.data as T;
+  const value = json.data as T;
+
+  if (cacheEnabled && cacheKey && cacheTtlMs > 0) {
+    getCache.set(cacheKey, {
+      expiresAt: Date.now() + cacheTtlMs,
+      value,
+    });
+  }
+
+  return value;
 }
 
 // ─── Public API ────────────────────────────────────────────────────────────────
@@ -319,18 +369,35 @@ export const apiClient = {
   get: <T = unknown>(path: string, opts?: RequestOptions) =>
     request<T>(path, { ...opts, method: 'GET' }),
 
-  post: <T = unknown>(path: string, body?: unknown, opts?: RequestOptions) =>
-    request<T>(path, { ...opts, method: 'POST', body }),
+  post: async <T = unknown>(path: string, body?: unknown, opts?: RequestOptions) => {
+    const result = await request<T>(path, { ...opts, method: 'POST', body });
+    clearGetCache();
+    return result;
+  },
 
-  put: <T = unknown>(path: string, body?: unknown, opts?: RequestOptions) =>
-    request<T>(path, { ...opts, method: 'PUT', body }),
+  put: async <T = unknown>(path: string, body?: unknown, opts?: RequestOptions) => {
+    const result = await request<T>(path, { ...opts, method: 'PUT', body });
+    clearGetCache();
+    return result;
+  },
 
-  patch: <T = unknown>(path: string, body?: unknown, opts?: RequestOptions) =>
-    request<T>(path, { ...opts, method: 'PATCH', body }),
+  patch: async <T = unknown>(path: string, body?: unknown, opts?: RequestOptions) => {
+    const result = await request<T>(path, { ...opts, method: 'PATCH', body });
+    clearGetCache();
+    return result;
+  },
 
-  delete: <T = unknown>(path: string, body?: unknown, opts?: RequestOptions) =>
-    request<T>(path, { ...opts, method: 'DELETE', body }),
+  delete: async <T = unknown>(path: string, body?: unknown, opts?: RequestOptions) => {
+    const result = await request<T>(path, { ...opts, method: 'DELETE', body });
+    clearGetCache();
+    return result;
+  },
 
-  upload: <T = unknown>(path: string, formData: FormData, opts?: RequestOptions) =>
-    request<T>(path, { ...opts, method: 'POST', body: formData }),
+  upload: async <T = unknown>(path: string, formData: FormData, opts?: RequestOptions) => {
+    const result = await request<T>(path, { ...opts, method: 'POST', body: formData });
+    clearGetCache();
+    return result;
+  },
+
+  clearCache: clearGetCache,
 };
