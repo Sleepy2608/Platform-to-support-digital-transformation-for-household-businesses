@@ -7,6 +7,7 @@ import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, BadgeDollarSi
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
+import BackToTop from '../components/BackToTop';
 
 export default function AdminLayout({
   children,
@@ -219,6 +220,8 @@ export default function AdminLayout({
       <main className="flex-1 min-w-0 px-6 py-8 sm:px-10 overflow-y-auto max-h-screen">
         {children}
       </main>
+
+      <BackToTop variant="dark" />
     </div>
   );
 }

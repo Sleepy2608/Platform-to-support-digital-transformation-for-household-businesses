@@ -16,6 +16,7 @@ import { apiClient, clearAuth, getAccessToken, getAuthItem } from '../lib/apiCli
 import { isOwner } from '../lib/roles';
 import { EntitlementProvider } from '../lib/EntitlementContext';
 import NotificationBell from '../components/NotificationBell';
+import BackToTop from '../components/BackToTop';
 
 function getCleanHash(rawHash?: string): string {
   if (!rawHash) return 'profile';
@@ -508,6 +509,8 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
           {children}
         </EntitlementProvider>
       </main>
+
+      <BackToTop variant="light" />
     </div>
   );
 }

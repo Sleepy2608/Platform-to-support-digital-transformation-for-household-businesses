@@ -13,6 +13,7 @@ import { apiClient, clearAuth, getAccessToken, getAuthItem } from '../lib/apiCli
 import { isEmployee } from '../lib/roles';
 import { EntitlementProvider } from '../lib/EntitlementContext';
 import NotificationBell from '../components/NotificationBell';
+import BackToTop from '../components/BackToTop';
 
 const NAV_ITEMS = [
   { label: 'Bán hàng tại quầy', href: '/employee/orders/new', icon: ShoppingCart, hash: '' },
@@ -256,6 +257,8 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
           {children}
         </EntitlementProvider>
       </main>
+
+      <BackToTop variant="light" />
     </div>
   );
 }
