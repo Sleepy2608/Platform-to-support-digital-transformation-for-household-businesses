@@ -619,6 +619,35 @@ class FinancialTemplateServiceTest {
                     .isInstanceOf(BadRequestException.class)
                     .hasMessageContaining("ngày hiệu lực");
         }
+
+        @Test
+        @DisplayName("TC 13b: Should allow immediate update on same day when effectiveFrom is today")
+        void updateTemplate_allowsImmediateUpdateOnSameDay() {
+            ReportTemplate template = buildTemplate(1L, "RL-001",
+                    TemplateType.REVENUE_LEDGER, TemplateStatus.ACTIVE, 100L);
+            ReportTemplateVersion v1 = buildVersion(100L, 1L, 1, sampleConfig("a"));
+            v1.setEffectiveFrom(LocalDate.now());
+
+            UpdateTemplateRequest request = UpdateTemplateRequest.builder()
+                    .name("Updated Name")
+                    .configurationJson(sampleConfig("a", "b"))
+                    .effectiveFrom(LocalDate.now())
+                    .build();
+
+            when(templateRepository.findById(1L)).thenReturn(Optional.of(template));
+            when(versionRepository.findTopByReportTemplateIdOrderByVersionNumberDesc(1L))
+                    .thenReturn(Optional.of(v1));
+            when(versionRepository.findById(100L)).thenReturn(Optional.of(v1));
+            when(versionRepository.save(any(ReportTemplateVersion.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(templateRepository.save(any(ReportTemplate.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(versionRepository.findByReportTemplateIdOrderByVersionNumberDesc(1L))
+                    .thenReturn(List.of(v1));
+
+            TemplateResponse response = templateService.update(1L, request, ADMIN_USER_ID);
+
+            assertThat(response).isNotNull();
+            verify(versionRepository, atLeastOnce()).save(any(ReportTemplateVersion.class));
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════

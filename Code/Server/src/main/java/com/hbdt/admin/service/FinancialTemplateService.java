@@ -212,8 +212,10 @@ public class FinancialTemplateService {
                     ? request.getEffectiveFrom()
                     : LocalDate.now();
 
-            // Uniqueness validations
-            if (versionRepository.existsByReportTemplateIdAndEffectiveFrom(templateId, effectiveFrom)) {
+            boolean isFutureEffective = effectiveFrom.isAfter(LocalDate.now());
+
+            // For scheduled future versions: prevent multiple drafts scheduled for the exact same date
+            if (isFutureEffective && versionRepository.existsByReportTemplateIdAndEffectiveFrom(templateId, effectiveFrom)) {
                 throw new BadRequestException(
                         "Phiên bản với ngày hiệu lực " + effectiveFrom + " đã tồn tại cho mẫu báo cáo này");
             }
@@ -223,8 +225,6 @@ public class FinancialTemplateService {
                 throw new BadRequestException(
                         "Phiên bản số " + nextVersionNumber + " đã tồn tại cho mẫu báo cáo này");
             }
-
-            boolean isFutureEffective = effectiveFrom.isAfter(LocalDate.now());
 
             if (isFutureEffective) {
                 // Scheduled version: status is DRAFT, does not immediately replace current active version
@@ -245,16 +245,27 @@ public class FinancialTemplateService {
                 logger.info("Template id={} updated: scheduled version v{} (DRAFT) created for effectiveFrom={}, by adminId={}",
                         templateId, nextVersionNumber, effectiveFrom, adminUserId);
             } else {
-                // Immediate activation: close out the previous version
-                latestVersion.setEffectiveTo(effectiveFrom);
-                latestVersion.setStatus(VersionStatus.SUPERSEDED);
-                versionRepository.save(latestVersion);
+                // Immediate activation: close out the previous active version
+                ReportTemplateVersion currentActive = template.getCurrentVersionId() != null
+                        ? versionRepository.findById(template.getCurrentVersionId()).orElse(latestVersion)
+                        : latestVersion;
+
+                if (currentActive.getEffectiveFrom() != null && effectiveFrom.isBefore(currentActive.getEffectiveFrom())) {
+                    throw new BadRequestException(
+                            "Ngày hiệu lực không được nhỏ hơn ngày hiệu lực của phiên bản hiện hành (" + currentActive.getEffectiveFrom() + ")");
+                }
+
+                if (currentActive.getStatus() == VersionStatus.ACTIVE) {
+                    currentActive.setEffectiveTo(effectiveFrom);
+                    currentActive.setStatus(VersionStatus.SUPERSEDED);
+                    versionRepository.save(currentActive);
+                }
 
                 // Transition older SUPERSEDED versions to ARCHIVED
                 List<ReportTemplateVersion> olderVersions =
                         versionRepository.findByReportTemplateIdAndStatus(templateId, VersionStatus.SUPERSEDED);
                 for (ReportTemplateVersion older : olderVersions) {
-                    if (!older.getId().equals(latestVersion.getId())) {
+                    if (!older.getId().equals(currentActive.getId())) {
                         older.setStatus(VersionStatus.ARCHIVED);
                         versionRepository.save(older);
                     }
