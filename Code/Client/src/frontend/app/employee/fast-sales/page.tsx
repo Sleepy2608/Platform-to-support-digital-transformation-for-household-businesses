@@ -2,6 +2,6 @@
 
 import { FastSalesView } from '@/app/components/fast-sales/FastSalesView';
 
-export default function EmployeeFastSalesPage() {
+export default function FastSalesRoutePage() {
   return <FastSalesView />;
 }
