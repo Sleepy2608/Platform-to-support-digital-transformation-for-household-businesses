@@ -64,12 +64,22 @@ export function FastSalesView() {
   // Payment Mode State ('PAY_NOW' vs 'DEBT')
   const [paymentMode, setPaymentMode] = useState<'PAY_NOW' | 'DEBT'>('PAY_NOW');
 
+  // Checkout UI States (Task 5)
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [showOrderSuccessModal, setShowOrderSuccessModal] = useState<boolean>(false);
+  const [orderFeedback, setOrderFeedback] = useState<{
+    code: string;
+    totalAmount: number;
+    itemCount: number;
+    customerName: string;
+    paymentMode: 'PAY_NOW' | 'DEBT';
+  } | null>(null);
+
   // Mobile Tab State ('products' vs 'cart')
   const [activeTab, setActiveTab] = useState<'products' | 'cart'>('products');
 
-  // Modal States
-  const [showClearCartModal, setShowClearCartModal] = useState(false);
-  const [showOrderSuccessModal, setShowOrderSuccessModal] = useState(false);
+  // Modal State for Clear Cart
+  const [showClearCartModal, setShowClearCartModal] = useState<boolean>(false);
 
   // ─── Fetch Categories ───────────────────────────────────────────────────────
   const fetchCategories = useCallback(async () => {
@@ -163,7 +173,22 @@ export function FastSalesView() {
   const discount = 0;
   const totalAmount = Math.max(0, subtotal - discount);
 
-  // Cart Operations (Task 3 Management)
+  // Cart Validation
+  const validationError = useMemo(() => {
+    if (cartItems.length === 0) return '';
+    // Check if any item exceeds stock
+    const invalidItem = cartItems.find((item) => item.quantity > item.quantityOnHand);
+    if (invalidItem) {
+      return `Sản phẩm "${invalidItem.productName}" vượt quá tồn kho hiện có (${invalidItem.quantityOnHand} ${invalidItem.unitName})`;
+    }
+    // Check debt requirement: Debt mode requires registered customer
+    if (paymentMode === 'DEBT' && !selectedCustomer) {
+      return 'Vui lòng chọn khách hàng cụ thể khi ghi nhận công nợ';
+    }
+    return '';
+  }, [cartItems, paymentMode, selectedCustomer]);
+
+  // Cart Operations (Reused logic from Task 3)
   const handleAddToCart = (product: FastSalesProduct) => {
     if (product.quantityOnHand <= 0) return;
 
@@ -200,7 +225,6 @@ export function FastSalesView() {
     setCartItems((prevItems) =>
       prevItems.map((item) => {
         if (item.productId === productId) {
-          // Clamp quantity between 1 and available stock (never auto-delete on stepper -)
           const clampedQty = Math.max(1, Math.min(newQty, item.quantityOnHand));
           return { ...item, quantity: clampedQty };
         }
@@ -220,9 +244,28 @@ export function FastSalesView() {
     setShowClearCartModal(false);
   };
 
+  // ─── Task 5: Checkout UI Flow ───────────────────────────────────────────────
   const handleCreateOrderClick = () => {
-    if (cartItems.length === 0) return;
-    setShowOrderSuccessModal(true);
+    if (cartItems.length === 0 || isSubmitting || validationError) return;
+
+    setIsSubmitting(true);
+
+    // Simulate order validation and preparation flow (Task 5: No API call, prepare UI flow)
+    setTimeout(() => {
+      const mockOrderCode = `FS-${Date.now().toString().slice(-6)}`;
+      setOrderFeedback({
+        code: mockOrderCode,
+        totalAmount,
+        itemCount: totalQuantity,
+        customerName: selectedCustomer ? selectedCustomer.customerName : 'Khách mua lẻ',
+        paymentMode,
+      });
+
+      // Prepare success state and reset cart
+      setCartItems([]);
+      setIsSubmitting(false);
+      setShowOrderSuccessModal(true);
+    }, 600);
   };
 
   return (
@@ -290,6 +333,10 @@ export function FastSalesView() {
               totalAmount={totalAmount}
               totalQuantity={totalQuantity}
               cartItemCount={cartItems.length}
+              selectedCustomer={selectedCustomer}
+              paymentMode={paymentMode}
+              isSubmitting={isSubmitting}
+              validationError={validationError}
               onCreateOrderClick={handleCreateOrderClick}
             />
           </section>
@@ -335,19 +382,29 @@ export function FastSalesView() {
         onCancel={() => setShowClearCartModal(false)}
       />
 
-      {/* Task Mock Order Modal */}
+      {/* Task 5 Order Checkout Success Feedback Modal */}
       <FastSalesConfirmModal
         isOpen={showOrderSuccessModal}
-        title="Đơn hàng Fast Sales"
-        message={`Đơn hàng với tổng tiền ${totalAmount.toLocaleString(
-          'vi-VN'
-        )} ₫ (${totalQuantity} sản phẩm) - Khách hàng: ${
-          selectedCustomer ? selectedCustomer.customerName : 'Khách mua lẻ'
-        } (${paymentMode === 'PAY_NOW' ? 'Thanh toán ngay' : 'Ghi nhận công nợ'}).`}
-        confirmLabel="Đóng"
-        cancelLabel="Kiểm tra lại"
-        onConfirm={() => setShowOrderSuccessModal(false)}
-        onCancel={() => setShowOrderSuccessModal(false)}
+        title="Đơn hàng đã được tiếp nhận"
+        message={
+          orderFeedback
+            ? `Mã tạm: ${orderFeedback.code} • ${orderFeedback.itemCount} sản phẩm • Tổng tiền: ${orderFeedback.totalAmount.toLocaleString(
+                'vi-VN'
+              )} ₫ • Khách: ${orderFeedback.customerName} (${
+                orderFeedback.paymentMode === 'PAY_NOW' ? 'Thanh toán ngay' : 'Ghi nhận công nợ'
+              }). Giỏ hàng đã được làm mới để sẵn sàng phục vụ khách tiếp theo.`
+            : 'Đơn hàng đã được chuẩn bị thành công!'
+        }
+        confirmLabel="Bán đơn mới"
+        cancelLabel="Đóng"
+        onConfirm={() => {
+          setShowOrderSuccessModal(false);
+          setOrderFeedback(null);
+        }}
+        onCancel={() => {
+          setShowOrderSuccessModal(false);
+          setOrderFeedback(null);
+        }}
       />
     </div>
   );
