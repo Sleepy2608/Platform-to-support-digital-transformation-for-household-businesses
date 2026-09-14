@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
 import { useDebounce } from '@/app/lib/useDebounce';
@@ -16,6 +16,7 @@ import { FastSalesCustomerSection } from './FastSalesCustomerSection';
 import { FastSalesCart } from './FastSalesCart';
 import { FastSalesOrderSummary } from './FastSalesOrderSummary';
 import { FastSalesConfirmModal } from './FastSalesConfirmModal';
+import { FastSalesShortcutsModal } from './FastSalesShortcutsModal';
 
 interface BackendProductItem {
   id: number;
@@ -45,8 +46,19 @@ interface BackendCategoryItem {
   categoryName: string;
 }
 
+interface SalesOrderResponse {
+  id?: number;
+  orderCode: string;
+  customerId?: number;
+  source?: string;
+  status?: string;
+  totalAmount?: number;
+  paidAmount?: number;
+  debtAmount?: number;
+}
+
 export function FastSalesView() {
-  // Products and Categories State
+  // Search and Product State
   const [products, setProducts] = useState<FastSalesProduct[]>([]);
   const [categories, setCategories] = useState<FastSalesCategory[]>([{ id: 0, name: 'Tất cả' }]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -64,12 +76,15 @@ export function FastSalesView() {
   // Payment Mode State ('PAY_NOW' vs 'DEBT')
   const [paymentMode, setPaymentMode] = useState<'PAY_NOW' | 'DEBT'>('PAY_NOW');
 
-  // Checkout UI States (Task 5)
+  // Checkout API States (HBDT-46)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showOrderSuccessModal, setShowOrderSuccessModal] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const [orderFeedback, setOrderFeedback] = useState<{
     code: string;
     totalAmount: number;
+    paidAmount: number;
+    debtAmount: number;
     itemCount: number;
     customerName: string;
     paymentMode: 'PAY_NOW' | 'DEBT';
@@ -78,8 +93,12 @@ export function FastSalesView() {
   // Mobile Tab State ('products' vs 'cart')
   const [activeTab, setActiveTab] = useState<'products' | 'cart'>('products');
 
-  // Modal State for Clear Cart
+  // Modal States
   const [showClearCartModal, setShowClearCartModal] = useState<boolean>(false);
+  const [showShortcutsModal, setShowShortcutsModal] = useState<boolean>(false);
+
+  // DOM Refs for Keyboard Shortcuts
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // ─── Fetch Categories ───────────────────────────────────────────────────────
   const fetchCategories = useCallback(async () => {
@@ -94,7 +113,6 @@ export function FastSalesView() {
       ];
       setCategories(mapped);
     } catch {
-      // Keep default 'Tất cả' if category endpoint is not accessible
       setCategories([{ id: 0, name: 'Tất cả' }]);
     }
   }, []);
@@ -124,6 +142,7 @@ export function FastSalesView() {
         productName: p.productName || '',
         categoryId: p.categoryId,
         categoryName: p.categoryName,
+        baseUnitId: p.baseUnitId || 1,
         unitName: p.baseUnitName || 'SP',
         salePrice: Number(p.salePrice || 0),
         quantityOnHand: Number(p.quantityOnHand || 0),
@@ -176,19 +195,17 @@ export function FastSalesView() {
   // Cart Validation
   const validationError = useMemo(() => {
     if (cartItems.length === 0) return '';
-    // Check if any item exceeds stock
     const invalidItem = cartItems.find((item) => item.quantity > item.quantityOnHand);
     if (invalidItem) {
       return `Sản phẩm "${invalidItem.productName}" vượt quá tồn kho hiện có (${invalidItem.quantityOnHand} ${invalidItem.unitName})`;
     }
-    // Check debt requirement: Debt mode requires registered customer
     if (paymentMode === 'DEBT' && !selectedCustomer) {
       return 'Vui lòng chọn khách hàng cụ thể khi ghi nhận công nợ';
     }
     return '';
   }, [cartItems, paymentMode, selectedCustomer]);
 
-  // Cart Operations (Reused logic from Task 3)
+  // Cart Operations
   const handleAddToCart = (product: FastSalesProduct) => {
     if (product.quantityOnHand <= 0) return;
 
@@ -196,7 +213,7 @@ export function FastSalesView() {
       const existing = prevItems.find((item) => item.productId === product.id);
       if (existing) {
         if (existing.quantity >= product.quantityOnHand) {
-          return prevItems; // Cannot exceed stock
+          return prevItems;
         }
         return prevItems.map((item) =>
           item.productId === product.id
@@ -210,6 +227,7 @@ export function FastSalesView() {
             productId: product.id,
             productCode: product.productCode,
             productName: product.productName,
+            baseUnitId: product.baseUnitId || 1,
             unitName: product.unitName,
             unitPrice: product.salePrice,
             quantity: 1,
@@ -244,29 +262,139 @@ export function FastSalesView() {
     setShowClearCartModal(false);
   };
 
-  // ─── Task 5: Checkout UI Flow ───────────────────────────────────────────────
-  const handleCreateOrderClick = () => {
+  // ─── Order API Integration (HBDT-46) ────────────────────────────────────────
+  const handleCreateOrderClick = useCallback(async () => {
     if (cartItems.length === 0 || isSubmitting || validationError) return;
 
     setIsSubmitting(true);
+    setErrorMessage('');
 
-    // Simulate order validation and preparation flow (Task 5: No API call, prepare UI flow)
-    setTimeout(() => {
-      const mockOrderCode = `FS-${Date.now().toString().slice(-6)}`;
+    // Generate POS order code with timestamp
+    const generatedOrderCode = `POS-${Date.now().toString().slice(-8)}`;
+
+    const payload = {
+      orderCode: generatedOrderCode,
+      customerId: selectedCustomer ? selectedCustomer.id : undefined,
+      source: 'POS',
+      paidAmount: paymentMode === 'PAY_NOW' ? totalAmount : 0,
+      note:
+        paymentMode === 'DEBT'
+          ? `Ghi nhận công nợ (Khách: ${selectedCustomer?.customerName || ''})`
+          : 'Bán hàng nhanh tại quầy (POS)',
+      items: cartItems.map((item) => ({
+        productId: item.productId,
+        unitId: item.baseUnitId || 1,
+        quantity: item.quantity,
+      })),
+    };
+
+    try {
+      const response = await apiClient.post<SalesOrderResponse>('/api/sales-orders', payload);
+
       setOrderFeedback({
-        code: mockOrderCode,
-        totalAmount,
+        code: response.orderCode || generatedOrderCode,
+        totalAmount: Number(response.totalAmount || totalAmount),
+        paidAmount: Number(response.paidAmount ?? (paymentMode === 'PAY_NOW' ? totalAmount : 0)),
+        debtAmount: Number(response.debtAmount ?? (paymentMode === 'DEBT' ? totalAmount : 0)),
         itemCount: totalQuantity,
         customerName: selectedCustomer ? selectedCustomer.customerName : 'Khách mua lẻ',
         paymentMode,
       });
 
-      // Prepare success state and reset cart
+      // Clear cart on successful order creation
       setCartItems([]);
-      setIsSubmitting(false);
       setShowOrderSuccessModal(true);
-    }, 600);
-  };
+
+      // Refresh product list stock
+      void fetchProducts(debouncedSearch, selectedCategoryId);
+    } catch (err) {
+      // Retain cart on error so staff can adjust quantity and retry
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : 'Không thể tạo đơn hàng. Vui lòng kiểm tra lại giỏ hàng hoặc kết nối.'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [
+    cartItems,
+    isSubmitting,
+    validationError,
+    selectedCustomer,
+    paymentMode,
+    totalAmount,
+    totalQuantity,
+    debouncedSearch,
+    selectedCategoryId,
+    fetchProducts,
+  ]);
+
+  // ─── Keyboard Shortcuts Global Listener ──────────────────────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isInputFocused =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement;
+
+      // F1: Open Keyboard Shortcuts modal
+      if (e.key === 'F1') {
+        e.preventDefault();
+        setShowShortcutsModal(true);
+        return;
+      }
+
+      // F2 or '/' (when not typing): Focus Product Search Bar
+      if (e.key === 'F2' || (!isInputFocused && e.key === '/')) {
+        e.preventDefault();
+        setActiveTab('products');
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+        return;
+      }
+
+      // F8: Clear cart modal
+      if (e.key === 'F8') {
+        e.preventDefault();
+        if (cartItems.length > 0) {
+          setShowClearCartModal(true);
+        }
+        return;
+      }
+
+      // F9 or Ctrl+Enter: Trigger Checkout / Create Order
+      if (e.key === 'F9' || (e.ctrlKey && e.key === 'Enter')) {
+        e.preventDefault();
+        if (cartItems.length > 0 && !isSubmitting && !validationError) {
+          void handleCreateOrderClick();
+        }
+        return;
+      }
+
+      // Escape: Close active modals / blur active input
+      if (e.key === 'Escape') {
+        if (showShortcutsModal) setShowShortcutsModal(false);
+        if (showClearCartModal) setShowClearCartModal(false);
+        if (showOrderSuccessModal) setShowOrderSuccessModal(false);
+        if (errorMessage) setErrorMessage('');
+        if (isInputFocused) (target as HTMLElement).blur();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    cartItems,
+    isSubmitting,
+    validationError,
+    showShortcutsModal,
+    showClearCartModal,
+    showOrderSuccessModal,
+    errorMessage,
+    handleCreateOrderClick,
+  ]);
 
   return (
     <div className="min-h-screen bg-[#ededed] text-slate-900 flex flex-col font-sans antialiased">
@@ -277,10 +405,25 @@ export function FastSalesView() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onClearCartClick={() => setShowClearCartModal(true)}
+        onOpenShortcutsClick={() => setShowShortcutsModal(true)}
       />
 
       {/* Main Responsive Body Container */}
       <div className="flex-1 mx-auto w-full max-w-7xl p-3 sm:p-5 lg:p-6">
+        {/* API Error Banner if any */}
+        {errorMessage && (
+          <div className="mb-4 p-4 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-between gap-3 text-sm text-red-800 animate-in fade-in">
+            <span className="font-semibold">⚠️ {errorMessage}</span>
+            <button
+              type="button"
+              onClick={() => setErrorMessage('')}
+              className="text-xs font-bold text-red-700 hover:underline cursor-pointer"
+            >
+              Đóng
+            </button>
+          </div>
+        )}
+
         {/* Responsive Grid: Desktop (2 Columns) / Mobile (Tabs/Stacked) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           {/* Left Column: Product Catalog (Visible on Desktop OR when activeTab is 'products' on Mobile) */}
@@ -290,6 +433,7 @@ export function FastSalesView() {
             }`}
           >
             <FastSalesProductCatalog
+              ref={searchInputRef}
               products={products}
               categories={categories}
               searchTerm={searchTerm}
@@ -337,7 +481,7 @@ export function FastSalesView() {
               paymentMode={paymentMode}
               isSubmitting={isSubmitting}
               validationError={validationError}
-              onCreateOrderClick={handleCreateOrderClick}
+              onCreateOrderClick={() => void handleCreateOrderClick()}
             />
           </section>
         </div>
@@ -373,7 +517,7 @@ export function FastSalesView() {
       {/* Confirm Clear Cart Modal */}
       <FastSalesConfirmModal
         isOpen={showClearCartModal}
-        title="Xóa toàn bộ giỏ hàng?"
+        title="Xóa toàn bộ giỏ hàng? (F8)"
         message="Hành động này sẽ xóa tất cả sản phẩm đang có trong giỏ hàng hiện tại. Bạn có chắc chắn muốn xóa không?"
         confirmLabel="Xóa tất cả"
         cancelLabel="Giữ lại"
@@ -382,20 +526,20 @@ export function FastSalesView() {
         onCancel={() => setShowClearCartModal(false)}
       />
 
-      {/* Task 5 Order Checkout Success Feedback Modal */}
+      {/* Order API Success Feedback Modal */}
       <FastSalesConfirmModal
         isOpen={showOrderSuccessModal}
-        title="Đơn hàng đã được tiếp nhận"
+        title="Tạo đơn hàng thành công!"
         message={
           orderFeedback
-            ? `Mã tạm: ${orderFeedback.code} • ${orderFeedback.itemCount} sản phẩm • Tổng tiền: ${orderFeedback.totalAmount.toLocaleString(
+            ? `Mã đơn hàng: ${orderFeedback.code} • Số lượng: ${orderFeedback.itemCount} món • Tổng tiền: ${orderFeedback.totalAmount.toLocaleString(
                 'vi-VN'
               )} ₫ • Khách: ${orderFeedback.customerName} (${
-                orderFeedback.paymentMode === 'PAY_NOW' ? 'Thanh toán ngay' : 'Ghi nhận công nợ'
-              }). Giỏ hàng đã được làm mới để sẵn sàng phục vụ khách tiếp theo.`
-            : 'Đơn hàng đã được chuẩn bị thành công!'
+                orderFeedback.paymentMode === 'PAY_NOW' ? 'Đã thanh toán đủ' : 'Ghi nợ đơn hàng'
+              }). Đơn hàng đã được lưu vào hệ thống.`
+            : 'Đơn hàng đã được tạo thành công!'
         }
-        confirmLabel="Bán đơn mới"
+        confirmLabel="Bán đơn tiếp theo"
         cancelLabel="Đóng"
         onConfirm={() => {
           setShowOrderSuccessModal(false);
@@ -405,6 +549,12 @@ export function FastSalesView() {
           setShowOrderSuccessModal(false);
           setOrderFeedback(null);
         }}
+      />
+
+      {/* Keyboard Shortcuts Help Modal */}
+      <FastSalesShortcutsModal
+        isOpen={showShortcutsModal}
+        onClose={() => setShowShortcutsModal(false)}
       />
     </div>
   );

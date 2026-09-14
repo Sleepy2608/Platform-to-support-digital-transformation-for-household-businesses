@@ -4,6 +4,7 @@ export interface FastSalesProduct {
   productName: string;
   categoryId?: number;
   categoryName?: string;
+  baseUnitId?: number;
   unitName: string;
   salePrice: number;
   quantityOnHand: number;
@@ -15,6 +16,7 @@ export interface FastSalesCartItem {
   productId: number;
   productCode: string;
   productName: string;
+  baseUnitId?: number;
   unitName: string;
   unitPrice: number;
   quantity: number;

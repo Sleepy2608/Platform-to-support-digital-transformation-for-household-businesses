@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShoppingCart, Zap, RefreshCw, Layers } from 'lucide-react';
+import { ShoppingCart, Zap, RefreshCw, Layers, Keyboard } from 'lucide-react';
 
 interface FastSalesHeaderProps {
   cartItemCount: number;
@@ -9,6 +9,7 @@ interface FastSalesHeaderProps {
   activeTab: 'products' | 'cart';
   setActiveTab: (tab: 'products' | 'cart') => void;
   onClearCartClick: () => void;
+  onOpenShortcutsClick: () => void;
 }
 
 export function FastSalesHeader({
@@ -17,6 +18,7 @@ export function FastSalesHeader({
   activeTab,
   setActiveTab,
   onClearCartClick,
+  onOpenShortcutsClick,
 }: FastSalesHeaderProps) {
   return (
     <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-2xs">
@@ -76,13 +78,27 @@ export function FastSalesHeader({
             </button>
           </div>
 
+          {/* Keyboard Shortcuts Trigger Button */}
+          <button
+            type="button"
+            onClick={onOpenShortcutsClick}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer border border-slate-200/80"
+            title="Xem phím tắt bán hàng (F1)"
+          >
+            <Keyboard className="w-4 h-4 text-slate-600" />
+            <span className="hidden sm:inline">Phím tắt</span>
+            <kbd className="hidden md:inline-block px-1.5 py-0.2 bg-white rounded border border-slate-300 text-[10px] font-mono text-slate-600">
+              F1
+            </kbd>
+          </button>
+
           {/* Reset/Clear Cart Header Action */}
           {cartItemCount > 0 && (
             <button
               type="button"
               onClick={onClearCartClick}
               className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-slate-200/80 cursor-pointer"
-              title="Làm mới / Xóa giỏ hàng"
+              title="Làm mới / Xóa giỏ hàng (F8)"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Làm mới</span>
