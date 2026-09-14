@@ -13,6 +13,7 @@ import com.hbdt.entity.User;
 import com.hbdt.entity.enums.ReportStatus;
 import com.hbdt.entity.enums.RoleType;
 import com.hbdt.entity.enums.TemplateType;
+import com.hbdt.entity.enums.VersionStatus;
 import com.hbdt.owner.dto.ReportRejectRequest;
 import com.hbdt.owner.dto.ReportReviewResponse;
 import com.hbdt.owner.dto.ReportUpdateRequest;
@@ -146,7 +147,7 @@ class ReportReviewServiceTest {
                 .versionNumber(1)
                 .templateSchema(sampleReportData())
                 .effectiveFrom(LocalDate.of(2025, 1, 1))
-                .status("ACTIVE")
+                .status(VersionStatus.ACTIVE)
                 .build();
         when(versionRepository.findById(1L)).thenReturn(Optional.of(version));
 

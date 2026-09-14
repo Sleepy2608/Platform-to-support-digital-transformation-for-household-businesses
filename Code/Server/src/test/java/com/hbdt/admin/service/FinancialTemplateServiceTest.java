@@ -11,6 +11,7 @@ import com.hbdt.entity.ReportTemplate;
 import com.hbdt.entity.ReportTemplateVersion;
 import com.hbdt.entity.enums.TemplateStatus;
 import com.hbdt.entity.enums.TemplateType;
+import com.hbdt.entity.enums.VersionStatus;
 import com.hbdt.repository.ReportTemplateRepository;
 import com.hbdt.repository.ReportTemplateVersionRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -106,7 +107,7 @@ class FinancialTemplateServiceTest {
                 .versionNumber(versionNumber)
                 .templateSchema(schema)
                 .effectiveFrom(LocalDate.now())
-                .status("ACTIVE")
+                .status(VersionStatus.ACTIVE)
                 .createdBy(ADMIN_USER_ID)
                 .updatedBy(ADMIN_USER_ID)
                 .createdAt(LocalDateTime.now())
@@ -237,9 +238,9 @@ class FinancialTemplateServiceTest {
                     TemplateType.REVENUE_LEDGER, TemplateStatus.ACTIVE, 102L);
 
             ReportTemplateVersion v1 = buildVersion(100L, 1L, 1, sampleConfig("rev"));
-            v1.setStatus("SUPERSEDED");
+            v1.setStatus(VersionStatus.SUPERSEDED);
             ReportTemplateVersion v2 = buildVersion(101L, 1L, 2, sampleConfig("rev", "exp"));
-            v2.setStatus("SUPERSEDED");
+            v2.setStatus(VersionStatus.SUPERSEDED);
             ReportTemplateVersion v3 = buildVersion(102L, 1L, 3, sampleConfig("rev", "exp", "net"));
 
             when(templateRepository.findById(1L)).thenReturn(Optional.of(template));
@@ -313,7 +314,7 @@ class FinancialTemplateServiceTest {
 
             List<ReportTemplateVersion> savedVersions = versionCaptor.getAllValues();
             // First save: old version marked SUPERSEDED
-            assertThat(savedVersions.get(0).getStatus()).isEqualTo("SUPERSEDED");
+            assertThat(savedVersions.get(0).getStatus()).isEqualTo(VersionStatus.SUPERSEDED);
             assertThat(savedVersions.get(0).getEffectiveTo()).isNotNull();
             // Second save: new version with incremented number
             assertThat(savedVersions.get(1).getVersionNumber()).isEqualTo(2);
@@ -517,6 +518,214 @@ class FinancialTemplateServiceTest {
             assertThat(reportData.get("data").get("totalExpense").decimalValue())
                     .isEqualByComparingTo("8000000");
             assertThat(reportData.get("data").get("netIncome").isNull()).isTrue();
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // TC 11: Scheduled activation
+    // ═══════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("TC 11: Scheduled Activation")
+    class ScheduledActivationTests {
+
+        @Test
+        @DisplayName("Should activate DRAFT version whose effective date has arrived")
+        void activateScheduledVersions_activatesDraftVersions() {
+            ReportTemplate template = buildTemplate(1L, "RL-001",
+                    TemplateType.REVENUE_LEDGER, TemplateStatus.ACTIVE, 100L);
+            ReportTemplateVersion currentActive = buildVersion(100L, 1L, 1, sampleConfig("a"));
+            currentActive.setStatus(VersionStatus.ACTIVE);
+
+            ReportTemplateVersion draftVersion = buildVersion(101L, 1L, 2, sampleConfig("a", "b"));
+            draftVersion.setStatus(VersionStatus.DRAFT);
+            draftVersion.setEffectiveFrom(LocalDate.now());
+
+            when(versionRepository.findByStatusAndEffectiveFromLessThanEqual(
+                    eq(VersionStatus.DRAFT), any(LocalDate.class)))
+                    .thenReturn(List.of(draftVersion));
+            when(templateRepository.findById(1L)).thenReturn(Optional.of(template));
+            when(versionRepository.findByReportTemplateIdOrderByVersionNumberDesc(1L))
+                    .thenReturn(List.of(draftVersion, currentActive));
+
+            int count = templateService.activateScheduledVersions();
+
+            assertThat(count).isEqualTo(1);
+            assertThat(draftVersion.getStatus()).isEqualTo(VersionStatus.ACTIVE);
+            assertThat(currentActive.getStatus()).isEqualTo(VersionStatus.SUPERSEDED);
+            assertThat(template.getCurrentVersionId()).isEqualTo(101L);
+
+            verify(versionRepository).save(draftVersion);
+            verify(versionRepository).save(currentActive);
+            verify(templateRepository).save(template);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // TC 12 & 13: Validations
+    // ═══════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("TC 12 & 13: Versioning Validations")
+    class VersioningValidationTests {
+
+        @Test
+        @DisplayName("TC 12: Should reject update if next version number already exists")
+        void updateTemplate_rejectsDuplicateVersionNumber() {
+            ReportTemplate template = buildTemplate(1L, "RL-001",
+                    TemplateType.REVENUE_LEDGER, TemplateStatus.ACTIVE, 100L);
+            ReportTemplateVersion v1 = buildVersion(100L, 1L, 1, sampleConfig("a"));
+
+            UpdateTemplateRequest request = UpdateTemplateRequest.builder()
+                    .name("Updated Name")
+                    .configurationJson(sampleConfig("a", "b"))
+                    .effectiveFrom(LocalDate.now().plusDays(10))
+                    .build();
+
+            when(templateRepository.findById(1L)).thenReturn(Optional.of(template));
+            when(versionRepository.findTopByReportTemplateIdOrderByVersionNumberDesc(1L))
+                    .thenReturn(Optional.of(v1));
+            when(versionRepository.existsByReportTemplateIdAndEffectiveFrom(eq(1L), any()))
+                    .thenReturn(false);
+            when(versionRepository.existsByReportTemplateIdAndVersionNumber(1L, 2))
+                    .thenReturn(true);
+
+            assertThatThrownBy(() -> templateService.update(1L, request, ADMIN_USER_ID))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("Phiên bản số 2 đã tồn tại");
+        }
+
+        @Test
+        @DisplayName("TC 13: Should reject update if effective date already exists for template")
+        void updateTemplate_rejectsDuplicateEffectiveDate() {
+            ReportTemplate template = buildTemplate(1L, "RL-001",
+                    TemplateType.REVENUE_LEDGER, TemplateStatus.ACTIVE, 100L);
+            ReportTemplateVersion v1 = buildVersion(100L, 1L, 1, sampleConfig("a"));
+
+            LocalDate targetDate = LocalDate.now().plusDays(5);
+            UpdateTemplateRequest request = UpdateTemplateRequest.builder()
+                    .name("Updated Name")
+                    .configurationJson(sampleConfig("a", "b"))
+                    .effectiveFrom(targetDate)
+                    .build();
+
+            when(templateRepository.findById(1L)).thenReturn(Optional.of(template));
+            when(versionRepository.findTopByReportTemplateIdOrderByVersionNumberDesc(1L))
+                    .thenReturn(Optional.of(v1));
+            when(versionRepository.existsByReportTemplateIdAndEffectiveFrom(1L, targetDate))
+                    .thenReturn(true);
+
+            assertThatThrownBy(() -> templateService.update(1L, request, ADMIN_USER_ID))
+                    .isInstanceOf(BadRequestException.class)
+                    .hasMessageContaining("ngày hiệu lực");
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // TC 14: Future Effective Date (DRAFT status)
+    // ═══════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("TC 14: Future Effective Date Versioning")
+    class FutureEffectiveDateTests {
+
+        @Test
+        @DisplayName("Should create version as DRAFT and preserve active version when effectiveFrom is in future")
+        void updateTemplate_createsDraftVersionWhenEffectiveInFuture() {
+            ReportTemplate template = buildTemplate(1L, "RL-001",
+                    TemplateType.REVENUE_LEDGER, TemplateStatus.ACTIVE, 100L);
+            ReportTemplateVersion v1 = buildVersion(100L, 1L, 1, sampleConfig("a"));
+            v1.setStatus(VersionStatus.ACTIVE);
+
+            LocalDate futureDate = LocalDate.now().plusDays(7);
+            JsonNode newConfig = sampleConfig("a", "b");
+            UpdateTemplateRequest request = UpdateTemplateRequest.builder()
+                    .name(template.getTemplateName())
+                    .configurationJson(newConfig)
+                    .effectiveFrom(futureDate)
+                    .changeSummary("Reg 2026 update")
+                    .build();
+
+            when(templateRepository.findById(1L)).thenReturn(Optional.of(template));
+            when(versionRepository.findTopByReportTemplateIdOrderByVersionNumberDesc(1L))
+                    .thenReturn(Optional.of(v1));
+            when(versionRepository.existsByReportTemplateIdAndEffectiveFrom(1L, futureDate))
+                    .thenReturn(false);
+            when(versionRepository.existsByReportTemplateIdAndVersionNumber(1L, 2))
+                    .thenReturn(false);
+            when(templateRepository.save(any(ReportTemplate.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            ReportTemplateVersion draftV2 = buildVersion(101L, 1L, 2, newConfig);
+            draftV2.setStatus(VersionStatus.DRAFT);
+            draftV2.setEffectiveFrom(futureDate);
+            draftV2.setChangeSummary("Reg 2026 update");
+
+            when(versionRepository.findByReportTemplateIdOrderByVersionNumberDesc(1L))
+                    .thenReturn(List.of(draftV2, v1));
+
+            TemplateResponse response = templateService.update(1L, request, ADMIN_USER_ID);
+
+            ArgumentCaptor<ReportTemplateVersion> captor = ArgumentCaptor.forClass(ReportTemplateVersion.class);
+            verify(versionRepository, times(1)).save(captor.capture());
+
+            ReportTemplateVersion saved = captor.getValue();
+            assertThat(saved.getStatus()).isEqualTo(VersionStatus.DRAFT);
+            assertThat(saved.getEffectiveFrom()).isEqualTo(futureDate);
+            assertThat(saved.getChangeSummary()).isEqualTo("Reg 2026 update");
+
+            // Current version remains v1 (active)
+            assertThat(response.getCurrentVersionNumber()).isEqualTo(1);
+            assertThat(template.getCurrentVersionId()).isEqualTo(100L);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // TC 15: Archived Versions Transition
+    // ═══════════════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("TC 15: Archived Versions Transition")
+    class ArchivedVersionsTransitionTests {
+
+        @Test
+        @DisplayName("Should transition existing SUPERSEDED versions to ARCHIVED when new ACTIVE version is created")
+        void updateTemplate_transitionsSupersededToArchived() {
+            ReportTemplate template = buildTemplate(1L, "RL-001",
+                    TemplateType.REVENUE_LEDGER, TemplateStatus.ACTIVE, 101L);
+
+            ReportTemplateVersion v1 = buildVersion(100L, 1L, 1, sampleConfig("a"));
+            v1.setStatus(VersionStatus.SUPERSEDED);
+
+            ReportTemplateVersion v2 = buildVersion(101L, 1L, 2, sampleConfig("a", "b"));
+            v2.setStatus(VersionStatus.ACTIVE);
+
+            JsonNode newConfig = sampleConfig("a", "b", "c");
+            UpdateTemplateRequest request = UpdateTemplateRequest.builder()
+                    .name(template.getTemplateName())
+                    .configurationJson(newConfig)
+                    .build();
+
+            when(templateRepository.findById(1L)).thenReturn(Optional.of(template));
+            when(versionRepository.findTopByReportTemplateIdOrderByVersionNumberDesc(1L))
+                    .thenReturn(Optional.of(v2));
+            when(versionRepository.findByReportTemplateIdAndStatus(1L, VersionStatus.SUPERSEDED))
+                    .thenReturn(List.of(v1));
+            when(versionRepository.save(any(ReportTemplateVersion.class))).thenAnswer(inv -> {
+                ReportTemplateVersion v = inv.getArgument(0);
+                if (v.getId() == null) v.setId(102L);
+                return v;
+            });
+            when(templateRepository.save(any(ReportTemplate.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            templateService.update(1L, request, ADMIN_USER_ID);
+
+            // v1 (SUPERSEDED) should now be ARCHIVED
+            assertThat(v1.getStatus()).isEqualTo(VersionStatus.ARCHIVED);
+            // v2 (ACTIVE) should now be SUPERSEDED
+            assertThat(v2.getStatus()).isEqualTo(VersionStatus.SUPERSEDED);
+
+            verify(versionRepository).save(v1);
+            verify(versionRepository).save(v2);
         }
     }
 }
