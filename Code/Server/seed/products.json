@@ -1,6 +1,6 @@
 {
   "table" : "products",
-  "version" : 12,
+  "version" : 13,
   "rows" : [ {
     "id" : 5,
     "base_unit_id" : 1,

@@ -1,6 +1,7 @@
 package com.hbdt.repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -38,4 +39,13 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
     List<Subscription> findAllByStatusAndEndDateBefore(SubscriptionStatus status, LocalDate today);
 
     boolean existsByBusinessIdAndStatusIn(Long businessId, Collection<SubscriptionStatus> statuses);
+
+    /** Đếm số lượng subscription được tạo trong khoảng thời gian theo danh sách trạng thái hợp lệ. */
+    long countByCreatedAtBetweenAndStatusIn(LocalDateTime startDate, LocalDateTime endDate, Collection<SubscriptionStatus> statuses);
+
+    /** Đếm số lượng subscription được tạo từ mốc thời gian (startDateTime trở đi) theo danh sách trạng thái hợp lệ. */
+    long countByCreatedAtGreaterThanEqualAndStatusIn(LocalDateTime startDateTime, Collection<SubscriptionStatus> statuses);
+
+    /** Đếm tất cả subscription theo danh sách trạng thái hợp lệ. */
+    long countByStatusIn(Collection<SubscriptionStatus> statuses);
 }

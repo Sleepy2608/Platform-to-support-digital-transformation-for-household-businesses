@@ -1,6 +1,6 @@
 {
   "table" : "notifications",
-  "version" : 4,
+  "version" : 5,
   "rows" : [ {
     "id" : 1,
     "ai_request_id" : null,

@@ -4,6 +4,7 @@
 - **[1]** Thông tư số 88/2021/TT-BTC của Bộ Tài chính: quy định chế độ kế toán cho hộ kinh doanh.
 - **[2]** Quyết định số 3389/QĐ-BTC năm 2025: tiêu chí phân loại hộ kinh doanh theo nhóm và nhóm ngành nghề tại thời điểm phát sinh doanh thu.
 - **[3]** Luật Kế toán 88/2015/QH13 và Nghị định 174/2016/NĐ-CP: nguyên tắc lưu trữ, sửa chữa và xác định nghĩa vụ thuế.
+- **[4]** File PDF của Thông tư [88/2021/TT-BTC](88-btc.pdf).
 
 - **Cơ quan ban hành**: Bộ Tài chính [1].
 - **Ngày ban hành**: 11/10/2021 | **Hiệu lực thi hành**: Từ ngày 01/01/2022 (Thay thế QĐ 169/2000/QĐ-BTC và QĐ 131/2002/QĐ-BTC) [1].

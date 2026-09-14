@@ -7,13 +7,12 @@ import com.hbdt.customer.dto.CustomerPurchaseHistoryPageResponse;
 import com.hbdt.customer.dto.CustomerPurchaseHistoryResponse;
 import com.hbdt.customer.dto.CustomerPurchaseSummaryResponse;
 import com.hbdt.customer.dto.*;
+import com.hbdt.debt.service.DebtBookkeepingService;
 import com.hbdt.entity.Customer;
-import com.hbdt.entity.DebtTransaction;
 import com.hbdt.entity.SalesOrder;
 import com.hbdt.entity.enums.PaymentStatus;
 import com.hbdt.product.service.BusinessContextService;
 import com.hbdt.repository.CustomerRepository;
-import com.hbdt.repository.DebtTransactionRepository;
 import com.hbdt.repository.SalesOrderRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,16 +31,16 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
     private final BusinessContextService businessContextService;
     private final SalesOrderRepository salesOrderRepository;
-    private final DebtTransactionRepository debtTransactionRepository;
+    private final DebtBookkeepingService debtBookkeepingService;
 
     public CustomerService(CustomerRepository customerRepository, 
                            BusinessContextService businessContextService,
                            SalesOrderRepository salesOrderRepository,
-                           DebtTransactionRepository debtTransactionRepository) {
+                           DebtBookkeepingService debtBookkeepingService) {
         this.customerRepository = customerRepository;
         this.businessContextService = businessContextService;
         this.salesOrderRepository = salesOrderRepository;
-        this.debtTransactionRepository = debtTransactionRepository;
+        this.debtBookkeepingService = debtBookkeepingService;
     }
 
     // ===== CRUD APIs (HBDT-47) =====
@@ -260,10 +259,8 @@ public class CustomerService {
             totalPurchased = BigDecimal.ZERO;
         }
         
-        BigDecimal totalDebt = debtTransactionRepository.findFirstByBusinessIdAndCustomerIdOrderByIdDesc(businessId, customerId)
-                .map(DebtTransaction::getBalanceAfter)
-                .orElse(BigDecimal.ZERO)
-                .setScale(0, RoundingMode.HALF_UP);
+        // Dùng calculateCurrentBalance (SSOT) — an toàn với concurrent writes
+        BigDecimal totalDebt = debtBookkeepingService.calculateCustomerDebt(customerId, businessId);
                 
         return new CustomerPurchaseSummaryResponse(totalPurchased.setScale(0, RoundingMode.HALF_UP), totalDebt);
     }
@@ -316,7 +313,7 @@ public class CustomerService {
     }
 
     private BigDecimal resolveDebtBalance(Customer customer) {
-        BigDecimal ledgerBalance = debtTransactionRepository.calculateCurrentBalance(
+        BigDecimal ledgerBalance = debtBookkeepingService.calculateCustomerDebt(
                 customer.getId(), customer.getBusinessId());
         if (ledgerBalance != null) {
             return ledgerBalance.setScale(0, RoundingMode.HALF_UP);

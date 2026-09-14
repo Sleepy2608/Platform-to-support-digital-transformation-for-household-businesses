@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Lock, LogOut, Search, Shield, Store, Unlock, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { clearAuth, getAccessToken } from '../lib/apiClient';
@@ -123,13 +124,22 @@ export default function ManagerDashboard() {
               </p>
             </div>
           </div>
-          <a
-            id="manager-invoice-history-link"
-            href="/manager/invoices"
-            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-xs transition-colors hover:bg-slate-800"
-          >
-            Xem lịch sử hóa đơn
-          </a>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              id="manager-analytics-link"
+              href="/manager/analytics"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 shadow-xs transition-colors hover:bg-slate-50"
+            >
+              Thống kê nền tảng
+            </Link>
+            <Link
+              id="manager-invoice-history-link"
+              href="/manager/invoices"
+              className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-xs transition-colors hover:bg-slate-800"
+            >
+              Xem lịch sử hóa đơn
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
