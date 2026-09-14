@@ -5,9 +5,9 @@
 | **Tên tài liệu** | Hướng dẫn Cài đặt Hệ thống (Installation Guide) – Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Mã issue/ticket** | HBDT-95 |  
-| **Phiên bản** | 1.1 |
-| **Cập nhật lần cuối** | 10/09/2026 |
-| **Trạng thái** | Đồng bộ với cấu hình hiện tại của repo và luồng dev local trên Windows |
+| **Phiên bản** | 1.2 |
+| **Cập nhật lần cuối** | 15/09/2026 |
+| **Trạng thái** | Đồng bộ với cấu hình hiện tại của repo (bao gồm phân hệ AI Service dùng B.ai) và luồng dev local trên Windows |
 
 ---
 
@@ -82,6 +82,13 @@ MAIL_PASSWORD=your-app-password
 
 SERVER_PORT=8080
 SPRING_PROFILES_ACTIVE=dev
+
+# Backend -> AI service (bắt buộc nếu muốn dùng tính năng AI tạo đơn nháp)
+AI_SERVICE_URL=http://127.0.0.1:8000
+AI_SERVICE_API_SECRET=<chuoi_bi_mat_tu_sinh>
+AI_SERVICE_TIMEOUT_SECONDS=35
+AI_SERVICE_AUTO_START=true
+AI_SERVICE_WORK_DIR=../AI
 ```
 
 > [!TIP]
@@ -89,7 +96,8 @@ SPRING_PROFILES_ACTIVE=dev
 > 1. `spring.datasource.url` trong [Code/Server/src/main/resources/application-dev.properties](Code/Server/src/main/resources/application-dev.properties) đã có `createDatabaseIfNotExist=true`, nên bạn không cần tạo database bằng tay nếu tài khoản MySQL có quyền tạo schema.
 > 2. `spring.jpa.hibernate.ddl-auto=update` cho phép Hibernate tự đồng bộ schema với entity khi chạy local.
 > 3. `app.otp.dev-mode=true` làm OTP xuất ra console log thay vì gửi email thật, rất phù hợp với môi trường phát triển.
-> 4. `Code/Server/.env.example` chỉ là mẫu tối thiểu; nếu có trường muốn override trong dev thì nên bổ sung thêm như `JWT_*`, `MAIL_*`, `OTP_*` để phù hợp với thực tế hiện tại.
+> 4. `Code/Server/.env.example` chỉ là mẫu tối thiểu; nếu có trường muốn override trong dev thì nên bổ sung thêm như `JWT_*`, `MAIL_*`, `OTP_*`, `AI_SERVICE_*` để phù hợp với thực tế hiện tại.
+> 5. `AI_SERVICE_API_SECRET` phải **trùng khớp** với giá trị cùng tên trong `Code/AI/.env`. Chuỗi bí mật này xác thực chiều gọi backend → AI service (header `X-API-Secret`). Khóa `BAI_API_KEY` chỉ đặt ở `Code/AI/.env`, không đặt ở backend.
 
 ### 2.3 Cấu hình IDE IntelliJ IDEA (Khuyến nghị cho Backend)
 1. **Mở dự án:** Chọn menu `File` → `Open` → Chọn thư mục `Code/Server` (hoặc mở root repository).
@@ -133,8 +141,28 @@ HBDT trang bị cơ chế **Seek Data** để các thành viên trao đổi dữ
   - Đăng nhập với quyền `ADMIN` tại `http://localhost:3000/admin/login`.
   - Nhập **Database Key** do Trưởng nhóm cung cấp để mở khóa tính năng Snapshot / Restore dữ liệu mẫu.
 
-### 2.6 Khởi chạy Phân hệ AI Service (`Code/AI` - Tùy chọn)
-Phân hệ AI hỗ trợ bóc tách ngôn ngữ tự nhiên từ tin nhắn thoại/văn bản tiếng Việt để tự động lập đơn hàng. Hướng dẫn chạy thực tế theo repo hiện tại:
+### 2.6 Cấu hình và khởi chạy Phân hệ AI Service (`Code/AI`)
+
+Phân hệ AI bóc tách câu đặt hàng tiếng Việt (dạng văn bản) để backend tạo **đơn nháp AI**; sau đó người dùng kiểm tra rồi xác nhận. Service gọi **B.ai** làm provider trích xuất, không tự ghi database và không tự tạo đơn hàng.
+
+**Bước 1 — Tạo file `Code/AI/.env`** (sao chép từ `Code/AI/.env.example`):
+
+```env
+# Lấy API key tại https://chat.b.ai/key (chỉ lưu phía server)
+BAI_API_KEY=<bai_api_key>
+# Model ID lấy từ GET https://api.b.ai/v1/models
+BAI_MODEL=qwen3.8-flash
+BAI_BASE_URL=https://api.b.ai/v1
+BAI_TIMEOUT_SECONDS=25
+# Phải trùng với AI_SERVICE_API_SECRET trong Code/Server/.env
+AI_SERVICE_API_SECRET=<chuoi_bi_mat_tu_sinh>
+```
+
+> [!IMPORTANT]
+> Nếu thiếu `BAI_API_KEY` / `BAI_MODEL`, service vẫn khởi động nhưng `/api/v1/ai/ready` trả `503 BAI_NOT_CONFIGURED` và tính năng AI sẽ báo lỗi cấu hình. **Không** đặt `BAI_API_KEY` trong `Code/Server/.env`.
+
+**Bước 2 — Khởi chạy service:**
+
 ```bat
 cd Code/AI
 python -m venv venv
@@ -142,8 +170,21 @@ python -m venv venv
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
-- Endpoint AI: `http://localhost:8000`
-- Trong môi trường dev, AI service nên chạy độc lập bên cạnh backend và frontend, không cần phụ thuộc vào Docker Compose nếu Docker config hiện tại chưa đồng bộ với cấu trúc thư mục hiện nay.
+
+**Endpoint thực tế của service (base `http://127.0.0.1:8000`):**
+
+| Method | Path | Ghi chú |
+|---|---|---|
+| GET | `/health` | Health check, không cần secret |
+| GET | `/api/v1/ai/ready` | Kiểm tra cấu hình B.ai; không tiêu tốn credit |
+| POST | `/api/v1/ai/parse-order` | Body `{ "text": "..." }`, yêu cầu header `X-API-Secret` |
+| POST | `/api/v1/ai/draft-bookkeeping` | Sinh nhận xét báo cáo từ số liệu backend gửi sang |
+
+> [!NOTE]
+> - Service **không** có route gốc `/`. Muốn kiểm tra service đang sống, gọi `/health`.
+> - Service hiện **chỉ nhận văn bản**, chưa hỗ trợ nhận diện giọng nói (STT).
+> - Backend có thể tự khởi động service khi `AI_SERVICE_AUTO_START=true` và `AI_SERVICE_WORK_DIR=../AI`; khi đó không cần chạy tay bước 2.
+> - Trong môi trường dev, AI service nên chạy độc lập bên cạnh backend và frontend.
 
 ### 2.7 Khởi chạy Frontend (Next.js 16 App Router)
 Mở một cửa sổ Terminal mới:
@@ -157,7 +198,7 @@ npm run dev
 - Trang Đăng nhập Quản trị viên hệ thống: `http://localhost:3000/admin/login`
 
 > [!IMPORTANT]
-> Port frontend theo luồng dev hiện tại là `3000`, không phải port `5173` như trong một số cấu hình Docker cũ. Nếu bạn dùng Docker Compose ở repo, hãy kiểm tra lại file [docker-compose.yml](docker-compose.yml) vì cấu hình hiện tại còn đang là phiên bản legacy và có thể không đồng bộ hoàn toàn với cấu trúc hiện tại của repo.
+> Port frontend theo luồng dev hiện tại là `3000`, không phải port `5173` như cấu hình Docker Compose đang expose. File [docker-compose.yml](docker-compose.yml) ở repo **đã được cập nhật** cho cấu trúc hiện tại (service `ai-service` dùng context `./Code/AI`, backend dùng `./Code/Server`), xem mục 3.3 để biết hai điểm còn chưa khớp.
 
 ---
 
@@ -185,22 +226,48 @@ npm run dev
 | `OTP_DEV_MODE` | `false` | Bắt buộc gửi mã OTP qua Email thực |
 | `UPLOAD_DIR` | Absolute path | Đường dẫn lưu trữ ảnh đại diện, hóa đơn trên volume bền vững |
 | `APP_PUBLIC_BASE_URL` | Domain URL (vd: `https://api.hbdt.vn`) | Domain phục vụ truy xuất tài nguyên tĩnh/ảnh |
+| `AI_SERVICE_URL` | URL nội bộ (vd: `http://ai-service:8000`) | Địa chỉ AI service mà backend gọi tới |
+| `AI_SERVICE_API_SECRET` | Chuỗi ngẫu nhiên ≥ 32 ký tự | Xác thực backend → AI service; phải trùng với `Code/AI/.env` |
+| `AI_SERVICE_TIMEOUT_SECONDS` | `35` | Timeout gọi AI service |
+| `AI_SERVICE_AUTO_START` | `false` ở production | Production nên chạy AI service như một service riêng, không để backend tự spawn |
+| `BAI_API_KEY` | B.ai API key | **Chỉ khai báo cho service `ai-service`**, không truyền vào backend |
+| `BAI_MODEL`, `BAI_BASE_URL`, `BAI_TIMEOUT_SECONDS` | Model ID / base URL / timeout | Chỉ khai báo cho service `ai-service` |
 
 ### 3.3 Triển khai trọn gói bằng Docker Compose
-Repo hiện có file [docker-compose.yml](docker-compose.yml), nhưng cấu hình này đang là phiên bản legacy và chưa hoàn toàn khớp với cấu trúc hiện tại của project. Theo tình trạng hiện tại, luồng chạy đáng tin cậy nhất vẫn là:
 
-1. Chạy backend ở `Code/Server`
-2. Chạy AI service ở `Code/AI`
-3. Chạy frontend ở `Code/Client/src/frontend`
-4. Chỉ dùng Docker Compose nếu bạn đã cập nhật lại các đường dẫn và service config cho đúng repo hiện tại.
+File [docker-compose.yml](docker-compose.yml) hiện **đã được cập nhật** theo cấu trúc repo, gồm 4 service:
+- `mysql` — MySQL 8.0, volume `mysql_data`.
+- `backend` — context `./Code/Server`, nhận `AI_SERVICE_URL=http://ai-service:8000` và `AI_SERVICE_API_SECRET`.
+- `ai-service` — context `./Code/AI`, nhận `BAI_API_KEY`, `BAI_MODEL`, `BAI_BASE_URL`, `BAI_TIMEOUT_SECONDS`, `AI_SERVICE_API_SECRET`; chỉ publish ra `127.0.0.1:8000`.
+- `frontend` — context `./Code/Client/src/frontend`, expose `5173:80`.
 
-Nếu vẫn muốn dùng Docker Compose, nên kiểm tra lại trước khi chạy:
+**Bước 1 — Tạo file `.env` tại thư mục gốc** để truyền biến cho Compose:
+
+```env
+AI_SERVICE_API_SECRET=<chuoi_bi_mat_tu_sinh>
+BAI_API_KEY=<bai_api_key>
+BAI_MODEL=qwen3.8-flash
+BAI_BASE_URL=https://api.b.ai/v1
+BAI_TIMEOUT_SECONDS=25
+```
+
+**Bước 2 — Kiểm tra cấu hình rồi chạy:**
+
 ```bash
 cd Platform-to-support-digital-transformation-for-household-businesses
 docker compose config
+docker compose up -d --build
 ```
 
-Lưu ý: file hiện tại đang tham chiếu các context như `./ai-service` và `5173:80`, trong khi repo thực tế hiện đang là `Code/AI`, `Code/Client/src/frontend` và port dev frontend là `3000`.
+> [!WARNING]
+> Hai điểm **còn chưa khớp** trong `docker-compose.yml`, cần xử lý trước khi dựa hoàn toàn vào Docker:
+> 1. Volume của service `mysql` đang trỏ `./database/init.sql`, nhưng file thật nằm ở `./Code/Server/database/init.sql`.
+> 2. Service `frontend` expose `5173:80`, trong khi luồng dev local dùng port `3000`.
+
+Khi cần debug, luồng chạy độc lập vẫn đáng tin cậy nhất:
+1. Backend ở `Code/Server`
+2. AI service ở `Code/AI`
+3. Frontend ở `Code/Client/src/frontend`
 
 ### 3.4 Quy trình cập nhật phiên bản (Rolling Update)
 ```bash
@@ -232,9 +299,10 @@ Sau khi hoàn tất cài đặt, tiến hành kiểm thử nhanh để đảm b�
 | 3 | Đăng nhập Hộ kinh doanh | Mở `http://localhost:3000/login`, nhập `owner` / `owner123` | Đăng nhập thành công, chuyển tiếp vào Owner Dashboard |
 | 4 | Đăng nhập Quản trị viên | Mở `http://localhost:3000/admin/login`, nhập `admin` / `admin` | Đăng nhập thành công, vào giao diện Quản trị hệ thống |
 | 5 | Seed Master Data | Kiểm tra danh mục sản phẩm, biểu mẫu TT88 | Bảng dữ liệu có đầy đủ danh mục và danh sách tỉnh thành |
-| 6 | Kiểm tra kết nối AI Service | Gọi `curl http://localhost:8000/` | Trả về HTTP Status 200 OK |
+| 6 | Kiểm tra kết nối AI Service | Gọi `curl http://localhost:8000/health` | Trả về `{"status":"ok","service":"ai-service"}` |
 | 7 | Kiểm thử tự động Backend | Chạy lệnh `mvn test` trong `Code/Server` | Toàn bộ các bộ kiểm thử tự động (Unit Tests) đều PASS |
 | 8 | Kiểm thử Frontend | Chạy `npm run test:low-stock` trong `Code/Client/src/frontend` | Kịch bản cảnh báo tồn kho thấp vượt qua kiểm thử thành công |
+| 9 | Kiểm tra cấu hình B.ai | Gọi `curl http://localhost:8000/api/v1/ai/ready` | Trả `{"status":"configured", ...}`; nếu `503 BAI_NOT_CONFIGURED` thì thiếu `BAI_API_KEY` hoặc `BAI_MODEL` trong `Code/AI/.env` |
 
 ---
 

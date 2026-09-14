@@ -19,9 +19,16 @@ Khi người dùng xác nhận giỏ, giao diện gọi `POST /api/sales-orders`
 và ghi đơn, trừ kho, ghi công nợ theo nghiệp vụ hiện có. Nguồn đơn vẫn là POS/ONLINE;
 mã đơn bắt đầu bằng AI và ghi chú cho biết có hỗ trợ nhập bằng AI.
 
-Chưa triển khai trong lần tích hợp này: lưu nháp lâu dài, thông báo nháp thời gian thực,
-nhận giọng nói, hỏi đáp luật có dẫn nguồn, tự động lập sổ kế toán và cập nhật biểu mẫu pháp lý.
+Đã triển khai trong lần tích hợp này: lưu nháp trong `ai_order_drafts`, thông báo thời gian thực cho
+Owner/Employee cùng hộ khi có đơn nháp mới (`notifyAiDraftCreated` → lưu `notifications` + publish qua
+stream sau khi commit), và API nhận xét báo cáo `POST /api/ai/draft-bookkeeping` (chỉ Owner).
+
+Chưa triển khai: nhận giọng nói (STT), hỏi đáp luật có dẫn nguồn, background sync đơn nháp.
 Câu hỏi luật đi vào endpoint tạo đơn được phân loại OTHER; endpoint này không trả lời luật.
+
+> Lưu ý phạm vi: sổ kế toán S1/S2/S4 và việc tự động điền biểu mẫu do **backend** tính từ dữ liệu
+> nghiệp vụ (`/api/accounting/books`, `/api/accounting/template-reports`), không do AI. AI chỉ viết
+> nhận xét cho báo cáo khi Owner yêu cầu.
 
 ## Mức độ hoàn thiện / chưa hoàn thiện
 
@@ -36,9 +43,9 @@ Câu hỏi luật đi vào endpoint tạo đơn được phân loại OTHER; end
 ### Vẫn còn ở dạng prototype / chưa hoàn thiện hoàn toàn
 - AI không phải là hệ thống hỏi đáp pháp lý có nguồn; câu hỏi luật được phân loại `OTHER`.
 - Chưa có lưu nháp dài hạn ngoài `AiOrderDraft` của hệ thống hiện tại.
-- Chưa có thông báo nháp thời gian thực hoặc background sync.
+- Đã có thông báo thời gian thực khi tạo đơn nháp (`notifyAiDraftCreated` → lưu `notifications` + publish qua stream); chưa có background sync/đồng bộ định kỳ.
 - Chưa có nhận diện giọng nói / speech-to-text.
-- Chưa có workflow AI độc lập để tạo báo cáo kế toán, cập nhật biểu mẫu pháp lý hoặc điều hành báo cáo tự động.
+- Chưa có workflow AI độc lập để tạo báo cáo kế toán, cập nhật biểu mẫu pháp lý hoặc điều hành báo cáo tự động; các phần này do backend tính và Owner duyệt.
 - Chưa có kiểm thử end-to-end đầy đủ trên môi trường production data để đảm bảo độ chính xác với mọi câu văn bản.
 
 ### Kết luận về trạng thái
