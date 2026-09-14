@@ -1,6 +1,7 @@
 package com.hbdt.admin.dto.template;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.hbdt.entity.enums.VersionStatus;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -20,8 +21,9 @@ public class TemplateVersionResponse {
     private Integer versionNumber;
     private JsonNode configurationJson;
     private Long updatedBy;
-    private String status;
+    private VersionStatus status;
     private LocalDate effectiveFrom;
     private LocalDate effectiveTo;
+    private String changeSummary;
     private LocalDateTime createdAt;
 }

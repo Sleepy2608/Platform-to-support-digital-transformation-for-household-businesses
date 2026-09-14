@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.time.LocalDate;
+
 /**
  * Request payload for updating a template.
  * If the configurationJson or name differs from the current version,
@@ -34,4 +36,14 @@ public class UpdateTemplateRequest {
 
     @NotNull(message = "Cấu hình JSON không được để trống")
     private JsonNode configurationJson;
+
+    /**
+     * Effective date for the new version.
+     * If null or today/past, version is activated immediately.
+     * If in the future, version is saved as DRAFT and activated by scheduler on that date.
+     */
+    private LocalDate effectiveFrom;
+
+    @Size(max = 500, message = "Mô tả thay đổi tối đa 500 ký tự")
+    private String changeSummary;
 }

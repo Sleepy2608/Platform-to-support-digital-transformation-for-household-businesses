@@ -57,6 +57,9 @@ public class AuditLogService {
         if (uri.startsWith("/api/owner/subscription")) {
             return "SUBSCRIPTION";
         }
+        if (uri.startsWith("/api/admin/templates") || uri.startsWith("/api/owner/templates")) {
+            return "REPORT_TEMPLATE";
+        }
         if (uri.startsWith("/api/seed")) {
             return "SEED_DATA";
         }
