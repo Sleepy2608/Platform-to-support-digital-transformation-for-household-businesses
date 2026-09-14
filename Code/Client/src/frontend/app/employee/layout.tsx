@@ -151,12 +151,12 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
             exit={{ x: -280, opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 220 }}
             className={`fixed md:sticky top-0 left-0 bottom-0 z-50 w-[270px] bg-white border-r border-slate-200/80
-              flex flex-col justify-between py-6 h-screen md:translate-x-0 shadow-xs
+              flex flex-col h-screen md:translate-x-0 shadow-xs
               ${sidebarOpen ? 'flex' : 'hidden md:flex'}`}
           >
-            <div className="flex flex-col gap-6 px-5">
-              {/* Brand */}
-              <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
+            {/* Brand Header */}
+            <div className="px-5 pt-5 pb-3 border-b border-slate-100 shrink-0">
+              <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="p-2.5 bg-slate-900 text-white rounded-xl shadow-sm">
                     <Briefcase className="w-5 h-5" />
@@ -168,7 +168,10 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                 </div>
                 <NotificationBell className="shrink-0" />
               </div>
+            </div>
 
+            {/* Scrollable Navigation & Profile Body */}
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-5 py-4 flex flex-col gap-6 custom-scrollbar">
               {/* User summary */}
               <div className="p-3.5 bg-slate-50 border border-slate-200/70 rounded-2xl flex items-center gap-3 shadow-2xs">
                 {avatarUrl ? (
@@ -228,16 +231,14 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
             </div>
 
             {/* Footer */}
-            <div className="px-5">
-              <div className="pt-4 border-t border-slate-100">
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer border border-transparent hover:border-red-200/60"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Đăng xuất</span>
-                </button>
-              </div>
+            <div className="px-5 py-4 border-t border-slate-100 shrink-0 space-y-1">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer border border-transparent hover:border-red-200/60"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Đăng xuất</span>
+              </button>
             </div>
           </motion.aside>
         )}
