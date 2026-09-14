@@ -11,9 +11,10 @@ API dùng giao thức Chat Completions tại `https://api.b.ai/v1/chat/completio
 - Hiển thị bản đề xuất trên trang tạo đơn, đưa vào giỏ để chỉnh sửa và xác nhận.
 - Tự chọn khách hàng đã tồn tại; tên viết liền/không dấu vẫn được đối chiếu khi chỉ có một kết quả.
 - Nếu khách hàng chưa tồn tại, hệ thống chỉ tạo khách hàng khi người dùng bấm đưa đề xuất vào giỏ.
+- Lưu bản đề xuất như đơn nháp AI trong database với trạng thái `PENDING` và cho phép từ chối/duyệt lại.
 - Phát hiện dữ liệu thiếu, nhiều kết quả phù hợp và lỗi dịch vụ; luôn có luồng nhập thủ công.
 
-**Bản đề xuất chỉ nằm trong phản hồi/trạng thái giao diện, chưa được lưu thành đơn DRAFT trong database.**
+**Bản đề xuất được lưu thành đơn nháp AI trong database với trạng thái `PENDING`.**
 Khi người dùng xác nhận giỏ, giao diện gọi `POST /api/sales-orders` hiện có. Backend kiểm tra lại
 và ghi đơn, trừ kho, ghi công nợ theo nghiệp vụ hiện có. Nguồn đơn vẫn là POS/ONLINE;
 mã đơn bắt đầu bằng AI và ghi chú cho biết có hỗ trợ nhập bằng AI.
