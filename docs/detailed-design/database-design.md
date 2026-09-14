@@ -868,7 +868,7 @@ BEGIN
 COMMIT
 ```
 
-### 13.5. Ghi nhận thanh toán công nợ (HBDT-66)
+### 13.5. Ghi nhận thanh toán công nợ 
 
 ```text
 BEGIN
@@ -894,7 +894,7 @@ BEGIN
 COMMIT
 ```
 
-### 13.6. Hủy đơn hàng có phát sinh công nợ (HBDT-66)
+### 13.6. Hủy đơn hàng có phát sinh công nợ 
 
 ```text
 BEGIN
