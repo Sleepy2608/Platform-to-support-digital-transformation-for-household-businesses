@@ -67,7 +67,10 @@ const MANAGE_NAV_ITEMS: Array<{
       { label: 'Danh sách đơn hàng', href: '/owner/orders/history', icon: ListOrdered },
     ],
   },
-  { label: 'Doanh thu', href: '/owner/revenue', icon: TrendingUp, path: '/owner/revenue' },
+  { label: 'Doanh thu', href: '/owner/revenue', icon: TrendingUp, path: '/owner/revenue', children: [
+    { label: 'Doanh thu cửa hàng', href: '/owner/revenue', icon: ReceiptText },
+    { label: 'Mặt hàng bán chạy', href: '/owner/revenue/products', icon: TrendingUp },
+  ] },
   { label: 'Khách hàng', href: '/owner/customers', icon: UserSearch, path: '/owner/customers' },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
   { label: 'Phản hồi', href: '/owner/feedback', icon: MessageSquare, path: '/owner/feedback' },
@@ -90,8 +93,8 @@ function isChildActive(childHref: string, pathname: string, searchParams: URLSea
     return !actualTab || actualTab === 'balances';
   }
 
-  if (childPath === '/owner/products') {
-    return pathname === '/owner/products';
+  if (childPath === '/owner/products' || childPath === '/owner/revenue') {
+    return pathname === childPath;
   }
 
   if (childPath === '/owner/products/stock-import') {
@@ -165,6 +168,7 @@ function OwnerManageNav({
                     <Link
                       key={child.href}
                       href={child.href}
+                      aria-current={childActive ? 'page' : undefined}
                       onClick={() => setSidebarOpen(false)}
                       className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all duration-150 cursor-pointer ${
                         childActive

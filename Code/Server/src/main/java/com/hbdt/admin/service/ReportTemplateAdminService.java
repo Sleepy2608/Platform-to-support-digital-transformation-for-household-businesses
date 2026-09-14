@@ -6,6 +6,8 @@ import com.hbdt.common.exception.ResourceNotFoundException;
 import com.hbdt.entity.ReportTemplate;
 import com.hbdt.entity.ReportTemplateVersion;
 import com.hbdt.entity.User;
+import com.hbdt.entity.enums.TemplateStatus;
+import com.hbdt.entity.enums.TemplateType;
 import com.hbdt.repository.ReportTemplateRepository;
 import com.hbdt.repository.ReportTemplateVersionRepository;
 import com.hbdt.repository.UserRepository;
@@ -41,11 +43,17 @@ public class ReportTemplateAdminService {
             throw new BadRequestException("Mã biểu mẫu đã tồn tại");
         }
         User actor = requireUser(username);
+        TemplateType templateType;
+        try {
+            templateType = TemplateType.valueOf(request.templateType().trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new BadRequestException("Loại biểu mẫu không hợp lệ");
+        }
         ReportTemplate saved = templates.save(ReportTemplate.builder().createdBy(actor.getId())
                 .templateCode(code).templateName(request.templateName().trim())
-                .templateType(request.templateType().trim().toUpperCase(Locale.ROOT))
+                .templateType(templateType)
                 .officialFormCode(trim(request.officialFormCode())).legalBasis(trim(request.legalBasis()))
-                .description(trim(request.description())).status("ACTIVE").build());
+                .description(trim(request.description())).status(TemplateStatus.ACTIVE).build());
         return new ReportTemplateAdminResponse(saved, List.of());
     }
 
@@ -57,7 +65,7 @@ public class ReportTemplateAdminService {
         if (request.effectiveTo() != null && request.effectiveTo().isBefore(request.effectiveFrom())) {
             throw new BadRequestException("Ngày kết thúc hiệu lực không được trước ngày bắt đầu");
         }
-        String version = request.versionNumber().trim();
+        Integer version = request.versionNumber();
         if (versions.existsByReportTemplateIdAndVersionNumber(templateId, version)) {
             throw new BadRequestException("Phiên bản biểu mẫu đã tồn tại");
         }
@@ -73,10 +81,12 @@ public class ReportTemplateAdminService {
             versions.save(previous);
         }
         User actor = requireUser(username);
-        versions.save(ReportTemplateVersion.builder().reportTemplateId(templateId)
+        ReportTemplateVersion savedVersion = versions.save(ReportTemplateVersion.builder().reportTemplateId(templateId)
                 .createdBy(actor.getId()).versionNumber(version).templateSchema(request.templateSchema())
                 .effectiveFrom(request.effectiveFrom()).effectiveTo(request.effectiveTo())
                 .status("ACTIVE").build());
+        template.setCurrentVersionId(savedVersion.getId());
+        templates.save(template);
         return new ReportTemplateAdminResponse(template,
                 versions.findAllByReportTemplateIdOrderByEffectiveFromDesc(templateId));
     }

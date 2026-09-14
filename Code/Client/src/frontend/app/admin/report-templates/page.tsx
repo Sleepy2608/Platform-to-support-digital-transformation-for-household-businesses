@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { FileCog, Plus, RefreshCw } from 'lucide-react';
 import { apiClient } from '../../lib/apiClient';
 
-interface TemplateVersion { id: number; versionNumber: string; effectiveFrom: string; effectiveTo: string | null; status: string; templateSchema: unknown; }
+interface TemplateVersion { id: number; versionNumber: number; effectiveFrom: string; effectiveTo: string | null; status: string; templateSchema: unknown; }
 interface TemplateItem { template: { id: number; templateCode: string; templateName: string; templateType: string; officialFormCode: string | null; legalBasis: string | null; status: string; }; versions: TemplateVersion[]; }
 
 export default function ReportTemplatesPage() {
@@ -13,7 +13,7 @@ export default function ReportTemplatesPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [form, setForm] = useState({ templateCode: 'S1-HKD', templateName: 'Sổ chi tiết doanh thu bán hàng hóa, dịch vụ', templateType: 'ACCOUNTING_BOOK', officialFormCode: 'S1-HKD', legalBasis: 'Thông tư 88/2021/TT-BTC', description: '' });
-  const [versionForm, setVersionForm] = useState({ templateId: '', versionNumber: '1.0', effectiveFrom: new Date().toISOString().slice(0, 10), templateSchema: '{\n  "columns": []\n}' });
+  const [versionForm, setVersionForm] = useState({ templateId: '', versionNumber: '1', effectiveFrom: new Date().toISOString().slice(0, 10), templateSchema: '{\n  "columns": []\n}' });
 
   const load = async () => {
     setLoading(true); setError('');
@@ -40,7 +40,7 @@ export default function ReportTemplatesPage() {
     event.preventDefault(); setError(''); setMessage('');
     try {
       const schema = JSON.parse(versionForm.templateSchema);
-      await apiClient.post(`/api/admin/report-templates/${versionForm.templateId}/versions`, { versionNumber: versionForm.versionNumber, effectiveFrom: versionForm.effectiveFrom, effectiveTo: null, templateSchema: schema });
+      await apiClient.post(`/api/admin/report-templates/${versionForm.templateId}/versions`, { versionNumber: Number(versionForm.versionNumber), effectiveFrom: versionForm.effectiveFrom, effectiveTo: null, templateSchema: schema });
       setMessage('Đã phát hành phiên bản mới; phiên bản trước được đóng hiệu lực tự động.'); await load();
     } catch (e) { setError(e instanceof Error ? e.message : 'JSON hoặc dữ liệu phiên bản không hợp lệ'); }
   };

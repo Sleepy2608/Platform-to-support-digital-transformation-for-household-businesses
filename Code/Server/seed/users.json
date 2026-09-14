@@ -1,6 +1,6 @@
 {
   "table" : "users",
-  "version" : 20,
+  "version" : 21,
   "rows" : [ {
     "id" : 1,
     "business_id" : null,
