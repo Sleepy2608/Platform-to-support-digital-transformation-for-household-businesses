@@ -5,17 +5,22 @@ import com.hbdt.entity.enums.ReportStatus;
 import com.hbdt.owner.dto.ReportRejectRequest;
 import com.hbdt.owner.dto.ReportReviewResponse;
 import com.hbdt.owner.dto.ReportUpdateRequest;
+import com.hbdt.owner.service.ReportAggregationService;
 import com.hbdt.owner.service.ReportReviewService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 /**
  * REST controller for Owner Report Review workflow.
@@ -32,9 +37,37 @@ import org.springframework.web.bind.annotation.*;
 public class ReportReviewController {
 
     private final ReportReviewService reportReviewService;
+    private final ReportAggregationService reportAggregationService;
 
     public ReportReviewController(ReportReviewService reportReviewService) {
+        this(reportReviewService, null);
+    }
+
+    @Autowired
+    public ReportReviewController(ReportReviewService reportReviewService,
+                                  ReportAggregationService reportAggregationService) {
         this.reportReviewService = reportReviewService;
+        this.reportAggregationService = reportAggregationService;
+    }
+
+    // =========================================================
+    // Generate Report (Bridge / On-demand Aggregation)
+    // =========================================================
+
+    /**
+     * POST /api/owner/reports/generate
+     * Aggregates real-time bookkeeping transactions into a generated report for the period.
+     */
+    @PostMapping("/generate")
+    public ResponseEntity<ApiResponse<ReportReviewResponse>> generateReport(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
+
+        ReportReviewResponse report =
+                reportAggregationService.generateReportForOwner(userDetails.getUsername(), fromDate, toDate);
+
+        return ResponseEntity.ok(ApiResponse.success("Tổng hợp báo cáo thành công", report));
     }
 
     // =========================================================

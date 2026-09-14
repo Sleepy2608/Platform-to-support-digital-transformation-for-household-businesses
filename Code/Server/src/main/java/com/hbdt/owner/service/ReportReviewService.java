@@ -244,7 +244,7 @@ public class ReportReviewService {
      * Maps a {@link GeneratedReport} entity to a {@link ReportReviewResponse}.
      * Resolves template name and type from the linked version → template chain.
      */
-    private ReportReviewResponse toResponse(GeneratedReport report) {
+    public ReportReviewResponse toResponse(GeneratedReport report) {
         String templateName = null;
         String templateType = null;
 
