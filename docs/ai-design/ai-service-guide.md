@@ -1,20 +1,20 @@
-# AI service — B.ai
+# AI hỗ trợ tạo đơn hàng — B.ai
 
 ## Trạng thái và phạm vi
 
-Tích hợp model có sẵn qua **B.ai**, không huấn luyện model.
+Hệ thống AI hỗ trợ tạo đơn hàng bằng **B.ai**, không huấn luyện model riêng.
 API dùng giao thức Chat Completions tại `https://api.b.ai/v1/chat/completions`.
 
 Đã có:
 - Trích xuất câu đặt hàng tiếng Việt cho Employee và Owner bằng model B.ai được cấu hình.
 - Đối chiếu sản phẩm, khách hàng, đơn vị, giá và tồn kho từ backend theo tài khoản đăng nhập.
-- Hiển thị bản đề xuất trên trang tạo đơn, đưa vào giỏ để chỉnh sửa và xác nhận.
+- Hiển thị gợi ý đơn hàng trên trang tạo đơn, cho phép người dùng đưa vào giỏ để chỉnh sửa và xác nhận.
 - Tự chọn khách hàng đã tồn tại; tên viết liền/không dấu vẫn được đối chiếu khi chỉ có một kết quả.
-- Nếu khách hàng chưa tồn tại, hệ thống chỉ tạo khách hàng khi người dùng bấm đưa đề xuất vào giỏ.
-- Lưu bản đề xuất như đơn nháp AI trong database với trạng thái `PENDING` và cho phép từ chối/duyệt lại.
+- Nếu khách hàng chưa tồn tại, hệ thống chỉ tạo khách hàng khi người dùng bấm đưa gợi ý vào giỏ.
+- Lưu gợi ý đơn hàng dưới dạng đơn nháp AI trong database với trạng thái `PENDING` và cho phép từ chối/duyệt lại.
 - Phát hiện dữ liệu thiếu, nhiều kết quả phù hợp và lỗi dịch vụ; luôn có luồng nhập thủ công.
 
-**Bản đề xuất được lưu thành đơn nháp AI trong database với trạng thái `PENDING`.**
+**Gợi ý đơn hàng được lưu thành đơn nháp AI trong database với trạng thái `PENDING`.**
 Khi người dùng xác nhận giỏ, giao diện gọi `POST /api/sales-orders` hiện có. Backend kiểm tra lại
 và ghi đơn, trừ kho, ghi công nợ theo nghiệp vụ hiện có. Nguồn đơn vẫn là POS/ONLINE;
 mã đơn bắt đầu bằng AI và ghi chú cho biết có hỗ trợ nhập bằng AI.
@@ -22,6 +22,175 @@ mã đơn bắt đầu bằng AI và ghi chú cho biết có hỗ trợ nhập b
 Chưa triển khai trong lần tích hợp này: lưu nháp lâu dài, thông báo nháp thời gian thực,
 nhận giọng nói, hỏi đáp luật có dẫn nguồn, tự động lập sổ kế toán và cập nhật biểu mẫu pháp lý.
 Câu hỏi luật đi vào endpoint tạo đơn được phân loại OTHER; endpoint này không trả lời luật.
+
+## Mức độ hoàn thiện / chưa hoàn thiện
+
+### Đã hoàn thiện trong luồng hiện tại
+- `POST /api/ai/parse-order` đã hoạt động ở backend và front-end, dùng để trích xuất đơn hàng từ văn bản tiếng Việt.
+- `GET /api/ai/drafts` và `POST /api/ai/drafts/{id}/reject` đã có thực thi cho lưu/trạng thái nháp AI.
+- `AiOrderDraft` đã lưu `sourceText`, `proposalJson`, `status`, `businessId`, `createdBy`, `reviewedBy` và `reviewedAt` trong database.
+- `AiOrderInput` trên frontend đã có UI cho nhập câu, xem đề xuất, xem danh sách draft đang chờ duyệt và từ chối nháp.
+- Spring Boot thực hiện resolve dữ liệu thật từ `ProductService`, `CustomerService`, `ProductUnitService` và `ProductPricingService` trước khi trả proposal.
+- Quá trình xác nhận cuối cùng vẫn đi qua luồng đặt hàng hiện có của hệ thống, không tự ghi đơn trực tiếp bằng AI.
+
+### Vẫn còn ở dạng prototype / chưa hoàn thiện hoàn toàn
+- AI không phải là hệ thống hỏi đáp pháp lý có nguồn; câu hỏi luật được phân loại `OTHER`.
+- Chưa có lưu nháp dài hạn ngoài `AiOrderDraft` của hệ thống hiện tại.
+- Chưa có thông báo nháp thời gian thực hoặc background sync.
+- Chưa có nhận diện giọng nói / speech-to-text.
+- Chưa có workflow AI độc lập để tạo báo cáo kế toán, cập nhật biểu mẫu pháp lý hoặc điều hành báo cáo tự động.
+- Chưa có kiểm thử end-to-end đầy đủ trên môi trường production data để đảm bảo độ chính xác với mọi câu văn bản.
+
+### Kết luận về trạng thái
+Luồng AI hiện tại ở mức “production-oriented prototype”: các phần chính đã hoạt động, nhưng chưa thay thế hoàn toàn quy trình đặt hàng thủ công cho mọi trường hợp. Đây là AI hỗ trợ tạo đơn hàng, không phải một workflow tự động hoàn toàn.
+
+## API contract thực tế (khớp DTO Java hiện có)
+
+### 1) `POST /api/ai/parse-order`
+Request:
+
+```json
+{
+  "text": "Lấy 5 bao xi măng Hà Tiên cho anh Ba, ghi nợ"
+}
+```
+
+Validation:
+- `text` không được rỗng
+- `text` tối đa 4000 ký tự
+
+Response body khung:
+
+```json
+{
+  "data": {
+    "draftId": 12,
+    "status": "PENDING",
+    "createdAt": "2026-09-15T10:00:00",
+    "provider": "bai",
+    "readyToApply": true,
+    "customerName": "Anh Ba",
+    "customer": {
+      "id": 101,
+      "customerCode": "KH-001",
+      "customerName": "Anh Ba",
+      "phone": "0900000000"
+    },
+    "customerNeedsCreation": false,
+    "paymentType": "DEBT",
+    "items": [
+      {
+        "requestedProductName": "xi măng Hà Tiên",
+        "quantity": 5,
+        "requestedUnit": "bao",
+        "product": {
+          "id": 11,
+          "productCode": "XMHT",
+          "productName": "Xi măng Hà Tiên",
+          "quantityOnHand": 100
+        },
+        "units": [
+          {
+            "unitId": 3,
+            "unitName": "bao",
+            "unitCode": "BAO"
+          }
+        ],
+        "price": {
+          "baseQuantity": 5,
+          "unitName": "bao",
+          "lineTotal": 2500000
+        },
+        "issues": []
+      }
+    ],
+    "ambiguities": [],
+    "message": "Đơn nháp đã được lưu. Kiểm tra thông tin và xác nhận tại giỏ hàng."
+  }
+}
+```
+
+Lưu ý thực tế:
+- `status` là `PENDING`, `REJECTED`, `CONFIRMED` tương ứng với draft workflow.
+- `customer` và `product` đều là dữ liệu đã resolve từ backend thực, không phải dữ liệu bốc thăm từ AI.
+- `readyToApply` chỉ true khi đủ dữ liệu và không còn vấn đề nghiêm trọng.
+
+### 2) `GET /api/ai/drafts`
+Trả về mảng JSON các proposal đang chờ duyệt theo business của người dùng.
+
+### 3) `POST /api/ai/drafts/{id}/reject`
+Request:
+
+```json
+{
+  "reason": "Tên khách hàng không rõ, cần nhập thủ công"
+}
+```
+
+Validation:
+- `reason` không được trống
+- tối đa 500 ký tự
+
+### 4) `POST /api/ai/draft-bookkeeping`
+API này dùng để dựng báo cáo kế toán dưới dạng draft từ dữ liệu ledger/revenue hiện có, nhưng đây là luồng phụ và chưa phải trung tâm của AI hỗ trợ tạo đơn hàng.
+
+## Architecture decisions / trade-offs
+
+### 1) Chọn B.ai làm provider chính
+- Lý do: triển khai nhanh, không cần huấn luyện từ đầu, dễ tích hợp vào luồng hiện có.
+- Trade-off: phụ thuộc vào nhà cung cấp, quota, model lifecycle và schema output không được kiểm soát tuyệt đối.
+- Tác động thực tế: hệ thống cần có validation chặt ở backend và không làm AI tự ghi dữ liệu trực tiếp.
+
+### 2) Không gửi toàn bộ catalog/database sang AI
+- Lý do: giữ riêng dữ liệu business và tránh rò rỉ thông tin, giảm kích thước payload và tăng độ an toàn.
+- Trade-off: AI chỉ làm trích xuất ý định, còn backend mới thực hiện lookup dữ liệu thật.
+- Tác động: chi phí xử lý tăng ở backend, nhưng độ chính xác và tính kiểm soát tài liệu/tenant tốt hơn.
+
+### 3) Dùng human-in-the-loop trước khi create order
+- Lý do: mặc định chỉ tạo draft và proposal; người dùng phải review, chỉnh sửa và xác nhận.
+- Trade-off: tốc độ tạo đơn giảm đi nhưng độ an toàn và khả năng kiểm soát sai lệch tăng lên đáng kể.
+- Tác động: đây là quyết định cốt lõi của hệ thống hiện tại, phù hợp với sản phẩm quản lý cửa hàng thực tế.
+
+### 4) Dùng AI draft thay vì AI trực tiếp ghi đơn
+- Lý do: giữ nguyên quy trình nghiệp vụ cũ của hệ thống (`POST /api/sales-orders`), không phá vỡ logic tồn kho, công nợ và phân quyền.
+- Trade-off: tự động hóa của AI bị giới hạn ở giai đoạn đề xuất, không phải toàn bộ workflow.
+- Tác động: hệ thống dễ tích hợp hơn, nhưng không tối ưu về tốc độ tự động hoàn toàn.
+
+### 5) Chuyển data resolving về Spring Boot
+- Lý do: backend đã có business context, product metadata, pricing và customer resolution logic, nên AI chỉ làm “nhận diện câu” chứ không thay thế toàn bộ nghiệp vụ.
+- Trade-off: code business logic được lặp lại ở nhiều layer, và pipeline AI phải biết rõ contract backend.
+- Tác động: bảo toàn tính nhất quán dữ liệu, nhưng cần kỹ thuật bảo dưỡng API và schema rõ ràng.
+
+### 6) Dùng `ambiguities` thay vì tự đoán
+- Lý do: khi nhiều product/customer khớp hoặc thiếu dữ liệu, hệ thống không tự chọn một phương án ngẫu nhiên.
+- Trade-off: người dùng phải làm rõ thêm trong một số trường hợp, tăng thao tác nhưng giảm sai lầm.
+- Tác động: chiến lược này hợp với mô hình B2B / Hộ kinh doanh, nơi sai lầm giá hoặc khách hàng rất tốn kém.
+
+### 7) Không xây dựng RAG/luật pháp ngay trong phiên này
+- Lý do: hiện tại mục tiêu chính là hỗ trợ đặt hàng, không phải trả lời thông tin pháp lý có dẫn chứng.
+- Trade-off: không thể giải quyết câu hỏi liên quan đến luật, biểu mẫu pháp lý hay quyết định dựa trên source text lớn.
+- Tác động: AI hiện có giới hạn rõ ràng về chuyên môn và không nên dùng như hệ thống tư vấn pháp lý.
+
+## Rủi ro / hạn chế kiến trúc hiện tại
+
+1. Phụ thuộc mạnh vào provider B.ai
+   - Nếu model bị thay đổi, quota hết, hoặc output sai schema, toàn bộ khai thác dữ liệu có thể bị dừng.
+   - Cấu hình provider nằm ở biến môi trường và không có lớp abstraction linh hoạt giữa nhiều provider.
+
+2. Không có fallback cho mô hình/khả năng “reasoning đích thực”
+   - Hệ thống không có RAG hay bộ tri thức pháp lý rõ ràng; nên các truy vấn luật không thể được xử lý đúng cách theo nghĩa chuyên sâu.
+
+3. Độ tin cậy phụ thuộc vào việc resolve dữ liệu backend
+   - Nếu product/customer/pricing service không đồng nhất hoặc dữ liệu cửa hàng không sạch, AI sẽ trả proposal nhưng bất hợp lệ trong thực tiễn.
+
+4. Human-in-the-loop vẫn là bắt buộc
+   - AI không tự tạo đơn cuối cùng. Điều này an toàn nhưng làm giảm độ tự động hóa và khiến hiệu suất phụ thuộc nhiều vào thao tác người dùng.
+
+5. Quyết định schema và lỗi có thể bị lệch nếu prompt thay đổi
+   - Vì B.ai trả JSON không được code hóa chặt chẽ như contract Java, backend phải thực hiện validate và sanitize dữ liệu rất cẩn thận.
+
+6. Chưa có sự kiểm soát đa business/tenant mạnh mẽ ở mọi layer
+   - Mặc dù backend có kiểm tra `businessId`, điểm mòn tiềm ẩn nằm ở việc AI provider hoặc client có thể gửi input nhầm không đúng ngữ cảnh doanh nghiệp nếu không được validate chặt.
 
 ## Dữ liệu đến từ đâu?
 

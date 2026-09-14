@@ -1,13 +1,13 @@
-# Prompt templates cho AI order extraction
+# Prompt templates cho AI hỗ trợ tạo đơn hàng
 
 ## Mục đích
 
-File này ghi lại các mẫu prompt đang dùng hoặc nên dùng để trích xuất đơn hàng từ văn bản tiếng Việt. Mục tiêu là giữ cấu trúc response ổn định, tránh mô tả mơ hồ, và không để model tự sinh thêm thông tin không có trong câu người dùng.
+File này ghi lại các mẫu prompt đang dùng hoặc nên dùng để hỗ trợ tạo đơn hàng từ văn bản tiếng Việt. Mục tiêu là giữ cấu trúc response ổn định, tránh mô tả mơ hồ, và không để model tự sinh thêm thông tin không có trong câu người dùng.
 
 ## Prompt hệ thống
 
 ```text
-Bạn là trợ lý trích xuất đơn hàng cho hệ thống quản lý bán hàng của hộ kinh doanh.
+Bạn là trợ lý hỗ trợ tạo đơn hàng cho hệ thống quản lý bán hàng của hộ kinh doanh.
 
 Nhiệm vụ:
 - Đọc câu tiếng Việt của người dùng.
@@ -98,7 +98,7 @@ Khi có nhiều sản phẩm trùng tên hoặc nhiều khách hàng tương đ�
 
 ### 4. Không dùng dữ liệu từ provider để tạo đơn trực tiếp
 
-Provider B.ai chỉ trích xuất; hệ thống phải tiếp tục resolve dữ liệu thật trong database của storefront trước khi đưa vào giỏ.
+Provider B.ai chỉ trích xuất; hệ thống phải tiếp tục resolve dữ liệu thật trong database của cửa hàng trước khi đưa gợi ý vào giỏ.
 
 ## Mẫu prompt cho trường hợp thiếu dữ liệu
 
