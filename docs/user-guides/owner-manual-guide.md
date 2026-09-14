@@ -5,14 +5,14 @@
 | **Tài liệu** | Hướng Dẫn Sử Dụng Hệ Thống – Vai Trò Chủ Hộ Kinh Doanh (Business Owner) |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Vai trò áp dụng** | Chủ hộ kinh doanh (`BUSINESS_OWNER` / Business Owner) |
-| **Phiên bản** | 1.2 |
-| **Cập nhật lần cuối** | 10/09/2026 |
+| **Phiên bản** | 1.3 |
+| **Cập nhật lần cuối** | 15/09/2026 |
 
 ---
 
 ## 1. Giới thiệu tổng quan
 
-Tài liệu này mô tả luồng thao tác chính dành cho **Chủ hộ kinh doanh (Owner)** sau khi hệ thống tích hợp các tính năng mới: quản lý gói thuê bao, revenue ledger chi tiết, stock import, bookkeeping tự động và lịch sử đơn hàng theo ngày.
+Tài liệu này mô tả luồng thao tác chính dành cho **Chủ hộ kinh doanh (Owner)** sau khi hệ thống tích hợp các tính năng mới: quản lý gói thuê bao, revenue ledger chi tiết, stock import, bookkeeping tự động, lịch sử đơn hàng theo ngày, **trợ lý AI tạo đơn nháp**, **sổ kế toán TT88 và duyệt báo cáo kế toán**.
 
 Owner là vai trò trung tâm của nền tảng, có quyền quản lý sản phẩm, tồn kho, nhân viên, đơn hàng, nợ khách hàng, doanh thu và các sổ kế toán theo Thông tư 88/2021/TT-BTC.
 
@@ -98,6 +98,20 @@ Owner là vai trò trung tâm của nền tảng, có quyền quản lý sản p
 
 ---
 
+#### c. Lập đơn bằng Trợ lý AI (đơn nháp AI)
+Owner cũng có thể dùng trợ lý AI tại trang tạo đơn (`/owner/orders/new`) thay vì chọn từng sản phẩm:
+
+1. Mở khu vực **Trợ lý AI** và gõ câu đặt hàng bằng tiếng Việt (tối đa 4000 ký tự).
+   - *Ví dụ: "Lấy 5 bao xi măng Hà Tiên cho anh Ba, ghi nợ"*
+2. Hệ thống trả về gợi ý đã đối chiếu sản phẩm, đơn vị tính, giá bán, khách hàng và hình thức thanh toán.
+3. Kiểm tra các mục **cần làm rõ** (nếu có). Khi nhiều sản phẩm cùng khớp hoặc thiếu dữ liệu, hệ thống **không tự đoán** mà yêu cầu chọn lại.
+4. Bấm **Đưa vào giỏ** rồi xác nhận đơn như bán hàng thường; đơn nháp AI chuyển sang `CONFIRMED`.
+5. Nếu không dùng, bấm **Từ chối** và nhập lý do (bắt buộc) — đơn nháp chuyển `REJECTED`.
+
+> Trợ lý AI chỉ tạo **đơn nháp**, không tự ghi đơn hàng. Trợ lý AI cần gói dịch vụ đang bật tính năng `AI_ASSISTANT`, và hiện chỉ nhận **câu văn bản** (chưa hỗ trợ giọng nói).
+
+---
+
 ### 3.4 Quản lý khách hàng và công nợ
 1. Vào menu **Quản lý khách hàng**.
 2. Xem danh sách khách hàng, số dư công nợ và lịch sử giao dịch.
@@ -109,12 +123,29 @@ Owner là vai trò trung tâm của nền tảng, có quyền quản lý sản p
 
 ---
 
-### 3.5 Sổ sách kế toán và báo cáo doanh thu
-Owner có thể xem các báo cáo sau:
-1. **Revenue Ledger**: doanh thu, lợi nhuận, chi phí nhập hàng, doanh thu theo ngày.
+### 3.5 Sổ sách kế toán, thuế và báo cáo
+Owner có thể xem các báo cáo và sổ sau:
+1. **Revenue Ledger**: doanh thu, lợi nhuận, chi phí nhập hàng, doanh thu theo ngày; kèm **báo cáo công nợ** và **báo cáo vận hành**.
 2. **Inventory bookkeeping**: nhập kho, xuất kho, stock adjustment.
 3. **Invoice history**: lịch sử hóa đơn, xem và in hóa đơn.
-4. **Báo cáo kế toán theo mẫu TT88**: hỗ trợ S1-HKD, S2-HKD, S4-HKD.
+4. **Ba sổ kế toán theo Thông tư 88**: S1-HKD (chi tiết doanh thu), S2-HKD (nhập–xuất–tồn), S4-HKD (nghĩa vụ thuế).
+5. **Biểu mẫu tự động điền**: hệ thống điền số liệu thật vào các biểu mẫu đang hiệu lực.
+
+#### a. Kiểm tra và duyệt báo cáo kế toán
+1. Mở sổ kế toán và chọn kỳ báo cáo (từ ngày – đến ngày).
+2. Đối chiếu số liệu với đơn hàng đã xác nhận, phiếu nhập và giao dịch kho.
+3. Lưu kết quả kiểm tra và nhập ghi chú nếu cần. Hệ thống ghi lại từng lần kiểm tra kèm **chữ ký dữ liệu** của kỳ báo cáo.
+4. Nếu dữ liệu nguồn thay đổi sau đó, chữ ký sẽ lệch — nghĩa là báo cáo đã cũ so với lần duyệt gần nhất và cần kiểm tra lại.
+
+> Chỉ Owner (và vai trò tương đương) có quyền lưu kết quả kiểm tra/duyệt báo cáo.
+
+#### b. Ghi nhận nộp thuế (S4-HKD)
+1. Trong khu vực sổ S4-HKD, chọn **Ghi nhận nộp thuế**.
+2. Nhập: kỳ (từ ngày – đến ngày), mã loại thuế, **ngày nộp**, **số tiền nộp** (phải lớn hơn 0), số chứng từ, phương thức nộp, số tham chiếu và ghi chú.
+3. Hệ thống cộng dồn số đã nộp và tính lại **số còn phải nộp**. Nếu nộp nhiều hơn phát sinh, kết quả âm thể hiện **nộp thừa**.
+
+#### c. Nhận xét báo cáo bằng AI (tùy chọn)
+Owner có thể nhờ trợ lý AI viết bản nhận xét cho báo cáo vận hành. AI **chỉ diễn giải** dựa trên số liệu do backend cung cấp — không tự tính lại tiền, không tự hạch toán và không tự duyệt báo cáo.
 
 > Tính năng revenue ledger đã được cập nhật để hiển thị giá trị thực tế sau khi trừ chi phí nhập hàng, phù hợp với yêu cầu tài chính kinh doanh.
 
@@ -134,10 +165,10 @@ Owner có thể xem các báo cáo sau:
 ## 4. Bảng tóm tắt luồng thao tác hàng ngày của Owner
 
 ```text
-[Đăng nhập] -> [Kiểm tra dashboard] -> [Xem tồn kho / cảnh báo] -> [Lập đơn / POS]
+[Đăng nhập] -> [Kiểm tra dashboard] -> [Xem tồn kho / cảnh báo] -> [Lập đơn / POS / Trợ lý AI]
       |                                                  |
       -> [Xem revenue ledger / invoice history] -> [Theo dõi công nợ]
-      -> [Quản lý gói dịch vụ / hạn sử dụng] -> [Xuất báo cáo kế toán]
+      -> [Quản lý gói dịch vụ / hạn sử dụng] -> [Kiểm tra & duyệt sổ S1/S2/S4, ghi nhận nộp thuế]
 ```
 
 ---
@@ -151,6 +182,8 @@ Owner có thể xem các báo cáo sau:
 | Doanh thu không đúng như kỳ vọng | Chi phí nhập hàng chưa trừ hoặc dữ liệu cũ | Xem revenue ledger chi tiết và kiểm tra ngày / giao dịch |
 | Gói đã thanh toán nhưng chưa được kích hoạt | Chờ xác nhận từ Manager hoặc trạng thái chưa cập nhật | Kiểm tra trạng thái subscription và liên hệ Manager |
 | Hóa đơn không hiển thị đúng | Dữ liệu hóa đơn / lịch sử không đồng bộ | Mở order history hoặc invoice history để đối chiếu |
+| Trợ lý AI báo lỗi khi lập đơn | Gói dịch vụ chưa bật tính năng `AI_ASSISTANT`, hoặc AI service chưa cấu hình B.ai | Kiểm tra gói đang bật tính năng AI; nếu service trả `503 BAI_NOT_CONFIGURED` thì bổ sung `BAI_API_KEY` / `BAI_MODEL` trong `Code/AI/.env` |
+| Đơn nháp AI vẫn còn sau khi đã xác nhận đơn | Đơn hàng chưa tạo thành công (ví dụ sản phẩm không đủ tồn kho) | Kiểm tra lại giỏ hàng và tồn kho, xử lý lại đơn nháp hoặc bấm **Từ chối** kèm lý do |
 
 ---
 

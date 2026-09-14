@@ -23,7 +23,7 @@ Thư mục `docs/user-guides` chứa toàn bộ tài liệu hướng dẫn vận
 | **[admin-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/admin-manual-guide.md)** | Quản trị viên hệ thống (`ADMIN`) | Quản lý toàn bộ tài khoản, phê duyệt hộ kinh doanh, quản lý gói thuê bao, giám sát Audit Log và cơ chế mã hóa Seek Data. | `/admin/login`<br>`/admin/accounts`<br>`/admin/seed` |
 | **[manager-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/manager-manual-guide.md)** | Quản lý / Chuyên viên (`MANAGER`) | Phê duyệt hồ sơ hộ kinh doanh, quản lý gói đăng ký của Owner, theo dõi revenue ledger, kiểm tra stock import và bookkeeping, hỗ trợ thanh toán / xác nhận gói. | `/login`<br>`/manager`<br>`/owner/subscription` |
 | **[owner-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/owner-manual-guide.md)** | Chủ Hộ Kinh Doanh (`BUSINESS_OWNER`) | Thiết lập cửa hàng, Onboarding gói cước, quản lý sản phẩm & tồn kho, phân quyền nhân viên, bán hàng POS/AI, xem lịch sử đơn hiệu, xuất báo cáo thuế TT88. | `/login`<br>`/onboarding`<br>`/owner/products`<br>`/owner/orders`<br>`/owner/revenue` |
-| **[employee-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/employee-manual-guide.md)** | Nhân viên cửa hàng (`EMPLOYEE`) | Lập đơn bán hàng tại quầy (POS), quét mã vạch, sử dụng trợ lý giọng nói AI, tra cứu giá & cảnh báo tồn kho thấp. | `/login`<br>`/employee/orders`<br>`/employee/inventory-alerts` |
+| **[employee-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/employee-manual-guide.md)** | Nhân viên cửa hàng (`EMPLOYEE`) | Lập đơn bán hàng tại quầy (POS), quét mã vạch, dùng trợ lý AI (nhập câu văn bản) tạo và xử lý đơn nháp, tra cứu giá & cảnh báo tồn kho thấp. | `/login`<br>`/employee/orders`<br>`/employee/inventory-alerts` |
 
 ---
 
@@ -61,7 +61,8 @@ Thư mục `docs/user-guides` chứa toàn bộ tài liệu hướng dẫn vận
 | **Quản lý Sản phẩm & Tồn kho** | ❌ Không | ❌ Không | ✅ Toàn quyền | 👁️ Tra cứu tồn |
 | **Cảnh báo Tồn kho thấp** | ❌ Không | ❌ Không | ✅ Cấu hình ngưỡng | 👁️ Xem cảnh báo |
 | **Lập Đơn bán hàng (POS / AI)** | ❌ Không | ❌ Không | ✅ Có | ✅ Thao tác chính |
-| **Xuất Sổ sách Thuế TT88 (S1, S2, S4)** | ❌ Không | ❌ Không | ✅ Xuất S1-HKD, S2-HKD, S4-HKD (PDF/Excel) | ❌ Không |
+| **Sổ kế toán & Thuế TT88 (S1, S2, S4)** | ❌ Không | ❌ Không | ✅ Lập sổ, kiểm tra/duyệt báo cáo, ghi nhận nộp thuế | ❌ Không |
+| **Quản lý Biểu mẫu Báo cáo Kế toán** | ✅ Tạo mẫu & phát hành phiên bản | ❌ Không | 👁️ Xem biểu mẫu đang hiệu lực | ❌ Không |
 | **Thao tác Seek Data Mã hóa** | ✅ Cần DB Key | ❌ Không | ❌ Không | ❌ Không |
 
 ---
@@ -80,11 +81,13 @@ Thư mục `docs/user-guides` chứa toàn bộ tài liệu hướng dẫn vận
 - `http://localhost:3000/admin/login` : Trang đăng nhập Quản trị viên.
 - `http://localhost:3000/admin/accounts` : Quản lý tài khoản toàn hệ thống.
 - `http://localhost:3000/admin/subscription-plans` : Quản lý các gói thuê bao (Free, Basic, Pro).
+- `http://localhost:3000/admin/report-templates` : Quản lý biểu mẫu báo cáo kế toán và phiên bản theo ngày hiệu lực.
 - `http://localhost:3000/admin/seed` : Quản lý mã hóa và đồng bộ Seek Data.
 
 ### 5.3 Khu vực Chủ Hộ Kinh Doanh (`/owner`)
 - `http://localhost:3000/owner/products` : Quản lý sản phẩm, quy tắc giá & giá nhập/bán.
 - `http://localhost:3000/owner/orders` : Quản lý đơn hàng, bán hàng POS & trợ lý AI.
+- `http://localhost:3000/owner/orders/new` : Trang tạo đơn mới, gồm khu vực nhập câu bằng trợ lý AI.
 - `http://localhost:3000/owner/customers` : Quản lý thông tin khách hàng & sổ nợ.
 - `http://localhost:3000/owner/employees` : Quản lý và phân quyền tài khoản nhân viên.
 - `http://localhost:3000/owner/inventory-alerts` : Quản lý cảnh báo tồn kho thấp.
@@ -94,5 +97,6 @@ Thư mục `docs/user-guides` chứa toàn bộ tài liệu hướng dẫn vận
 
 ### 5.4 Khu vực Nhân Viên Cửa Hàng (`/employee`)
 - `http://localhost:3000/employee/orders` : Giao diện bán hàng POS tại quầy & trợ lý AI.
+- `http://localhost:3000/employee/orders/new` : Trang tạo đơn mới cho nhân viên, gồm khu vực nhập câu bằng trợ lý AI.
 - `http://localhost:3000/employee/inventory-alerts` : Tra cứu danh sách sản phẩm sắp hết hàng.
 - `http://localhost:3000/employee/account` : Quản lý tài khoản cá nhân & đổi mật khẩu ca làm việc.
