@@ -151,7 +151,7 @@ export function FastSalesView() {
     return map;
   }, [cartItems]);
 
-  // Financial Calculations
+  // Financial Calculations Realtime
   const totalQuantity = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }, [cartItems]);
@@ -163,7 +163,7 @@ export function FastSalesView() {
   const discount = 0;
   const totalAmount = Math.max(0, subtotal - discount);
 
-  // Cart Operations (Reused from Task 1)
+  // Cart Operations (Task 3 Management)
   const handleAddToCart = (product: FastSalesProduct) => {
     if (product.quantityOnHand <= 0) return;
 
@@ -197,15 +197,11 @@ export function FastSalesView() {
   };
 
   const handleUpdateQuantity = (productId: number, newQty: number) => {
-    if (newQty <= 0) {
-      handleRemoveItem(productId);
-      return;
-    }
-
     setCartItems((prevItems) =>
       prevItems.map((item) => {
         if (item.productId === productId) {
-          const clampedQty = Math.min(newQty, item.quantityOnHand);
+          // Clamp quantity between 1 and available stock (never auto-delete on stepper -)
+          const clampedQty = Math.max(1, Math.min(newQty, item.quantityOnHand));
           return { ...item, quantity: clampedQty };
         }
         return item;
