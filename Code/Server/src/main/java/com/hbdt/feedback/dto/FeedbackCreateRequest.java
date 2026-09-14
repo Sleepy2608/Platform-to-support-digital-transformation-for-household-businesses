@@ -19,6 +19,6 @@ public class FeedbackCreateRequest {
     @Size(max = 10000, message = "Nội dung không được vượt quá 10000 ký tự")
     private String content;
 
-    @NotBlank(message = "Loại phản hồi không được để trống")
+    @NotBlank(message = "Loại hỗ trợ không được để trống")
     private String feedbackType;
 }

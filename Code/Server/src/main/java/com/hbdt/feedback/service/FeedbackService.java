@@ -72,7 +72,7 @@ public class FeedbackService {
         Feedback saved = feedbackRepository.save(feedback);
 
         saveHistory(saved.getId(), "CREATED", null, FeedbackStatus.NEW.name(),
-                    user.getId(), "Phản hồi được tạo bởi người dùng");
+                    user.getId(), "Hỗ trợ được tạo bởi người dùng");
 
         return toResponse(saved);
     }
@@ -178,15 +178,15 @@ public class FeedbackService {
 
     private Feedback findFeedbackById(Long id) {
         return feedbackRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy phản hồi với ID: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hỗ trợ với ID: " + id));
     }
 
     private String normalizeRequiredType(String type) {
-        String normalized = normalizeEnumValue(type, "Loại phản hồi");
+        String normalized = normalizeEnumValue(type, "Loại hỗ trợ");
         try {
             return FeedbackType.valueOf(normalized).name();
         } catch (IllegalArgumentException e) {
-            throw new BadRequestException("Loại phản hồi không hợp lệ. Các loại hợp lệ: " +
+            throw new BadRequestException("Loại hỗ trợ không hợp lệ. Các loại hợp lệ: " +
                     String.join(", ", Arrays.stream(FeedbackType.values()).map(Enum::name).toList()));
         }
     }
@@ -222,7 +222,7 @@ public class FeedbackService {
 
     private void validateStatusTransition(String currentStatus, String newStatus) {
         if (currentStatus.equals(newStatus)) {
-            throw new BadRequestException("Phản hồi đã ở trạng thái này");
+            throw new BadRequestException("Hỗ trợ đã ở trạng thái này");
         }
 
         boolean valid = switch (FeedbackStatus.valueOf(currentStatus)) {
@@ -248,7 +248,7 @@ public class FeedbackService {
 
         if (role == RoleType.BUSINESS_OWNER || role == RoleType.EMPLOYEE) {
             if (!feedback.getSubmittedBy().equals(user.getId())) {
-                throw new AccessDeniedException("Bạn không có quyền xem phản hồi này");
+                throw new AccessDeniedException("Bạn không có quyền xem hỗ trợ này");
             }
             return;
         }

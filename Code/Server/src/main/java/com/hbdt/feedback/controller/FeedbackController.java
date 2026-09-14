@@ -31,19 +31,19 @@ public class FeedbackController {
         this.feedbackService = feedbackService;
     }
 
-    /** GET /api/feedback/types - Danh sách loại phản hồi hợp lệ */
+    /** GET /api/feedback/types - Danh sách loại hỗ trợ hợp lệ */
     @GetMapping("/types")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<FeedbackTypeOption>>> getFeedbackTypes() {
         List<FeedbackTypeOption> types = java.util.Arrays.stream(FeedbackType.values())
                 .map(type -> new FeedbackTypeOption(type.name(), type.getLabel()))
                 .toList();
-        return ResponseEntity.ok(ApiResponse.success("Lấy loại phản hồi thành công", types));
+        return ResponseEntity.ok(ApiResponse.success("Lấy loại hỗ trợ thành công", types));
     }
 
     // ==================== USER ENDPOINTS ====================
 
-    /** GET /api/feedback - Lấy danh sách phản hồi của người dùng hiện tại */
+    /** GET /api/feedback - Lấy danh sách hỗ trợ của người dùng hiện tại */
     @GetMapping
     @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER', 'EMPLOYEE')")
     public ResponseEntity<ApiResponse<PageResponse<FeedbackResponse>>> getMyFeedbacks(
@@ -60,11 +60,11 @@ public class FeedbackController {
         var feedbacks = feedbackService.getMyFeedbacks(authentication.getName(), status, feedbackType, search, pageable);
 
         return ResponseEntity.ok(ApiResponse.success(
-                "Lấy danh sách phản hồi thành công",
+                "Lấy danh sách hỗ trợ thành công",
                 PageResponse.from(feedbacks)));
     }
 
-    /** POST /api/feedback - Tạo phản hồi mới */
+    /** POST /api/feedback - Tạo hỗ trợ mới */
     @PostMapping
     @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'OWNER', 'EMPLOYEE')")
     public ResponseEntity<ApiResponse<FeedbackResponse>> createFeedback(
@@ -74,10 +74,10 @@ public class FeedbackController {
         var feedback = feedbackService.createFeedback(authentication.getName(), request);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Gửi phản hồi thành công", feedback));
+                .body(ApiResponse.success("Gửi hỗ trợ thành công", feedback));
     }
 
-    /** GET /api/feedback/{id} - Lấy chi tiết phản hồi */
+    /** GET /api/feedback/{id} - Lấy chi tiết hỗ trợ */
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<FeedbackResponse>> getFeedbackDetail(
@@ -85,11 +85,11 @@ public class FeedbackController {
             @PathVariable Long id) {
 
         return ResponseEntity.ok(ApiResponse.success(
-                "Lấy chi tiết phản hồi thành công",
+                "Lấy chi tiết hỗ trợ thành công",
                 feedbackService.getFeedbackDetail(authentication.getName(), id)));
     }
 
-    /** GET /api/feedback/{id}/history - Lấy lịch sử phản hồi */
+    /** GET /api/feedback/{id}/history - Lấy lịch sử trao đổi hỗ trợ */
     @GetMapping("/{id}/history")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<FeedbackHistoryResponse>>> getFeedbackHistory(
@@ -97,13 +97,13 @@ public class FeedbackController {
             @PathVariable Long id) {
 
         return ResponseEntity.ok(ApiResponse.success(
-                "Lấy lịch sử phản hồi thành công",
+                "Lấy lịch sử trao đổi hỗ trợ thành công",
                 feedbackService.getFeedbackHistory(authentication.getName(), id)));
     }
 
     // ==================== MANAGER/ADMIN ENDPOINTS ====================
 
-    /** GET /api/feedback/admin/all - Lấy tất cả phản hồi (ADMIN) */
+    /** GET /api/feedback/admin/all - Lấy tất cả hỗ trợ (ADMIN) */
     @GetMapping("/admin/all")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ApiResponse<PageResponse<FeedbackResponse>>> getAllFeedbacks(
@@ -119,11 +119,11 @@ public class FeedbackController {
         var feedbacks = feedbackService.getAllFeedbacks(status, feedbackType, search, pageable);
 
         return ResponseEntity.ok(ApiResponse.success(
-                "Lấy danh sách phản hồi thành công",
+                "Lấy danh sách hỗ trợ thành công",
                 PageResponse.from(feedbacks)));
     }
 
-    /** GET /api/feedback/admin/business/{businessId} - Lấy phản hồi theo business */
+    /** GET /api/feedback/admin/business/{businessId} - Lấy hỗ trợ theo business */
     @GetMapping("/admin/business/{businessId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ApiResponse<PageResponse<FeedbackResponse>>> getBusinessFeedbacks(
@@ -140,11 +140,11 @@ public class FeedbackController {
         var feedbacks = feedbackService.getBusinessFeedbacks(businessId, status, feedbackType, search, pageable);
 
         return ResponseEntity.ok(ApiResponse.success(
-                "Lấy danh sách phản hồi thành công",
+                "Lấy danh sách hỗ trợ thành công",
                 PageResponse.from(feedbacks)));
     }
 
-    /** PUT /api/feedback/admin/{id}/status - Cập nhật trạng thái phản hồi */
+    /** PUT /api/feedback/admin/{id}/status - Cập nhật trạng thái hỗ trợ */
     @PutMapping("/admin/{id}/status")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ApiResponse<FeedbackResponse>> updateFeedbackStatus(
@@ -157,7 +157,7 @@ public class FeedbackController {
         return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công", feedback));
     }
 
-    /** POST /api/feedback/admin/{id}/response - Thêm phản hồi cho người dùng */
+    /** POST /api/feedback/admin/{id}/response - Thêm phản hồi cho hỗ trợ */
     @PostMapping("/admin/{id}/response")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<ApiResponse<FeedbackResponse>> addFeedbackResponse(
