@@ -9,6 +9,7 @@ import {
   getCustomerPaymentHistory,
   PaymentResponse
 } from '@/app/lib/payment';
+import { getTransactionTypeMeta } from '@/app/lib/debtBookkeepingViewModel';
 
 interface PaymentHistoryListProps {
   orderId?: number;
@@ -104,70 +105,101 @@ export default function PaymentHistoryList({ orderId, customerId, refreshTrigger
         <div className="space-y-3">
           {/* Transaction Items */}
           <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
-            {payments.map((tx) => (
-              <div key={tx.paymentId} className="py-3 text-xs space-y-2">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center space-x-2">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-[11px] ${
-                      tx.paymentMethod === 'BANK_TRANSFER'
-                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300'
-                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
-                    }`}>
-                      {tx.paymentMethod === 'BANK_TRANSFER' ? (
-                        <>
-                          <CreditCard className="h-3 w-3 mr-1" />
-                          <span>Chuyển khoản</span>
-                        </>
-                      ) : (
-                        <>
-                          <DollarSign className="h-3 w-3 mr-1" />
-                          <span>Tiền mặt</span>
-                        </>
-                      )}
-                    </span>
-                    <span className="font-mono font-medium text-slate-600 dark:text-slate-400">
-                      {tx.transactionCode}
-                    </span>
-                  </div>
-                  <span className="font-bold text-sm text-emerald-600 dark:text-emerald-400">
-                    +{formatVND(tx.amount)}
-                  </span>
-                </div>
+            {payments.map((tx) => {
+              const meta = getTransactionTypeMeta(tx.transactionType);
+              return (
+                <div key={tx.paymentId || tx.transactionCode} className="py-3 text-xs space-y-2">
+                  <div className="flex justify-between items-start flex-wrap gap-2">
+                    <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                      {/* Transaction Type Badge */}
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-bold text-[11px] border ${meta.badgeClass}`}>
+                        {meta.label}
+                      </span>
 
-                <div className="grid grid-cols-2 gap-2 text-slate-500 dark:text-slate-400">
-                  <div className="flex items-center space-x-1">
-                    <Calendar className="h-3 w-3" />
-                    <span>{formatDate(tx.paymentDate)}</span>
+                      {/* Payment Method Badge if PAYMENT */}
+                      {tx.transactionType === 'PAYMENT' && tx.paymentMethod && (
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md font-semibold text-[11px] ${
+                          tx.paymentMethod === 'BANK_TRANSFER'
+                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300'
+                            : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+                        }`}>
+                          {tx.paymentMethod === 'BANK_TRANSFER' ? (
+                            <>
+                              <CreditCard className="h-3 w-3 mr-1" />
+                              <span>Chuyển khoản</span>
+                            </>
+                          ) : (
+                            <>
+                              <DollarSign className="h-3 w-3 mr-1" />
+                              <span>Tiền mặt</span>
+                            </>
+                          )}
+                        </span>
+                      )}
+
+                      <span className="font-mono font-medium text-slate-600 dark:text-slate-400">
+                        {tx.transactionCode}
+                      </span>
+
+                      {tx.orderCode && (
+                        <span className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-[10px] text-slate-600 dark:text-slate-300 font-semibold">
+                          Đơn: {tx.orderCode}
+                        </span>
+                      )}
+
+                      {tx.paymentStatus && (
+                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                          tx.paymentStatus === 'PAID'
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : tx.paymentStatus === 'PARTIALLY_PAID'
+                            ? 'bg-amber-50 text-amber-700'
+                            : 'bg-rose-50 text-rose-700'
+                        }`}>
+                          {tx.paymentStatus === 'PAID' ? 'Đã trả hết' : tx.paymentStatus === 'PARTIALLY_PAID' ? 'Trả 1 phần' : 'Chưa trả'}
+                        </span>
+                      )}
+                    </div>
+
+                    <span className={`font-bold text-sm ${meta.textClass}`}>
+                      {meta.sign}{formatVND(tx.amount)}
+                    </span>
                   </div>
-                  {tx.createdByUsername && (
-                    <div className="flex items-center space-x-1 justify-end">
-                      <User className="h-3 w-3" />
-                      <span>{tx.createdByUsername}</span>
+
+                  <div className="grid grid-cols-2 gap-2 text-slate-500 dark:text-slate-400">
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>{formatDate(tx.paymentDate || tx.createdAt)}</span>
+                    </div>
+                    {tx.createdByUsername && (
+                      <div className="flex items-center space-x-1 justify-end">
+                        <User className="h-3 w-3" />
+                        <span>{tx.createdByUsername}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {tx.referenceNumber && (
+                    <div className="text-[11px] text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 rounded-lg p-1.5 font-mono">
+                      Mã tham chiếu: <span className="font-semibold">{tx.referenceNumber}</span>
                     </div>
                   )}
-                </div>
 
-                {tx.referenceNumber && (
-                  <div className="text-[11px] text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 rounded-lg p-1.5 font-mono">
-                    Mã GD Ngân hàng: <span className="font-semibold">{tx.referenceNumber}</span>
+                  {tx.note && (
+                    <div className="flex items-start space-x-1 text-[11px] text-slate-500 italic">
+                      <FileText className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                      <span>{tx.note}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center text-[11px] pt-1 text-slate-400 border-t border-dashed border-slate-100 dark:border-slate-800">
+                    <span>Số dư nợ sau giao dịch:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">
+                      {formatVND(tx.balanceAfter)}
+                    </span>
                   </div>
-                )}
-
-                {tx.note && (
-                  <div className="flex items-start space-x-1 text-[11px] text-slate-500 italic">
-                    <FileText className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                    <span>{tx.note}</span>
-                  </div>
-                )}
-
-                <div className="flex justify-between items-center text-[11px] pt-1 text-slate-400 border-t border-dashed border-slate-100 dark:border-slate-800">
-                  <span>Dư nợ khách sau GD:</span>
-                  <span className="font-semibold text-slate-700 dark:text-slate-300">
-                    {formatVND(tx.balanceAfter)}
-                  </span>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Pagination if customer history */}

@@ -292,6 +292,10 @@ async function request<T = unknown>(
       if (response.status === 403) {
         throw new Error(errorJson.message || 'Bạn không có quyền thực hiện thao tác này.');
       }
+      if (errorJson.data && typeof errorJson.data === 'object' && Object.keys(errorJson.data).length > 0) {
+        const details = Object.values(errorJson.data).join(', ');
+        throw new Error(details || errorJson.message || `HTTP ${response.status}`);
+      }
       throw new Error(errorJson.message || `HTTP ${response.status}`);
     }
     throw new Error(`HTTP ${response.status}`);

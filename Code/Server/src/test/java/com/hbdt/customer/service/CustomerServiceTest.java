@@ -4,10 +4,10 @@ import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.customer.dto.CustomerOptionResponse;
 import com.hbdt.customer.dto.CustomerResponse;
 import com.hbdt.customer.dto.QuickCreateCustomerRequest;
+import com.hbdt.debt.service.DebtBookkeepingService;
 import com.hbdt.entity.Customer;
 import com.hbdt.product.service.BusinessContextService;
 import com.hbdt.repository.CustomerRepository;
-import com.hbdt.repository.DebtTransactionRepository;
 import com.hbdt.repository.SalesOrderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ class CustomerServiceTest {
     @Mock private CustomerRepository customerRepository;
     @Mock private BusinessContextService businessContextService;
     @Mock private SalesOrderRepository salesOrderRepository;
-    @Mock private DebtTransactionRepository debtTransactionRepository;
+    @Mock private DebtBookkeepingService debtBookkeepingService;
 
     private CustomerService service;
 
@@ -42,7 +42,7 @@ class CustomerServiceTest {
                 customerRepository,
                 businessContextService,
                 salesOrderRepository,
-                debtTransactionRepository
+                debtBookkeepingService
         );
     }
 
@@ -101,7 +101,7 @@ class CustomerServiceTest {
                 .build();
         when(businessContextService.requireBusinessId("owner")).thenReturn(12L);
         when(customerRepository.findByIdAndBusinessId(44L, 12L)).thenReturn(Optional.of(customer));
-        when(debtTransactionRepository.calculateCurrentBalance(44L, 12L))
+        when(debtBookkeepingService.calculateCustomerDebt(44L, 12L))
                 .thenReturn(new BigDecimal("275000"));
 
         CustomerResponse response = service.getDetail("owner", 44L);

@@ -63,6 +63,7 @@ export interface CustomerDebtSummaryResponse {
   customerName: string;
   totalDebtIncreased: number;
   totalPaid: number;
+  totalVoid: number;
   currentBalance: number;
 }
 

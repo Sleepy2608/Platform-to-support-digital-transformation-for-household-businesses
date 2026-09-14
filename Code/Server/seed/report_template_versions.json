@@ -1,0 +1,53 @@
+{
+  "table" : "report_template_versions",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "created_at" : "2026-09-13T15:42:01.666754",
+    "created_by" : 1,
+    "effective_from" : "2026-09-13",
+    "effective_to" : null,
+    "report_template_id" : 1,
+    "status" : "ACTIVE",
+    "template_schema" : "{\"title\": \"Sổ chi tiết doanh thu bán hàng hóa, dịch vụ\", \"fields\": [{\"key\": \"voucherDate\", \"type\": \"date\", \"label\": \"Ngày ghi chứng từ\", \"required\": true}, {\"key\": \"invoiceNumber\", \"type\": \"text\", \"label\": \"Số hiệu hóa đơn / chứng từ\", \"required\": true}, {\"key\": \"customerName\", \"type\": \"text\", \"label\": \"Họ tên người mua hàng\", \"required\": false}, {\"key\": \"productName\", \"type\": \"text\", \"label\": \"Tên mặt hàng / Dịch vụ\", \"required\": true}, {\"key\": \"unit\", \"type\": \"text\", \"label\": \"Đơn vị tính\", \"required\": false}, {\"key\": \"quantity\", \"type\": \"number\", \"label\": \"Số lượng\", \"required\": true}, {\"key\": \"unitPrice\", \"type\": \"currency\", \"label\": \"Đơn giá bán\", \"required\": true}, {\"key\": \"revenue\", \"type\": \"currency\", \"label\": \"Doanh thu bán hàng\", \"required\": true}, {\"key\": \"vatAmount\", \"type\": \"currency\", \"label\": \"Tiền thuế GTGT\", \"required\": false}, {\"key\": \"notes\", \"type\": \"text\", \"label\": \"Ghi chú\", \"required\": false}], \"legalBasis\": \"Thông tư 88/2021/TT-BTC\", \"description\": \"Dùng để theo dõi chi tiết doanh thu bán hàng hóa, dịch vụ theo từng nhóm ngành nghề tính thuế.\", \"officialFormCode\": \"Mẫu số S1-HKD\"}",
+    "updated_at" : "2026-09-13T15:42:01.666754",
+    "version_number" : 1,
+    "updated_by" : 1
+  }, {
+    "id" : 2,
+    "created_at" : "2026-09-13T15:42:52.515087",
+    "created_by" : 1,
+    "effective_from" : "2026-09-13",
+    "effective_to" : null,
+    "report_template_id" : 2,
+    "status" : "ACTIVE",
+    "template_schema" : "{\"title\": \"Báo cáo tổng hợp và theo dõi công nợ\", \"fields\": [{\"key\": \"partnerCode\", \"type\": \"text\", \"label\": \"Mã đối tác (Khách hàng/NCC)\", \"required\": true}, {\"key\": \"partnerName\", \"type\": \"text\", \"label\": \"Tên đối tác\", \"required\": true}, {\"key\": \"openingBalance\", \"type\": \"currency\", \"label\": \"Dư nợ đầu kỳ\", \"required\": true}, {\"key\": \"incurredAmount\", \"type\": \"currency\", \"label\": \"Số phát sinh tăng\", \"required\": true}, {\"key\": \"paidAmount\", \"type\": \"currency\", \"label\": \"Số đã thanh toán\", \"required\": true}, {\"key\": \"closingBalance\", \"type\": \"currency\", \"label\": \"Dư nợ còn lại cuối kỳ\", \"required\": true}], \"legalBasis\": \"Chế độ kế toán quản trị HBDT\", \"description\": \"Theo dõi số dư nợ đầu kỳ, phát sinh tăng, số đã thanh toán và dư nợ cuối kỳ của khách hàng/NCC.\", \"officialFormCode\": \"Mẫu quản trị công nợ\"}",
+    "updated_at" : "2026-09-13T15:42:52.515087",
+    "version_number" : 1,
+    "updated_by" : 1
+  }, {
+    "id" : 3,
+    "created_at" : "2026-09-13T15:42:57.53267",
+    "created_by" : 1,
+    "effective_from" : "2026-09-13",
+    "effective_to" : null,
+    "report_template_id" : 3,
+    "status" : "ACTIVE",
+    "template_schema" : "{\"title\": \"Bảng cân đối tình hình tài chính quản trị\", \"fields\": [{\"key\": \"indicator\", \"type\": \"text\", \"label\": \"Chỉ tiêu tài chính\", \"required\": true}, {\"key\": \"code\", \"type\": \"text\", \"label\": \"Mã số chỉ tiêu\", \"required\": true}, {\"key\": \"startPeriod\", \"type\": \"currency\", \"label\": \"Số đầu kỳ\", \"required\": true}, {\"key\": \"endPeriod\", \"type\": \"currency\", \"label\": \"Số cuối kỳ\", \"required\": true}], \"legalBasis\": \"Chuẩn mực kế toán hộ kinh doanh\", \"description\": \"Tổng hợp số dư tài sản, nguồn vốn và công nợ của hộ kinh doanh đầu kỳ và cuối kỳ.\", \"officialFormCode\": \"Báo cáo tài chính quản trị\"}",
+    "updated_at" : "2026-09-13T15:42:57.53267",
+    "version_number" : 1,
+    "updated_by" : 1
+  }, {
+    "id" : 4,
+    "created_at" : "2026-09-13T15:52:28.208741",
+    "created_by" : 1,
+    "effective_from" : "2026-09-13",
+    "effective_to" : null,
+    "report_template_id" : 4,
+    "status" : "ACTIVE",
+    "template_schema" : "{\"title\": \"Sổ chi tiết doanh thu bán hàng hóa, dịch vụ\", \"fields\": [{\"key\": \"voucherDate\", \"type\": \"date\", \"label\": \"Ngày ghi chứng từ\", \"required\": true}, {\"key\": \"invoiceNumber\", \"type\": \"text\", \"label\": \"Số hiệu hóa đơn / chứng từ\", \"required\": true}, {\"key\": \"customerName\", \"type\": \"text\", \"label\": \"Họ tên người mua hàng\", \"required\": false}, {\"key\": \"productName\", \"type\": \"text\", \"label\": \"Tên mặt hàng / Dịch vụ\", \"required\": true}, {\"key\": \"unit\", \"type\": \"text\", \"label\": \"Đơn vị tính\", \"required\": false}, {\"key\": \"quantity\", \"type\": \"number\", \"label\": \"Số lượng\", \"required\": true}, {\"key\": \"unitPrice\", \"type\": \"currency\", \"label\": \"Đơn giá bán\", \"required\": true}, {\"key\": \"revenue\", \"type\": \"currency\", \"label\": \"Doanh thu bán hàng\", \"required\": true}, {\"key\": \"vatAmount\", \"type\": \"currency\", \"label\": \"Tiền thuế GTGT\", \"required\": false}, {\"key\": \"notes\", \"type\": \"text\", \"label\": \"Ghi chú\", \"required\": false}], \"legalBasis\": \"Thông tư 88/2021/TT-BTC\", \"description\": \"Dùng để theo dõi chi tiết doanh thu bán hàng hóa, dịch vụ theo từng nhóm ngành nghề tính thuế.\", \"officialFormCode\": \"Mẫu số S1-HKD\"}",
+    "updated_at" : "2026-09-13T15:52:28.208741",
+    "version_number" : 1,
+    "updated_by" : 1
+  } ]
+}
