@@ -121,7 +121,7 @@ export default function AdminFeedbackPage() {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || 'Không thể lấy danh sách phản hồi');
+        throw new Error(data.message || 'Không thể lấy danh sách hỗ trợ');
       }
       const pageData = data.data;
       setFeedbacks(Array.isArray(pageData?.content) ? pageData.content : []);
@@ -228,9 +228,9 @@ export default function AdminFeedbackPage() {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || 'Lỗi gửi phản hồi');
+        throw new Error(data.message || 'Lỗi gửi hỗ trợ');
       }
-      showSuccess('Gửi phản hồi thành công');
+      showSuccess('Gửi hỗ trợ thành công');
       setResponseContent('');
       // Refresh feedback details
       await openDetail(selectedFeedback);
@@ -267,9 +267,9 @@ export default function AdminFeedbackPage() {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Quản lý Phản hồi</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Quản lý hỗ trợ</h1>
           <p className="text-zinc-400 text-sm mt-1">
-            Xem và quản lý các phản hồi từ người dùng về hệ thống.
+            Xem và quản lý các yêu cầu hỗ trợ từ người dùng.
           </p>
         </div>
         <button
@@ -349,8 +349,8 @@ export default function AdminFeedbackPage() {
         ) : feedbacks.length === 0 ? (
           <div className="py-20 text-center text-zinc-500 text-sm">
             {searchQuery || statusFilter !== 'ALL' || typeFilter !== 'ALL'
-              ? 'Không tìm thấy phản hồi nào khớp với bộ lọc'
-              : 'Chưa có phản hồi nào được gửi'}
+              ? 'Không tìm thấy hỗ trợ nào khớp với bộ lọc'
+              : 'Chưa có hỗ trợ nào được gửi'}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -425,7 +425,7 @@ export default function AdminFeedbackPage() {
         {!loading && !error && feedbacks.length > 0 && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-800 bg-zinc-800/20">
             <div className="text-zinc-400 text-xs">
-              Hiển thị {startIndex + 1}-{Math.min(startIndex + feedbacks.length, totalElements)} trong {totalElements} phản hồi
+              Hiển thị {startIndex + 1}-{Math.min(startIndex + feedbacks.length, totalElements)} trong {totalElements} hỗ trợ
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -497,7 +497,7 @@ export default function AdminFeedbackPage() {
                     <MessageSquare className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold">Chi tiết Phản hồi</h2>
+                    <h2 className="text-xl font-bold">Chi tiết hỗ trợ</h2>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-zinc-500 text-xs font-mono">#{selectedFeedback.id}</span>
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${statusConfig[selectedFeedback.status]?.className || statusConfig.NEW.className}`}>
@@ -555,7 +555,7 @@ export default function AdminFeedbackPage() {
                       <div className="flex items-center gap-3 p-4 bg-zinc-800/50 rounded-xl border border-zinc-800">
                         <Tag className="w-5 h-5 text-zinc-500" />
                         <div>
-                          <div className="text-zinc-400 text-xs">Loại phản hồi</div>
+                          <div className="text-zinc-400 text-xs">Loại hỗ trợ</div>
                           <div className="mt-1">
                             <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${typeConfig[selectedFeedback.feedbackType]?.className || typeConfig.SUGGESTION.className}`}>
                               {selectedFeedback.feedbackTypeLabel || selectedFeedback.feedbackType}

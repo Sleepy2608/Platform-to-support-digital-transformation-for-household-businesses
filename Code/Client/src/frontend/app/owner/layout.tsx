@@ -73,7 +73,7 @@ const MANAGE_NAV_ITEMS: Array<{
   ] },
   { label: 'Khách hàng', href: '/owner/customers', icon: UserSearch, path: '/owner/customers' },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
-  { label: 'Phản hồi', href: '/owner/feedback', icon: MessageSquare, path: '/owner/feedback' },
+  { label: 'Viết hỗ trợ', href: '/owner/feedback', icon: MessageSquare, path: '/owner/feedback' },
 ];
 
 function isChildActive(childHref: string, pathname: string, searchParams: URLSearchParams | null): boolean {
