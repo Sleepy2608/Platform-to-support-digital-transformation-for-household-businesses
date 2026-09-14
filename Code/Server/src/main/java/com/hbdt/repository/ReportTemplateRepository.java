@@ -17,4 +17,6 @@ public interface ReportTemplateRepository
     boolean existsByTemplateCode(String templateCode);
 
     Optional<ReportTemplate> findByTemplateTypeAndStatus(TemplateType type, TemplateStatus status);
+
+    Optional<ReportTemplate> findFirstByTemplateType(TemplateType type);
 }
