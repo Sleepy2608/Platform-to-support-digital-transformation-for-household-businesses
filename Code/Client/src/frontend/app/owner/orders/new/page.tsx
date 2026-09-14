@@ -84,7 +84,8 @@ export default function OwnerCreateOrderPage() {
     }
     setCartOpen(true);
     const existing = items.find(
-      (item) => item.productId === product.id && item.unitId === product.baseUnitId,
+      (item) => item.productId === product.id
+        && item.unitId === (product.saleUnitId || product.baseUnitId),
     );
     if (existing) {
       changeQuantity(existing.key, String(parseQuantity(existing.quantity) + 1));
@@ -92,7 +93,8 @@ export default function OwnerCreateOrderPage() {
     }
     try {
       const units = await apiClient.get<CartUnit[]>(`/api/products/${product.id}/units`);
-      const preferred = units.find((unit) => unit.unitId === product.baseUnitId)
+      const preferred = units.find((unit) => unit.unitId === (product.saleUnitId || product.baseUnitId))
+        || units.find((unit) => unit.unitId === product.baseUnitId)
         || units.find((unit) => unit.baseUnit) || units[0];
       if (!preferred) throw new Error('Sản phẩm chưa được cấu hình đơn vị tính');
       const key = nextKey.current++;

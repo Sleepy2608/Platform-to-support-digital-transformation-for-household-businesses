@@ -88,7 +88,8 @@ public class ProductImportController {
 
         try {
             byte[] fileBytes = file.getBytes();
-            ProductImportResponse result = productImportService.importProducts(businessId, fileBytes, filename);
+            ProductImportResponse result = productImportService.importProducts(
+                    businessId, currentUser.getId(), fileBytes, filename);
 
             if (result.isSuccess()) {
                 return ResponseEntity.ok(ApiResponse.success(result));

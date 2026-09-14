@@ -26,6 +26,8 @@ interface BackendProductItem {
   categoryName?: string;
   baseUnitId?: number;
   baseUnitName?: string;
+  saleUnitId?: number;
+  saleUnitName?: string;
   salePrice?: number | string;
   quantityOnHand?: number | string;
   imageUrl?: string;
@@ -142,8 +144,8 @@ export function FastSalesView() {
         productName: p.productName || '',
         categoryId: p.categoryId,
         categoryName: p.categoryName,
-        baseUnitId: p.baseUnitId || 1,
-        unitName: p.baseUnitName || 'SP',
+        baseUnitId: p.saleUnitId || p.baseUnitId || 1,
+        unitName: p.saleUnitName || p.baseUnitName || 'SP',
         salePrice: Number(p.salePrice || 0),
         quantityOnHand: Number(p.quantityOnHand || 0),
         imageUrl: p.imageUrl,
