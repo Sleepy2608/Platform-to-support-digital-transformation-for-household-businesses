@@ -65,8 +65,12 @@
    - 6.8. [Subscription Plans — Admin & Public](#68-subscription-plans--admin--public)
    - 6.9. [Reference — /api/reference](#69-reference--apireference)
    - 6.10. [Dev health check — /api/public](#610-dev-health-check--apipublic)
-   - 6.11. [AI Service (FastAPI)](#611-ai-service-fastapi)
-   - 6.12. [Ví dụ Request/Response JSON](#612-ví-dụ-requestresponse-json)
+   - 6.11. [AI Service (Python + FastAPI)](#611-ai-service-python--fastapi--base-dev-http1270018000)
+   - 6.12. [Backend AI — /api/ai](#612-backend-ai--apiai-comhbdtai)
+   - 6.13. [Kế toán & thuế — /api/accounting](#613-kế-toán--thuế--apiaccounting)
+   - 6.14. [Quản trị biểu mẫu báo cáo — /api/admin/report-templates](#614-quản-trị-biểu-mẫu-báo-cáo--apiadminreport-templates-chỉ-admin)
+   - 6.15. [Sổ doanh thu & báo cáo vận hành — /api/revenue-ledger](#615-sổ-doanh-thu--báo-cáo-vận-hành--apirevenue-ledger)
+   - 6.16. [Ví dụ Request/Response JSON](#616-ví-dụ-requestresponse-json)
 7. [Workflow các luồng nghiệp vụ chính](#7-workflow-các-luồng-nghiệp-vụ-chính)
    - 7.1. [Workflow Đăng ký & Onboarding](#71-workflow-đăng-ký--onboarding)
    - 7.2. [Workflow Xác thực & Phiên làm việc](#72-workflow-xác-thực--phiên-làm-việc)
@@ -151,7 +155,8 @@ Tài liệu bao phủ ba thành phần triển khai của hệ thống:
 | Tenant | Một hộ kinh doanh độc lập trong hệ thống multi-tenant |
 | S1-HKD / S2-HKD / S4-HKD | Mẫu sổ kế toán theo Thông tư 88/2021/TT-BTC |
 | POS | Point of Sale — bán hàng tại quầy |
-| Draft Order | Đơn hàng nháp do AI tạo, chờ con người duyệt |
+| Draft Order | Đơn hàng nháp do AI tạo, chờ con người duyệt (bảng `ai_order_drafts`, trạng thái `PENDING` → `CONFIRMED` / `REJECTED`) |
+| B.ai | Nhà cung cấp model AI bên ngoài, được AI service gọi qua Chat Completions API |
 
 ## 1.4. Tài liệu tham khảo
 
@@ -722,18 +727,19 @@ Cơ sở dữ liệu gồm **34 bảng nghiệp vụ** (5 phân hệ) + **2 bả
 | `sales_order_items` | Sản phẩm, số lượng, giá bán + snapshot tỷ lệ thuế |
 | `debt_transactions` | Phát sinh nợ, trả nợ, điều chỉnh |
 
-### 3.3.4. AI & System Operations – 6 bảng
+### 3.3.4. AI & System Operations – 7 bảng
 
 | Bảng | Chức năng |
 |---|---|
-| `ai_requests` | Yêu cầu văn bản/giọng nói + kết quả AI |
+| `ai_order_drafts` | Đơn nháp AI đang dùng: nội dung nguồn, proposal JSON, trạng thái `PENDING` / `REJECTED` / `CONFIRMED` |
+| `ai_requests` | Bảng **legacy** của thiết kế ban đầu; entity `AiRequest` vẫn được khai báo nhưng không còn service/repository nào sử dụng |
 | `notifications` | Thông báo theo người dùng |
 | `feedback` | Phản hồi, khiếu nại |
 | `announcements` | Thông báo toàn nền tảng |
 | `system_configurations` | Cấu hình hệ thống và AI |
 | `audit_logs` | Nhật ký thao tác + dữ liệu trước/sau |
 
-### 3.3.5. Accounting, Tax & Reporting – 8 bảng
+### 3.3.5. Accounting, Tax & Reporting – 9 bảng
 
 | Bảng | Chức năng |
 |---|---|
@@ -742,6 +748,7 @@ Cơ sở dữ liệu gồm **34 bảng nghiệp vụ** (5 phân hệ) + **2 bả
 | `accounting_books` | Sổ theo hộ, loại sổ, kỳ |
 | `accounting_book_entries` | Dòng ghi sổ, nguồn phát sinh, lịch sử điều chỉnh |
 | `generated_reports` | Báo cáo đã tạo + trạng thái duyệt |
+| `accounting_report_reviews` | Lịch sử kiểm tra/duyệt báo cáo kế toán theo kỳ, gắn `data_signature` để biết báo cáo có thay đổi sau khi duyệt |
 | `tax_types` | Loại nghĩa vụ thuế |
 | `tax_obligations` | Nghĩa vụ thuế theo hộ và kỳ |
 | `tax_payments` | Các lần nộp thuế |
@@ -882,9 +889,16 @@ CREATE INDEX idx_notifications_user_created ON notifications (user_id, created_a
 CREATE INDEX idx_audit_logs_user     ON audit_logs (user_id);
 CREATE INDEX idx_audit_logs_created  ON audit_logs (created_at);
 
--- AI requests
+-- AI order drafts (bảng đang dùng cho đơn nháp AI)
+CREATE INDEX idx_ai_drafts_business_status ON ai_order_drafts (business_id, status, created_at);
+
+-- AI requests (bảng legacy; chỉ cần nếu vẫn giữ entity AiRequest)
 CREATE INDEX idx_ai_requests_business_status ON ai_requests (business_id, status);
 CREATE INDEX idx_ai_requests_created         ON ai_requests (created_at);
+
+-- accounting report reviews (lịch sử duyệt báo cáo kế toán)
+CREATE INDEX idx_accounting_review_period    ON accounting_report_reviews (business_id, period_from, period_to);
+CREATE INDEX idx_accounting_review_signature ON accounting_report_reviews (business_id, data_signature);
 
 -- 6. ONBOARDING --------------------------------------------------
 CREATE INDEX idx_terms_consents_user ON terms_consents (user_id);
@@ -1054,7 +1068,7 @@ Trong phạm vi đồ án, các khái niệm "hợp đồng" được thực hi�
 
 - Toàn bộ giao tiếp giữa Frontend ↔ Backend ↔ AI Service được định nghĩa chặt chẽ bởi **đặc tả REST API** (xem mục 6).
 - Định dạng response chuẩn `ApiResponse<T>` và mã lỗi thống nhất đóng vai trò là "điều khoản" của hợp đồng dữ liệu.
-- AI Service (FastAPI) công bố hợp đồng riêng qua Pydantic models: `ParseOrderRequest { text, store_id, audio_base64? }` → `ParseOrderResponse { success, draft_order?, ambiguities, message }`.
+- AI Service (FastAPI) công bố hợp đồng riêng qua Pydantic models: `ParseOrderRequest { text }` → `ExtractedOrder`; `BookkeepingDraftRequest { report }` → `BookkeepingDraft { summary, observations, warnings }`. Mọi endpoint (trừ `/health`) xác thực bằng header `X-API-Secret`.
 
 ### 5.2.2. Hợp đồng thuê bao (Subscription Contract)
 
@@ -1155,8 +1169,9 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 | `/api/public/**` | Public |
 | `/api/reference/**` | Public |
 | `/api/admin/accounts/**`, `/api/admin/seed/**`, `/api/seed/**` | `ADMIN` |
-| `/api/admin/**` | `ADMIN` hoặc `MANAGER` |
+| `/api/admin/**` (gồm `/api/admin/report-templates/**`) | `ADMIN` hoặc `MANAGER` (riêng controller biểu mẫu còn chặn thêm bằng `@PreAuthorize("hasRole('ADMIN')")`) |
 | `/api/owner/**` | `BUSINESS_OWNER` hoặc `OWNER` |
+| `/api/ai/**`, `/api/accounting/**`, `/api/revenue-ledger/**` | Xác thực + `@PreAuthorize` cấp method: đọc = `BUSINESS_OWNER` / `OWNER` / `EMPLOYEE`; thao tác ghi (duyệt báo cáo, nộp thuế, `draft-bookkeeping`) chỉ `BUSINESS_OWNER` / `OWNER`. Riêng `/api/ai/**` còn yêu cầu feature `AI_ASSISTANT` qua `@RequireFeature` |
 | Còn lại | Xác thực (authenticated) |
 
 ## 6.3. Authentication — `/api/auth`
@@ -1265,16 +1280,66 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 |---|---|---|---|
 | GET | `/api/public/database-health` | Map trạng thái kết nối | Chỉ chạy ở `dev` |
 
-## 6.11. AI Service (FastAPI) — Base `http://<ai-host>`
+## 6.11. AI Service (Python + FastAPI) — Base dev `http://127.0.0.1:8000`
+
+Service này là **gateway trích xuất** gọi B.ai. Service **không** tự ghi database, không tự tạo đơn hàng và không giữ danh mục sản phẩm/khách hàng — mọi bước match, tính giá, tạo draft và xác nhận đơn do backend Spring Boot thực hiện.
 
 | Method | Path | Request | Response | Ghi chú |
 |---|---|---|---|---|
-| GET | `/health` | — | `{ status, service }` | Health check |
-| POST | `/api/v1/ai/parse-order` | `ParseOrderRequest { text, store_id, audio_base64? }` | `ParseOrderResponse { success, draft_order?, ambiguities, message }` | Chưa triển khai đầy đủ (Sprint 5-6) |
+| GET | `/health` | — | `{ status, service }` | Health check, không cần secret |
+| GET | `/api/v1/ai/ready` | — | `{ status, provider, model, live_verified }` | Kiểm tra đủ cấu hình B.ai; trả `503 BAI_NOT_CONFIGURED` nếu thiếu. Không tiêu tốn credit |
+| POST | `/api/v1/ai/parse-order` | `{ text }` | `ExtractedOrder` | Trích xuất sản phẩm, số lượng, đơn vị, khách hàng, hình thức thanh toán từ câu tiếng Việt |
+| POST | `/api/v1/ai/draft-bookkeeping` | `{ report }` | `{ summary, observations[], warnings[] }` | Sinh nhận xét cho báo cáo từ số liệu backend cung cấp; AI không tự tính lại tiền |
 
-## 6.12. Ví dụ Request/Response JSON
+Quy ước bắt buộc:
 
-### 6.12.1. POST /api/auth/login
+- Mọi endpoint **trừ `/health`** yêu cầu header `X-API-Secret` khớp `AI_SERVICE_API_SECRET`; sai/thiếu trả `401 UNAUTHORIZED`, chưa cấu hình trả `503 SERVICE_NOT_CONFIGURED`.
+- Input chỉ là văn bản (`{ text }`). Hiện **chưa có nhận diện giọng nói (STT)**, không có `store_id` hay `audio_base64`.
+- Cấu hình nằm trong `Code/AI/.env`: `BAI_API_KEY`, `BAI_MODEL`, `BAI_BASE_URL`, `BAI_TIMEOUT_SECONDS`, `AI_SERVICE_API_SECRET`.
+
+## 6.12. Backend AI — `/api/ai` (`com.hbdt.ai`)
+
+Tất cả endpoint yêu cầu đã đăng nhập **và** feature `AI_ASSISTANT` (`@RequireFeature`).
+
+| Method | Path | Quyền | Request | Response | Ghi chú |
+|---|---|---|---|---|---|
+| POST | `/api/ai/parse-order` | OWNER / EMPLOYEE | `AiParseOrderRequest { text }` (bắt buộc, ≤ 4000 ký tự) | `ApiResponse<AiParseOrderResponse>` | Backend gọi AI service, resolve sản phẩm/khách hàng/giá thật, lưu `ai_order_drafts` trạng thái `PENDING` và gửi notification |
+| GET | `/api/ai/drafts` | OWNER / EMPLOYEE | — | `ApiResponse<List<AiParseOrderResponse>>` | Tối đa 50 draft `PENDING` mới nhất theo business |
+| POST | `/api/ai/drafts/{id}/reject` | OWNER / EMPLOYEE | `AiDraftRejectRequest { reason }` (bắt buộc, ≤ 500 ký tự) | `ApiResponse<AiParseOrderResponse>` | Chỉ từ chối được draft đang `PENDING`; chuyển sang `REJECTED` |
+| POST | `/api/ai/draft-bookkeeping` | chỉ OWNER | query `fromDate`, `toDate` | `ApiResponse<AiBookkeepingDraftResponse { summary, observations[], warnings[] }>` | Backend lấy số liệu revenue ledger rồi nhờ AI viết nhận xét |
+| GET | `/api/ai/health` | OWNER / EMPLOYEE | — | `ApiResponse<Map>` | Kiểm tra cấu hình URL/secret phía backend |
+
+> AI **không** ghi đơn hàng. Khi người dùng chấp nhận gợi ý, frontend đưa vào giỏ và đơn cuối cùng vẫn đi qua `POST /api/sales-orders` (§7.5).
+
+## 6.13. Kế toán & thuế — `/api/accounting`
+
+| Method | Path | Quyền | Request | Response | Ghi chú |
+|---|---|---|---|---|---|
+| GET | `/api/accounting/books` | OWNER / EMPLOYEE | query `fromDate`, `toDate` | `ApiResponse<StatutoryAccountingBooksResponse>` | Lập sổ S1-HKD, S2-HKD, S4-HKD theo kỳ |
+| POST | `/api/accounting/books/review` | chỉ OWNER | `AccountingReportReviewRequest { fromDate, toDate, status, note }` | `ApiResponse<StatutoryAccountingBooksResponse>` | Lưu kết quả kiểm tra vào `accounting_report_reviews` kèm `data_signature` |
+| POST | `/api/accounting/books/tax-payments` | chỉ OWNER | `CreateTaxPaymentRequest { fromDate, toDate, taxCode, paymentDate, paymentAmount (> 0), documentNumber, paymentMethod, referenceNumber, note }` | `ApiResponse<StatutoryAccountingBooksResponse>` | Ghi nhận một lần nộp thuế vào `tax_payments`, cập nhật số còn phải nộp |
+| GET | `/api/accounting/template-reports` | OWNER / EMPLOYEE | query `fromDate`, `toDate` | `ApiResponse<List<FilledTemplateReportResponse>>` | Tự động điền các biểu mẫu đang hiệu lực bằng số liệu thật |
+
+## 6.14. Quản trị biểu mẫu báo cáo — `/api/admin/report-templates` (chỉ ADMIN)
+
+| Method | Path | Request | Response | Ghi chú |
+|---|---|---|---|---|
+| GET | `/api/admin/report-templates` | — | `ApiResponse<List<ReportTemplateAdminResponse>>` | Danh mục biểu mẫu kèm phiên bản hiện hành |
+| POST | `/api/admin/report-templates` | `ReportTemplateRequest` | `ApiResponse<ReportTemplateAdminResponse>` | Tạo biểu mẫu mới |
+| POST | `/api/admin/report-templates/{templateId}/versions` | `ReportTemplateVersionRequest` | `ApiResponse<ReportTemplateAdminResponse>` | Thêm phiên bản mới với thời gian hiệu lực |
+
+Frontend tương ứng: `/admin/report-templates`.
+
+## 6.15. Sổ doanh thu & báo cáo vận hành — `/api/revenue-ledger`
+
+| Method | Path | Quyền | Request | Response | Ghi chú |
+|---|---|---|---|---|---|
+| GET | `/api/revenue-ledger` | OWNER / EMPLOYEE | query `fromDate`, `toDate`, `keyword`, `productId`, `page`, `size` | `ApiResponse<RevenueLedgerPageResponse>` | Response gồm dòng sổ doanh thu, báo cáo vận hành và báo cáo công nợ (`debts`, `debtSummary`) |
+| POST | `/api/revenue-ledger/operations/review` | chỉ OWNER | `AccountingReportReviewRequest` | `ApiResponse<BusinessOperationsReportResponse>` | Kiểm tra/duyệt báo cáo vận hành, ghi vào `accounting_report_reviews` |
+
+## 6.16. Ví dụ Request/Response JSON
+
+### 6.16.1. POST /api/auth/login
 
 **Request:**
 
@@ -1305,7 +1370,7 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 }
 ```
 
-### 6.12.2. POST /api/auth/register
+### 6.16.2. POST /api/auth/register
 
 **Request:**
 
@@ -1330,7 +1395,7 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 }
 ```
 
-### 6.12.3. GET /api/products (tìm kiếm + phân trang)
+### 6.16.3. GET /api/products (tìm kiếm + phân trang)
 
 **Request:** `GET /api/products?keyword=sơn&categoryId=3&page=0&size=20&sortBy=createdAt&direction=desc`
 
@@ -1362,7 +1427,7 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 }
 ```
 
-### 6.12.4. POST /api/products
+### 6.16.4. POST /api/products
 
 **Request:**
 
@@ -1396,7 +1461,7 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 }
 ```
 
-### 6.12.5. Ví dụ lỗi chuẩn (404)
+### 6.16.5. Ví dụ lỗi chuẩn (404)
 
 **Request:** `GET /api/products/999999`
 
@@ -1553,24 +1618,38 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                     WORKFLOW: AI DRAFT ORDER                                │
 │                                                                            │
-│  ┌─────────────┐  ┌──────────────────┐  ┌────────────────────────────────┐ │
-│  │  Khách nhắn │─►│  AI Service      │─►│  Draft Order (PENDING_REVIEW)  │ │
-│  │  Zalo / gọi │  │  (FastAPI)       │  │  → thông báo Employee/Owner    │ │
-│  │  điện       │  │  POST /parse-order│  └──────────────┬────────────────┘ │
-│  └─────────────┘  └────────┬─────────┘                 │                  │
-│                            │                            │                  │
-│       Text/Voice → STT (voice) → NLP Parser              │                  │
-│       → Match sản phẩm/khách hàng → Ambiguity check      │                  │
-│       → Sinh Draft Order (ai_requests)                   │                  │
-│                            ▼                            ▼                  │
+│  ┌──────────────┐   ┌────────────────────┐   ┌──────────────────────────┐  │
+│  │ Người dùng   │──►│  Backend /api/ai    │──►│  AI Service (FastAPI)    │  │
+│  │ nhập câu tại │   │  POST /parse-order  │   │  POST /api/v1/ai/parse-  │  │
+│  │ trang tạo đơn│   │  (@RequireFeature   │   │  order + X-API-Secret    │  │
+│  │ (văn bản)    │   │   AI_ASSISTANT)     │   └─────────────┬────────────┘  │
+│  └──────────────┘   └─────────┬──────────┘                 ▼               │
+│                               │                 ┌────────────────────────┐  │
+│                               │                 │  B.ai Chat Completions │  │
+│                               │                 │  → JSON trích xuất     │  │
+│                               │                 └────────────────────────┘  │
+│                               ▼                                            │
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │  EMPLOYEE/OWNER DUYỆT:                                               │  │
-│  │    ├─ Xác nhận  → Chuyển thành đơn thật (mục 7.5)                    │  │
-│  │    ├─ Sửa       → Cập nhật rồi xác nhận                              │  │
-│  │    └─ Từ chối   → Hủy Draft Order + ghi log                          │  │
+│  │  BACKEND RESOLVE DỮ LIỆU THẬT (không tin trực tiếp dữ liệu AI):      │  │
+│  │    ├─ Match sản phẩm / đơn vị / giá theo business                    │  │
+│  │    ├─ Match hoặc đánh dấu khách hàng cần tạo                         │  │
+│  │    └─ Ghi nhận dữ liệu thiếu / nhập nhằng vào issues, ambiguities    │  │
+│  └───────────────────────────────────┬──────────────────────────────────┘  │
+│                                      ▼                                     │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  LƯU `ai_order_drafts` (status = PENDING)                            │  │
+│  │  + gửi notification cho OWNER/EMPLOYEE khác trong cùng hộ           │  │
+│  └───────────────────────────────────┬──────────────────────────────────┘  │
+│                                      ▼                                     │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  NGƯỜI DÙNG XỬ LÝ:                                                   │  │
+│  │    ├─ Đưa gợi ý vào giỏ → chỉnh sửa → POST /api/sales-orders (7.5)   │  │
+│  │    │     → draft chuyển CONFIRMED, sinh sổ kế toán / S1-HKD          │  │
+│  │    └─ Từ chối → POST /api/ai/drafts/{id}/reject → status REJECTED    │  │
+│  │          (lý do bắt buộc, lưu vào rejection_reason)                  │  │
 │  └──────────────────────────────────────────────────────────────────────┘  │
 │                                                                            │
-│  Ghi chú: AI parser hiện chưa triển khai đầy đủ (Sprint 5-6)               │
+│  Ghi chú: chưa hỗ trợ nhận giọng nói (STT); input hiện là văn bản.        │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1765,8 +1844,10 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 │  │  │ - period       │   └──────────────────┘   └──────────────────────┘ │   │
 │  │  └────────────────┘                                                  │   │
 │  │                                                                        │   │
-│  │  Hệ thống: AiRequest · Notification · Feedback · Announcement ·       │   │
-│  │            SystemConfiguration · AuditLog · TermsConsent               │   │
+│  │  Hệ thống (AI & System Ops): AiOrderDraft (đang dùng) ·              │   │
+│  │            AiRequest (legacy) · AccountingReportReview ·              │   │
+│  │            Notification · Feedback · Announcement ·                   │   │
+│  │            SystemConfiguration · AuditLog · TermsConsent              │   │
 │  └──────────────────────────────────────────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -2290,36 +2371,38 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 
 ## 8.15. Sequence — AI Draft Order
 
-```text
-┌──────────────────────────────────────────────────────────────────────────────┐
-│               SEQUENCE DIAGRAM: AI DRAFT ORDER                                │
-│                                                                              │
-│  Employee   OrderCtrl(*)  AIService(FastAPI)   Backend(*)       DB           │
-│    │            │              │                  │             │             │
-│    │ POST /api/v1/ai/parse-order (text)          │             │             │
-│    │───────────►│              │                  │             │             │
-│    │            │ parseOrder(text, storeId)      │             │             │
-│    │            │─────────────►│                  │             │             │
-│    │            │              │ ① STT (voice) / NLP parse    │             │
-│    │            │              │ ② Match sản phẩm, khách hàng │             │
-│    │            │              │ ③ Ambiguity detection        │             │
-│    │            │              │ ④ Gọi backend nếu cần match  │             │
-│    │            │              │────────────────────────────►│             │
-│    │            │◄─ DraftOrder (proposed)────────────────────│             │
-│    │            │              │                  │             │             │
-│    │            │ lưu AiRequest + tạo Draft Order             │             │
-│    │            │ (status = PENDING_REVIEW)                  │             │
-│    │            │───────────────────────────────────────────────────────►│    │
-│    │            │ thông báo Employee/Owner (Notification)    │             │
-│    │            │───────────────────────────────────────────────────────►│    │
-│    │◄── 200 ────│  { draft_order, ambiguities }              │             │
-│    │            │              │                  │             │             │
-│    │  Employee/Owner duyệt:                                  │             │
-│    │    Xác nhận → chuyển thành đơn thật (xem 8.14)          │             │
-│    │    Sửa / Từ chối → cập nhật hoặc hủy Draft Order        │             │
-│    │  Ghi chú: AI parser chưa triển khai đầy đủ (Sprint 5-6) │             │
-└──────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as Người dùng (OWNER/EMPLOYEE)
+    participant AC as AiController
+    participant AS as AiService
+    participant PY as AI Service (FastAPI)
+    participant BAI as B.ai
+    participant DB as MySQL
+
+    U->>AC: POST /api/ai/parse-order { text }
+    AC->>AC: Kiểm tra quyền + feature AI_ASSISTANT
+    AC->>AS: parseOrder(user, text)
+    AS->>PY: POST /api/v1/ai/parse-order (header X-API-Secret)
+    PY->>BAI: Chat Completions với prompt trích xuất
+    BAI-->>PY: JSON (sản phẩm, số lượng, đơn vị, khách hàng, thanh toán)
+    PY-->>AS: ExtractedOrder
+    AS->>AS: Resolve sản phẩm / đơn vị / giá / khách hàng theo business
+    AS->>DB: INSERT ai_order_drafts (status = PENDING)
+    AS->>DB: INSERT notifications cho OWNER/EMPLOYEE cùng hộ
+    AS-->>AC: AiParseOrderResponse (draftId, status, items, ambiguities)
+    AC-->>U: 200 ApiResponse.data
+    alt Người dùng chấp nhận
+        U->>DB: POST /api/sales-orders (luồng 8.14)
+        Note over DB: draft chuyển CONFIRMED, sinh dòng sổ kế toán
+    else Người dùng từ chối
+        U->>AC: POST /api/ai/drafts/{id}/reject { reason }
+        AC->>DB: UPDATE status = REJECTED + rejection_reason
+    end
 ```
+
+> Ghi chú: AI chỉ tạo đơn nháp. Đơn chính thức luôn đi qua `POST /api/sales-orders` (§7.5, §8.14). Hiện chưa hỗ trợ nhận giọng nói (STT).
 
 ---
 
@@ -2422,7 +2505,7 @@ Quy trình:
 
 ## 10.2. Danh sách entity (JPA)
 
-`AccountingBook`, `AccountingBookEntry`, `AiRequest`, `Announcement`, `AuditLog`, `BusinessProfile`, `Category`, `Customer`, `DebtTransaction`, `Feedback`, `GeneratedReport`, `InventoryBalance`, `InventoryTransaction`, `Notification`, `Product`, `ProductPrice`, `ProductUnit`, `ReportTemplate`, `ReportTemplateVersion`, `Role`, `SalesOrder`, `SalesOrderItem`, `StockImport`, `StockImportItem`, `Subscription`, `SubscriptionPlan`, `SystemConfiguration`, `TaxActivityGroup`, `TaxObligation`, `TaxPayment`, `TaxType`, `TermsConsent`, `Unit`, `User` (+ `enums`).
+`AccountingBook`, `AccountingBookEntry`, `AccountingReportReview`, `AiOrderDraft`, `AiRequest` *(legacy, không còn nơi sử dụng)*, `Announcement`, `AuditLog`, `BusinessProfile`, `Category`, `Customer`, `DebtTransaction`, `Feedback`, `GeneratedReport`, `InventoryBalance`, `InventoryTransaction`, `Notification`, `Product`, `ProductPrice`, `ProductUnit`, `ReportTemplate`, `ReportTemplateVersion`, `Role`, `SalesOrder`, `SalesOrderItem`, `StockImport`, `StockImportItem`, `Subscription`, `SubscriptionPlan`, `SystemConfiguration`, `TaxActivityGroup`, `TaxObligation`, `TaxPayment`, `TaxType`, `TermsConsent`, `Unit`, `User` (+ `enums`).
 
 ## 10.3. Danh sách file frontend chính
 
@@ -2431,11 +2514,12 @@ Quy trình:
 | `app/lib/apiClient.ts` | HTTP client + refresh token + auth sync |
 | `app/lib/sessionGuard.ts` | Bảo vệ route |
 | `app/proxy.ts` | Edge proxy `/owner/*` |
-| `app/components/` | AuthSync, Navbar, PricingPlans, ScrollReveal, legal |
+| `app/components/` | AuthSync, Navbar, PricingPlans, ScrollReveal, legal, `AiOrderInput.tsx`, `OrderCartDrawer.tsx` |
 | `app/login`, `app/register`, `app/forgot-password`, `app/verify-email` | Luồng xác thực |
 | `app/onboarding` | Thiết lập ban đầu |
-| `app/owner/account`, `app/owner/products` | Khu vực chủ hộ |
-| `app/admin/accounts`, `app/admin/subscription-plans`, `app/admin/seed` | Khu vực quản trị |
+| `app/owner/account`, `app/owner/products`, `app/owner/orders/new`, `app/owner/revenue` | Khu vực chủ hộ (gồm nhập đơn bằng AI và sổ doanh thu) |
+| `app/employee/orders/new` | Nhập đơn bằng AI cho nhân viên |
+| `app/admin/accounts`, `app/admin/subscription-plans`, `app/admin/seed`, `app/admin/report-templates`, `app/admin/templates` | Khu vực quản trị (gồm quản lý biểu mẫu báo cáo kế toán) |
 
 ## 10.4. Cấu hình môi trường
 
@@ -2446,6 +2530,12 @@ Quy trình:
 | `JWT_SECRET` | dev key | Prod: bắt buộc từ môi trường |
 | `JWT_ACCESS_EXPIRATION_MS` | `900000` (15 phút) | |
 | `JWT_REFRESH_EXPIRATION_MS` | `604800000` (7 ngày) | |
+| `AI_SERVICE_URL` | `http://127.0.0.1:8000` | Địa chỉ AI service (Docker Compose dùng `http://ai-service:8000`) |
+| `AI_SERVICE_API_SECRET` | — | Secret backend → AI service; phải khớp giá trị cùng tên trong `Code/AI/.env` |
+| `AI_SERVICE_TIMEOUT_SECONDS` | `35` | Timeout khi backend gọi AI service |
+| `AI_SERVICE_AUTO_START` | `true` | Backend tự khởi động tiến trình AI service ở môi trường dev |
+| `AI_SERVICE_WORK_DIR` | `../AI` | Thư mục AI service, tính tương đối từ `Code/Server` |
+| `BAI_API_KEY` / `BAI_MODEL` / `BAI_BASE_URL` / `BAI_TIMEOUT_SECONDS` | — | Chỉ khai báo trong `Code/AI/.env`; **không** đặt ở backend |
 | Upload max | `5MB` | `spring.servlet.multipart.max-file-size` |
 
 ## 10.5. Ma trận truy xuất thiết kế
@@ -2457,9 +2547,9 @@ Quy trình:
 | Product & Category | §8.1, §8.2 | §8.7 | §7.3 | products, categories, units, prices, tax_activity_groups | §6.5, §6.6 | §4.7 |
 | Subscription | §8.1 | §8.8 | §7.4 | subscription_plans, subscriptions | §6.8 | §4.7 |
 | Admin | §8.3 | — | §7.8 | users, roles | §6.7 | §4.7 |
-| Sales & Debt | §8.1 | — | §7.5 | sales_orders, sales_order_items, customers, debt_transactions | (kế hoạch) | (kế hoạch) |
-| AI Order | §8.1 | — | §7.6 | ai_requests, notifications | §6.11 | (kế hoạch) |
-| Accounting/Tax | §8.1 | — | §7.7 | accounting_books, tax_*, report_* | (kế hoạch) | (kế hoạch) |
+| Sales & Debt | §8.1 | §8.14 | §7.5 | sales_orders, sales_order_items, customers, debt_transactions | §6.15 | `owner/orders`, `employee/orders` |
+| AI Order | §8.1 | §8.15 | §7.6 | ai_order_drafts, notifications | §6.11, §6.12 | `components/AiOrderInput.tsx` |
+| Accounting/Tax | §8.1 | — | §7.7 | accounting_books, accounting_report_reviews, tax_*, report_* | §6.13, §6.14 | `owner/revenue`, `admin/report-templates` |
 | Reference | — | — | — | (in-memory) | §6.9 | §4.7 |
 
 ## 10.6. Hướng dẫn sử dụng tài liệu này
