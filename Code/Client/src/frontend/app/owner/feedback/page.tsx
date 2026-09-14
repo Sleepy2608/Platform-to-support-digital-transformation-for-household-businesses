@@ -170,7 +170,7 @@ export default function FeedbackPage() {
     setSubmitSuccess('');
 
     if (!selectedTypeId) {
-      setSubmitError('Vui lòng chọn loại phản hồi');
+      setSubmitError('Vui lòng chọn loại hỗ trợ');
       return;
     }
     if (!subject.trim()) {
@@ -178,7 +178,7 @@ export default function FeedbackPage() {
       return;
     }
     if (!content.trim()) {
-      setSubmitError('Vui lòng nhập nội dung phản hồi');
+      setSubmitError('Vui lòng nhập nội dung hỗ trợ');
       return;
     }
 
@@ -191,11 +191,11 @@ export default function FeedbackPage() {
       });
       setSubject('');
       setContent('');
-      setSubmitSuccess('Gửi phản hồi thành công! Chúng tôi sẽ phản hồi trong thời gian sớm nhất.');
+      setSubmitSuccess('Gửi hỗ trợ thành công! Chúng tôi sẽ hỗ trợ bạn trong thời gian sớm nhất.');
       void loadFeedbacks(0);
       setPage(0);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Không thể gửi phản hồi');
+      setSubmitError(err instanceof Error ? err.message : 'Không thể gửi hỗ trợ');
     } finally {
       setSubmitting(false);
     }
@@ -227,10 +227,10 @@ export default function FeedbackPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-2xs">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight select-none" style={{ userSelect: 'none' }}>
-              Phản hồi & Hỗ trợ
+              Hỗ trợ
             </h1>
             <p className="text-slate-500 text-xs sm:text-sm font-medium mt-1 select-none" style={{ userSelect: 'none' }}>
-              Gửi yêu cầu hỗ trợ hoặc phản hồi về dịch vụ
+              Gửi yêu cầu hỗ trợ về dịch vụ
             </p>
           </div>
           <div className="flex items-center gap-3 self-start sm:self-auto">
@@ -253,7 +253,7 @@ export default function FeedbackPage() {
                 <MessageSquare className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900">Gửi phản hồi mới</h2>
+                <h2 className="text-base font-bold text-slate-900">Gửi hỗ trợ mới</h2>
                 <p className="text-xs text-slate-500 font-medium">Chia sẻ ý kiến, báo lỗi hoặc yêu cầu hỗ trợ</p>
               </div>
             </div>
@@ -278,7 +278,7 @@ export default function FeedbackPage() {
             {/* Feedback Type */}
             <div>
               <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                Loại phản hồi <span className="text-red-500">*</span>
+                Loại hỗ trợ <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
@@ -290,9 +290,9 @@ export default function FeedbackPage() {
                   className="w-full appearance-none rounded-xl border border-slate-200 bg-white pl-10 pr-10 py-3 text-sm font-semibold text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-900/10 transition cursor-pointer disabled:bg-slate-50 disabled:text-slate-400"
                 >
                   {loadingTypes ? (
-                    <option value="">Đang tải loại phản hồi...</option>
+                    <option value="">Đang tải loại hỗ trợ...</option>
                   ) : feedbackTypes.length === 0 ? (
-                    <option value="">Chưa có loại phản hồi</option>
+                    <option value="">Chưa có loại hỗ trợ</option>
                   ) : (
                     feedbackTypes.map((type) => (
                       <option key={type.code} value={type.code}>
@@ -316,7 +316,7 @@ export default function FeedbackPage() {
                   type="text"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  placeholder="Nhập tiêu đề phản hồi..."
+                  placeholder="Nhập tiêu đề hỗ trợ..."
                   maxLength={255}
                   required
                   className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-900/10 transition"
@@ -357,7 +357,7 @@ export default function FeedbackPage() {
                 ) : (
                   <Send className="h-4 w-4" />
                 )}
-                {submitting ? 'Đang gửi...' : 'Gửi phản hồi'}
+                {submitting ? 'Đang gửi...' : 'Gửi hỗ trợ'}
               </button>
             </div>
           </form>
@@ -377,9 +377,9 @@ export default function FeedbackPage() {
                   <Clock className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-slate-900">Phản hồi đã gửi</h2>
+                  <h2 className="text-base font-bold text-slate-900">Hỗ trợ đã gửi</h2>
                   <p className="text-xs text-slate-500 font-medium">
-                    {totalElements > 0 ? `${totalElements} phản hồi đã gửi` : 'Danh sách phản hồi của bạn'}
+                    {totalElements > 0 ? `${totalElements} hỗ trợ đã gửi` : 'Danh sách hỗ trợ đã gửi của bạn'}
                   </p>
                 </div>
               </div>
@@ -404,8 +404,8 @@ export default function FeedbackPage() {
           ) : feedbacks.length === 0 ? (
             <div className="flex h-48 flex-col items-center justify-center gap-3 text-slate-400">
               <MessageSquare className="h-10 w-10 opacity-40" />
-              <p className="font-semibold text-sm">Bạn chưa gửi phản hồi nào</p>
-              <p className="text-xs">Sử dụng biểu mẫu bên trên để gửi phản hồi</p>
+              <p className="font-semibold text-sm">Bạn chưa gửi hỗ trợ nào</p>
+              <p className="text-xs">Sử dụng biểu mẫu bên trên để gửi hỗ trợ</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-100">
@@ -509,7 +509,7 @@ export default function FeedbackPage() {
                     <MessageSquare className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900">Chi tiết phản hồi</h3>
+                    <h3 className="font-bold text-slate-900">Chi tiết hỗ trợ</h3>
                     <p className="text-xs text-slate-500 font-mono">#{viewingFeedback.id}</p>
                   </div>
                 </div>

@@ -73,7 +73,7 @@ const MANAGE_NAV_ITEMS: Array<{
   ] },
   { label: 'Khách hàng', href: '/owner/customers', icon: UserSearch, path: '/owner/customers' },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
-  { label: 'Phản hồi', href: '/owner/feedback', icon: MessageSquare, path: '/owner/feedback' },
+  { label: 'Viết hỗ trợ', href: '/owner/feedback', icon: MessageSquare, path: '/owner/feedback' },
 ];
 
 function isChildActive(childHref: string, pathname: string, searchParams: URLSearchParams | null): boolean {
@@ -240,9 +240,12 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     if (loading) return;
     let active = true;
     const refreshCount = async () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+
       try {
         const summary = await apiClient.get<{ totalLowStock: number }>(
           '/api/inventory/low-stock/summary?limit=1',
+          { cacheTtlMs: 25_000 },
         );
         if (active) setLowStockCount(summary.totalLowStock);
       } catch {
@@ -250,17 +253,22 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
       }
     };
     void refreshCount();
-    const timer = window.setInterval(() => void refreshCount(), 30_000);
+    const timer = window.setInterval(() => void refreshCount(), 60_000);
     const handleNotification = () => void refreshCount();
+    const handleVisibilityChange = () => {
+      if (!document.hidden) void refreshCount();
+    };
 
     window.addEventListener('hbdt-notification', handleNotification);
     window.addEventListener('product-updated', handleNotification);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       active = false;
       window.clearInterval(timer);
       window.removeEventListener('hbdt-notification', handleNotification);
       window.removeEventListener('product-updated', handleNotification);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [loading]);
 
