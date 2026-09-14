@@ -8,8 +8,9 @@
 | **Tên dự án (VN)** | Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | **Loại tài liệu** | Architecture Design Document |
 | **Viết tắt** | HBDT
-| **Phiên bản tài liệu** | 1.0 |
+| **Phiên bản tài liệu** | 2.0 |
 | **Ngày tạo** | 26/07/2026 |
+| **Ngày chỉnh sửa lần cuối** | 14/09/2026 |
 | **Trạng thái** | Bản nháp (Draft) |
 
 ---
@@ -64,7 +65,7 @@ Tài liệu mô tả kiến trúc kỹ thuật của nền tảng hỗ trợ chu
 
 Hệ thống được thiết kế theo kiến trúc **phân tầng** (Layered / Three-Tier), Backend tổ chức theo **Modular Monolith**, tách riêng một **AI Order Service** để xử lý ngôn ngữ tự nhiên (text/voice) và không làm gián đoạn bán hàng thủ công khi AI không khả dụng. Hệ thống là **multi-tenant**, mỗi hộ kinh doanh là một Tenant độc lập. Hệ thống bao gồm:
 
-- **4 nhóm giao diện**: Public Portal (đăng ký/landing), Owner Web/Mobile, Employee Mobile/POS, Admin Portal — ưu tiên thiết kế đơn giản, phù hợp người dùng có trình độ số thấp và chỉ sở hữu smartphone.
+- **5 nhóm giao diện**: Public Portal (đăng ký/landing), Owner Web/Mobile (quản lý cửa hàng, sản phẩm, kho, doanh thu, công nợ), Employee Mobile/POS (bán hàng tại quầy, xác nhận đơn nháp), Manager Portal (quản lý vận hành nền tảng, duyệt hồ sơ hộ kinh doanh, hỗ trợ gói thuê bao, xử lý phản hồi, theo dõi platform analytics) và Admin Portal (quản trị hệ thống, định nghĩa bảng giá gói, template báo cáo kế toán, quản lý Manager, audit log).
 - **1 Backend API trung tâm** theo mô hình Modular Monolith, đảm bảo tính toàn vẹn giao dịch (order – tồn kho – công nợ – bút toán) trong cùng transaction.
 - **1 AI Order Service** độc lập: chuyển đổi tin nhắn/giọng nói (qua kênh tại quầy, điện thoại, Zalo) thành Draft Order, luôn có con người xác nhận trước khi ghi nhận chính thức (human-in-the-loop).
 - **Kênh tích hợp nhắn tin (Zalo OA / thoại)** làm cầu nối giữa khách hàng và AI Order Service — đây là thành phần bắt buộc để hiện thực hoá yêu cầu "multi-channel orders".
@@ -82,26 +83,26 @@ Kiến trúc hướng tới đáp ứng các yêu cầu phi chức năng: thời
 
 ```
                                     HỆ THỐNG BÊN NGOÀI
-                    ┌─────────────────────────────────────────────────┐
-                    │              NGƯỜI DÙNG / ACTORS                │
-                    │                                                 │
-                    │   ┌───────┐   ┌──────────┐     ┌───────────┐    │
-                    │   │ OWNER │   │ EMPLOYEE │     │   ADMIN   │    │
-                    │   └───┬───┘   └────┬─────┘     └─────┬─────┘    │
-                    │       │            │                 │          │
-                    │       │      ┌─────┴──────┐          │          │
-                    │       │      │ KHÁCH HÀNG │          │          │
-                    │       │      │ (phone/Zalo│          │          │
-                    │       │      │  /tại quầy)│          │          │
-                    │       │      └─────┬──────┘          │          │
-                    └───────┼────────────┼─────────────────┼──────────┘
-                            ▼            ▼                 ▼
-        ┌───────────────────────────────────────────────────────────────┐
-        │        NỀN TẢNG HỖ TRỢ CHUYỂN ĐỔI SỐ CHO HỘ KINH DOANH        │
-        │                                                               │
-        │   Presentation Tier → Application Tier (Modular Monolith)     │
-        │   → AI Order Service → Data & Infrastructure                  │
-        └───────────────────────────────┬───────────────────────────────┘
+                    ┌─────────────────────────────────────────────────────────────────┐
+                    │                      NGƯỜI DÙNG / ACTORS                        │
+                    │                                                                 │
+                    │   ┌───────┐   ┌──────────┐     ┌───────────┐    ┌───────────┐   │
+                    │   │ OWNER │   │ EMPLOYEE │     │  MANAGER  │    │   ADMIN   │   │
+                    │   └───┬───┘   └────┬─────┘     └─────┬─────┘    └─────┬─────┘   │
+                    │       │            │                 │                │         │
+                    │       │      ┌─────┴──────┐          │                │         │
+                    │       │      │ KHÁCH HÀNG │          │                │         │
+                    │       │      │ (phone/Zalo│          │                │         │
+                    │       │      │  /tại quầy)│          │                │         │
+                    │       │      └─────┬──────┘          │                │         │
+                    └───────┼────────────┼─────────────────┼────────────────┼─────────┘
+                            ▼            ▼                 ▼                ▼
+        ┌───────────────────────────────────────────────────────────────────────────────┐
+        │        NỀN TẢNG HỖ TRỢ CHUYỂN ĐỔI SỐ CHO HỘ KINH DOANH                        │
+        │                                                                               │
+        │   Presentation Tier → Application Tier (Modular Monolith)                     │
+        │   → AI Order Service → Data & Infrastructure                                  │
+        └───────────────────────────────┬───────────────────────────────────────────────┘
                                         │
                     ┌───────────────────┼───────────────────┐
                     ▼                   ▼                   ▼
@@ -112,7 +113,7 @@ Kiến trúc hướng tới đáp ứng các yêu cầu phi chức năng: thời
           └──────────────────┘ └─────────────────┘ └──────────────────┘
 ```
 
-**Chú thích:** Khách hàng không phải actor có tài khoản trong hệ thống — họ tương tác gián tiếp qua kênh Zalo/điện thoại, được Employee/Owner đại diện thao tác hoặc được AI Order Service tiếp nhận hộ.
+**Chú thích:** Khách hàng không phải actor có tài khoản trong hệ thống — họ tương tác gián tiếp qua kênh Zalo/điện thoại, được Employee/Owner đại diện thao tác hoặc được AI Order Service tiếp nhận hộ. Quyền hạn nội bộ được phân định theo 4 cấp vai trò: Administrator (quản trị hệ thống) → Manager (quản lý vận hành nền tảng) → Owner (chủ hộ kinh doanh) → Employee (nhân viên cửa hàng).
 
 ### 2.2. Kiến trúc Container (C4 Level 2)
 
@@ -121,9 +122,9 @@ Kiến trúc hướng tới đáp ứng các yêu cầu phi chức năng: thời
 │                              HỆ THỐNG                                       │
 │                                                                             │
 │  ┌───────────────────────── PRESENTATION TIER ────────────────────────┐     │
-│  │  Public Portal │ Owner Web/Mobile │ Employee Mobile/POS │ Admin    │     │
-│  │  (Landing,     │ (Quản lý cửa     │ (Bán hàng, xác      │ Portal   │     │
-│  │  Đăng ký)      │  hàng, báo cáo)  │  nhận, công nợ)     │          │     │
+│  │  Public Portal │ Owner Web/App    │ Employee App/POS │ Manager &   │     │
+│  │  (Landing,     │ (Quản lý cửa     │ (Bán hàng, xác   │ Admin       │     │
+│  │  Đăng ký)      │  hàng, báo cáo)  │  nhận, công nợ)  │ Portal      │     │
 │  └───────────────────────────────┬────────────────────────────────────┘     │
 │                                  │ HTTPS / WebSocket                        │
 │  ┌────────────────────── API & SECURITY ENTRY LAYER ────────────────┐       │
@@ -150,9 +151,9 @@ Kiến trúc hướng tới đáp ứng các yêu cầu phi chức năng: thời
 ┌──────────┼─────────────────────── HỆ THỐNG BÊN NGOÀI ───────────────────────┐
 │          ▼                                                                  │
 │  ┌───────────────────┐  ┌──────────────────┐  ┌──────────────────────┐      │
-│  │ MESSAGING/VOICE   │  │ PAYMENT PROVIDER │  │ EMAIL/SMS/PUSH       │      │
-│  │ CHANNEL (Zalo OA, │  │ / BANK           │  │ PROVIDER (OTP,       │      │
-│  │ ghi âm cuộc gọi)  │  │ (Subscription)   │  │ thông báo)           │      │
+│  │ MESSAGING/VOICE   │  │ BANK / QR TĨNH   │  │ EMAIL/SMS/PUSH       │      │
+│  │ CHANNEL (Zalo OA, │  │ (Subscription    │  │ PROVIDER (OTP,       │      │
+│  │ ghi âm cuộc gọi)  │  │ transfer)        │  │ thông báo)           │      │
 │  └────────┬──────────┘  └──────────────────┘  └──────────────────────┘      │
 │           ▼                                                                 │
 │  ┌──────────────────┐                                                       │
@@ -170,18 +171,19 @@ Kiến trúc hướng tới đáp ứng các yêu cầu phi chức năng: thời
 | # | Thành phần | Vai trò | Giao thức |
 |---|---|---|---|
 | 1 | Public Portal | Landing page, đăng ký Owner | HTTPS |
-| 2 | Owner Web/Mobile | Quản lý cửa hàng, sản phẩm, kho, khách hàng, báo cáo | HTTPS |
+| 2 | Owner Web/Mobile | Quản lý cửa hàng, sản phẩm, kho, khách hàng, báo cáo doanh thu | HTTPS |
 | 3 | Employee Mobile/POS | Bán hàng tại quầy, xác nhận Draft Order, ghi công nợ | HTTPS + WebSocket |
-| 4 | Admin Portal | Quản trị Owner, subscription, cấu hình hệ thống | HTTPS |
-| 5 | API & Security Entry Layer | Auth, RBAC, Tenant Context, Rate Limiting | REST |
-| 6 | Backend Modular Monolith | Toàn bộ nghiệp vụ lõi | REST / nội bộ |
-| 7 | AI Order Service | STT, NLP, matching, sinh Draft Order | REST / message queue |
-| 8 | Messaging/Voice Channel | Tiếp nhận tin nhắn Zalo, cuộc gọi | Webhook / API |
-| 9 | Notification Service | Thông báo realtime | WebSocket / Push |
-| 10 | Data & Infrastructure | DB, cache, file, queue, audit | JDBC/TCP |
-| 11 | Payment Provider | Thanh toán subscription | REST API |
-| 12 | Email/SMS/Push Provider | OTP, thông báo tài khoản | SMTP/API |
-| 13 | AI/Speech Provider | Speech-to-Text, mô hình ngôn ngữ | REST API |
+| 4 | Manager Portal | Quản lý vận hành nền tảng: duyệt hồ sơ Owner, hỗ trợ gói thuê bao, xử lý phản hồi, xem phân tích nền tảng | HTTPS |
+| 5 | Admin Portal | Quản trị viên hệ thống: quản lý Manager, định nghĩa bảng giá gói, template báo cáo kế toán, cấu hình AI, audit log | HTTPS |
+| 6 | API & Security Entry Layer | Auth, RBAC (4 vai trò), Tenant Context, Rate Limiting | REST |
+| 7 | Backend Modular Monolith | Toàn bộ nghiệp vụ lõi (Sales, Inventory, Debt, Bookkeeping, Analytics) | REST / nội bộ |
+| 8 | AI Order Service | STT, NLP, matching, sinh Draft Order | REST / message queue |
+| 9 | Messaging/Voice Channel | Tiếp nhận tin nhắn Zalo, cuộc gọi | Webhook / API |
+| 10 | Notification Service | Thông báo realtime | WebSocket / Push |
+| 11 | Data & Infrastructure | DB, cache, file, queue, audit | JDBC/TCP |
+| 12 | Bank / QR tĩnh | Thông tin chuyển khoản subscription hiển thị trên UI; chưa có payment gateway/webhook tự động | Chuyển khoản ngoài hệ thống |
+| 13 | Email/SMS/Push Provider | OTP, thông báo tài khoản | SMTP/API |
+| 14 | AI/Speech Provider | Speech-to-Text, mô hình ngôn ngữ | REST API |
 
 ---
 
@@ -206,7 +208,7 @@ Kiến trúc hướng tới đáp ứng các yêu cầu phi chức năng: thời
 | **Quyết định** | AI Order Service triển khai **độc lập** với Backend Modular Monolith |
 | **Bối cảnh** | Cần cô lập độ trễ/lỗi của Speech-to-Text và mô hình ngôn ngữ khỏi luồng bán hàng thủ công |
 | **Lý do chọn** | ① Triển khai/nâng cấp mô hình AI độc lập <br> ② Bán hàng thủ công không bị gián đoạn khi AI lỗi <br> ③ AI chỉ tạo Draft Order — Employee/Owner luôn là người xác nhận cuối |
-| **Ràng buộc bổ sung** | AI Order Service **không được truy cập trực tiếp** cơ sở dữ liệu nghiệp vụ; mọi thao tác đọc Product/Customer để matching phải đi qua application service API của Application Tier, có kèm `tenant_id` để đảm bảo cô lập dữ liệu giữa các hộ kinh doanh |
+| **Ràng buộc bổ sung** | AI Order Service **không được truy cập trực tiếp** cơ sở dữ liệu nghiệp vụ; mọi thao tác đọc Product/Customer để matching phải đi qua application service API của Application Tier, có kèm `businessId`/tenant context để đảm bảo cô lập dữ liệu giữa các hộ kinh doanh |
 
 #### ADR-003: Kênh tích hợp nhắn tin/thoại (Messaging Channel Integration)
 
@@ -220,7 +222,7 @@ Kiến trúc hướng tới đáp ứng các yêu cầu phi chức năng: thời
 
 | Thuộc tính | Chi tiết |
 |---|---|
-| **Quyết định** | Mỗi hộ kinh doanh là một `Tenant`; dữ liệu nghiệp vụ gắn `tenant_id` |
+| **Quyết định** | Mỗi hộ kinh doanh là một `Tenant` về mặt kiến trúc; mã nguồn hiện triển khai tenant isolation bằng `BusinessProfile` và cột `business_id`/field `businessId` |
 | **Lý do chọn** | ① Một nền tảng SaaS phục vụ nhiều hộ kinh doanh độc lập <br> ② Admin có phạm vi toàn nền tảng, Owner/Employee chỉ thấy dữ liệu Tenant của mình |
 | **Đánh đổi** | Cần kiểm soát chặt tenant isolation ở mọi tầng, kể cả AI Order Service |
 
@@ -239,17 +241,19 @@ Kiến trúc hướng tới đáp ứng các yêu cầu phi chức năng: thời
 | **Quyết định** | Dùng Redis (hoặc tương đương) làm caching layer |
 | **Lý do chọn** | ① Đáp ứng yêu cầu phản hồi < 2.000 ms <br> ② Hỗ trợ session, cache danh mục sản phẩm, rate limiting |
 
-#### ADR-007: Công nghệ minh hoạ
+#### ADR-007: Công nghệ triển khai thực tế
 
-| Thành phần | Ví dụ công nghệ | Ghi chú |
+Hệ thống được chuẩn hóa trên Tech Stack hiện đại, đảm bảo tính nhất quán giữa tài liệu thiết kế và mã nguồn thực tế:
+
+| Thành phần | Công nghệ triển khai | Ghi chú kiến trúc |
 |---|---|---|
-| Frontend Web | ReactJS/Next.js hoặc Vue/Nuxt | Responsive, ưu tiên hiệu năng trên thiết bị cấu hình thấp |
-| Mobile | React Native hoặc Flutter | Dùng chung 1 codebase cho Owner/Employee app |
-| Backend | Node.js (NestJS) hoặc Java (Spring Boot) | Modular Monolith, package-by-feature |
-| Database | PostgreSQL/MySQL | Quan hệ, hỗ trợ transaction ACID |
-| Cache | Redis | Session, cache, rate limit |
-| Queue | RabbitMQ/Kafka hoặc dịch vụ cloud tương đương | Xử lý bất đồng bộ AI, notification |
-| AI/Speech | Nhà cung cấp STT + LLM (có thể qua API bên thứ ba) | Tách qua adapter để dễ thay thế |
+| **Frontend Web** | **Next.js 16 (App Router), React 19, TypeScript 5** | Server-side Rendering (SSR) & Client Components, Responsive, Tailwind CSS 4, Framer Motion, Lucide React |
+| **Backend** | **Java 21, Spring Boot 3.3** | Modular Monolith, Spring Web, Spring Data JPA, Spring Security, JWT (JJWT), Maven |
+| **Database** | **MySQL 8.x (InnoDB, `utf8mb4`)** | Cơ sở dữ liệu quan hệ ACID. Chiến lược `ddl-auto`: `update` cho local dev và `validate` cho production |
+| **Data Mapping** | **Hybrid JPA Mapping** | Object mapping (`@ManyToOne`, `@JoinColumn`) cho liên kết nghiệp vụ lõi (`User` → `Role`, `Subscription` → `Plan`); dùng `Long ...Id` tham chiếu định danh (`businessId`, `productId`, `customerId`) để phân tách ranh giới module và tối ưu hiệu năng |
+| **AI Order Service** | **Python, FastAPI, Uvicorn, Pydantic** | Triển khai độc lập; trích xuất thực thể, tính điểm tin cậy, gọi API Backend theo tenant-scoped |
+| **Cache & Realtime** | **Redis (Cache/Session/Rate Limit), WebSocket** | Tăng tốc độ truy vấn, cập nhật trạng thái đơn hàng thời gian thực |
+| **DevOps & Packaging** | **Docker, Docker Compose** | Đóng gói toàn diện Backend, Frontend, Database và AI service |
 
 ### 3.2. Ma trận quyết định theo Quality Attribute
 
@@ -299,32 +303,43 @@ Kiến trúc hướng tới đáp ứng các yêu cầu phi chức năng: thời
 | **AI Order Service** | Nhận input từ Messaging/Voice Channel, STT, NLP parser, matching Product/Customer (qua Application Tier API), ambiguity detection, sinh Draft Order |
 | **Data & Infrastructure** | Lưu dữ liệu nghiệp vụ, cache, file, hàng đợi, audit log, backup |
 
-### 4.3. Cấu trúc thư mục Backend (Package-by-Feature — minh hoạ, có thể thay đổi nhiều sau khi dự án hoàn thành)
+### 4.3. Cấu trúc thư mục Backend thực tế (Spring Boot Package-by-Feature)
+
+Mã nguồn Backend tổ chức theo mô hình **Modular Monolith** dưới package gốc `com.hbdt`:
 
 ```
-src/
-├── config/                     # Cấu hình chung (security, redis, websocket)
-├── common/                     # DTO chung, exception handler, utils
-├── auth/                       # Đăng nhập, JWT, RBAC, Tenant Context
-├── onboarding-identity/        # Đăng ký Owner, xác minh, hồ sơ, Employee accounts
-├── subscription-billing/       # Gói dịch vụ, thanh toán, entitlement
-├── product-pricing/            # Sản phẩm, danh mục, đơn vị tính, giá
-├── inventory/                  # Nhập kho, tồn kho, biến động kho
-├── customer-debt/              # Khách hàng, lịch sử mua, công nợ
-├── order-checkout/             # Đơn thủ công, Draft Order review, thanh toán
-├── accounting-compliance/      # Bút toán, sổ sách, template báo cáo
-├── reporting-analytics/        # Dashboard, báo cáo
-├── administration/             # Quản lý Owner, giá gói, cấu hình hệ thống
-├── notification/                # WebSocket/Push dispatcher
-└── audit-log/                  # Ghi vết thao tác nhạy cảm
+com.hbdt/
+├── config/                     # Cấu hình hệ thống (SecurityFilterChain, WebMvc, CORS)
+├── common/                     # Base Entity, ApiResponse, GlobalExceptionHandler, Utils
+├── security/                   # JWT Filter, Token Provider, UserDetailsService, RBAC Evaluator
+├── auth/                       # Đăng nhập, làm mới token (Refresh Token), đăng xuất
+├── business/                   # Quản lý hồ sơ hộ kinh doanh (Tenant Profile, Onboarding)
+├── user/                       # Quản lý tài khoản người dùng, phân quyền RBAC
+│   ├── employee/               # Quản lý nhân viên (Owner Employee Directory, Lock/Reset pass)
+│   └── manager/                # Quản lý tài khoản Manager (do Admin khởi tạo)
+├── customer/                   # Khách hàng, lịch sử mua hàng, quản lý và xác nhận công nợ
+├── category/                   # Danh mục sản phẩm theo hộ kinh doanh
+├── product/                    # Sản phẩm, quy tắc đa đơn vị tính (Multi-unit conversion), giá bán
+├── inventory/                  # Nhập kho, xuất kho, cân chỉnh kho (Adjustment), cảnh báo tồn kho tối thiểu
+├── order/                      # Đơn hàng tại quầy (Sales Order), thanh toán, chi tiết đơn, hoá đơn
+├── bookkeeping/                # Tự động ghi nhận sổ kế toán theo TT 88/2021/TT-BTC (S1-HKD, S2-HKD, S4-HKD)
+├── subscription/               # Gói dịch vụ thuê bao, chu kỳ thanh toán, kích hoạt gói
+├── feature/                    # Quản lý tính năng gói (Feature Plans) & Feature Gate phân quyền
+├── analytics/                  # Phân tích & Báo cáo số liệu:
+│   ├── platform/               # Platform Analytics cho Admin/Manager (MRR, Tenant active, Churn rate)
+│   └── revenue/                # Revenue Ledger & Mặt hàng bán chạy (Best/Slow/Unsold) cho Owner
+├── template/                   # Quản lý mẫu biểu báo cáo tài chính/kế toán (Financial Template Management)
+├── feedback/                   # Tiếp nhận & xử lý phản hồi từ Owner/Employee tới Manager/Admin
+├── announcement/               # Quản lý và phát thông báo toàn hệ thống
+├── audit/                      # Audit Log ghi vết thao tác nhạy cảm
+└── seed/                       # Khởi tạo dữ liệu hệ thống tự động từ JSON có kiểm tra version/checksum
 
-ai-order-service/                # Service triển khai độc lập
-├── channel-adapter/             # Nhận input từ Zalo OA / thoại
-├── stt/                         # Speech-to-Text
-├── nlp-parser/                  # Trích xuất thực thể (sản phẩm, số lượng, khách hàng)
-├── matching/                    # Gọi Application Tier API để match Product/Customer
-├── ambiguity-detection/
-└── draft-order-generator/
+ai-order-service/               # Service FastAPI triển khai độc lập
+├── channel_adapter/            # Webhook Zalo OA / tiếp nhận audio thoại
+├── stt/                        # Speech-to-Text adapter
+├── nlp_parser/                 # Trích xuất thực thể (sản phẩm, số lượng, khách hàng)
+├── matching/                   # Gọi API Backend (tenant-scoped) để match danh mục
+└── draft_order_generator/      # Sinh Draft Order có tính điểm tin cậy (Confidence score)
 ```
 
 ---
@@ -339,19 +354,21 @@ ai-order-service/                # Service triển khai độc lập
 │                                                                        │
 │  ┌───────────┐ ┌──────────────┐ ┌───────────┐ ┌───────────────────┐    │
 │  │Onboarding │ │ Subscription │ │ Product & │ │     Inventory     │    │
-│  │& Identity │ │  & Billing   │ │  Pricing  │ │                   │    │
+│  │& Identity │ │  & Feature   │ │  Pricing  │ │  (Stock & Alerts) │    │
 │  └───────────┘ └──────────────┘ └───────────┘ └───────────────────┘    │
+│                                                                        │
 │  ┌───────────┐ ┌──────────────┐ ┌───────────────────────────────┐      │
-│  │Customer & │ │  Order &     │ │  Accounting, Bookkeeping &    │      │
-│  │   Debt    │ │  Checkout    │ │  Compliance                   │      │
+│  │Customer & │ │  Order &     │ │  Automatic Bookkeeping &      │      │
+│  │   Debt    │ │  Checkout    │ │  Financial Templates          │      │
 │  └───────────┘ └──────────────┘ └───────────────────────────────┘      │
+│                                                                        │
 │  ┌───────────────────┐ ┌────────────────────────────────────────┐      │
 │  │ Reporting &       │ │  Administration                        │      │
-│  │ Analytics         │ │                                        │      │
+│  │ Analytics         │ │  (User, Manager, Feedback, Audit)      │      │
 │  └───────────────────┘ └────────────────────────────────────────┘      │
 │                                                                        │
 │  ┌────────────────────────── SHARED SERVICES ─────────────────────┐    │
-│  │  Notification Service │ Audit Log Service │ Print/Invoice Svc  │    │
+│  │  Notification Service │ Audit Log Service │ Feature Gate       │    │
 │  └────────────────────────────────────────────────────────────────┘    │
 └───────────────────────────────────────┬────────────────────────────────┘
                                         │ internal API (tenant-scoped)
@@ -359,10 +376,20 @@ ai-order-service/                # Service triển khai độc lập
                         ┌───────────────────────────────┐
                         │       AI ORDER SERVICE        │
                         │  Channel Adapter → STT → NLP  │
-                        │  → Matching → Ambiguity       │
+                        │  → Matching → Confidence      │
                         │  → Draft Order Generator      │
                         └───────────────────────────────┘
 ```
+
+> **Ghi chú về phạm vi Accounting/Bookkeeping:**
+> - Module kế toán hiện tập trung vào tự động ghi nhận dữ liệu và hỗ trợ xuất 3 mẫu sổ chính theo TT 88/2021/TT-BTC: **S1-HKD** (Sổ chi tiết doanh thu bán hàng hóa, dịch vụ), **S2-HKD** (Sổ chi tiết vật liệu, dụng cụ, sản phẩm, hàng hóa) và **S4-HKD** (Sổ chi tiết nghĩa vụ thuế đối với NSNN).
+> - Các sổ S3 (Chi phí), S5 (Tiền lương), S6 (Quỹ tiền mặt), S7 (Tiền gửi ngân hàng) và tích hợp trực tiếp cổng thuế/hóa đơn điện tử nằm ngoài phạm vi triển khai hiện tại.
+
+> **Ghi chú về phân tách Purchase, Debt và Payment:**
+> - **Order Payment:** Thanh toán phát sinh tức thì tại thời điểm hoàn tất đơn hàng (`Orders`).
+> - **Customer Debt & Debt Transactions:** Khi đơn hàng chọn hình thức ghi nợ, hệ thống tăng `debtBalance` của khách hàng và lưu một bản ghi lịch sử trong `DebtTransactions`.
+> - **Debt Payment:** Khách hàng đến trả nợ sau được ghi nhận trong `DebtTransactions` với `transactionType = PAYMENT`, đồng thời kích hoạt cập nhật giảm `debtBalance`.
+> - **Phạm vi ngoài hệ thống (Out-of-Scope):** Các sổ S3 (Chi phí), S5 (Tiền lương), S6 (Quỹ tiền mặt), S7 (Tiền gửi ngân hàng) và các cổng nộp thuế/hóa đơn điện tử trực tiếp với cơ quan nhà nước không thuộc phạm vi triển khai của đồ án này.
 
 ### 5.2. Module Auth — Luồng xác thực
 
@@ -452,7 +479,7 @@ ai-order-service/                # Service triển khai độc lập
 |---|---|
 | **Human-in-the-loop** | AI chỉ tạo Draft Order; Employee/Owner phải kiểm tra, chỉnh sửa hoặc từ chối trước khi ghi nhận chính thức |
 | **Manual fallback** | Khi AI/Speech Provider không khả dụng, Channel Adapter vẫn nhận tin nhắn nhưng chuyển thẳng cho Employee xử lý thủ công (không chặn luồng bán hàng) |
-| **Tenant-scoped matching** | Mọi truy vấn Product/Customer để matching bắt buộc kèm `tenant_id`, gọi qua Application Tier API — không đọc thẳng cơ sở dữ liệu để tránh vi phạm ranh giới module và rò rỉ dữ liệu chéo Tenant |
+| **Tenant-scoped matching** | Mọi truy vấn Product/Customer để matching bắt buộc kèm `businessId`/tenant context, gọi qua Application Tier API — không đọc thẳng cơ sở dữ liệu để tránh vi phạm ranh giới module và rò rỉ dữ liệu chéo Tenant |
 | **Confidence threshold** | Draft Order có điểm tin cậy thấp phải được gắn cờ "cần làm rõ" thay vì tự động điền giá trị đoán |
 | **Idempotency** | Mỗi tin nhắn/cuộc gọi đầu vào có định danh duy nhất để tránh sinh trùng Draft Order khi Channel Adapter retry |
 
@@ -496,70 +523,81 @@ Order & Checkout module xử lý như đơn thủ công (transaction đầy đ�
 ### 7.1. Entity-Relationship Diagram (ERD) — Tổng quan
 
 ```
-┌──────────────┐     ┌──────────────┐     ┌───────────────┐
-│   Tenants    │─────┤    Users     │─────┤    Roles      │
-│ (Hộ KD)      │ 1:N │ (Owner/Emp)  │ N:N │ (Owner/Emp/   │
-│ • id (PK)    │     │ • id (PK)    │     │  Admin)       │
-│ • name       │     │ • tenantId   │     └───────────────┘
-│ • status     │     │ • email/pass │
-│ • subscript. │     │ • role       │
-└──────┬───────┘     └──────────────┘
-       │ 1:N
-       ▼
-┌──────────────┐     ┌────────────────────┐
-│  Products    │─────┤ ProductUnits       │
-│              │ 1:N │ (multi-unit)       │
-│ • id (PK)    │     │ • unitName         │
-│ • tenantId   │     │ • conversionRate   │
-│ • name/price │     └────────────────────┘
-│ • category   │
-└──────┬───────┘
-       │ 1:N
-       ▼
-┌───────────────────┐     ┌─────────────────────┐
-│  StockMovements   │     │  Customers          │
-│  (nhập/xuất kho)  │     │  • id (PK)          │
-│  • productId (FK) │     │  • tenantId         │
-│  • quantity       │     │  • name/phone       │
-│  • type           │     │  • debtBalance      │
-└───────────────────┘     └──────────┬──────────┘
-                                     │ 1:N
-                                     ▼
-┌───────────────────┐     ┌─────────────────────┐     ┌───────────────────┐
-│  Orders           │─────┤  OrderItems         │     │  DebtPayments     │
-│  • id (PK)        │ 1:N │  • orderId (FK)     │     │  • customerId(FK) │
-│  • tenantId       │     │  • productId (FK)   │     │  • amount         │
-│  • customerId(FK) │     │  • qty/unit/price   │     │  • paidAt         │
-│  • source         │     └─────────────────────┘     └───────────────────┘
-│  (counter/AI)     │
-│  • status         │
-└──────┬────────────┘
-       │ 1:1
-       ▼
-┌────────────────────┐     ┌──────────────────┐
-│  AccountingEntries │     │  DraftOrders     │
-│  • orderId (FK)    │     │  • id (PK)       │
-│  • entryType       │     │  • tenantId      │
-│  • amount          │     │  • rawInput      │
-│  • createdAt       │     │  • confidence    │
-└────────────────────┘     │  • status        │
-                           └──────────────────┘
+┌────────────────────┐     ┌────────────────────┐     ┌───────────────┐
+│  BusinessProfiles  │─────┤       Users        │─────┤    Roles      │
+│ (Hộ kinh doanh)    │ 1:N │ (Owner/Emp/        │ N:N │ (Owner/Emp/   │
+│ • id (PK)          │     │  Manager/Admin)    │     │  Mgr/Admin)   │
+│ • businessName     │     │ • id (PK)          │     └───────────────┘
+│ • status           │     │ • businessId       │
+│ • subscription     │     │ • username/email   │
+└─────────┬──────────┘     └────────────────────┘
+          │ 1:N
+          ▼
+┌────────────────────┐     ┌────────────────────┐
+│     Products       │─────┤    ProductUnits    │
+│                    │ 1:N │   (multi-unit)     │
+│ • id (PK)          │     │ • unitName         │
+│ • businessId       │     │ • conversionRate   │
+│ • name/price       │     └────────────────────┘
+│ • categoryId       │
+└─────────┬──────────┘
+          │ 1:N
+          ▼
+┌────────────────────┐     ┌────────────────────┐
+│ InventoryTrans./   │     │     Customers      │
+│ InventoryBalances  │     │ • id (PK)          │
+│ • productId (FK)   │     │ • businessId       │
+│ • quantity         │     │ • name/phone       │
+│ • type             │     │ • debtBalance      │
+└────────────────────┘     └─────────┬──────────┘
+                                     │
+           ┌─────────────────────────┼─────────────────────────┐
+           │ 1:N                     │ 1:N                     │ 1:N
+           ▼                         ▼                         ▼
+┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐
+│    SalesOrders     │   │ DebtTransactions   │   │ Accounting Books   │
+│ • id (PK)          │   │ (lịch sử công nợ)  │   │ & Book Entries     │
+│ • businessId       │   │ • customerId(FK)   │   │ • accountingBookId │
+│ • customerId(FK)   │   │ • salesOrderId(opt)│   │ • sourceType/id    │
+│ • source           │   │ • amount           │   │ • entryData(JSON)  │
+│ • paid/debt amount │   │ • balanceAfter     │   │ • entryStatus      │
+│ • paymentStatus    │   └────────────────────┘   └────────────────────┘
+└─────────┬──────────┘
+          │ 1:N
+          ▼
+┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐
+│  SalesOrderItems   │   │ RevenueLedgerEntry │   │   AI Requests /    │
+│ • salesOrderId(FK) │   │ (denormalized)     │   │   Draft context    │
+│ • productId(FK)    │   │ • salesOrderId     │   │ • rawInput         │
+│ • qty/unit/price   │   │ • productId        │   │ • confidence/status│
+└────────────────────┘   │ • confirmedAt      │   └────────────────────┘
+                         │ • lineTotal        │
+                         └────────────────────┘
 
-┌───────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│  Subscriptions    │     │  AuditLogs       │     │  ReportTemplates │
-│  • tenantId (FK)  │     │  • userId (FK)   │     │  • type          │
-│  • planId (FK)    │     │  • action        │     │  • version       │
-│  • status         │     │  • timestamp     │     │  • regulationRef │
-└───────────────────┘     └──────────────────┘     └──────────────────┘
+┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐
+│   Subscriptions    │   │ SubscriptionPlans  │   │  PackageFeatures   │
+│ • businessId (FK)  │───┤ • id (PK)          ├───┤ • featureKey       │
+│ • planId (FK)      │   │ • packageType      │   │ • enabled/limit    │
+│ • status           │   │ • priceMonth/Year  │   │ • planId           │
+└────────────────────┘   └────────────────────┘   └────────────────────┘
+
+┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐
+│     AuditLogs      │   │  ReportTemplates   │   │ ReportTemplate     │
+│ • userId (FK)      │   │ • templateCode     │───┤ Versions           │
+│ • action           │   │ • reportType       │   │ • versionNo        │
+│ • timestamp        │   │ • regulationRef    │   │ • schemaDefinition │
+└────────────────────┘   └────────────────────┘   └────────────────────┘
 ```
+
+> **Ghi chú:** Mã nguồn hiện tại dùng thuật ngữ `businessId`/`BusinessProfile` để triển khai tenant isolation. Trong tài liệu kiến trúc, “Tenant” tương ứng với một bản ghi hộ kinh doanh (`BusinessProfile`).
 
 ### 7.2. Redis Cache Strategy
 
 | Key Pattern | Giá trị | TTL | Mục đích |
 |---|---|---|---|
 | `session:{token}` | User session | 15 phút | Giảm DB lookup |
-| `tenant:{id}:products` | Danh mục sản phẩm | 10 phút | Tăng tốc tìm kiếm khi bán hàng |
-| `tenant:{id}:customer:{id}` | Thông tin khách hàng + công nợ | 5 phút | Hiển thị nhanh khi tạo đơn |
+| `business:{id}:products` | Danh mục sản phẩm | 10 phút | Tăng tốc tìm kiếm khi bán hàng |
+| `business:{id}:customer:{id}` | Thông tin khách hàng + công nợ | 5 phút | Hiển thị nhanh khi tạo đơn |
 | `notification:{userId}:unread` | Số thông báo chưa đọc | 1 phút | Badge realtime |
 | `rate_limit:{ip}` | Đếm request | 1 phút | Rate limiting |
 | `ai:draftorder:{msgId}` | Idempotency key AI | 24 giờ | Tránh sinh trùng Draft Order |
@@ -568,12 +606,14 @@ Order & Checkout module xử lý như đơn thủ công (transaction đầy đ�
 
 | Bảng | Cột index | Mục đích |
 |---|---|---|
-| Users | tenantId, email | Login, phân quyền theo Tenant |
-| Products | tenantId, category | Tìm kiếm sản phẩm khi bán hàng |
-| Orders | tenantId, status, createdAt | Danh sách đơn, báo cáo doanh thu |
-| Customers | tenantId, phone | Tra cứu khách hàng khi ghi công nợ |
-| StockMovements | productId, createdAt | Lịch sử tồn kho |
-| DraftOrders | tenantId, status | Danh sách Draft Order chờ xác nhận |
+| `users` | `business_id`, `email`/`username` | Login, phân quyền theo hộ kinh doanh |
+| `products` | `business_id`, `category_id` | Tìm kiếm/lọc sản phẩm khi bán hàng |
+| `sales_orders` | `business_id`, `status`, `created_at` | Danh sách đơn, báo cáo doanh thu |
+| `customers` | `business_id`, `phone` | Tra cứu khách hàng khi ghi công nợ |
+| `debt_transactions` | `business_id`, `customer_id`, `sales_order_id`, `transaction_date` | Lịch sử công nợ và đối soát thanh toán |
+| `inventory_transactions` | `product_id`, `created_at` | Lịch sử nhập/xuất kho |
+| `revenue_ledger_entries` | `business_id`, `confirmed_at`, `product_id`, `customer_id` | Báo cáo doanh thu và mặt hàng bán chạy |
+| `ai_requests` | `business_id`, `status` | Danh sách yêu cầu AI/Draft Order chờ xác nhận |
 
 ---
 
@@ -634,7 +674,8 @@ Luồng payment gateway và webhook có thể được bổ sung ở phiên bả
     │                 │  Webhook / call event│                       │
     │                 │─────────────────────►│                       │
     │                 │                      │  Chuẩn hoá + gắn      │
-    │                 │                      │  tenantId (theo số    │
+    │                 │                      │  businessId/tenant    │
+    │                 │                      │  context (theo số     │
     │                 │                      │  Zalo OA/hotline)     │
     │                 │                      │──────────────────────►│
     │                 │                      │                       │
@@ -650,7 +691,7 @@ Luồng payment gateway và webhook có thể được bổ sung ở phiên bả
 |---|---|---|
 | Bank / QR tĩnh | Owner chuyển khoản subscription theo thông tin hiển thị trên modal | Chưa có đối soát tự động hoặc webhook trong phiên bản hiện tại |
 | Email/SMS/Push Provider | OTP đăng ký, cảnh báo tồn thấp, thông báo đơn | Rate limit gửi OTP |
-| Messaging/Voice Channel (Zalo OA, tổng đài) | Nguồn input cho AI Order Service | Xác thực webhook, ánh xạ số điện thoại/OA → tenantId |
+| Messaging/Voice Channel (Zalo OA, tổng đài) | Nguồn input cho AI Order Service | Xác thực webhook, ánh xạ số điện thoại/OA → businessId/tenant context |
 | AI/Speech Provider | STT + NLP model | Adapter hoá để thay nhà cung cấp; không lưu voice thô quá thời hạn cần thiết |
 
 ---
@@ -692,8 +733,8 @@ Luồng payment gateway và webhook có thể được bổ sung ở phiên bả
 
 | Môi trường | Mục đích |
 |---|---|
-| **Development** | Phát triển cá nhân, mock AI/Payment Provider |
-| **Testing/QA** | Kiểm thử chức năng, tích hợp với sandbox của Zalo/Payment |
+| **Development** | Phát triển cá nhân, mock AI/Channel; subscription payment dùng QR tĩnh/chuyển khoản thủ công |
+| **Testing/QA** | Kiểm thử chức năng, tích hợp sandbox Zalo; payment subscription dùng QR tĩnh/chuyển khoản thủ công trong bản hiện tại |
 | **Staging** | UAT, kiểm thử hiệu năng gần môi trường thật |
 | **Production** | Vận hành thực tế, có backup và giám sát |
 
@@ -750,7 +791,7 @@ Luồng payment gateway và webhook có thể được bổ sung ở phiên bả
 | Khách hàng (của hộ kinh doanh) | Họ tên, số điện thoại, địa chỉ, lịch sử mua hàng, số dư công nợ | Module Customer & Debt (MySQL/PostgreSQL) |
 | Khách hàng (khi đặt hàng qua AI) | Nội dung tin nhắn Zalo, ghi âm giọng nói cuộc gọi | AI Order Service (tạm thời, trong quá trình xử lý) |
 | Employee / Owner | Họ tên, số điện thoại, email, tài khoản đăng nhập | Module Onboarding & Identity |
-| Owner (đăng ký hộ kinh doanh) | Thông tin định danh hộ kinh doanh, thông tin thanh toán subscription | Subscription & Billing, Payment Provider |
+| Owner (đăng ký hộ kinh doanh) | Thông tin định danh hộ kinh doanh, thông tin chọn gói và xác nhận chuyển khoản subscription | Subscription & Billing, Bank / QR tĩnh |
 
 ### 11.2. Phân loại theo Nghị định 13/2023/NĐ-CP
 
@@ -790,7 +831,7 @@ Theo Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân, hệ t
 | Transcript AI + Draft Order đã xác nhận | Theo thời hạn lưu chứng từ kế toán (Thông tư 88/2021/TT-BTC) | Gắn với Order chính thức |
 | Draft Order bị từ chối/không xác nhận | Tối đa 30–90 ngày rồi xoá hoặc ẩn danh | Không cần giữ lâu vì không phát sinh giao dịch |
 | Thông tin công nợ khách hàng | Lưu trong suốt thời gian còn phát sinh giao dịch; xoá/ẩn danh theo yêu cầu khi khách hàng ngừng giao dịch và không còn nghĩa vụ pháp lý phải lưu | Cân bằng với nghĩa vụ lưu chứng từ kế toán |
-| Sổ sách kế toán, bút toán (Accounting Entries) | Theo thời hạn lưu trữ chứng từ kế toán quy định pháp luật hiện hành | Không được xoá theo yêu cầu cá nhân trong thời hạn này |
+| Sổ sách kế toán, bút toán (`AccountingBookEntry`) | Theo thời hạn lưu trữ chứng từ kế toán quy định pháp luật hiện hành | Không được xoá theo yêu cầu cá nhân trong thời hạn này |
 
 ### 11.6. Quyền của chủ thể dữ liệu (khách hàng)
 
@@ -869,7 +910,7 @@ Xác nhận đơn → Kiểm tra giá và tồn kho → BEGIN TRANSACTION
    ├── Lưu Order và Order Items
    ├── Trừ tồn kho
    ├── Ghi Payment hoặc Customer Debt
-   ├── Tạo Accounting Entries
+   ├── Tạo `AccountingBookEntry`/bản ghi sổ liên quan
    └── Ghi Audit Log
    ├── Có lỗi → ROLLBACK → Thông báo lỗi
    └── Thành công → COMMIT → Sinh hoá đơn (in nếu có máy in, hoặc xuất ảnh/PDF gửi Zalo)
@@ -912,7 +953,7 @@ PENDING (thủ công hoặc AI Draft) → CONFIRMED → (thanh toán đủ | ghi
 | **Draft Order** | Đơn hàng do AI tạo tự động, chưa được người dùng xác nhận |
 | **Human-in-the-loop** | Nguyên tắc luôn có người xác nhận trước khi kết quả AI có hiệu lực |
 | **Channel Adapter** | Thành phần chuẩn hoá input từ các kênh (Zalo, thoại) trước khi vào AI Service |
-| **RBAC** | Phân quyền theo vai trò (Employee/Owner/Administrator) |
+| **RBAC** | Phân quyền theo vai trò (Employee/Owner/Manager/Administrator) |
 
 ### 15.2. Ma trận truy xuất (Component → Yêu cầu chức năng)
 
@@ -935,15 +976,18 @@ PENDING (thủ công hoặc AI Draft) → CONFIRMED → (thanh toán đủ | ghi
 |---|---|---|---|
 | R1 | AI/Speech Provider downtime | Trung bình | Manual fallback, Channel Adapter chuyển thẳng cho Employee |
 | R2 | Nhân viên/chủ hộ không có máy in | Trung bình | Hoá đơn dạng ảnh/PDF gửi qua Zalo thay thế in giấy |
-| R3 | Rò rỉ dữ liệu chéo Tenant qua AI matching | Cao | Bắt buộc tenant_id trong mọi lời gọi matching, không truy cập DB trực tiếp |
+| R3 | Rò rỉ dữ liệu chéo Tenant qua AI matching | Cao | Bắt buộc `businessId`/tenant context trong mọi lời gọi matching, không truy cập DB trực tiếp |
 | R4 | Quá tải Backend giờ cao điểm bán hàng | Trung bình | Redis cache danh mục sản phẩm, horizontal scaling |
-| R5 | Webhook Zalo/Payment giả mạo | Cao | Xác thực chữ ký (signature) trên mọi webhook |
+| R5 | Webhook Zalo/Channel giả mạo | Cao | Xác thực chữ ký (signature) trên webhook kênh nhận đơn; nếu bổ sung payment webhook ở phiên bản sau thì bắt buộc kiểm tra chữ ký và idempotency |
 
 ### 15.4. Lịch sử phiên bản tài liệu
 
 | Phiên bản | Ngày | Mô tả thay đổi |
 |---|---|---|
 | 1.0 | 26/07/2026 | Phiên bản đầu tiên, biên soạn theo format Architecture Design Document, bổ sung Messaging/Voice Channel, tách Notification Service, làm rõ ranh giới truy cập dữ liệu của AI Order Service |
+| 1.1 | 19/08/2026 | Thay đổi RBAC, Thêm Manager |
+| 1.2 | 23/08/2026 | Tách Purchase/Debt/Payment thành riêng |
+| 2.0 | 14/09/2026 | Hoàn thành và cập nhật các tính năng chính cho hệ thống |
 
 ---
 

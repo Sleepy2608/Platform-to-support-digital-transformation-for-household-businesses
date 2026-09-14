@@ -1,0 +1,57 @@
+{
+  "table" : "report_templates",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "created_at" : "2026-09-13T15:42:01.542474",
+    "created_by" : 1,
+    "description" : "Dùng để theo dõi chi tiết doanh thu bán hàng hóa, dịch vụ theo từng nhóm ngành nghề tính thuế.",
+    "legal_basis" : "Thông tư 88/2021/TT-BTC",
+    "official_form_code" : "Mẫu số S1-HKD",
+    "status" : "ACTIVE",
+    "template_code" : "RL-2026-882",
+    "template_name" : "Sổ chi tiết doanh thu bán hàng hóa, dịch vụ",
+    "template_type" : "REVENUE_LEDGER",
+    "updated_at" : "2026-09-13T15:42:01.731993",
+    "current_version_id" : 1
+  }, {
+    "id" : 2,
+    "created_at" : "2026-09-13T15:42:52.497599",
+    "created_by" : 1,
+    "description" : "Theo dõi số dư nợ đầu kỳ, phát sinh tăng, số đã thanh toán và dư nợ cuối kỳ của khách hàng/NCC.",
+    "legal_basis" : "Chế độ kế toán quản trị HBDT",
+    "official_form_code" : "Mẫu quản trị công nợ",
+    "status" : "ACTIVE",
+    "template_code" : "DR-2026-297",
+    "template_name" : "Báo cáo tổng hợp và theo dõi công nợ",
+    "template_type" : "DEBT_REPORT",
+    "updated_at" : "2026-09-13T15:42:52.536883",
+    "current_version_id" : 2
+  }, {
+    "id" : 3,
+    "created_at" : "2026-09-13T15:42:57.522205",
+    "created_by" : 1,
+    "description" : "Tổng hợp số dư tài sản, nguồn vốn và công nợ của hộ kinh doanh đầu kỳ và cuối kỳ.",
+    "legal_basis" : "Chuẩn mực kế toán hộ kinh doanh",
+    "official_form_code" : "Báo cáo tài chính quản trị",
+    "status" : "ACTIVE",
+    "template_code" : "BS-2026-921",
+    "template_name" : "Bảng cân đối tình hình tài chính quản trị",
+    "template_type" : "BALANCE_SHEET",
+    "updated_at" : "2026-09-13T15:42:57.548285",
+    "current_version_id" : 3
+  }, {
+    "id" : 4,
+    "created_at" : "2026-09-13T15:52:28.11868",
+    "created_by" : 1,
+    "description" : "Dùng để theo dõi chi tiết doanh thu bán hàng hóa, dịch vụ theo từng nhóm ngành nghề tính thuế.",
+    "legal_basis" : "Thông tư 88/2021/TT-BTC",
+    "official_form_code" : "Mẫu số S1-HKD",
+    "status" : "ACTIVE",
+    "template_code" : "RL-2026-701",
+    "template_name" : "Sổ chi tiết doanh thu bán hàng hóa, dịch vụ",
+    "template_type" : "REVENUE_LEDGER",
+    "updated_at" : "2026-09-13T15:52:28.227673",
+    "current_version_id" : 4
+  } ]
+}

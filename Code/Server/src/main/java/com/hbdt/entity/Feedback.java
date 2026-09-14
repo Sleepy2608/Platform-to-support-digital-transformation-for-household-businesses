@@ -6,7 +6,11 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "feedback")
+@Table(name = "feedback", indexes = {
+        @Index(name = "idx_feedback_submitted_created", columnList = "submitted_by,created_at"),
+        @Index(name = "idx_feedback_business_created", columnList = "business_id,created_at"),
+        @Index(name = "idx_feedback_status_type", columnList = "status,feedback_type")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -43,12 +47,26 @@ public class Feedback {
     @Column(name = "admin_response", columnDefinition = "TEXT")
     private String adminResponse;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = now;
+        }
+        updatedAt = now;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

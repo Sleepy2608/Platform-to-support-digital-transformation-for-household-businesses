@@ -1,5 +1,7 @@
 package com.hbdt.repository;
 
+import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,8 +33,30 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     long countByStatus(UserStatus status);
 
+    long countByRole_NameAndStatus(RoleType roleType, UserStatus status);
+
+    long countByRole_NameAndStatusIn(RoleType roleType, Collection<UserStatus> statuses);
+
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    long countByCreatedAtGreaterThanEqual(LocalDateTime start);
+
+    long countByCreatedAtLessThanEqual(LocalDateTime end);
+
     @Query("SELECT u FROM User u WHERE u.role.name = :roleType")
     List<User> findByRoleType(@Param("roleType") RoleType roleType);
+
+    List<User> findByRole_NameAndStatusOrderByCreatedAtDesc(RoleType roleType, UserStatus status);
+
+    List<User> findByStatusOrderByCreatedAtDesc(UserStatus status);
+
+    List<User> findByCreatedAtBetweenOrderByCreatedAtDesc(LocalDateTime start, LocalDateTime end);
+
+    List<User> findByCreatedAtGreaterThanEqualOrderByCreatedAtDesc(LocalDateTime start);
+
+    List<User> findByCreatedAtLessThanEqualOrderByCreatedAtDesc(LocalDateTime end);
+
+    List<User> findAllByOrderByCreatedAtDesc();
 
     Optional<User> findFirstByBusinessIdAndRole_Name(Long businessId, RoleType roleType);
 
@@ -69,4 +93,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByBusinessIdAndRole_Name(Long businessId, RoleType roleType);
 
     List<User> findAllByBusinessIdAndStatus(Long businessId, UserStatus status);
+
+    @Query("select u from User u join fetch u.role r where u.status = :status and u.businessId is not null and r.name in :roles")
+    List<User> findAnnouncementRecipients(@Param("status") UserStatus status,
+            @Param("roles") java.util.Collection<RoleType> roles);
 }

@@ -1,6 +1,6 @@
 {
   "table" : "inventory_balances",
-  "version" : 12,
+  "version" : 13,
   "rows" : [ {
     "id" : 1,
     "average_unit_cost" : 0.00,
@@ -75,12 +75,12 @@
     "updated_at" : "2026-08-21T17:36:20.000899"
   }, {
     "id" : 10,
-    "average_unit_cost" : 0.00,
+    "average_unit_cost" : 20000.00,
     "business_id" : 5,
-    "inventory_value" : 0.00,
+    "inventory_value" : 60000.00,
     "product_id" : 14,
-    "quantity_on_hand" : 0.000,
-    "updated_at" : "2026-08-21T17:39:32.904575"
+    "quantity_on_hand" : 3.000,
+    "updated_at" : "2026-09-11T20:22:44.28565"
   }, {
     "id" : 11,
     "average_unit_cost" : 0.00,
@@ -96,7 +96,7 @@
     "inventory_value" : 0.00,
     "product_id" : 16,
     "quantity_on_hand" : 12.000,
-    "updated_at" : "2026-08-24T06:34:54.7867"
+    "updated_at" : "2026-09-13T14:52:00.141485"
   }, {
     "id" : 13,
     "average_unit_cost" : 0.00,
