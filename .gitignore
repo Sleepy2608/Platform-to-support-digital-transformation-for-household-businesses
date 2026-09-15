@@ -175,6 +175,7 @@ Code/Server/uploads/
 uploads/
 
 reports/
+!Code/Client/**/reports/
 
 **/exports/*.pdf
 **/exports/*.xlsx

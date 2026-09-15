@@ -29,6 +29,7 @@ interface TemplateVersionItem {
   status: string;
   effectiveFrom: string | null;
   effectiveTo: string | null;
+  changeSummary?: string | null;
   createdAt: string | null;
 }
 
@@ -372,6 +373,7 @@ export default function FinancialTemplateManagementPage() {
   const [formOfficialCode, setFormOfficialCode] = useState('');
   const [formLegalBasis, setFormLegalBasis] = useState('');
   const [formDescription, setFormDescription] = useState('');
+  const [formEffectiveFrom, setFormEffectiveFrom] = useState('');
   const [changeSummary, setChangeSummary] = useState('');
 
   // Column Configuration Table State
@@ -562,6 +564,7 @@ export default function FinancialTemplateManagementPage() {
 
   const openCreate = () => {
     setEditId(null);
+    setFormEffectiveFrom('');
     setChangeSummary('');
     loadStandardProfile('REVENUE_LEDGER', true);
     setModalOpen(true);
@@ -582,6 +585,7 @@ export default function FinancialTemplateManagementPage() {
       setFormOfficialCode(detail.officialFormCode || '');
       setFormLegalBasis(detail.legalBasis || '');
       setFormDescription(detail.description || '');
+      setFormEffectiveFrom('');
       setChangeSummary('');
 
       // Parse existing columns configuration
@@ -666,6 +670,7 @@ export default function FinancialTemplateManagementPage() {
           legalBasis: formLegalBasis.trim() || null,
           description: formDescription.trim() || null,
           configurationJson: finalConfig,
+          effectiveFrom: formEffectiveFrom ? formEffectiveFrom : null,
           changeSummary: changeSummary.trim() || 'Cập nhật cấu hình cột báo cáo',
         });
         setNotice(`Đã cập nhật mẫu "${formName}" (phiên bản mới được lưu thành công)`);
@@ -1168,22 +1173,39 @@ export default function FinancialTemplateManagementPage() {
                   </div>
                 </div>
 
-                {/* 3. Lý do điều chỉnh (chỉ hiện khi cập nhật) */}
+                {/* 3. Ngày hiệu lực & Lý do điều chỉnh (chỉ hiện khi cập nhật) */}
                 {editId && (
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
-                      Ghi chú thay đổi (Change summary) <span className="text-red-400">*</span>
-                    </label>
-                    <input
-                      className={inputClass}
-                      value={changeSummary}
-                      onChange={(e) => setChangeSummary(e.target.value)}
-                      placeholder="VD: Cập nhật tiêu đề cột doanh thu, bổ sung cột chiết khấu..."
-                      required
-                    />
-                    <p className="text-[11px] text-zinc-500 mt-1">
-                      Cơ chế Bất biến (Immutability): Mọi cập nhật sẽ tự động nâng lên phiên bản mới v(N+1) mà không ảnh hưởng đến các báo cáo cũ.
-                    </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
+                        Ngày hiệu lực phiên bản mới
+                      </label>
+                      <input
+                        type="date"
+                        className={inputClass}
+                        value={formEffectiveFrom}
+                        onChange={(e) => setFormEffectiveFrom(e.target.value)}
+                      />
+                      <p className="text-[11px] text-zinc-500 mt-1">
+                        Để trống nếu áp dụng ngay hôm nay. Nếu chọn ngày tương lai, phiên bản sẽ lưu ở trạng thái Chờ kích hoạt (DRAFT).
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
+                        Ghi chú thay đổi (Change summary) <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        className={inputClass}
+                        value={changeSummary}
+                        onChange={(e) => setChangeSummary(e.target.value)}
+                        placeholder="VD: Cập nhật tiêu đề cột doanh thu, bổ sung cột..."
+                        required
+                      />
+                      <p className="text-[11px] text-zinc-500 mt-1">
+                        Cơ chế Bất biến: Tự động sinh phiên bản v(N+1) bảo toàn dữ liệu báo cáo lịch sử.
+                      </p>
+                    </div>
                   </div>
                 )}
 
@@ -1261,9 +1283,24 @@ export default function FinancialTemplateManagementPage() {
                             <span className="font-mono text-sm font-bold text-white">
                               Phiên bản v{ver.versionNumber}
                             </span>
-                            {isCurrent && (
+                            {ver.status === 'ACTIVE' && (
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                 <Check className="w-3 h-3 stroke-[3]" /> Hiện hành
+                              </span>
+                            )}
+                            {ver.status === 'DRAFT' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                Chờ hiệu lực
+                              </span>
+                            )}
+                            {ver.status === 'SUPERSEDED' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700/50">
+                                Đã thay thế
+                              </span>
+                            )}
+                            {ver.status === 'ARCHIVED' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-900 text-zinc-500 border border-zinc-800">
+                                Đã lưu trữ
                               </span>
                             )}
                           </div>
@@ -1272,10 +1309,22 @@ export default function FinancialTemplateManagementPage() {
                           </span>
                         </div>
 
-                        <div className="mt-2 text-xs text-zinc-400 flex items-center justify-between">
-                          <span>
-                            Người cập nhật: Admin #{ver.updatedBy ?? 'Hệ thống'}
-                          </span>
+                        {ver.changeSummary && (
+                          <p className="mt-1.5 text-xs text-zinc-300">
+                            <span className="text-zinc-500 font-semibold">Ghi chú:</span> {ver.changeSummary}
+                          </p>
+                        )}
+
+                        <div className="mt-2 text-xs text-zinc-400 flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-3">
+                            <span>Admin #{ver.updatedBy ?? 'Hệ thống'}</span>
+                            {ver.effectiveFrom && (
+                              <span>
+                                Hiệu lực: <strong className="text-zinc-300">{formatDate(ver.effectiveFrom)}</strong>
+                                {ver.effectiveTo ? ` → ${formatDate(ver.effectiveTo)}` : ''}
+                              </span>
+                            )}
+                          </div>
                           <button
                             type="button"
                             onClick={() =>

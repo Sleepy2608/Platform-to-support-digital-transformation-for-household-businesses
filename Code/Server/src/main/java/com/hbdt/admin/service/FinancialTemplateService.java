@@ -8,6 +8,7 @@ import com.hbdt.entity.ReportTemplate;
 import com.hbdt.entity.ReportTemplateVersion;
 import com.hbdt.entity.enums.TemplateStatus;
 import com.hbdt.entity.enums.TemplateType;
+import com.hbdt.entity.enums.VersionStatus;
 import com.hbdt.repository.ReportTemplateRepository;
 import com.hbdt.repository.ReportTemplateVersionRepository;
 import jakarta.persistence.criteria.Predicate;
@@ -69,6 +70,8 @@ public class FinancialTemplateService {
                     "Mã mẫu '" + request.getTemplateCode() + "' đã tồn tại trong hệ thống");
         }
 
+        validateConfigurationJson(request.getConfigurationJson());
+
         // 1. Persist the parent template
         ReportTemplate template = ReportTemplate.builder()
                 .templateCode(request.getTemplateCode().trim())
@@ -88,7 +91,7 @@ public class FinancialTemplateService {
                 .versionNumber(1)
                 .templateSchema(request.getConfigurationJson())
                 .effectiveFrom(LocalDate.now())
-                .status("ACTIVE")
+                .status(VersionStatus.ACTIVE)
                 .createdBy(adminUserId)
                 .updatedBy(adminUserId)
                 .build();
@@ -194,6 +197,8 @@ public class FinancialTemplateService {
         boolean nameChanged = !template.getTemplateName().equals(request.getName().trim());
         boolean configChanged = !latestVersion.getTemplateSchema().equals(request.getConfigurationJson());
 
+        validateConfigurationJson(request.getConfigurationJson());
+
         // Update parent metadata (always safe — these are non-versioned fields)
         template.setTemplateName(request.getName().trim());
         template.setOfficialFormCode(request.getOfficialFormCode());
@@ -203,29 +208,86 @@ public class FinancialTemplateService {
         ReportTemplateVersion activeVersion;
 
         if (nameChanged || configChanged) {
-            // ── Create a new immutable version ──
+            LocalDate effectiveFrom = request.getEffectiveFrom() != null
+                    ? request.getEffectiveFrom()
+                    : LocalDate.now();
+
+            boolean isFutureEffective = effectiveFrom.isAfter(LocalDate.now());
+
+            // For scheduled future versions: prevent multiple drafts scheduled for the exact same date
+            if (isFutureEffective && versionRepository.existsByReportTemplateIdAndEffectiveFrom(templateId, effectiveFrom)) {
+                throw new BadRequestException(
+                        "Phiên bản với ngày hiệu lực " + effectiveFrom + " đã tồn tại cho mẫu báo cáo này");
+            }
+
             int nextVersionNumber = latestVersion.getVersionNumber() + 1;
+            if (versionRepository.existsByReportTemplateIdAndVersionNumber(templateId, nextVersionNumber)) {
+                throw new BadRequestException(
+                        "Phiên bản số " + nextVersionNumber + " đã tồn tại cho mẫu báo cáo này");
+            }
 
-            // Close out the previous version's effective period
-            latestVersion.setEffectiveTo(LocalDate.now());
-            latestVersion.setStatus("SUPERSEDED");
-            versionRepository.save(latestVersion);
+            if (isFutureEffective) {
+                // Scheduled version: status is DRAFT, does not immediately replace current active version
+                ReportTemplateVersion scheduledVersion = ReportTemplateVersion.builder()
+                        .reportTemplateId(templateId)
+                        .versionNumber(nextVersionNumber)
+                        .templateSchema(request.getConfigurationJson())
+                        .effectiveFrom(effectiveFrom)
+                        .status(VersionStatus.DRAFT)
+                        .changeSummary(request.getChangeSummary())
+                        .createdBy(latestVersion.getCreatedBy())
+                        .updatedBy(adminUserId)
+                        .build();
+                versionRepository.save(scheduledVersion);
 
-            ReportTemplateVersion newVersion = ReportTemplateVersion.builder()
-                    .reportTemplateId(templateId)
-                    .versionNumber(nextVersionNumber)
-                    .templateSchema(request.getConfigurationJson())
-                    .effectiveFrom(LocalDate.now())
-                    .status("ACTIVE")
-                    .createdBy(latestVersion.getCreatedBy())
-                    .updatedBy(adminUserId)
-                    .build();
-            activeVersion = versionRepository.save(newVersion);
+                activeVersion = latestVersion;
 
-            template.setCurrentVersionId(activeVersion.getId());
+                logger.info("Template id={} updated: scheduled version v{} (DRAFT) created for effectiveFrom={}, by adminId={}",
+                        templateId, nextVersionNumber, effectiveFrom, adminUserId);
+            } else {
+                // Immediate activation: close out the previous active version
+                ReportTemplateVersion currentActive = template.getCurrentVersionId() != null
+                        ? versionRepository.findById(template.getCurrentVersionId()).orElse(latestVersion)
+                        : latestVersion;
 
-            logger.info("Template id={} updated: new version v{} created by adminId={}",
-                    templateId, nextVersionNumber, adminUserId);
+                if (currentActive.getEffectiveFrom() != null && effectiveFrom.isBefore(currentActive.getEffectiveFrom())) {
+                    throw new BadRequestException(
+                            "Ngày hiệu lực không được nhỏ hơn ngày hiệu lực của phiên bản hiện hành (" + currentActive.getEffectiveFrom() + ")");
+                }
+
+                if (currentActive.getStatus() == VersionStatus.ACTIVE) {
+                    currentActive.setEffectiveTo(effectiveFrom);
+                    currentActive.setStatus(VersionStatus.SUPERSEDED);
+                    versionRepository.save(currentActive);
+                }
+
+                // Transition older SUPERSEDED versions to ARCHIVED
+                List<ReportTemplateVersion> olderVersions =
+                        versionRepository.findByReportTemplateIdAndStatus(templateId, VersionStatus.SUPERSEDED);
+                for (ReportTemplateVersion older : olderVersions) {
+                    if (!older.getId().equals(currentActive.getId())) {
+                        older.setStatus(VersionStatus.ARCHIVED);
+                        versionRepository.save(older);
+                    }
+                }
+
+                ReportTemplateVersion newVersion = ReportTemplateVersion.builder()
+                        .reportTemplateId(templateId)
+                        .versionNumber(nextVersionNumber)
+                        .templateSchema(request.getConfigurationJson())
+                        .effectiveFrom(effectiveFrom)
+                        .status(VersionStatus.ACTIVE)
+                        .changeSummary(request.getChangeSummary())
+                        .createdBy(latestVersion.getCreatedBy())
+                        .updatedBy(adminUserId)
+                        .build();
+                activeVersion = versionRepository.save(newVersion);
+
+                template.setCurrentVersionId(activeVersion.getId());
+
+                logger.info("Template id={} updated: new version v{} (ACTIVE) created by adminId={}",
+                        templateId, nextVersionNumber, adminUserId);
+            }
         } else {
             activeVersion = latestVersion;
             logger.info("Template id={} metadata updated (no version change)", templateId);
@@ -338,6 +400,77 @@ public class FinancialTemplateService {
                 .build();
     }
 
+    // ──────────────────────────────────────────────────────────────────────
+    // SCHEDULED ACTIVATION
+    // ──────────────────────────────────────────────────────────────────────
+
+    /**
+     * Scans for DRAFT template versions whose effectiveFrom <= today,
+     * activates them, supersedes/archives previous versions, and updates
+     * the parent template's currentVersionId.
+     *
+     * @return the number of versions successfully activated
+     */
+    @Transactional
+    public int activateScheduledVersions() {
+        LocalDate today = LocalDate.now();
+        List<ReportTemplateVersion> draftsToActivate =
+                versionRepository.findByStatusAndEffectiveFromLessThanEqual(VersionStatus.DRAFT, today);
+
+        int activatedCount = 0;
+
+        for (ReportTemplateVersion draft : draftsToActivate) {
+            Long templateId = draft.getReportTemplateId();
+            ReportTemplate template = templateRepository.findById(templateId).orElse(null);
+            if (template == null) {
+                logger.warn("Scheduled activation skipped for version id={}: template id={} not found",
+                        draft.getId(), templateId);
+                continue;
+            }
+
+            // Find existing versions for this template
+            List<ReportTemplateVersion> versions =
+                    versionRepository.findByReportTemplateIdOrderByVersionNumberDesc(templateId);
+
+            for (ReportTemplateVersion v : versions) {
+                if (v.getId().equals(draft.getId())) {
+                    continue;
+                }
+                if (v.getStatus() == VersionStatus.ACTIVE) {
+                    v.setStatus(VersionStatus.SUPERSEDED);
+                    v.setEffectiveTo(draft.getEffectiveFrom());
+                    versionRepository.save(v);
+                } else if (v.getStatus() == VersionStatus.SUPERSEDED) {
+                    v.setStatus(VersionStatus.ARCHIVED);
+                    versionRepository.save(v);
+                }
+            }
+
+            // Activate the draft version
+            draft.setStatus(VersionStatus.ACTIVE);
+            versionRepository.save(draft);
+
+            // Update template pointer
+            template.setCurrentVersionId(draft.getId());
+            templateRepository.save(template);
+
+            activatedCount++;
+            logger.info("Scheduled activation: activated version id={}, v{} for template id={}",
+                    draft.getId(), draft.getVersionNumber(), templateId);
+        }
+
+        return activatedCount;
+    }
+
+    private void validateConfigurationJson(JsonNode config) {
+        if (config == null || !config.isObject()) {
+            throw new BadRequestException("Cấu hình JSON không hợp lệ: phải là một JSON object");
+        }
+        if (!config.has("fields") || !config.get("fields").isArray()) {
+            throw new BadRequestException("Cấu hình JSON không hợp lệ: phải chứa danh sách trường 'fields'");
+        }
+    }
+
     private TemplateVersionResponse toVersionResponse(ReportTemplateVersion version) {
         return TemplateVersionResponse.builder()
                 .id(version.getId())
@@ -347,6 +480,7 @@ public class FinancialTemplateService {
                 .status(version.getStatus())
                 .effectiveFrom(version.getEffectiveFrom())
                 .effectiveTo(version.getEffectiveTo())
+                .changeSummary(version.getChangeSummary())
                 .createdAt(version.getCreatedAt())
                 .build();
     }

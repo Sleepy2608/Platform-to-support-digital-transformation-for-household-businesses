@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -79,6 +80,24 @@ public interface AccountingTransactionRepository extends JpaRepository<Accountin
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
             Pageable pageable
+    );
+
+    /**
+     * Lay toan bo but toan trong ky de tong hop bao cao so ke toan.
+     */
+    @Query("""
+        SELECT t FROM AccountingTransaction t
+        WHERE t.businessId = :businessId
+          AND t.status = :status
+          AND t.createdAt >= :startDate
+          AND t.createdAt <= :endDate
+        ORDER BY t.createdAt ASC
+        """)
+    List<AccountingTransaction> findAllByBusinessIdAndStatusAndCreatedAtBetween(
+            @Param("businessId") Long businessId,
+            @Param("status") AccountingTransactionStatus status,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate
     );
 
     // -------------------------------------------------------------------------
