@@ -18,8 +18,8 @@
 | 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Leader | Repository & Git Management, Docs (Installation/Run Guide, User Manual, Technical Documentation, SRS, Compliance), Authorization, Password Encoder and Security, Performance (Testing and Enhancing), Admin Account Management, User Account Management (Basic CRUD, Profile), Payment Process, Subscription Pricing & Plans, Revenue Reports (Revenue Ledger, Platform Analytics, Trend Analysis) |
 | 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer | Register/Login/Dashboard UI, OTP Code Verification, Owner Account Management, Searching Engine, Image Uploads (Avatar, Products), CRUD (Customer, Owner Employee, Product), Automatic Bookkeeping (Debt, Sales, Inventory) |
 | 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger | Database Management, Docs (Data Model, AI, Calculate taxes in Compliance), Audit Log, Measurement & Product Pricing Rules, Product Stock Management (Automatic Update/Calculating, Debt History/Searching), Service Invoice Management, Order Management (At-counter Order, Confirm/Cancel Order, Confirm Debt/Debt Payment), AI Service, Feedback Management |
-| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager | Database Management, Docs (ERD, Data Model, Diagram, User Requirements, Test Cases Management), CRUD (Category, Product, Subcription), Product Stock Management (Low Stock Alert), Operational Analytics for Owner/Employee, System-wide Announcement |
-| 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Feature Developer | Employee Account Management, Product Stock Management (Stock Import), Feature Plans Management, Report (Review, Edit, Reject & Template Version) |
+| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager | Database Management, Docs (ERD, Data Model, Diagram, User Requirements, Test Cases Management), CRUD (Category, Product, Subcription), Product Stock Management (Low Stock Alert), Operational Analytics for Owner/Employee (Report, Chart), System-wide Announcement |
+| 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Feature Developer | Employee Account Management, Product Stock Management (Stock Import), Feature Plans Management, Financial Template Management (Admin), Report (Review, Edit, Reject & Template Version) |
 | 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer | Manage purchase package payments, Manager Account Management, Subscription Features (Pricing Plans, Notifications), RBAC, Service Invoice Management, Platform Analytics for Admin/Manager, Fast Sales UI for mobile (Owner/Employee) |
 
 > Mọi người đều được giao task có backend code bằng Java (Vai trò trên chỉ bao gồm các vai trò khác ngoài Backend Developer).
@@ -32,7 +32,7 @@
 
 > Nhiệm vụ được giao sẽ được dựa vào nhiệm vụ được giao trên [Issue](https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/issues) trên Github và cập nhật tiến độ ở [Jira](https://java-project-platform-for-household-business.atlassian.net/jira/software/projects/SCRUM/summary).<br>
 > Các issue trên Github sẽ được cập nhật theo tiến độ của Jira và sẽ được test trước khi merge vào nhánh Main.<br>
-> Mức độ hoàn thành dự án: 90%<br>
+> Mức độ hoàn thành dự án: 93%<br>
 > Ngày cập nhật lần cuối: 15/09/2026.
 
 ### Tính năng mới nhất cập nhật gần đây
@@ -40,6 +40,10 @@
 - Thêm tính năng feedback cho Owner/Employee
 - Thêm các báo cáo doanh thu, lợi nhuận, chi phí nhập hàng, doanh thu theo ngày
 - Fast Sales UI cho điện thoại (Owner/Employee)
+
+### Các tính năng đã hoàn thành
+
+Xem ở file `docs/project-progress-and-feature/feature.md` để biết chi tiết các tính năng đã hoàn thành.
 
 ---
 
