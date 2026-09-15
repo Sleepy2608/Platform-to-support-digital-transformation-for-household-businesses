@@ -8,6 +8,7 @@ import com.hbdt.entity.ReportTemplateVersion;
 import com.hbdt.entity.User;
 import com.hbdt.entity.enums.TemplateStatus;
 import com.hbdt.entity.enums.TemplateType;
+import com.hbdt.entity.enums.VersionStatus;
 import com.hbdt.repository.ReportTemplateRepository;
 import com.hbdt.repository.ReportTemplateVersionRepository;
 import com.hbdt.repository.UserRepository;
@@ -77,14 +78,14 @@ public class ReportTemplateAdminService {
         if (!current.isEmpty()) {
             ReportTemplateVersion previous = current.getFirst();
             previous.setEffectiveTo(request.effectiveFrom().minusDays(1));
-            previous.setStatus("INACTIVE");
+            previous.setStatus(VersionStatus.SUPERSEDED);
             versions.save(previous);
         }
         User actor = requireUser(username);
         ReportTemplateVersion savedVersion = versions.save(ReportTemplateVersion.builder().reportTemplateId(templateId)
                 .createdBy(actor.getId()).versionNumber(version).templateSchema(request.templateSchema())
                 .effectiveFrom(request.effectiveFrom()).effectiveTo(request.effectiveTo())
-                .status("ACTIVE").build());
+                .status(VersionStatus.ACTIVE).build());
         template.setCurrentVersionId(savedVersion.getId());
         templates.save(template);
         return new ReportTemplateAdminResponse(template,
