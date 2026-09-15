@@ -164,6 +164,7 @@ Platform-to-support-digital-transformation-for-household-businesses/
 │   ├── requirements/                             # Yêu cầu đề tài / phân tích yêu cầu
 │   ├── run-guide/                                # Hướng dẫn chạy trên IDE / VS Code
 │   ├── software-requirement-specification/       # SRS
+│   ├── system-implementation/                     # Tài liệu hiện thực hệ thống
 │   ├── testing-documents/                        # Tài liệu kiểm thử
 │   ├── user-guides/                              # Hướng dẫn sử dụng theo vai trò
 │   ├── user-requirements/                        # Yêu cầu người dùng
@@ -178,6 +179,14 @@ Platform-to-support-digital-transformation-for-household-businesses/
 ├── .gitignore                                    # Bỏ qua file nhạy cảm / build output
 └── .md                                           # Tệp markdown phụ trợ nếu có
 ```
+
+---
+
+## Tài liệu hiện thực hệ thống
+
+Tài liệu mô tả kiến trúc hiện thực, tổ chức mã nguồn, bảo mật, các luồng nghiệp vụ, cấu hình, kiểm thử và đóng gói:
+
+- [System Implementation Document](docs/system-implementation/system-implementation.md)
 
 ---
 
