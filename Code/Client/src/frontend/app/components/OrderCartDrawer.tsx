@@ -10,6 +10,11 @@ import {
   ShoppingBag,
   Trash2,
   X,
+  QrCode,
+  Download,
+  Copy,
+  Check,
+  Loader2,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CustomerSelect, CustomerOption } from '@/app/components/CustomerSelect';
@@ -18,6 +23,7 @@ import {
   calculateProjectedCustomerDebt,
   validateOrderCheckout,
 } from '@/app/lib/debtBookkeepingViewModel';
+import { downloadQrImage } from '@/app/lib/qrDownload';
 
 export type { CustomerOption };
 
@@ -94,6 +100,10 @@ export function OrderCartDrawer({
   const [checkoutError, setCheckoutError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerOption | null>(null);
+  const [showQr, setShowQr] = useState(false);
+  const [downloadingQr, setDownloadingQr] = useState(false);
+  const [copiedAcc, setCopiedAcc] = useState(false);
+  const [copiedSyntax, setCopiedSyntax] = useState(false);
 
   const totalAmount = useMemo(
     () => Math.round(items.reduce((sum, item) => sum + Number(item.resolved?.lineTotal || 0), 0)),
@@ -378,6 +388,114 @@ export function OrderCartDrawer({
                     </div>
                     <strong className="text-xl font-black text-emerald-700">{formatVnd(totalAmount)}</strong>
                   </div>
+                </div>
+
+                {/* QR Payment Preview Toggle & Box */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => setShowQr(!showQr)}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 transition cursor-pointer"
+                    >
+                      <QrCode className="h-4 w-4 text-blue-600" />
+                      <span>{showQr ? 'Ẩn mã QR thanh toán' : 'Hiển thị mã QR thanh toán'}</span>
+                    </button>
+                    {showQr && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setDownloadingQr(true);
+                          const amountForQr = paid > 0 ? paid : totalAmount;
+                          const syntax = `DH ${orderCode.trim() || 'POS'}`;
+                          const url = `https://img.vietqr.io/image/ICB-108871728162-compact2.png?amount=${amountForQr}&addInfo=${encodeURIComponent(syntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`;
+                          await downloadQrImage(url, `qr-don-hang-${orderCode.trim() || 'pos'}.png`);
+                          setTimeout(() => setDownloadingQr(false), 1200);
+                        }}
+                        disabled={downloadingQr}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 transition cursor-pointer active:scale-95 disabled:opacity-50"
+                      >
+                        {downloadingQr ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5 text-amber-400" />}
+                        <span>{downloadingQr ? 'Đang tải...' : 'Tải mã QR'}</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {showQr && (() => {
+                    const amountForQr = paid > 0 ? paid : totalAmount;
+                    const syntax = `DH ${orderCode.trim() || 'POS'}`;
+                    const qrUrl = `https://img.vietqr.io/image/ICB-108871728162-compact2.png?amount=${amountForQr}&addInfo=${encodeURIComponent(syntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`;
+
+                    return (
+                      <div className="rounded-2xl bg-slate-900 p-4 text-white shadow-lg space-y-3">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                          <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">Quét mã QR để thanh toán</span>
+                          <span className="text-xs font-black text-amber-400">{formatVnd(amountForQr)}</span>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
+                          <div className="bg-white p-2 rounded-xl shrink-0 shadow-inner">
+                            <img
+                              src={qrUrl}
+                              alt="Mã QR thanh toán đơn hàng"
+                              className="h-32 w-32 object-contain rounded-lg"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                if (target.src !== '/images/qr-code.jpg') {
+                                  target.src = '/images/qr-code.jpg';
+                                }
+                              }}
+                            />
+                          </div>
+                          <div className="w-full space-y-1 text-xs text-slate-300">
+                            <div className="flex justify-between border-b border-slate-800 pb-1">
+                              <span>Ngân hàng:</span>
+                              <strong className="text-white">VietinBank</strong>
+                            </div>
+                            <div className="flex justify-between items-center border-b border-slate-800 pb-1">
+                              <span>Số TK:</span>
+                              <div className="flex items-center gap-1">
+                                <strong className="font-mono text-white">108871728162</strong>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText('108871728162');
+                                    setCopiedAcc(true);
+                                    setTimeout(() => setCopiedAcc(false), 2000);
+                                  }}
+                                  className="text-slate-400 hover:text-white p-0.5"
+                                >
+                                  {copiedAcc ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                                </button>
+                              </div>
+                            </div>
+                            <div className="flex justify-between border-b border-slate-800 pb-1">
+                              <span>Chủ TK:</span>
+                              <strong className="text-white">NGUYEN LE HUY TAM</strong>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span>Nội dung:</span>
+                              <div className="flex items-center gap-1">
+                                <span className="font-mono font-bold text-blue-300 bg-blue-900/50 px-1.5 py-0.5 rounded text-[11px]">
+                                  {syntax}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(syntax);
+                                    setCopiedSyntax(true);
+                                    setTimeout(() => setCopiedSyntax(false), 2000);
+                                  }}
+                                  className="text-slate-400 hover:text-white p-0.5"
+                                >
+                                  {copiedSyntax ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <button type="submit" disabled={submitting || hasInvalidItem} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3.5 text-sm font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40">
