@@ -35,7 +35,8 @@ Repo có sẵn **4 file script ở thư mục gốc** — double-click là chạ
 | `run-frontend-clean.bat` | Như trên nhưng **xóa `.next` + `node_modules`** rồi cài lại | **Node.js 20+** |
 | `run-ai.bat` | AI Service (FastAPI) — cổng **8000** | **Python 3.10+** |
 
-> **`run-ai.bat` cần tải thư viện về máy:** lần chạy đầu tiên script tạo môi trường ảo `Code\AI\.venv` (khoảng 50 MB) và **tải các thư viện Python cần thiết** (fastapi, uvicorn, pydantic, httpx, python-dotenv…) → cần **Internet** và mất khoảng **1–2 phút**. Các lần sau chạy nhanh vì đã có `.venv`. Khi `requirements.txt` thay đổi, chạy `run-ai.bat reinstall`.
+> **`run-ai.bat` cần tải thư viện về máy:** lần chạy đầu tiên script tạo môi trường ảo `Code\AI\.venv` (khoảng 50 MB) và **tải các thư viện Python cần thiết** (fastapi, uvicorn, pydantic, httpx, python-dotenv…) → cần **Internet** và mất khoảng **1–2 phút**. Các lần sau chạy nhanh vì đã có `.venv`. Khi `requirements.txt` thay đổi, chạy `run-ai.bat reinstall`.<br>
+> Có thể bỏ qua bước này nếu không dùng tính năng AI Service.
 
 > **`run-backend.bat` cần `JAVA_HOME`:** nếu máy chưa có, chạy 1 lần trong PowerShell (thay bằng JDK 21 thật trên máy bạn): `[Environment]::SetEnvironmentVariable('JAVA_HOME', 'C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot', 'User')` rồi mở lại terminal.
 
