@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, Check, CheckCircle2, Copy, CreditCard, Loader2, X } from 'lucide-react';
+import { AlertTriangle, Check, CheckCircle2, Copy, CreditCard, Download, Loader2, X } from 'lucide-react';
+import { downloadQrImage } from '@/app/lib/qrDownload';
 
 interface PaymentQrModalProps {
   isOpen: boolean;
@@ -31,6 +32,11 @@ export default function PaymentQrModal({
 }: PaymentQrModalProps) {
   const [copiedAccountNumber, setCopiedAccountNumber] = useState(false);
   const [copiedTransferSyntax, setCopiedTransferSyntax] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
+  const qrImageUrl = amount > 0 && transferSyntax
+    ? `https://img.vietqr.io/image/ICB-108871728162-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(transferSyntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`
+    : '/images/qr-code.jpg';
 
   const copyValue = (value: string, type: 'account' | 'syntax') => {
     navigator.clipboard.writeText(value);
@@ -41,6 +47,12 @@ export default function PaymentQrModal({
       setCopiedTransferSyntax(true);
       setTimeout(() => setCopiedTransferSyntax(false), 2000);
     }
+  };
+
+  const handleDownloadQr = async () => {
+    setDownloading(true);
+    await downloadQrImage(qrImageUrl, `qr-thanh-toan-${transferSyntax || 'goi-cuoc'}.png`);
+    setTimeout(() => setDownloading(false), 1200);
   };
 
   return (
@@ -99,11 +111,33 @@ export default function PaymentQrModal({
                   <div className="bg-slate-900 text-white rounded-2xl p-5 text-center shadow-lg">
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Quét mã QR để thanh toán</p>
                     <div className="bg-white p-2 rounded-2xl inline-block shadow-md border-4 border-slate-800">
-                      <img src="/images/qr-code.jpg" alt="Mã QR chuyển khoản" className="w-64 h-64 object-contain rounded-xl" />
+                      <img
+                        src={qrImageUrl}
+                        alt="Mã QR chuyển khoản"
+                        className="w-64 h-64 object-contain rounded-xl"
+                        onError={(e) => {
+                          const target = e.currentTarget as HTMLImageElement;
+                          if (target.src !== '/images/qr-code.jpg') {
+                            target.src = '/images/qr-code.jpg';
+                          }
+                        }}
+                      />
                     </div>
-                    <div className="mt-3">
-                      <span className="text-xs text-slate-400 font-medium">Số tiền cần chuyển: </span>
-                      <span className="text-xl font-black text-amber-400">{amount.toLocaleString('vi-VN')}đ</span>
+                    <div className="mt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
+                      <div>
+                        <span className="text-xs text-slate-400 font-medium">Số tiền cần chuyển: </span>
+                        <span className="text-xl font-black text-amber-400">{amount.toLocaleString('vi-VN')}đ</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleDownloadQr}
+                        disabled={downloading}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl border border-white/20 transition cursor-pointer active:scale-95 disabled:opacity-50"
+                        title="Tải ảnh mã QR về máy"
+                      >
+                        {downloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-amber-400" />}
+                        <span>{downloading ? 'Đang tải...' : 'Tải mã QR'}</span>
+                      </button>
                     </div>
                   </div>
 

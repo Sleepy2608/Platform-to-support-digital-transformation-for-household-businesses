@@ -2,7 +2,8 @@
 
 import { FormEvent, useState, useEffect } from 'react';
 import {
-  X, DollarSign, CreditCard, Calendar, FileText, CheckCircle2, AlertCircle, RefreshCw, ArrowRight
+  X, DollarSign, CreditCard, Calendar, FileText, CheckCircle2, AlertCircle, RefreshCw, ArrowRight,
+  Download, Copy, Check, QrCode, Loader2
 } from 'lucide-react';
 import {
   createPayment,
@@ -12,6 +13,7 @@ import {
   CreatePaymentRequest
 } from '@/app/lib/payment';
 import { validatePaymentAmount } from '@/app/lib/debtBookkeepingViewModel';
+import { downloadQrImage } from '@/app/lib/qrDownload';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -33,6 +35,9 @@ export default function PaymentModal({ isOpen, onClose, orderId, onSuccess }: Pa
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>('');
   const [successMsg, setSuccessMsg] = useState<string>('');
+  const [copiedAccount, setCopiedAccount] = useState(false);
+  const [copiedSyntax, setCopiedSyntax] = useState(false);
+  const [downloadingQr, setDownloadingQr] = useState(false);
 
   const loadSummary = async () => {
     setLoadingSummary(true);
@@ -293,21 +298,127 @@ export default function PaymentModal({ isOpen, onClose, orderId, onSuccess }: Pa
                   )}
                 </div>
 
-                {/* Reference Number (Required for Bank Transfer) */}
-                {paymentMethod === 'BANK_TRANSFER' && (
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      Mã tham chiếu / Mã giao dịch ngân hàng <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={referenceNumber}
-                      onChange={(e) => setReferenceNumber(e.target.value)}
-                      placeholder="Ví dụ: FT24081900123"
-                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-2 text-sm text-slate-900 dark:text-white bg-transparent focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
-                    />
-                  </div>
-                )}
+                {/* QR Code & Bank Transfer Section */}
+                {paymentMethod === 'BANK_TRANSFER' && (() => {
+                  const transferSyntax = `TT ${summary.orderCode || orderId}`;
+                  const qrImageUrl = numericAmount > 0
+                    ? `https://img.vietqr.io/image/ICB-108871728162-compact2.png?amount=${numericAmount}&addInfo=${encodeURIComponent(transferSyntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`
+                    : '/images/qr-code.jpg';
+
+                  const copyText = (val: string, type: 'acc' | 'syn') => {
+                    navigator.clipboard.writeText(val);
+                    if (type === 'acc') {
+                      setCopiedAccount(true);
+                      setTimeout(() => setCopiedAccount(false), 2000);
+                    } else {
+                      setCopiedSyntax(true);
+                      setTimeout(() => setCopiedSyntax(false), 2000);
+                    }
+                  };
+
+                  const handleDownloadQr = async () => {
+                    setDownloadingQr(true);
+                    await downloadQrImage(qrImageUrl, `qr-don-hang-${summary.orderCode || orderId}.png`);
+                    setTimeout(() => setDownloadingQr(false), 1200);
+                  };
+
+                  return (
+                    <div className="space-y-3 rounded-2xl bg-slate-900 p-4 text-white shadow-md">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <div className="flex items-center gap-2">
+                          <QrCode className="h-4 w-4 text-blue-400" />
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                            Quét mã QR để thanh toán
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleDownloadQr}
+                          disabled={downloadingQr}
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-white/20 active:scale-95 disabled:opacity-50 cursor-pointer"
+                        >
+                          {downloadingQr ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5 text-amber-400" />}
+                          <span>{downloadingQr ? 'Đang tải...' : 'Tải mã QR'}</span>
+                        </button>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row items-center gap-4">
+                        <div className="rounded-xl bg-white p-2 shadow-inner shrink-0">
+                          <img
+                            src={qrImageUrl}
+                            alt="Mã QR thanh toán đơn hàng"
+                            className="h-36 w-36 object-contain rounded-lg"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              if (target.src !== '/images/qr-code.jpg') {
+                                target.src = '/images/qr-code.jpg';
+                              }
+                            }}
+                          />
+                        </div>
+                        <div className="w-full space-y-1.5 text-xs">
+                          <div className="flex justify-between border-b border-slate-800 pb-1">
+                            <span className="text-slate-400">Ngân hàng:</span>
+                            <span className="font-bold text-slate-100">VietinBank</span>
+                          </div>
+                          <div className="flex justify-between items-center border-b border-slate-800 pb-1">
+                            <span className="text-slate-400">Số tài khoản:</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono font-bold text-slate-100">108871728162</span>
+                              <button
+                                type="button"
+                                onClick={() => copyText('108871728162', 'acc')}
+                                className="p-0.5 text-slate-400 hover:text-white"
+                                title="Sao chép STK"
+                              >
+                                {copiedAccount ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex justify-between border-b border-slate-800 pb-1">
+                            <span className="text-slate-400">Chủ TK:</span>
+                            <span className="font-bold text-slate-100">NGUYEN LE HUY TAM</span>
+                          </div>
+                          <div className="flex justify-between items-center border-b border-slate-800 pb-1">
+                            <span className="text-slate-400">Nội dung:</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono font-bold text-blue-300 bg-blue-900/40 px-1.5 py-0.5 rounded">
+                                {transferSyntax}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => copyText(transferSyntax, 'syn')}
+                                className="p-0.5 text-slate-400 hover:text-white"
+                                title="Sao chép nội dung"
+                              >
+                                {copiedSyntax ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex justify-between pt-0.5">
+                            <span className="text-slate-400">Số tiền:</span>
+                            <span className="font-black text-amber-400 text-sm">
+                              {formatVND(numericAmount)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-300 mb-1">
+                          Mã tham chiếu / Mã giao dịch ngân hàng <span className="text-rose-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={referenceNumber}
+                          onChange={(e) => setReferenceNumber(e.target.value)}
+                          placeholder={`Ví dụ: FT${Date.now().toString().slice(-6)}`}
+                          className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-3.5 py-2 text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Date Input */}
                 <div>

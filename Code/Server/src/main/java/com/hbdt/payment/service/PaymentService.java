@@ -170,7 +170,8 @@ public class PaymentService {
         BigDecimal totalDebt = debtTransactionRepository
                 .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.DEBT_INCREASE.name());
         BigDecimal totalPaid = debtTransactionRepository
-                .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.PAYMENT.name());
+                .sumAmountByCustomerIdAndTypes(customerId, businessId,
+                        java.util.List.of(DebtTransactionType.PAYMENT.name(), "DEBT_PAYMENT"));
         BigDecimal totalVoided = debtTransactionRepository
                 .sumAmountByCustomerIdAndType(customerId, businessId, DebtTransactionType.VOID.name());
         // Dùng calculateCustomerDebt (SSOT) để lấy số dư chính xác nhất

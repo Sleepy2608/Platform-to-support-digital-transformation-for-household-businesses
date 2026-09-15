@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,6 +19,7 @@ public class AuditLogService {
     private static final Pattern ID_SEGMENT = Pattern.compile("/(\\d+)(?=/|$)");
 
     private final AuditLogRepository auditLogRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public AuditLogService(AuditLogRepository auditLogRepository) {
         this.auditLogRepository = auditLogRepository;
@@ -39,6 +41,22 @@ public class AuditLogService {
                 .entityId(extractEntityId(uri))
                 .ipAddress(abbreviate(resolveClientIp(request), 45))
                 .userAgent(abbreviate(request.getHeader("User-Agent"), 500))
+                .createdAt(LocalDateTime.now())
+                .build());
+    }
+
+    /** Records before/after values for reviewed accounting events without storing secrets. */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordAccountingChange(User user, String action, String entityType, Long entityId,
+            Object oldData, Object newData) {
+        auditLogRepository.save(AuditLog.builder()
+                .businessId(user.getBusinessId())
+                .userId(user.getId())
+                .action(abbreviate(action, 100))
+                .entityType(abbreviate(entityType, 100))
+                .entityId(entityId)
+                .oldData(oldData == null ? null : objectMapper.valueToTree(oldData))
+                .newData(newData == null ? null : objectMapper.valueToTree(newData))
                 .createdAt(LocalDateTime.now())
                 .build());
     }

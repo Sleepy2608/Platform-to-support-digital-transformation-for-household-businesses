@@ -65,7 +65,6 @@ public class ReportTemplate {
      */
     @Column(name = "current_version_id", columnDefinition = "BIGINT UNSIGNED")
     private Long currentVersionId;
-
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

@@ -96,6 +96,25 @@ const STANDARD_PRESETS: Record<string, TemplatePreset> = {
       { key: 'notes', label: 'Ghi chú', type: 'text', required: false },
     ],
   },
+  INVENTORY_LEDGER: {
+    name: 'Sổ chi tiết vật liệu, dụng cụ, sản phẩm, hàng hóa',
+    officialFormCode: 'Mẫu số S2-HKD',
+    legalBasis: 'Thông tư 88/2021/TT-BTC',
+    description: 'Theo dõi số lượng và giá trị nhập, xuất, tồn theo dữ liệu kho đã xác nhận.',
+    columns: [
+      { key: 'productCode', label: 'Mã sản phẩm', type: 'text', required: true },
+      { key: 'productName', label: 'Tên sản phẩm', type: 'text', required: true },
+      { key: 'unit', label: 'Đơn vị tính', type: 'text', required: true },
+      { key: 'openingQuantity', label: 'Tồn đầu số lượng', type: 'number', required: true },
+      { key: 'openingValue', label: 'Tồn đầu tiền', type: 'currency', required: true },
+      { key: 'stockInQuantity', label: 'Nhập số lượng', type: 'number', required: true },
+      { key: 'stockInValue', label: 'Tiền nhập', type: 'currency', required: true },
+      { key: 'stockOutQuantity', label: 'Xuất số lượng', type: 'number', required: true },
+      { key: 'stockOutValue', label: 'Giá vốn xuất', type: 'currency', required: true },
+      { key: 'closingQuantity', label: 'Tồn cuối số lượng', type: 'number', required: true },
+      { key: 'closingValue', label: 'Tồn cuối tiền', type: 'currency', required: true },
+    ],
+  },
   EXPENSE_LEDGER: {
     name: 'Sổ chi tiết chi phí sản xuất, kinh doanh',
     officialFormCode: 'Mẫu số S2-HKD',
@@ -152,6 +171,20 @@ const STANDARD_PRESETS: Record<string, TemplatePreset> = {
       { key: 'totalTax', label: 'Tổng tiền thuế phải nộp', type: 'currency', required: true },
     ],
   },
+  TAX_OBLIGATION_LEDGER: {
+    name: 'Sổ theo dõi tình hình thực hiện nghĩa vụ thuế',
+    officialFormCode: 'Mẫu số S4-HKD',
+    legalBasis: 'Thông tư 88/2021/TT-BTC',
+    description: 'Theo dõi số thuế phải nộp, đã nộp và còn phải nộp theo từng sắc thuế.',
+    columns: [
+      { key: 'taxCode', label: 'Mã sắc thuế', type: 'text', required: true },
+      { key: 'taxName', label: 'Tên sắc thuế', type: 'text', required: true },
+      { key: 'taxableRevenue', label: 'Doanh thu tính thuế', type: 'currency', required: true },
+      { key: 'taxPayable', label: 'Số phải nộp', type: 'currency', required: true },
+      { key: 'paidAmount', label: 'Số đã nộp', type: 'currency', required: true },
+      { key: 'remainingAmount', label: 'Số còn phải nộp', type: 'currency', required: true },
+    ],
+  },
   BALANCE_SHEET: {
     name: 'Bảng cân đối tình hình tài chính quản trị',
     officialFormCode: 'Báo cáo tài chính quản trị',
@@ -168,29 +201,35 @@ const STANDARD_PRESETS: Record<string, TemplatePreset> = {
 
 const TYPE_PREFIX: Record<string, string> = {
   REVENUE_LEDGER: 'RL',
+  INVENTORY_LEDGER: 'IL',
   EXPENSE_LEDGER: 'EL',
   DEBT_REPORT: 'DR',
   CASH_FLOW: 'CF',
   TAX_SUMMARY: 'TS',
+  TAX_OBLIGATION_LEDGER: 'TL',
   BALANCE_SHEET: 'BS',
 };
 
 const TYPE_OPTIONS = [
   { value: '', label: 'Tất cả loại báo cáo' },
   { value: 'REVENUE_LEDGER', label: 'Sổ chi tiết doanh thu' },
+  { value: 'INVENTORY_LEDGER', label: 'S2-HKD · Sổ nhập, xuất, tồn' },
   { value: 'EXPENSE_LEDGER', label: 'Sổ chi phí kinh doanh' },
   { value: 'DEBT_REPORT', label: 'Báo cáo công nợ' },
   { value: 'CASH_FLOW', label: 'Lưu chuyển tiền tệ' },
   { value: 'TAX_SUMMARY', label: 'Tờ khai tổng hợp thuế' },
+  { value: 'TAX_OBLIGATION_LEDGER', label: 'S4-HKD · Sổ nghĩa vụ thuế' },
   { value: 'BALANCE_SHEET', label: 'Bảng cân đối kế toán' },
 ];
 
 const TYPE_LABELS: Record<string, string> = {
   REVENUE_LEDGER: 'Sổ doanh thu',
+  INVENTORY_LEDGER: 'Sổ nhập, xuất, tồn',
   EXPENSE_LEDGER: 'Sổ chi phí',
   DEBT_REPORT: 'Báo cáo công nợ',
   CASH_FLOW: 'Lưu chuyển tiền tệ',
   TAX_SUMMARY: 'Tổng hợp thuế',
+  TAX_OBLIGATION_LEDGER: 'Sổ nghĩa vụ thuế',
   BALANCE_SHEET: 'Bảng cân đối',
 };
 

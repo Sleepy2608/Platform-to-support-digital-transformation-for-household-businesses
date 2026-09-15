@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Lock, LogOut, MessageSquare, Search, Shield, Store, Unlock, Users } from 'lucide-react';
 import Link from 'next/link';
+import { Lock, LogOut, MessageSquare, Search, Shield, Store, Unlock, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { clearAuth, getAccessToken } from '../lib/apiClient';
 
@@ -129,7 +129,7 @@ export default function ManagerDashboard() {
               href="/manager/feedback"
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 shadow-xs transition-colors hover:bg-slate-50"
             >
-              <MessageSquare className="h-4 w-4" /> Quản lý phản hồi
+              <MessageSquare className="h-4 w-4" /> Quản lý hỗ trợ
             </Link>
             <Link
               id="manager-analytics-link"

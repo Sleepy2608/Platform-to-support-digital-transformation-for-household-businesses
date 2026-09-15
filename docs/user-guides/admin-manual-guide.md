@@ -5,8 +5,8 @@
 | **Tài liệu** | Hướng Dẫn Sử Dụng Hệ Thống – Vai Trò Quản Trị Viên (System Admin) |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Vai trò áp dụng** | Quản trị viên hệ thống (`ADMIN` / System Administrator) |
-| **Phiên bản** | 1.1 |
-| **Cập nhật lần cuối** | 07/09/2026 |
+| **Phiên bản** | 1.2 |
+| **Cập nhật lần cuối** | 15/09/2026 |
 
 ---
 
@@ -14,7 +14,7 @@
 
 Tài liệu này hướng dẫn chi tiết các thao tác vận hành dành riêng cho **Quản trị viên hệ thống (System Admin)** trên Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform). 
 
-Quản trị viên hệ thống nắm giữ quyền hạn cao nhất (Super Admin), chịu trách nhiệm quản lý toàn bộ tài khoản người dùng, giám sát các Hộ kinh doanh đăng ký, quản lý danh mục gói dịch vụ thuê bao (Subscription Plans), theo dõi nhật ký hoạt động (Audit Logs) và quản lý cơ sở dữ liệu mẫu (Seek Data).
+Quản trị viên hệ thống nắm giữ quyền hạn cao nhất (Super Admin), chịu trách nhiệm quản lý toàn bộ tài khoản người dùng, giám sát các Hộ kinh doanh đăng ký, quản lý danh mục gói dịch vụ thuê bao (Subscription Plans), quản lý biểu mẫu báo cáo kế toán theo Thông tư 88 (Report Templates), theo dõi nhật ký hoạt động (Audit Logs) và quản lý cơ sở dữ liệu mẫu (Seek Data).
 
 ---
 
@@ -115,6 +115,27 @@ Tính năng dành riêng cho Quản trị viên nhằm tạo bản sao lưu snap
 
 ---
 
+### 3.7 Quản lý Biểu mẫu Báo cáo Kế toán (`/admin/report-templates`)
+Quản lý danh mục và **phiên bản** biểu mẫu báo cáo kế toán theo Thông tư 88/2021/TT-BTC (S1-HKD, S2-HKD, S4-HKD) cùng các mẫu khác. Mỗi biểu mẫu có nhiều phiên bản; mỗi phiên bản có ngày bắt đầu hiệu lực riêng để số liệu lịch sử luôn dùng đúng cấu trúc tại thời điểm đó.
+
+1. Vào menu **Biểu mẫu báo cáo kế toán** (`/admin/report-templates`).
+2. Màn hình hiển thị danh sách biểu mẫu kèm các phiên bản: mã phiên bản, ngày hiệu lực từ/đến, trạng thái và cấu trúc (`templateSchema`).
+3. **Tạo biểu mẫu mới** (khung *Tạo biểu mẫu*):
+   - **Mã mẫu** (ví dụ `S1-HKD`) — không được trùng với biểu mẫu đã có.
+   - **Tên biểu mẫu**, **mã mẫu chính thức** và **căn cứ pháp lý** (ví dụ `Thông tư 88/2021/TT-BTC`).
+   - **Loại biểu mẫu** — hệ thống chỉ chấp nhận các loại hợp lệ (ví dụ `ACCOUNTING_BOOK`).
+   - Biểu mẫu mới được tạo ở trạng thái `ACTIVE`.
+4. **Phát hành phiên bản mới** (khung *Phát hành phiên bản*):
+   - Chọn **biểu mẫu**, nhập **số phiên bản** (không được trùng số đã có) và **ngày bắt đầu hiệu lực**.
+   - Nhập **cấu trúc phiên bản** dưới dạng JSON (ví dụ `{ "columns": [] }`). JSON sai định dạng sẽ bị từ chối.
+   - Ngày hiệu lực của phiên bản mới **phải sau** phiên bản gần nhất.
+   - Khi phát hành thành công, **phiên bản trước tự động bị đóng hiệu lực**: ngày kết thúc được đặt bằng *ngày bắt đầu mới − 1 ngày* và trạng thái chuyển `INACTIVE`.
+5. **Lưu ý nghiệp vụ:**
+   - Không sửa trực tiếp phiên bản đã đóng hiệu lực; hãy phát hành phiên bản mới để giữ vết lịch sử.
+   - Sau khi phát hành phiên bản mới, Owner/Employee sẽ thấy số liệu tự động điền theo phiên bản đang hiệu lực tại trang báo cáo kế toán.
+
+---
+
 ## 4. Bảng tóm tắt Quyền hạn và Thao tác của Admin
 
 | Chức năng | Thao tác | Mô tả quyền hạn |
@@ -122,6 +143,7 @@ Tính năng dành riêng cho Quản trị viên nhằm tạo bản sao lưu snap
 | **Quản lý Tài khoản** | Tìm kiếm, Khóa, Mở khóa, Reset Pass | Toàn quyền trên mọi tài khoản `ADMIN`, `MANAGER`, `OWNER`, `EMPLOYEE` |
 | **Quản lý Hộ kinh doanh** | Xem chi tiết, Phê duyệt, Tạm dừng | Quản lý thông tin pháp lý và trạng thái hoạt động của Hộ kinh doanh |
 | **Quản lý Thuê bao** | Tạo gói, Sửa giá, Cấu hình tính năng | Định hình các gói cước Free / Basic / Pro trên nền tảng |
+| **Quản lý Biểu mẫu Kế toán** | Tạo biểu mẫu, Phát hành phiên bản, Đóng hiệu lực phiên bản cũ | Quản lý phiên bản biểu mẫu S1-HKD / S2-HKD / S4-HKD theo ngày hiệu lực |
 | **Nhật ký Audit Log** | Tra cứu, Xuất log hệ thống | Xem chi tiết các truy vết thao tác và lịch sử đăng nhập/thay đổi |
 | **Seek Data Master** | Snapshot, Restore dữ liệu seed | Mã hóa và đồng bộ dữ liệu mẫu danh mục hệ thống |
 
@@ -135,3 +157,5 @@ Tính năng dành riêng cho Quản trị viên nhằm tạo bản sao lưu snap
 | Báo lỗi "Access Denied" khi bấm Seek Data | Chưa nhập đúng Database Key | Liên hệ Trưởng nhóm phát triển để nhận Database Key chính xác |
 | Không thấy dữ liệu Audit Log mới | Đã chọn sai khoảng thời gian lọc | Đặt lại bộ lọc ngày tháng về "Tất cả" hoặc "Hôm nay" |
 | Hộ kinh doanh báo không nâng cấp được gói | Hóa đơn thanh toán dịch vụ chưa được xác nhận | Vào menu Gói dịch vụ → Tìm mã hóa đơn dịch vụ và bấm "Xác nhận thanh toán" |
+| Báo lỗi "Phiên bản mới phải có ngày hiệu lực sau phiên bản gần nhất" | Ngày bắt đầu hiệu lực nhập vào không sau phiên bản đang hiệu lực | Chọn ngày bắt đầu hiệu lực muộn hơn ngày của phiên bản gần nhất |
+| Báo lỗi "JSON hoặc dữ liệu phiên bản không hợp lệ" | Cấu trúc `templateSchema` không phải JSON hợp lệ | Kiểm tra lại JSON (ví dụ `{ "columns": [] }`) trước khi phát hành phiên bản |
