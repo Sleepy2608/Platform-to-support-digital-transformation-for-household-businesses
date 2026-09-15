@@ -11,7 +11,7 @@
 | **Phiên bản tài liệu** | 2.1 |
 | **Ngày tạo** | 26/07/2026 |
 | **Ngày chỉnh sửa lần cuối** | 14/09/2026 |
-| **Trạng thái** | Bản nháp (Draft) |
+| **Trạng thái** | Hoàn thành |
 
 ---
 
