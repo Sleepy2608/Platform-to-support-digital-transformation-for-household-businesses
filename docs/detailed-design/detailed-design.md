@@ -945,7 +945,7 @@ src/frontend/app/
 ├── register/         → /register
 ├── forgot-password/  → /forgot-password
 ├── verify-email/     → /verify-email
-├── onboarding/       → /onboarding           (thiết lập ban đầu chủ hộ)
+├── onboarding/       → /onboarding/business-profile, /onboarding/package-selection   (thiết lập ban đầu chủ hộ)
 ├── owner/            → /owner/*              (khu vực chủ hộ — có bảo vệ)
 │   ├── account/      → /owner/account        (quản lý tài khoản)
 │   └── products/     → /owner/products       (quản lý sản phẩm)
@@ -992,7 +992,8 @@ src/frontend/app/
 | `/register` | Đăng ký chủ hộ + đồng thuận điều khoản |
 | `/forgot-password` | Gửi OTP đặt lại mật khẩu |
 | `/verify-email` | Xác thực email bằng OTP |
-| `/onboarding` | Thiết lập hồ sơ kinh doanh ban đầu |
+| `/onboarding/business-profile` | Thiết lập hồ sơ kinh doanh ban đầu |
+| `/onboarding/package-selection` | Chọn gói cước ban đầu |
 | `/owner/account` | Hồ sơ, đổi mật khẩu, email, SĐT, gói thuê bao |
 | `/owner/products` | Quản lý sản phẩm, danh mục |
 | `/admin/accounts` | Quản lý tài khoản Manager (Yêu cầu vai trò `ADMIN`) |
@@ -1023,8 +1024,10 @@ App (RootLayout)
     │   └── VerifyEmailPage (/verify-email)
     │       └── OtpInput
     │
-    ├── OnboardingPage (/onboarding)
+    ├── OnboardingPage (/onboarding/business-profile)
     │   └── BusinessProfileForm (hồ sơ kinh doanh + địa chỉ)
+    ├── PackageSelectionPage (/onboarding/package-selection)
+    │   └── Chọn gói cước ban đầu
     │
     ├── OwnerArea (được bảo vệ bởi proxy.ts + sessionGuard)
     │   └── OwnerLayout
@@ -1487,7 +1490,7 @@ Frontend tương ứng: `/admin/report-templates`.
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                  WORKFLOW: ĐĂNG KÝ & ONBOARDING CHỦ HỘ                       │
 │                                                                            │
-│  PUBLIC PORTAL → /register → /verify-email → /onboarding → /owner          │
+│  PUBLIC PORTAL → /register → /verify-email → /onboarding/* → /owner/*      │
 │                                                                            │
 │  ┌──────────┐    ┌──────────────┐    ┌───────────────┐    ┌──────────────┐  │
 │  │  Landing │───►│  Register    │───►│  Verify OTP   │───►│  Onboarding  │  │
@@ -2516,7 +2519,7 @@ Quy trình:
 | `app/proxy.ts` | Edge proxy `/owner/*` |
 | `app/components/` | AuthSync, Navbar, PricingPlans, ScrollReveal, legal, `AiOrderInput.tsx`, `OrderCartDrawer.tsx` |
 | `app/login`, `app/register`, `app/forgot-password`, `app/verify-email` | Luồng xác thực |
-| `app/onboarding` | Thiết lập ban đầu |
+| `app/onboarding/business-profile`, `app/onboarding/package-selection` | Thiết lập ban đầu & chọn gói cước |
 | `app/owner/account`, `app/owner/products`, `app/owner/orders/new`, `app/owner/revenue` | Khu vực chủ hộ (gồm nhập đơn bằng AI và sổ doanh thu) |
 | `app/employee/orders/new` | Nhập đơn bằng AI cho nhân viên |
 | `app/admin/accounts`, `app/admin/subscription-plans`, `app/admin/seed`, `app/admin/report-templates`, `app/admin/templates` | Khu vực quản trị (gồm quản lý biểu mẫu báo cáo kế toán) |
