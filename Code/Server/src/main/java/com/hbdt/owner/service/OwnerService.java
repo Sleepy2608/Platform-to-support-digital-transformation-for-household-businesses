@@ -269,17 +269,22 @@ public class OwnerService {
                 .build();
         paymentHistoryRepository.save(paymentHistory);
 
-        String invoiceNo = "INV-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        String today = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
+        String invoiceCode = "INV-" + today + "-" + java.util.UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+        String invoiceNo = "INV-" + today + "-" + String.format("%04d", (int)(Math.random() * 10000));
         java.math.BigDecimal unitPrice = amount.divide(java.math.BigDecimal.valueOf(months), 2, java.math.RoundingMode.HALF_UP);
 
         ServiceInvoice serviceInvoice = ServiceInvoice.builder()
-                .invoiceCode(invoiceNo)
+                .invoiceCode(invoiceCode)
+                .invoiceNo(invoiceNo)
+                .businessId(subscription.getBusinessId())
                 .user(user)
                 .subscription(subscription)
                 .plan(subscription.getPlan())
                 .duration(months)
-                .unitPrice(subscription.getPlan().getMonthlyPrice())
+                .unitPrice(unitPrice)
                 .totalAmount(amount)
+                .amount(amount)
                 .status("PAID")
                 .build();
         serviceInvoiceRepository.save(serviceInvoice);
