@@ -21,6 +21,11 @@ public interface ProductPriceRepository extends JpaRepository<ProductPrice, Long
             String status
     );
 
+    Optional<ProductPrice> findFirstByProductUnitIdAndStatusOrderByEffectiveFromDesc(
+            Long productUnitId,
+            String status
+    );
+
     Optional<ProductPrice> findByIdAndProductUnitId(Long id, Long productUnitId);
 
 }

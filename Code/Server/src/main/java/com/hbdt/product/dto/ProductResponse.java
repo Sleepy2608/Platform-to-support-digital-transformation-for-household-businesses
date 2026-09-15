@@ -13,6 +13,8 @@ public record ProductResponse(
         Long baseUnitId,
         String baseUnitName,
         BigDecimal salePrice,
+        Long saleUnitId,
+        String saleUnitName,
         Long defaultTaxActivityGroupId,
         String defaultTaxActivityGroupName,
         String imageUrl,
@@ -42,6 +44,7 @@ public record ProductResponse(
             LocalDateTime updatedAt
     ) {
         this(id, productCode, productName, categoryId, categoryName, baseUnitId, baseUnitName, BigDecimal.ZERO,
+                baseUnitId, baseUnitName,
                 defaultTaxActivityGroupId, defaultTaxActivityGroupName, imageUrl, images, description, status,
                 quantityOnHand, createdAt, updatedAt);
     }
