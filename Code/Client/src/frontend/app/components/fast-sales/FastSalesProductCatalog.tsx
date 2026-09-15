@@ -183,17 +183,17 @@ export const FastSalesProductCatalog = forwardRef<HTMLInputElement, FastSalesPro
 
                     {/* Price & Add Action Row */}
                     <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Giá bán</span>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-base font-black text-emerald-700">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block whitespace-nowrap">Giá bán</span>
+                        <div className="flex flex-nowrap items-baseline gap-1 min-w-0">
+                          <span className="text-base font-black text-emerald-700 whitespace-nowrap">
                             {Number(p.salePrice || 0).toLocaleString('vi-VN')} ₫
                           </span>
-                          <span className="text-xs text-slate-500 font-medium">/{p.unitName}</span>
+                          <span className="text-xs text-slate-500 font-medium truncate">/{p.unitName}</span>
                         </div>
                       </div>
 
-                      {/* Add to Cart Button */}
+                      {/* Add to Cart Button — fixed 36x36 in every state so the price area never shifts */}
                       <button
                         type="button"
                         disabled={isOutOfStock}
@@ -201,20 +201,36 @@ export const FastSalesProductCatalog = forwardRef<HTMLInputElement, FastSalesPro
                           e.stopPropagation();
                           if (!isOutOfStock) onAddToCart(p);
                         }}
-                        className={`flex items-center justify-center rounded-xl transition-all ${
+                        title={
+                          isOutOfStock
+                            ? 'Sản phẩm đã hết hàng'
+                            : inCartCount > 0
+                            ? `Đã chọn ${inCartCount} ${p.unitName}`
+                            : 'Thêm vào giỏ hàng'
+                        }
+                        aria-label={
+                          isOutOfStock
+                            ? 'Sản phẩm đã hết hàng'
+                            : inCartCount > 0
+                            ? `Đã chọn ${inCartCount} ${p.unitName}`
+                            : 'Thêm vào giỏ hàng'
+                        }
+                        className={`relative shrink-0 flex items-center justify-center rounded-xl transition-all ${
                           isOutOfStock
                             ? 'h-9 px-2 bg-slate-100 text-slate-400 cursor-not-allowed'
                             : inCartCount > 0
-                            ? 'h-9 px-3 bg-emerald-600 text-white font-bold text-xs gap-1.5 shadow-2xs cursor-pointer'
+                            ? 'h-9 w-9 bg-emerald-600 text-white shadow-2xs cursor-pointer'
                             : 'h-9 w-9 bg-slate-100 text-slate-700 hover:bg-slate-900 hover:text-white border border-slate-200 cursor-pointer'
                         }`}
                       >
                         {isOutOfStock ? (
-                          <span className="text-[10px] font-bold">Hết hàng</span>
+                          <span className="text-[10px] font-bold whitespace-nowrap">Hết hàng</span>
                         ) : inCartCount > 0 ? (
                           <>
                             <Check className="w-4 h-4" />
-                            <span>Đã chọn ({inCartCount})</span>
+                            <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-amber-400 text-slate-950 text-[10px] font-extrabold leading-none flex items-center justify-center shadow-2xs ring-2 ring-white">
+                              {inCartCount > 99 ? '99+' : inCartCount}
+                            </span>
                           </>
                         ) : (
                           <Plus className="w-4 h-4" />
