@@ -142,6 +142,7 @@ const STANDARD_COLUMN_ORDER = [
 function orderColumns(cols: string[]): string[] {
   const getPriority = (col: string): number => {
     const c = col.toLowerCase();
+    if (c.includes('phương thức') || c.includes('hình thức')) return 11;
     for (let i = 0; i < STANDARD_COLUMN_ORDER.length; i++) {
       if (c.includes(STANDARD_COLUMN_ORDER[i])) {
         return i;
@@ -156,11 +157,29 @@ function orderColumns(cols: string[]): string[] {
 function isAmountColumn(colName?: string): boolean {
   if (!colName) return false;
   const c = colName.toLowerCase();
+  // Strictly exclude non-amount columns
+  if (
+    c.includes('phương thức') ||
+    c.includes('hình thức') ||
+    c === 'stt' ||
+    c.includes('ngày') ||
+    c.includes('số hiệu') ||
+    c.includes('mã') ||
+    c.includes('người mua') ||
+    c.includes('khách') ||
+    c.includes('mặt hàng') ||
+    c.includes('diễn giải') ||
+    c.includes('nội dung')
+  ) {
+    return false;
+  }
   return (
     c.includes('tiền') ||
     c.includes('doanh thu') ||
-    c.includes('thanh toán') ||
-    c.includes('nợ') ||
+    c.includes('đã thanh toán') ||
+    c.includes('thực thu') ||
+    c.includes('còn nợ') ||
+    c.includes('công nợ') ||
     c.includes('giá') ||
     c.includes('chi phí')
   );
@@ -177,6 +196,7 @@ function calculateTotals(rows: Array<Record<string, unknown>>) {
   rows.forEach((r) => {
     Object.keys(r).forEach((k) => {
       const kl = k.toLowerCase();
+      if (kl.includes('phương thức') || kl.includes('hình thức')) return;
       const val = Number(r[k]) || 0;
       if (kl.includes('doanh thu') || kl.includes('tổng tiền')) {
         totalRevenue += val;
@@ -463,10 +483,15 @@ export default function ReportReviewPage() {
             if (kl === 'stt') {
               clean[k] = idx + 1;
             } else if (
-              kl.includes('doanh thu') ||
-              kl.includes('tiền') ||
-              kl.includes('thanh toán') ||
-              kl.includes('nợ')
+              !kl.includes('phương thức') &&
+              !kl.includes('hình thức') && (
+                kl.includes('doanh thu') ||
+                kl.includes('tiền') ||
+                kl.includes('đã thanh toán') ||
+                kl.includes('thực thu') ||
+                kl.includes('còn nợ') ||
+                kl.includes('công nợ')
+              )
             ) {
               clean[k] = Number(clean[k]) || 0;
             }
@@ -479,10 +504,13 @@ export default function ReportReviewPage() {
         Object.keys(cleanObj).forEach((k) => {
           const kl = k.toLowerCase();
           if (
-            kl.includes('doanh thu') ||
-            kl.includes('tiền') ||
-            kl.includes('thuế') ||
-            kl.includes('lượng')
+            !kl.includes('phương thức') &&
+            !kl.includes('hình thức') && (
+              kl.includes('doanh thu') ||
+              kl.includes('tiền') ||
+              kl.includes('thuế') ||
+              kl.includes('lượng')
+            )
           ) {
             if (cleanObj[k] !== '' && !isNaN(Number(cleanObj[k]))) {
               cleanObj[k] = Number(cleanObj[k]);
@@ -1078,6 +1106,9 @@ export default function ReportReviewPage() {
                                             const kl = col.toLowerCase();
                                             const val = row[col];
                                             const isStt = kl === 'stt';
+                                            const isPayment = kl.includes('phương thức') || kl.includes('hình thức');
+                                            const isVoucher = kl.includes('số hiệu') || kl.includes('hóa đơn');
+                                            const isDate = kl.includes('ngày');
                                             const isAmount = isAmountColumn(col);
 
                                             if (isStt) {
@@ -1086,6 +1117,63 @@ export default function ReportReviewPage() {
                                                   <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-slate-100 font-bold text-slate-700 text-xs">
                                                     {idx + 1}
                                                   </span>
+                                                </td>
+                                              );
+                                            }
+
+                                            if (isPayment) {
+                                              const paymentStr = String(val ?? '').toUpperCase();
+                                              let currentMethod = 'CASH';
+                                              if (paymentStr.includes('DEBT') || paymentStr.includes('NỢ')) {
+                                                currentMethod = 'DEBT';
+                                              } else if (paymentStr.includes('BANK') || paymentStr.includes('CHUYỂN KHOẢN')) {
+                                                currentMethod = 'BANK';
+                                              } else if (paymentStr.includes('OTHER') || paymentStr.includes('KHÁC')) {
+                                                currentMethod = 'OTHER';
+                                              } else {
+                                                currentMethod = 'CASH';
+                                              }
+
+                                              return (
+                                                <td key={col} className="px-2 py-1.5 whitespace-nowrap min-w-[140px]">
+                                                  <select
+                                                    value={currentMethod}
+                                                    onChange={(e) => handleUpdateRow(idx, col, e.target.value)}
+                                                    className="w-full px-2.5 py-1.5 text-xs font-bold text-slate-800 rounded-lg border border-slate-300 bg-white hover:border-slate-400 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 cursor-pointer transition-colors shadow-2xs"
+                                                  >
+                                                    <option value="CASH">CASH (Tiền mặt)</option>
+                                                    <option value="BANK">BANK (Chuyển khoản)</option>
+                                                    <option value="DEBT">DEBT (Ghi nợ)</option>
+                                                    <option value="OTHER">OTHER (Khác)</option>
+                                                  </select>
+                                                </td>
+                                              );
+                                            }
+
+                                            if (isVoucher) {
+                                              return (
+                                                <td key={col} className="px-2 py-1.5 whitespace-nowrap min-w-[110px]">
+                                                  <input
+                                                    type="text"
+                                                    value={String(val ?? '')}
+                                                    onChange={(e) => handleUpdateRow(idx, col, e.target.value)}
+                                                    placeholder="DH-..."
+                                                    className="w-full px-2.5 py-1.5 text-xs font-mono font-bold text-slate-800 rounded-lg border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 bg-white transition-colors"
+                                                  />
+                                                </td>
+                                              );
+                                            }
+
+                                            if (isDate) {
+                                              return (
+                                                <td key={col} className="px-2 py-1.5 whitespace-nowrap min-w-[120px]">
+                                                  <input
+                                                    type="text"
+                                                    value={String(val ?? '')}
+                                                    onChange={(e) => handleUpdateRow(idx, col, e.target.value)}
+                                                    placeholder="DD/MM/YYYY"
+                                                    className="w-full px-2.5 py-1.5 text-xs text-slate-800 rounded-lg border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 bg-white transition-colors"
+                                                  />
                                                 </td>
                                               );
                                             }
@@ -1105,25 +1193,8 @@ export default function ReportReviewPage() {
                                                         Math.max(0, Number(e.target.value) || 0)
                                                       )
                                                     }
-                                                    className="w-full px-2.5 py-1.5 text-xs font-mono font-semibold text-right text-slate-900 rounded-lg border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 bg-slate-50/50 hover:bg-white transition-colors"
+                                                    className="w-full px-2.5 py-1.5 text-xs font-mono font-semibold text-right text-slate-900 rounded-lg border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 bg-white transition-colors"
                                                   />
-                                                </td>
-                                              );
-                                            }
-
-                                            if (kl.includes('phương thức')) {
-                                              return (
-                                                <td key={col} className="px-2 py-1.5 whitespace-nowrap min-w-[120px]">
-                                                  <select
-                                                    value={String(val || 'CASH')}
-                                                    onChange={(e) => handleUpdateRow(idx, col, e.target.value)}
-                                                    className="w-full px-2 py-1.5 text-xs font-bold text-slate-800 rounded-lg border border-slate-300 bg-slate-50/50 hover:bg-white focus:border-slate-800 focus:ring-1 focus:ring-slate-800 cursor-pointer transition-colors"
-                                                  >
-                                                    <option value="CASH">CASH (Tiền mặt)</option>
-                                                    <option value="BANK">BANK (Chuyển khoản)</option>
-                                                    <option value="DEBT">DEBT (Ghi nợ)</option>
-                                                    <option value="OTHER">OTHER (Khác)</option>
-                                                  </select>
                                                 </td>
                                               );
                                             }
