@@ -31,6 +31,7 @@
 | Node.js | 20+ (hỗ trợ 20, 22, 24) | `node -v` | Môi trường runtime cho Next.js Frontend |
 | npm | 10+ | `npm -v` | Quản lý package Node.js |
 | MySQL | 8.0+ (khuyến nghị 8.0 / 8.4) | `mysql --version` | Hệ quản trị cơ sở dữ liệu quan hệ chính |
+| Biến `JAVA_HOME` | Trỏ tới thư mục cài JDK 21 | `echo $env:JAVA_HOME` (PowerShell) | **Bắt buộc** để `mvnw`/`mvnw.cmd` và `run-backend.bat` chạy được |
 
 ### 1.2 Phần mềm tùy chọn / Phân hệ AI / Container
 | Phần mềm | Mục đích |
@@ -159,6 +160,28 @@ npm run dev
 > [!IMPORTANT]
 > Port frontend theo luồng dev hiện tại là `3000`, không phải port `5173` như trong một số cấu hình Docker cũ. Nếu bạn dùng Docker Compose ở repo, hãy kiểm tra lại file [docker-compose.yml](docker-compose.yml) vì cấu hình hiện tại còn đang là phiên bản legacy và có thể không đồng bộ hoàn toàn với cấu trúc hiện tại của repo.
 
+### 2.8 Chạy nhanh bằng script có sẵn (tùy chọn)
+Ngoài các cách chạy thủ công ở mục 2.4, 2.6 và 2.7, repo có sẵn **4 file `.bat` ở thư mục gốc**. Chỉ cần **double-click**, không phải gõ lệnh:
+
+| File | Chức năng | Yêu cầu |
+|---|---|---|
+| `run-backend.bat` | Chạy Backend Spring Boot (cổng 8080) | JDK 21 + biến `JAVA_HOME` |
+| `run-frontend.bat` | Chạy Frontend Next.js (cổng 3000), tự `npm install` nếu thiếu | Node.js 20+ |
+| `run-frontend-clean.bat` | Xóa `.next` + `node_modules` rồi cài lại và chạy (hỏi xác nhận `[y/N]` trước khi xóa) | Node.js 20+ |
+| `run-ai.bat` | Chạy AI Service (FastAPI, cổng 8000) | Python 3.10+ |
+
+Các script tự kiểm tra môi trường trước khi chạy và giữ cửa sổ lại khi có lỗi để đọc thông báo.
+
+> [!NOTE]
+> **`run-ai.bat` cần tải các thư viện cần thiết về máy:** lần chạy **đầu tiên** script sẽ tạo môi trường ảo `Code/AI/.venv` (khoảng 50 MB) và chạy `pip install -r requirements.txt` để **tải các package Python** (fastapi, uvicorn, pydantic, httpx, python-dotenv…). Do đó lần đầu **cần kết nối Internet** và mất khoảng **1–2 phút**; các lần sau chạy nhanh vì đã dùng lại `.venv`. Khi `requirements.txt` có thư viện mới, chạy lại bằng `run-ai.bat reinstall`.
+
+> [!CAUTION]
+> **`run-backend.bat` yêu cầu biến `JAVA_HOME`.** Nếu máy chưa có, chạy 1 lần trong PowerShell (thay bằng đường dẫn JDK 21 thật trên máy):
+> ```powershell
+> [Environment]::SetEnvironmentVariable('JAVA_HOME', 'C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot', 'User')
+> ```
+> Sau đó mở lại terminal / VS Code. Nếu thiếu biến này, `mvnw.cmd` sẽ báo `Error: JAVA_HOME not found in your environment`.
+
 ---
 
 ## 3. Cài đặt Production
@@ -235,6 +258,9 @@ Sau khi hoàn tất cài đặt, tiến hành kiểm thử nhanh để đảm b�
 | 6 | Kiểm tra kết nối AI Service | Gọi `curl http://localhost:8000/` | Trả về HTTP Status 200 OK |
 | 7 | Kiểm thử tự động Backend | Chạy lệnh `mvn test` trong `Code/Server` | Toàn bộ các bộ kiểm thử tự động (Unit Tests) đều PASS |
 | 8 | Kiểm thử Frontend | Chạy `npm run test:low-stock` trong `Code/Client/src/frontend` | Kịch bản cảnh báo tồn kho thấp vượt qua kiểm thử thành công |
+| 9 | AI Service (nếu dùng `run-ai.bat`) | Gọi `curl http://127.0.0.1:8000/health` | Trả về `{"status":"ok","service":"ai-service"}` |
+
+> Ghi chú: AI Service **không có route gốc `/`**. Để kiểm tra service đang sống, gọi `/health` (hoặc `/api/v1/ai/ready` nếu phiên bản đang chạy có endpoint này). Endpoint `/api/v1/ai/parse-order` yêu cầu header `X-API-Secret`.
 
 ---
 
@@ -250,6 +276,10 @@ Sau khi hoàn tất cài đặt, tiến hành kiểm thử nhanh để đảm b�
 | Danh sách Tỉnh / Huyện / Xã bị trống rỗng | Máy tính mất kết nối Internet trong lần đầu backend boot | Bật kết nối mạng Internet và tiến hành khởi động lại backend để hệ thống đồng bộ dữ liệu địa giới |
 | Bấm thao tác trên Web bị quay vòng / báo Network Error | Backend chưa khởi chạy hoặc cổng API không khớp | Đảm bảo Spring Boot backend đang chạy song song tại cổng 8080 trước khi thao tác trên giao diện |
 | Không nhận được Email mã OTP khi test đăng ký | `OTP_DEV_MODE` chưa bật hoặc chưa cấu hình SMTP | Trong môi trường Dev, mở cửa sổ Console Log của Spring Boot để copy trực tiếp mã OTP 6 số |
+| `Error: JAVA_HOME not found in your environment` khi chạy `mvnw` hoặc `run-backend.bat` | Máy chưa đặt biến môi trường `JAVA_HOME` | Chạy 1 lần trong PowerShell: `[Environment]::SetEnvironmentVariable('JAVA_HOME', '<duong-dan-JDK-21>', 'User')` rồi mở lại terminal |
+| `Another next dev server is already running` hoặc Next.js tự nhảy sang cổng 3001 | Đang có dev server frontend khác giữ cổng 3000 | Tắt tiến trình cũ, hoặc dùng cổng mà Next.js thông báo (ví dụ `http://localhost:3001`) |
+| Ổ đĩa bị chiếm nhiều GB bởi thư mục `.next` | Cache build của Next.js phình ra khi dev server chạy liên tục nhiều ngày | Chạy `run-frontend-clean.bat` để dọn `.next` + `node_modules` rồi cài lại (đây là cache, xóa không mất code) |
+| `run-ai.bat` chạy lần đầu rất lâu hoặc báo lỗi mạng | Lần đầu phải tải các thư viện Python về máy (`fastapi`, `uvicorn`, …) | Cần Internet cho lần cài đầu; các lần sau dùng lại `Code/AI/.venv` |
 
 ---
 
@@ -261,3 +291,6 @@ Sau khi hoàn tất cài đặt, tiến hành kiểm thử nhanh để đảm b�
   docker compose down -v
   ```
 - Xóa thư mục lưu trữ file tạm `Code/Server/uploads/` và xóa cơ sở dữ liệu `household_business_platform` trên MySQL nếu muốn xóa bỏ hoàn toàn dữ liệu. Ứng dụng không ghi bất kỳ khóa nào vào Registry của hệ điều hành Windows.
+- Nếu đã chạy `run-ai.bat` (hoặc tự tạo môi trường ảo cho AI Service): xóa thư mục `Code/AI/.venv` để giải phóng khoảng 50 MB.
+- Nếu muốn dọn cache build của frontend: xóa thư mục `Code/Client/src/frontend/.next` (cache này có thể phình lên vài GB nếu dev server chạy liên tục nhiều ngày).
+- Cache thư viện Python nằm ở `%LOCALAPPDATA%\pip\Cache`; có thể xóa nếu muốn giải phóng thêm dung lượng (lần cài sau sẽ tải lại từ mạng).

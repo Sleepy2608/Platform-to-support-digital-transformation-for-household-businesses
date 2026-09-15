@@ -20,6 +20,7 @@ MỤC LỤC
    D. CẤU HÌNH KẾT NỐI DATABASE (.env)
    E. CHẠY BACKEND (Java)
    F. CHẠY FRONTEND (giao diện web)
+   F2. AI SERVICE (tùy chọn - cách chạy và tải thư viện)
    G. CƠ CHẾ SEEK DATA (dữ liệu mẫu dùng chung cả nhóm)
    H. QUY TRÌNH LÀM VIỆC NHÓM VỚI GIT
    I. GẶP LỖI THƯỜNG GẶP
@@ -222,6 +223,20 @@ CÁCH 2 - bằng dòng lệnh:
    - Gõ:   .\mvnw.cmd spring-boot:run
      (Mac/Linux thì gõ:  ./mvnw spring-boot:run )
 
+CÁCH 3 - double-click file .bat (nhanh nhất, không cần mở VS Code):
+   - Ra thư mục gốc của project, double-click file:   run-backend.bat
+   - Script tự kiểm tra JDK, cảnh báo nếu thiếu file .env, rồi chạy
+     "mvnw.cmd spring-boot:run" giúp bạn.
+   - LƯU Ý: máy phải có biến môi trường JAVA_HOME. Nếu không sẽ báo
+     "Error: JAVA_HOME not found in your environment".
+     Cách đặt (chạy 1 lần) - mở PowerShell, gõ 1 dòng (thay đường dẫn bằng
+     JDK 21 thật trên máy bạn, xem trong C:\Program Files\Eclipse Adoptium\):
+
+         [Environment]::SetEnvironmentVariable('JAVA_HOME', 'C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot', 'User')
+
+     Rồi MỞ LẠI terminal / VS Code cho biến có hiệu lực.
+     Kiểm tra:   echo $env:JAVA_HOME
+
 CHẠY THÀNH CÔNG khi thấy trong log dòng kiểu:
 
        Started HbdtApplication in 8.xxx seconds
@@ -263,6 +278,55 @@ Muốn TẮT backend: bấm vào Terminal đang chạy, nhấn  Ctrl + C.
 
    Lưu ý: muốn dùng đầy đủ chức năng thì BACKEND (mục E) phải đang chạy song
    song, vì frontend gọi dữ liệu từ backend ở cổng 8080.
+
+
+CÁCH KHÁC - double-click file .bat (không cần gõ lệnh):
+   - Ra thư mục gốc của project.
+   - Chạy bình thường:  double-click  run-frontend.bat
+     (script tự chạy npm install nếu chưa có node_modules, rồi npm run dev)
+   - Khi gặp lỗi "Cannot find module" hoặc mở trang bị 404 / giao diện không
+     cập nhật:  double-click  run-frontend-clean.bat
+     File này hỏi xác nhận [y/N], sau đó xóa .next + node_modules, cài lại và
+     chạy dev.
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║  F2. AI SERVICE (tùy chọn - KHÔNG bắt buộc để chạy web)                     ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+AI Service là một service Python (FastAPI) riêng, nằm ở thư mục Code\AI và
+chạy ở cổng 8000. KHÔNG bắt buộc phải chạy: web vẫn hoạt động bình thường,
+chỉ các tính năng liên quan tới AI mới cần service này.
+
+CÁCH CHẠY - double-click file:   run-ai.bat
+
+   *** LẦN ĐẦU CHẠY SẼ MẤT 1-2 PHÚT VÀ CẦN INTERNET ***
+   Vì script phải TẢI CÁC THƯ VIỆN CẦN THIẾT về máy:
+     - Tạo môi trường ảo riêng tại   Code\AI\.venv   (khoảng 50 MB)
+     - Tải và cài các thư viện: fastapi, uvicorn, pydantic, httpx,
+       python-dotenv... vào môi trường ảo đó.
+   Các lần sau chạy nhanh vì đã có sẵn .venv.
+
+   Nếu requirements.txt có thêm thư viện mới, chạy lại bằng:
+         run-ai.bat reinstall
+
+CÁCH CHẠY THỦ CÔNG (nếu không dùng file .bat):
+   Mở terminal mới, gõ lần lượt:
+
+       cd Code\AI
+       python -m venv .venv
+       .\.venv\Scripts\activate
+       pip install -r requirements.txt
+       uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+
+   (Mac/Linux:  python3 -m venv .venv   và   source .venv/bin/activate )
+   Ghi chú: tên thư mục môi trường ảo có thể là  .venv  (file .bat) hoặc
+   venv  (một số hướng dẫn cũ) - cả hai đều dùng được.
+
+KIỂM TRA service đã chạy: mở trình duyệt vào   http://127.0.0.1:8000/health
+
+DỌN DẸP khi không dùng nữa (giải phóng khoảng 50 MB):
+       Xóa thư mục   Code\AI\.venv
 
 
 ╔══════════════════════════════════════════════════════════════════════════╗
@@ -387,6 +451,30 @@ LỖI: "Port 8080 already in use" / cổng 8080 bị chiếm.
    -> Có tiến trình khác đang giữ cổng 8080. Cách 1: tắt tiến trình đó.
       Cách 2: thêm dòng  SERVER_PORT=8081  vào file .env rồi chạy lại.
 
+LỖI: "Error: JAVA_HOME not found in your environment" (khi chạy mvnw hoặc
+      double-click run-backend.bat).
+   -> Máy chưa đặt biến môi trường JAVA_HOME. Mở PowerShell, gõ 1 dòng:
+
+         [Environment]::SetEnvironmentVariable('JAVA_HOME', 'C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot', 'User')
+
+      (thay bằng đường dẫn JDK 21 thật trên máy bạn), rồi MỞ LẠI terminal.
+      Kiểm tra bằng:   echo $env:JAVA_HOME
+
+LỖI: "Port 3000 is in use" (Next.js tự nhảy sang cổng 3001), hoặc
+      "Another next dev server is already running."
+   -> Đang có một dev server frontend khác giữ cổng 3000 - thường là cửa sổ
+      terminal bạn quên tắt. Tắt tiến trình cũ, hoặc cứ dùng cổng mà Next.js
+      in ra (ví dụ http://localhost:3001).
+
+LỖI: ổ đĩa bị chiếm nhiều GB, thư mục .next rất to.
+   -> .next là cache build của Next.js, có thể phình lên vài GB nếu dev server
+      chạy liên tục nhiều ngày. Đây là cache nên xóa không mất code; chạy
+      run-frontend-clean.bat để dọn (lần chạy kế tiếp sẽ chậm hơn một chút).
+
+LỖI: run-ai.bat chạy lần đầu rất lâu hoặc báo lỗi mạng.
+   -> Lần đầu phải tải thư viện Python về máy, cần Internet. Các lần sau dùng
+      lại Code\AI\.venv nên chạy nhanh.
+
 LỖI: bấm Run mà KHÔNG thấy chữ "Run | Debug" phía trên hàm main.
    -> VS Code chưa load xong Java. Đợi thanh dưới góc phải chạy xong. Nếu vẫn
       không có: bấm F1, gõ "Java: Clean Java Language Server Workspace",
@@ -413,9 +501,11 @@ LỖI: đăng nhập tài khoản quản trị không được.
    [ ] Đã cài JDK 21     (java -version ra 21)
    [ ] Đã cài MySQL 8    (Get-Service MySQL84 = Running)
    [ ] Đã cài Node.js    (node -v ra vxx)   <- chỉ cần cho frontend
+   [ ] Đã đặt JAVA_HOME  (echo $env:JAVA_HOME)   <- cần cho mvnw + run-backend.bat
    [ ] Đã cài 2 Extension Java trong VS Code
    [ ] Đã mở đúng thư mục Code\Server trong VS Code
    [ ] File .env đã có sẵn (chỉ sửa DB_PASSWORD nếu pass MySQL khác root)
    [ ] Backend chạy: thấy "Started HbdtApplication"
    [ ] Frontend chạy: mở được http://localhost:3000
    [ ] Đăng nhập được tài khoản quản trị (do trưởng nhóm cấp)
+   [ ] (Tùy chọn) AI Service chạy: mở http://127.0.0.1:8000/health

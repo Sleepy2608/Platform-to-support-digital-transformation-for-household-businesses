@@ -178,6 +178,8 @@ Platform-to-support-digital-transformation-for-household-businesses/
 
 ## Cách chạy (How to run)
 
+> Repo có sẵn **4 file `.bat`** ở thư mục gốc để chạy nhanh bằng cách double-click — xem **mục 4**. Cách chạy thủ công bằng IDE / dòng lệnh vẫn được giữ nguyên ở **mục 5 và 6**.
+
 ### 1. Yêu cầu
 - **Intellij IDEA 2026.2**
 - **Java 21**
@@ -202,12 +204,37 @@ DB_PASSWORD=<password>
 
 Vào mục Edit Configurations -> Chọn Evironment variables -> Thêm file .env vừa tạo
 
-### 4. Backend
+### 4. Chạy nhanh bằng file `.bat` (khuyến nghị)
+
+Repo có sẵn **4 file script ở thư mục gốc** — chỉ cần **double-click**, không phải gõ lệnh:
+
+| File | Chạy gì | Cần cài trước |
+| :--- | :--- | :--- |
+| `run-backend.bat` | Backend Spring Boot — cổng **8080** | **JDK 21** + biến môi trường `JAVA_HOME` |
+| `run-frontend.bat` | Frontend Next.js — cổng **3000** | **Node.js 20+** |
+| `run-frontend-clean.bat` | Như trên nhưng **xóa `.next` + `node_modules`** rồi cài lại | **Node.js 20+** |
+| `run-ai.bat` | AI Service (FastAPI) — cổng **8000** | **Python 3.10+** |
+
+Script sẽ tự kiểm tra môi trường, tự chạy `npm install` nếu chưa có `node_modules`, và giữ cửa sổ lại khi có lỗi để bạn đọc thông báo.
+
+> **Ghi chú cho `run-ai.bat` — cần tải thư viện về máy:**
+> Lần chạy **đầu tiên** script sẽ tự tạo môi trường ảo riêng `Code\AI\.venv` (khoảng 50 MB) và **tải các thư viện cần thiết** (fastapi, uvicorn, pydantic, httpx, python-dotenv…) về máy. Vì vậy lần đầu **bắt buộc có kết nối Internet** và mất khoảng **1–2 phút**. Các lần sau chạy gần như tức thì vì đã dùng lại `.venv`.
+> Khi `requirements.txt` có thư viện mới, cài lại bằng: `run-ai.bat reinstall`.
+
+> **Ghi chú cho `run-backend.bat`:** script cần biến môi trường `JAVA_HOME`. Nếu máy chưa có, mở PowerShell chạy 1 lần (thay bằng đường dẫn JDK 21 thật trên máy bạn):
+>
+> ```powershell
+> [Environment]::SetEnvironmentVariable('JAVA_HOME', 'C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot', 'User')
+> ```
+>
+> rồi **mở lại terminal**. Kiểm tra bằng: `echo $env:JAVA_HOME`
+
+### 5. Backend (cách chạy thủ công)
 
 - Click chuột phải vào thư mục `HbdtApplication.java`. Chọn vào `Run 'HbdtApplication.main()'`
 - Hãy đảm bảo rằng bạn đã có đủ các thông tin cho file .env và MySQL đang hoạt động
 
-### 5. Frontend
+### 6. Frontend (cách chạy thủ công)
 
 - Chuyển đường dẫn sang file frontend (`Code\Client\src\frontend`)
 ```text
@@ -229,6 +256,7 @@ npm run dev
   * Network: http://[IP_ADDRESS]/
 > Lưu ý: Trang đăng nhập vào Manager/Owner/Employee được chạy ở url `http://localhost:3000/login` còn trang Admin được chạy ở url `http://localhost:3000/admin/login`.
 > Cần chọn đúng trang đăng nhập để tránh bị báo lỗi 404 hoặc không tìm thấy trang, nếu không thấy thì xóa các file trong thư mục `.next` và `node_modules` rồi chạy lại `npm install`.
+> Thay vì xóa tay, có thể double-click `run-frontend-clean.bat` ở thư mục gốc — script làm đúng các bước này và hỏi xác nhận trước khi xóa.
 
 ---
 
