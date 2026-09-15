@@ -8,6 +8,7 @@ import {
   ChevronRight, Briefcase, ListOrdered, ShoppingCart, BellRing,
   Warehouse, UserSearch, ShieldCheck, TrendingUp, Zap,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient, clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
 import { isEmployee } from '../lib/roles';
@@ -15,14 +16,54 @@ import { EntitlementProvider } from '../lib/EntitlementContext';
 import NotificationBell from '../components/NotificationBell';
 import BackToTop from '../components/BackToTop';
 
-const NAV_ITEMS = [
-  { label: 'Bán hàng tại quầy', href: '/employee/orders/new', icon: ShoppingCart, hash: '' },
-  { label: 'Bán hàng nhanh tại quầy', href: '/employee/fast-sales', icon: Zap, hash: '' },
-  { label: 'Danh sách đơn hàng', href: '/employee/orders/history', icon: ListOrdered, hash: '' },
+interface EmployeeNavChild {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+}
+
+interface EmployeeNavItem {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  hash: string;
+  /** Tiền tố đường dẫn thuộc nhóm này — dùng để mở rộng + highlight nhóm cha */
+  matchPrefixes?: string[];
+  children?: EmployeeNavChild[];
+}
+
+/** Khớp theo đoạn đường dẫn (thêm '/' để /a không "dính" /a-b) */
+function matchesPrefix(pathname: string, prefixes: string[]): boolean {
+  return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(prefix + '/'));
+}
+
+/** Trang con đang mở — /employee/inventory phải khớp chính xác để không dính /employee/inventory-alerts */
+function isChildActive(childHref: string, pathname: string): boolean {
+  if (childHref === '/employee/inventory') return pathname === '/employee/inventory';
+  return pathname === childHref || pathname.startsWith(childHref + '/');
+}
+
+const NAV_ITEMS: EmployeeNavItem[] = [
+  {
+    label: 'Bán hàng tại quầy',
+    href: '/employee/orders/new',
+    icon: ShoppingCart,
+    hash: '',
+    matchPrefixes: [
+      '/employee/orders',
+      '/employee/fast-sales',
+      '/employee/inventory',
+      '/employee/inventory-alerts',
+    ],
+    children: [
+      { label: 'Bán hàng nhanh tại quầy', href: '/employee/fast-sales', icon: Zap },
+      { label: 'Danh sách đơn hàng', href: '/employee/orders/history', icon: ListOrdered },
+      { label: 'Tồn kho hiện tại', href: '/employee/inventory', icon: Warehouse },
+      { label: 'Cảnh báo tồn kho', href: '/employee/inventory-alerts', icon: BellRing },
+    ],
+  },
   { label: 'Doanh thu', href: '/employee/revenue', icon: TrendingUp, hash: '' },
-  { label: 'Tồn kho hiện tại', href: '/employee/inventory', icon: Warehouse, hash: '' },
   { label: 'Khách hàng', href: '/employee/customers', icon: UserSearch, hash: '' },
-  { label: 'Cảnh báo tồn kho', href: '/employee/inventory-alerts', icon: BellRing, hash: '' },
   { label: 'Hồ sơ cá nhân', href: '/employee/account#profile', icon: UserCircle, hash: '#profile' },
   { label: 'Thay đổi thông tin cá nhân', href: '/employee/account#personal-info', icon: Lock, hash: '#personal-info' },
   { label: 'Chính sách & Điều khoản', href: '/employee/account#policy', icon: ShieldCheck, hash: '#policy' },
@@ -174,8 +215,8 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
 
             {/* Scrollable Navigation & Profile Body */}
             <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-5 py-4 flex flex-col gap-6 custom-scrollbar">
-              {/* User summary */}
-              <div className="p-3.5 bg-slate-50 border border-slate-200/70 rounded-2xl flex items-center gap-3 shadow-2xs">
+              {/* User summary — no own background so it matches the sidebar background */}
+              <div className="p-3.5 border border-slate-200/70 rounded-2xl flex items-center gap-3 shadow-2xs">
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
@@ -203,30 +244,79 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
                 </p>
                 {NAV_ITEMS.map((item) => {
                   const Icon = item.icon;
+                  const hasChildren = Boolean(item.children?.length);
+                  const hasAlertChild = Boolean(
+                    item.children?.some((child) => child.href === '/employee/inventory-alerts'),
+                  );
                   const isActive = item.hash
                     ? pathname === '/employee/account' && currentHash === item.hash
+                    : hasChildren
+                    ? pathname === item.href || matchesPrefix(pathname, item.matchPrefixes ?? [])
                     : pathname === item.href;
+
                   return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
-                        ${isActive
-                          ? 'bg-slate-900 text-white shadow-sm'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'}`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
-                        <span>{item.label}</span>
-                        {item.href === '/employee/inventory-alerts' && lowStockCount > 0 && (
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${isActive ? 'bg-white text-red-700' : 'bg-red-100 text-red-700'}`}>
-                            {lowStockCount > 99 ? '99+' : lowStockCount}
-                          </span>
-                        )}
-                      </div>
-                      <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'translate-x-0' : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'}`} />
-                    </Link>
+                    <div key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 group cursor-pointer
+                          ${isActive
+                            ? 'bg-slate-900 text-white shadow-sm'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'}`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                          <span>{item.label}</span>
+                          {hasAlertChild && lowStockCount > 0 && !isActive && (
+                            <span className="rounded-full px-2 py-0.5 text-[10px] font-black bg-red-100 text-red-700">
+                              {lowStockCount > 99 ? '99+' : lowStockCount}
+                            </span>
+                          )}
+                        </div>
+                        <ChevronRight
+                          className={`w-3.5 h-3.5 transition-transform ${
+                            isActive
+                              ? hasChildren
+                                ? 'rotate-90'
+                                : 'translate-x-0'
+                              : 'opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0'
+                          }`}
+                        />
+                      </Link>
+
+                      {/* Sub-items of the group */}
+                      {isActive && hasChildren && (
+                        <div className="ml-5 mt-1 border-l border-slate-200 pl-3 space-y-0.5">
+                          {item.children!.map((child) => {
+                            const ChildIcon = child.icon;
+                            const childActive = isChildActive(child.href, pathname);
+                            return (
+                              <Link
+                                key={child.href}
+                                href={child.href}
+                                aria-current={childActive ? 'page' : undefined}
+                                onClick={() => setSidebarOpen(false)}
+                                className={`flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all duration-150 cursor-pointer ${
+                                  childActive
+                                    ? 'bg-slate-100 text-slate-950 font-bold shadow-2xs'
+                                    : 'text-slate-500 hover:bg-slate-100/70 hover:text-slate-900'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <ChildIcon className={`h-3.5 w-3.5 flex-shrink-0 ${childActive ? 'text-slate-900' : 'text-slate-400'}`} />
+                                  <span>{child.label}</span>
+                                </div>
+                                {child.href === '/employee/inventory-alerts' && lowStockCount > 0 && (
+                                  <span className="rounded-full px-1.5 py-0.5 text-[10px] font-black bg-red-100 text-red-700">
+                                    {lowStockCount > 99 ? '99+' : lowStockCount}
+                                  </span>
+                                )}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </nav>
