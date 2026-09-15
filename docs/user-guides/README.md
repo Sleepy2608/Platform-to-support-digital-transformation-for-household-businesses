@@ -21,8 +21,8 @@ Thư mục `docs/user-guides` chứa toàn bộ tài liệu hướng dẫn vận
 | File tài liệu | Vai trò áp dụng | Mô tả ngắn gọn | Đường dẫn giao diện |
 |---|---|---|---|
 | **[admin-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/admin-manual-guide.md)** | Quản trị viên hệ thống (`ADMIN`) | Quản lý toàn bộ tài khoản, phê duyệt hộ kinh doanh, quản lý gói thuê bao, giám sát Audit Log và cơ chế mã hóa Seek Data. | `/admin/login`<br>`/admin/accounts`<br>`/admin/seed` |
-| **[manager-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/manager-manual-guide.md)** | Quản lý / Chuyên viên (`MANAGER`) | Phê duyệt hồ sơ hộ kinh doanh, quản lý gói đăng ký của Owner, theo dõi revenue ledger, kiểm tra stock import và bookkeeping, hỗ trợ thanh toán / xác nhận gói. | `/login`<br>`/manager`<br>`/owner/subscription` |
-| **[owner-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/owner-manual-guide.md)** | Chủ Hộ Kinh Doanh (`BUSINESS_OWNER`) | Thiết lập cửa hàng, Onboarding gói cước, quản lý sản phẩm & tồn kho, phân quyền nhân viên, bán hàng POS/AI, xem lịch sử đơn hiệu, xuất báo cáo thuế TT88. | `/login`<br>`/onboarding`<br>`/owner/products`<br>`/owner/orders`<br>`/owner/revenue` |
+| **[manager-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/manager-manual-guide.md)** | Quản lý / Chuyên viên (`MANAGER`) | Phê duyệt hồ sơ hộ kinh doanh, quản lý gói đăng ký của Owner, theo dõi revenue ledger, kiểm tra stock import và bookkeeping, hỗ trợ thanh toán / xác nhận gói. | `/login`<br>`/manager`<br>`/manager/invoices` |
+| **[owner-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/owner-manual-guide.md)** | Chủ Hộ Kinh Doanh (`BUSINESS_OWNER`) | Thiết lập cửa hàng, Onboarding gói cước, quản lý sản phẩm & tồn kho, phân quyền nhân viên, bán hàng POS/AI, xem lịch sử đơn hiệu, xuất báo cáo thuế TT88. | `/login`<br>`/onboarding/business-profile`<br>`/onboarding/package-selection`<br>`/owner/products`<br>`/owner/orders`<br>`/owner/revenue` |
 | **[employee-manual-guide.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/user-guides/employee-manual-guide.md)** | Nhân viên cửa hàng (`EMPLOYEE`) | Lập đơn bán hàng tại quầy (POS), quét mã vạch, dùng trợ lý AI (nhập câu văn bản) tạo và xử lý đơn nháp, tra cứu giá & cảnh báo tồn kho thấp. | `/login`<br>`/employee/orders`<br>`/employee/inventory-alerts` |
 
 ---
@@ -33,12 +33,12 @@ Thư mục `docs/user-guides` chứa toàn bộ tài liệu hướng dẫn vận
 ```text
 [Trang chủ / Register] ──> [Nhập thông tin Hộ] ──> [Xác thực Email OTP]
                                                           │
-[Vào Owner Dashboard] <── [Chọn Gói cước (Free/Pro)] <── [Màn hình /onboarding]
+[Vào Owner Dashboard] <── [Chọn Gói cước (Free/Pro)] <── [Màn hình Onboarding]
 ```
 
 1. **Đăng ký tài khoản:** Người dùng truy cập `/register`, nhập thông tin chủ hộ, email và mật khẩu.
 2. **Xác thực OTP:** Mã OTP 6 số được gửi về Email (hoặc hiển thị console log trong môi trường dev).
-3. **Onboarding (`/onboarding`):** Thiết lập thông tin cửa hàng ban đầu, chọn gói cước dùng thử hoặc mua gói Pro/Basic.
+3. **Onboarding (`/onboarding/business-profile` → `/onboarding/package-selection`):** Thiết lập thông tin cửa hàng ban đầu, chọn gói cước dùng thử hoặc mua gói Pro/Basic.
 4. **Kích hoạt:** Hệ thống chuyển hướng vào `/owner/products` để bắt đầu quản lý.
 
 ### 3.2 Quy trình Quên Mật khẩu (`/forgot-password`)
@@ -75,28 +75,72 @@ Thư mục `docs/user-guides` chứa toàn bộ tài liệu hướng dẫn vận
 - `http://localhost:3000/register` : Trang đăng ký Hộ kinh doanh mới.
 - `http://localhost:3000/verify-email` : Trang xác thực OTP Email.
 - `http://localhost:3000/forgot-password` : Trang khôi phục mật khẩu.
-- `http://localhost:3000/onboarding` : Trang hướng dẫn thiết lập cửa hàng & chọn gói cước ban đầu.
+- `http://localhost:3000/onboarding/business-profile` : Thiết lập hồ sơ cửa hàng ban đầu.
+- `http://localhost:3000/onboarding/package-selection` : Chọn gói cước ban đầu (dùng thử hoặc gói trả phí).
 
 ### 5.2 Khu vực Quản trị Hệ thống (`/admin`)
 - `http://localhost:3000/admin/login` : Trang đăng nhập Quản trị viên.
+- `http://localhost:3000/admin` : Dashboard quản trị tổng quan.
 - `http://localhost:3000/admin/accounts` : Quản lý tài khoản toàn hệ thống.
+- `http://localhost:3000/admin/analytics` : Xem Platform Analytics của toàn nền tảng.
+- `http://localhost:3000/admin/announcements` : Phát thông báo toàn hệ thống.
+- `http://localhost:3000/admin/features` : Quản lý danh mục tính năng (Feature Plans) gán vào gói thuê bao.
+- `http://localhost:3000/admin/feedback` : Theo dõi và xử lý phản hồi từ Owner/Employee.
+- `http://localhost:3000/admin/profile` : Hồ sơ và đổi mật khẩu quản trị viên.
 - `http://localhost:3000/admin/subscription-plans` : Quản lý các gói thuê bao (Free, Basic, Pro).
 - `http://localhost:3000/admin/report-templates` : Quản lý biểu mẫu báo cáo kế toán và phiên bản theo ngày hiệu lực.
+- `http://localhost:3000/admin/templates` : Quản lý biểu mẫu báo cáo tài chính.
 - `http://localhost:3000/admin/seed` : Quản lý mã hóa và đồng bộ Seek Data.
 
-### 5.3 Khu vực Chủ Hộ Kinh Doanh (`/owner`)
+### 5.3 Khu vực Chủ Hộ Kinh Doanh (`/owner/*`)
+- `http://localhost:3000/owner/account` : Cài đặt thông tin hộ kinh doanh, thuế & gói dịch vụ — **route mặc định sau khi chủ hộ đăng nhập**.
+- `http://localhost:3000/owner/account/subscription` : Xem, chọn và xác nhận gói thuê bao / gia hạn dịch vụ.
 - `http://localhost:3000/owner/products` : Quản lý sản phẩm, quy tắc giá & giá nhập/bán.
+- `http://localhost:3000/owner/products/stock-import` : Danh sách phiếu nhập kho.
+- `http://localhost:3000/owner/products/stock-import/new` : Lập phiếu nhập kho mới.
+- `http://localhost:3000/owner/products/stock-import/[id]` : Xem/cập nhật chi tiết một phiếu nhập kho.
 - `http://localhost:3000/owner/orders` : Quản lý đơn hàng, bán hàng POS & trợ lý AI.
 - `http://localhost:3000/owner/orders/new` : Trang tạo đơn mới, gồm khu vực nhập câu bằng trợ lý AI.
+- `http://localhost:3000/owner/orders/history` : Lịch sử đơn hàng theo ngày.
+- `http://localhost:3000/owner/fast-sales` : Giao diện bán nhanh (Fast Sales UI) tối ưu cho điện thoại, thao tác tạo đơn tại quầy.
 - `http://localhost:3000/owner/customers` : Quản lý thông tin khách hàng & sổ nợ.
+- `http://localhost:3000/owner/customers/[id]/purchase-history` : Lịch sử mua hàng của một khách hàng.
 - `http://localhost:3000/owner/employees` : Quản lý và phân quyền tài khoản nhân viên.
+- `http://localhost:3000/owner/employees/[employeeId]` : Xem chi tiết & cập nhật phân quyền một nhân viên.
+- `http://localhost:3000/owner/inventory` : Tồn kho hiện tại & lịch sử biến động kho.
 - `http://localhost:3000/owner/inventory-alerts` : Quản lý cảnh báo tồn kho thấp.
-- `http://localhost:3000/owner/account` : Cài đặt thông tin hộ kinh doanh, thuế & gói dịch vụ.
-- `http://localhost:3000/owner/subscription` : Xem, chọn và xác nhận gói thuê bao / gia hạn dịch vụ.
 - `http://localhost:3000/owner/revenue` : Xem revenue ledger, lợi nhuận, chi phí nhập hàng và doanh thu theo ngày.
+- `http://localhost:3000/owner/revenue/products` : Phân tích mặt hàng bán chạy / bán chậm / không bán được.
+- `http://localhost:3000/owner/reports` : Xem, kiểm tra – sửa – từ chối và duyệt báo cáo kế toán theo biểu mẫu (S1-HKD, S2-HKD, S4-HKD).
+- `http://localhost:3000/owner/feedback` : Gửi phản hồi tới Manager/Admin.
 
 ### 5.4 Khu vực Nhân Viên Cửa Hàng (`/employee`)
 - `http://localhost:3000/employee/orders` : Giao diện bán hàng POS tại quầy & trợ lý AI.
 - `http://localhost:3000/employee/orders/new` : Trang tạo đơn mới cho nhân viên, gồm khu vực nhập câu bằng trợ lý AI.
+- `http://localhost:3000/employee/orders/history` : Lịch sử đơn hàng nhân viên đã tạo.
+- `http://localhost:3000/employee/fast-sales` : Giao diện bán nhanh (Fast Sales UI) cho nhân viên.
+- `http://localhost:3000/employee/customers` : Tra cứu thông tin khách hàng & công nợ.
+- `http://localhost:3000/employee/customers/[id]/purchase-history` : Xem lịch sử mua hàng của khách.
+- `http://localhost:3000/employee/inventory` : Tra cứu tồn kho sản phẩm.
 - `http://localhost:3000/employee/inventory-alerts` : Tra cứu danh sách sản phẩm sắp hết hàng.
+- `http://localhost:3000/employee/revenue` : Xem doanh thu bán hàng (theo quyền được cấp).
 - `http://localhost:3000/employee/account` : Quản lý tài khoản cá nhân & đổi mật khẩu ca làm việc.
+
+### 5.5 Khu vực Quản lý Nền tảng (`/manager`)
+- `http://localhost:3000/manager` : Dashboard vận hành nền tảng (duyệt hồ sơ hộ kinh doanh, hỗ trợ gói thuê bao).
+- `http://localhost:3000/manager/analytics` : Xem Platform Analytics.
+- `http://localhost:3000/manager/feedback` : Tiếp nhận và xử lý phản hồi từ Owner/Employee.
+- `http://localhost:3000/manager/invoices` : Quản lý hóa đơn dịch vụ của các hộ kinh doanh.
+- `http://localhost:3000/manager/invoices/[id]` : Chi tiết một hóa đơn dịch vụ.
+
+### 5.6 Đường dẫn mặc định sau khi đăng nhập
+
+Theo logic `getLoginRedirectPath()` trong `app/lib/roles.ts`, sau khi đăng nhập thành công người dùng được chuyển tới:
+
+| Vai trò | Route mặc định |
+|---|---|
+| Administrator (`ADMIN`) | `/admin` |
+| Manager (`MANAGER`) | `/manager` |
+| Chủ hộ (`BUSINESS_OWNER`) — đã có hồ sơ kinh doanh | `/owner/account` |
+| Chủ hộ (`BUSINESS_OWNER`) — chưa có hồ sơ kinh doanh | `/onboarding/business-profile` |
+| Nhân viên (`EMPLOYEE`) | `/employee/orders/new` |

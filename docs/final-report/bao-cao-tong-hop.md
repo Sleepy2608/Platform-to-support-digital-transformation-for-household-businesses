@@ -94,7 +94,7 @@ Hệ thống theo **kiến trúc phân tầng (Layered / Three-Tier)**, backend 
 ┌──────────────────────────────────────────────────────────────────────┐
 │  PRESENTATION TIER                                                   │
 │   Next.js 16 App Router (:3000)                                      │
-│   ├── Public Portal      (/, /login, /register, /onboarding)         │
+│   ├── Public Portal      (/, /login, /register, /onboarding/*)       │
 │   ├── Owner Portal       (/owner/**  — quản trị hộ kinh doanh)       │
 │   ├── Employee POS       (/employee/** — bán hàng tại quầy)          │
 │   ├── Manager Portal     (/manager/** — vận hành nền tảng)           │
@@ -193,7 +193,7 @@ Dự án phát triển qua **13 Epic** quản lý trên Jira, chia thành các g
 
 **Cách triển khai:**
 
-- **Luồng onboarding**: `Landing → /register → xác thực OTP email → /onboarding (hồ sơ kinh doanh) → chọn gói → kích hoạt`.
+- **Luồng onboarding**: `Landing → /register → xác thực OTP email → /onboarding/business-profile (hồ sơ kinh doanh) → /onboarding/package-selection (chọn gói) → kích hoạt`.
 - **API**: `POST /api/auth/register` (tạo user `PENDING` + sinh OTP), `POST /api/auth/verify-otp` (kích hoạt, gán role `BUSINESS_OWNER`, trả `AuthResponse`), `POST /api/owner/business-profile` (upsert hồ sơ), `GET /api/public/subscription-plans` (bảng giá công khai).
 - **OTP**: `OtpService` quản lý **in-memory** (không lưu DB), TTL cấu hình `app.otp.ttl-minutes` (mặc định 5 phút); chế độ dev `app.otp.dev-mode=true` in OTP ra console thay vì gửi email thật. Gửi mail qua `MailService`.
 - **Đồng thuận pháp lý**: bảng `terms_consents` lưu 6 cờ đồng thuận (điều khoản, quyền riêng tư, xử lý dữ liệu, **phạm vi học thuật Thông tư 88**, xác nhận thông tin chính xác, hiểu rủi ro sai lệch) kèm `ip_address`, `user_agent`, `accepted_at`.
@@ -494,9 +494,9 @@ Order & Checkout  xử lý như đơn thủ công (transaction đầy đủ: kho
 
 | Khu vực | Route tiêu biểu | Chức năng |
 |---|---|---|
-| **Public** | `/`, `/login`, `/register`, `/forgot-password`, `/verify-email`, `/onboarding` | Landing page, bảng giá, đăng ký/đăng nhập, xác thực OTP, thiết lập hồ sơ cửa hàng |
-| **Owner** | `/owner`, `/owner/account` (+ `/subscription`), `/owner/products` (+ `stock-import`), `/owner/inventory`, `/owner/inventory-alerts`, `/owner/customers` (+ purchase history), `/owner/employees`, `/owner/orders` (+ `/new`, `/history`), `/owner/revenue` (+ `/products`), `/owner/feedback` | Dashboard chủ hộ: sản phẩm, kho, khách hàng & công nợ, đơn hàng, doanh thu, nhân viên, gói thuê bao |
-| **Employee** | `/employee/account`, `/employee/orders` (+ `/new`, `/history`), `/employee/customers` (+ purchase history), `/employee/inventory`, `/employee/inventory-alerts`, `/employee/revenue` | **Fast Sales UI**: lập đơn tại quầy, giỏ hàng, ghi nợ, in hóa đơn, xem cảnh báo tồn |
+| **Public** | `/`, `/login`, `/register`, `/forgot-password`, `/verify-email`, `/onboarding/business-profile`, `/onboarding/package-selection` | Landing page, bảng giá, đăng ký/đăng nhập, xác thực OTP, thiết lập hồ sơ cửa hàng & chọn gói cước |
+| **Owner** | `/owner/account` (+ `/subscription`), `/owner/products` (+ `stock-import`), `/owner/inventory`, `/owner/inventory-alerts`, `/owner/customers` (+ purchase history), `/owner/employees` (+ `/[employeeId]`), `/owner/orders` (+ `/new`, `/history`), `/owner/fast-sales`, `/owner/revenue` (+ `/products`), `/owner/reports`, `/owner/feedback` | Dashboard chủ hộ: sản phẩm, kho, khách hàng & công nợ, đơn hàng, doanh thu, nhân viên, gói thuê bao |
+| **Employee** | `/employee/account`, `/employee/orders` (+ `/new`, `/history`), `/employee/fast-sales`, `/employee/customers` (+ purchase history), `/employee/inventory`, `/employee/inventory-alerts`, `/employee/revenue` | **Fast Sales UI**: lập đơn tại quầy, giỏ hàng, ghi nợ, in hóa đơn, xem cảnh báo tồn |
 | **Manager & Admin** | `/manager` (+ `/analytics`, `/feedback`, `/invoices`), `/admin/login`, `/admin` (+ `/accounts`, `/analytics`, `/announcements`, `/features`, `/feedback`, `/profile`, `/report-templates`, `/seed`, `/subscription-plans`, `/templates`) | Vận hành nền tảng & quản trị hệ thống |
 
 ### 7.3. Bảo vệ route & quản lý phiên
