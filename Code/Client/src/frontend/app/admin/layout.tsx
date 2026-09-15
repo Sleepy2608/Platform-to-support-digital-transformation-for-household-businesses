@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, BadgeDollarSign, UserCircle, Boxes, FileText, BarChart3, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, BadgeDollarSign, UserCircle, Boxes, FileText, BarChart3, FileCog, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
@@ -96,6 +96,7 @@ export default function AdminLayout({
     { name: 'Gói thuê bao', href: '/admin/subscription-plans', icon: BadgeDollarSign },
     { name: 'Quản lý tính năng', href: '/admin/features', icon: Boxes },
     { name: 'Hỗ trợ', href: '/admin/feedback', icon: MessageSquare },
+    { name: 'Biểu mẫu kế toán', href: '/admin/report-templates', icon: FileCog },
     { name: 'Thông báo hệ thống', href: '/admin/announcements', icon: Store },
     { name: 'Mẫu báo cáo', href: '/admin/templates', icon: FileText },
     { name: 'Hồ sơ cá nhân', href: '/admin/profile', icon: UserCircle },

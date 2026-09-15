@@ -5,8 +5,8 @@
 | **Tài liệu** | Hướng Dẫn Sử Dụng Hệ Thống – Vai Trò Nhân Viên Cửa Hàng (Employee) |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Vai trò áp dụng** | Nhân viên cửa hàng / Thu ngân (`EMPLOYEE` / Store Staff) |
-| **Phiên bản** | 1.1 |
-| **Cập nhật lần cuối** | 07/09/2026 |
+| **Phiên bản** | 1.2 |
+| **Cập nhật lần cuối** | 15/09/2026 |
 
 ---
 
@@ -69,21 +69,33 @@ Có 3 cách để thêm sản phẩm vào đơn hàng:
 
 ### 3.2 Tạo và Xử Lý Đơn Hàng bằng Trợ Lý AI (AI Order & Draft Orders)
 
-#### a. Lập đơn hàng tại quầy bằng Trợ lý Giọng nói
-Khi bán hàng bận rộn hoặc tiếp nhận đơn hàng qua điện thoại:
-1. Bấm vào nút **Micro / Trợ lý AI** trên giao diện POS (`/employee/orders`).
-2. Đọc rõ nội dung đơn hàng:
-   - *Ví dụ: "Lấy 3 chai dầu ăn Neptune 1 lít và 2 bao đường Biên Hòa 1kg cho cô Lan"*
-3. Hệ thống AI tự động bóc tách và đưa chính xác các sản phẩm vào giỏ hàng.
-4. Nhân viên đối soát lại màn hình và bấm **Thanh toán**.
+> [!NOTE]
+> Trợ lý AI hiện nhận **câu văn bản tiếng Việt**, **chưa** hỗ trợ nhận diện giọng nói. Khu vực này chỉ hiển thị khi gói dịch vụ của hộ đang bật tính năng `AI_ASSISTANT`.
 
-#### b. Xử lý Đơn hàng Nháp (Draft Orders) từ xa
-Khi khách hàng gửi tin nhắn/giọng nói đặt hàng từ xa (qua kênh tích hợp):
-1. **Nhận thông báo Realtime:** Hệ thống phát chuông và thông báo đẩy (WebSocket) trên màn hình làm việc của nhân viên.
-2. **Kiểm tra đơn nháp (`PENDING_REVIEW`):**
-   - Mở tab **Đơn hàng nháp** trên màn hình `/employee/orders`.
-   - Xem độ khớp thông tin (Matching Score / Confidence Score), danh sách mặt hàng và tên khách hàng do AI đề xuất.
-   - **Xử lý:** Chỉnh sửa lại số lượng nếu khách thay đổi ý, bấm **Xác nhận (Confirm)** để chốt đơn in bill hoặc **Từ chối (Reject)** nếu đơn không hợp lệ.
+#### a. Lập đơn hàng tại quầy bằng Trợ lý AI
+Khi bán hàng bận rộn hoặc tiếp nhận đơn qua điện thoại, có thể nhập cả câu thay vì chọn từng sản phẩm:
+1. Mở giao diện POS tại `/employee/orders` (hoặc trang tạo đơn `/employee/orders/new`) và chọn khu vực **Trợ lý AI**.
+2. Gõ nội dung đơn hàng vào ô nhập (tối đa 4000 ký tự):
+   - *Ví dụ: "Lấy 3 chai dầu ăn Neptune 1 lít và 2 bao đường Biên Hòa 1kg cho cô Lan"*
+3. Bấm gửi để nhận **gợi ý đơn hàng**: sản phẩm đã đối chiếu với danh mục cửa hàng, đơn vị tính, giá bán, khách hàng và hình thức thanh toán.
+4. Kiểm tra gợi ý:
+   - Nếu có mục **cần làm rõ** (nhiều sản phẩm cùng khớp hoặc thiếu dữ liệu), hệ thống **không tự đoán** mà yêu cầu chọn lại.
+   - Nếu khách hàng chưa tồn tại, hệ thống **chỉ tạo khách mới sau khi** bấm đưa gợi ý vào giỏ.
+5. Bấm **Đưa vào giỏ**, chỉnh sửa nếu cần rồi **Thanh toán** theo quy trình ở mục 3.1. Đơn chính thức vẫn đi qua luồng bán hàng chuẩn: trừ tồn kho, ghi công nợ và ghi sổ kế toán.
+
+> Trợ lý AI **không** tự tạo đơn hàng. Hệ thống chỉ lưu **đơn nháp AI** để người dùng kiểm tra.
+
+#### b. Xử lý Đơn hàng Nháp (Draft Orders)
+Khi có người trong cửa hàng tạo đơn nháp bằng AI, hệ thống lưu đơn với trạng thái `PENDING` và gửi **thông báo thời gian thực** tới màn hình làm việc của bạn (chuông thông báo, không cần tải lại trang).
+
+1. **Xem đơn nháp đang chờ:** mở danh sách **Đơn nháp đang chờ duyệt** trong khu vực Trợ lý AI — danh sách hiển thị tối đa 50 đơn `PENDING` mới nhất của hộ.
+2. **Kiểm tra chi tiết:** câu gốc đã nhập, danh sách mặt hàng đã đối chiếu, đơn vị tính, giá bán, khách hàng và các điểm cần làm rõ.
+3. **Xử lý:**
+   - **Chấp nhận:** bấm đưa gợi ý vào giỏ, chỉnh sửa nếu khách đổi ý rồi xác nhận thanh toán. Khi đơn được tạo thành công, đơn nháp chuyển sang `CONFIRMED`.
+   - **Từ chối:** bấm **Từ chối** và nhập **lý do** (bắt buộc, tối đa 500 ký tự). Đơn nháp chuyển sang `REJECTED` và không tạo đơn hàng.
+
+> [!TIP]
+> Chỉ đơn nháp ở trạng thái `PENDING` mới từ chối được. Nếu đơn hàng chưa tạo thành công (ví dụ sản phẩm đã hết), đơn nháp vẫn ở `PENDING` để xử lý lại.
 
 ---
 

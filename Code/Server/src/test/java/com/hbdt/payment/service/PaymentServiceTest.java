@@ -27,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -124,8 +125,8 @@ class PaymentServiceTest {
         when(debtTransactionRepository.sumAmountByCustomerIdAndType(
                 22L, 5L, DebtTransactionType.DEBT_INCREASE.name()))
                 .thenReturn(new BigDecimal("500000"));
-        when(debtTransactionRepository.sumAmountByCustomerIdAndType(
-                22L, 5L, DebtTransactionType.PAYMENT.name()))
+        when(debtTransactionRepository.sumAmountByCustomerIdAndTypes(
+                22L, 5L, List.of(DebtTransactionType.PAYMENT.name(), "DEBT_PAYMENT")))
                 .thenReturn(new BigDecimal("200000"));
         when(debtTransactionRepository.sumAmountByCustomerIdAndType(
                 22L, 5L, DebtTransactionType.VOID.name()))
@@ -147,7 +148,8 @@ class PaymentServiceTest {
         // Verify truy vấn luôn dùng businessId của user (5L), không phải hardcoded hay param khác
         verify(customerRepository).findByIdAndBusinessId(22L, 5L);
         verify(debtTransactionRepository).sumAmountByCustomerIdAndType(22L, 5L, "DEBT_INCREASE");
-        verify(debtTransactionRepository).sumAmountByCustomerIdAndType(22L, 5L, "PAYMENT");
+        verify(debtTransactionRepository).sumAmountByCustomerIdAndTypes(
+                22L, 5L, List.of("PAYMENT", "DEBT_PAYMENT"));
         verify(debtTransactionRepository).sumAmountByCustomerIdAndType(22L, 5L, "VOID");
         verify(debtBookkeepingService).calculateCustomerDebt(22L, 5L);
     }

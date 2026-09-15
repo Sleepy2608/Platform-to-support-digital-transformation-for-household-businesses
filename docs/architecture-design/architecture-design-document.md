@@ -8,7 +8,7 @@
 | **Tên dự án (VN)** | Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | **Loại tài liệu** | Architecture Design Document |
 | **Viết tắt** | HBDT
-| **Phiên bản tài liệu** | 2.0 |
+| **Phiên bản tài liệu** | 2.1 |
 | **Ngày tạo** | 26/07/2026 |
 | **Ngày chỉnh sửa lần cuối** | 14/09/2026 |
 | **Trạng thái** | Bản nháp (Draft) |
@@ -67,9 +67,9 @@ Hệ thống được thiết kế theo kiến trúc **phân tầng** (Layered /
 
 - **5 nhóm giao diện**: Public Portal (đăng ký/landing), Owner Web/Mobile (quản lý cửa hàng, sản phẩm, kho, doanh thu, công nợ), Employee Mobile/POS (bán hàng tại quầy, xác nhận đơn nháp), Manager Portal (quản lý vận hành nền tảng, duyệt hồ sơ hộ kinh doanh, hỗ trợ gói thuê bao, xử lý phản hồi, theo dõi platform analytics) và Admin Portal (quản trị hệ thống, định nghĩa bảng giá gói, template báo cáo kế toán, quản lý Manager, audit log).
 - **1 Backend API trung tâm** theo mô hình Modular Monolith, đảm bảo tính toàn vẹn giao dịch (order – tồn kho – công nợ – bút toán) trong cùng transaction.
-- **1 AI Order Service** độc lập: chuyển đổi tin nhắn/giọng nói (qua kênh tại quầy, điện thoại, Zalo) thành Draft Order, luôn có con người xác nhận trước khi ghi nhận chính thức (human-in-the-loop).
-- **Kênh tích hợp nhắn tin (Zalo OA / thoại)** làm cầu nối giữa khách hàng và AI Order Service — đây là thành phần bắt buộc để hiện thực hoá yêu cầu "multi-channel orders".
-- **Hạ tầng dữ liệu**: Cơ sở dữ liệu quan hệ, Redis cache, Object storage, Message queue, Audit log.
+- **1 AI Order Service** độc lập: nhận **câu văn bản** từ giao diện POS/Owner, gọi provider **B.ai** để trích xuất, trả **gợi ý đơn nháp** để backend đối chiếu dữ liệu thật và lưu `ai_order_drafts`; luôn có con người xác nhận trước khi ghi nhận chính thức (human-in-the-loop).
+- **Kênh tích hợp nhắn tin (Zalo OA / thoại)**: mới ở mức **thiết kế**, chưa triển khai — xem ghi chú §4.4.
+- **Hạ tầng dữ liệu**: Cơ sở dữ liệu quan hệ (đang dùng), Object storage/queue (một phần), Audit log. Redis cache là **thiết kế đề xuất**, hiện chưa dùng (xem §7.2).
 
 Kiến trúc hướng tới đáp ứng các yêu cầu phi chức năng: thời gian phản hồi < 2.000 ms cho thao tác cốt lõi, hỗ trợ nhiều người dùng đồng thời, có cơ chế fallback thủ công khi AI lỗi, và tuân thủ Thông tư 88/2021/TT-BTC về báo cáo kế toán.
 
@@ -176,14 +176,14 @@ Kiến trúc hướng tới đáp ứng các yêu cầu phi chức năng: thời
 | 4 | Manager Portal | Quản lý vận hành nền tảng: duyệt hồ sơ Owner, hỗ trợ gói thuê bao, xử lý phản hồi, xem phân tích nền tảng | HTTPS |
 | 5 | Admin Portal | Quản trị viên hệ thống: quản lý Manager, định nghĩa bảng giá gói, template báo cáo kế toán, cấu hình AI, audit log | HTTPS |
 | 6 | API & Security Entry Layer | Auth, RBAC (4 vai trò), Tenant Context, Rate Limiting | REST |
-| 7 | Backend Modular Monolith | Toàn bộ nghiệp vụ lõi (Sales, Inventory, Debt, Bookkeeping, Analytics) | REST / nội bộ |
-| 8 | AI Order Service | STT, NLP, matching, sinh Draft Order | REST / message queue |
-| 9 | Messaging/Voice Channel | Tiếp nhận tin nhắn Zalo, cuộc gọi | Webhook / API |
+| 7 | Backend Modular Monolith | Toàn bộ nghiệp vụ lõi (Sales, Inventory, Debt, AI draft order, Accounting/Sổ TT88, Report Templates, Analytics) | REST / nội bộ |
+| 8 | AI Order Service (FastAPI) | Trích xuất câu văn bản qua B.ai; backend resolve dữ liệu và lưu đơn nháp | REST (header `X-API-Secret`) |
+| 9 | Messaging/Voice Channel | Tiếp nhận tin nhắn Zalo, cuộc gọi — **chưa triển khai** | Webhook / API (thiết kế) |
 | 10 | Notification Service | Thông báo realtime | WebSocket / Push |
 | 11 | Data & Infrastructure | DB, cache, file, queue, audit | JDBC/TCP |
 | 12 | Bank / QR tĩnh | Thông tin chuyển khoản subscription hiển thị trên UI; chưa có payment gateway/webhook tự động | Chuyển khoản ngoài hệ thống |
 | 13 | Email/SMS/Push Provider | OTP, thông báo tài khoản | SMTP/API |
-| 14 | AI/Speech Provider | Speech-to-Text, mô hình ngôn ngữ | REST API |
+| 14 | AI Provider (B.ai) | Mô hình ngôn ngữ qua Chat Completions cho trích xuất đơn hàng; **chưa** có Speech-to-Text | REST API |
 
 ---
 
@@ -299,8 +299,8 @@ Hệ thống được chuẩn hóa trên Tech Stack hiện đại, đảm bảo 
 |---|---|
 | **Presentation Tier** | Giao diện Public/Owner/Employee/Admin, web + mobile responsive, tiếng Việt Unicode, real-time notification (WebSocket/Push) |
 | **API & Security Entry Layer** | Xác thực token, phân quyền, xác định Tenant, kiểm tra Subscription, validate dữ liệu, rate limiting |
-| **Application Tier** | Onboarding, thuê bao, sản phẩm, kho, khách hàng/công nợ, đơn hàng, kế toán, báo cáo, quản trị nền tảng |
-| **AI Order Service** | Nhận input từ Messaging/Voice Channel, STT, NLP parser, matching Product/Customer (qua Application Tier API), ambiguity detection, sinh Draft Order |
+| **Application Tier** | Onboarding, thuê bao, sản phẩm, kho, khách hàng/công nợ, đơn hàng, **đơn nháp AI**, kế toán & sổ TT88, báo cáo, quản trị nền tảng |
+| **AI Order Service** | Nhận **câu văn bản** từ Application Tier, gọi provider **B.ai** để trích xuất (sản phẩm, số lượng, đơn vị, khách hàng, thanh toán). Service **không** tự match dữ liệu và **không** ghi database: backend Spring Boot resolve danh mục/giá/khách hàng, lưu `ai_order_drafts` trạng thái `PENDING` và gửi notification cho hộ. Chưa có STT (xem ghi chú §4.4) |
 | **Data & Infrastructure** | Lưu dữ liệu nghiệp vụ, cache, file, hàng đợi, audit log, backup |
 
 ### 4.3. Cấu trúc thư mục Backend thực tế (Spring Boot Package-by-Feature)
@@ -322,25 +322,41 @@ com.hbdt/
 ├── product/                    # Sản phẩm, quy tắc đa đơn vị tính (Multi-unit conversion), giá bán
 ├── inventory/                  # Nhập kho, xuất kho, cân chỉnh kho (Adjustment), cảnh báo tồn kho tối thiểu
 ├── order/                      # Đơn hàng tại quầy (Sales Order), thanh toán, chi tiết đơn, hoá đơn
-├── bookkeeping/                # Tự động ghi nhận sổ kế toán theo TT 88/2021/TT-BTC (S1-HKD, S2-HKD, S4-HKD)
+├── ai/                         # Đơn nháp AI: gọi AI Service, resolve sản phẩm/khách hàng, lưu ai_order_drafts
+├── accounting/                 # Sổ kế toán TT 88/2021/TT-BTC (S1-HKD, S2-HKD, S4-HKD), tự động điền biểu mẫu
+├── revenue/                    # Revenue Ledger, báo cáo công nợ và báo cáo vận hành
+├── admin/                      # Quản trị nền tảng: tài khoản, gói, biểu mẫu báo cáo & phiên bản
+├── debt/                       # Công nợ khách hàng và ghi sổ công nợ tự động
 ├── subscription/               # Gói dịch vụ thuê bao, chu kỳ thanh toán, kích hoạt gói
-├── feature/                    # Quản lý tính năng gói (Feature Plans) & Feature Gate phân quyền
+├── entitlement/                # Feature Gate theo gói (ví dụ AI_ASSISTANT)
+├── feature/                    # Quản lý tính năng gói (Feature Plans)
 ├── analytics/                  # Phân tích & Báo cáo số liệu:
 │   ├── platform/               # Platform Analytics cho Admin/Manager (MRR, Tenant active, Churn rate)
-│   └── revenue/                # Revenue Ledger & Mặt hàng bán chạy (Best/Slow/Unsold) cho Owner
-├── template/                   # Quản lý mẫu biểu báo cáo tài chính/kế toán (Financial Template Management)
+│   └── revenue/                # Mặt hàng bán chạy (Best/Slow/Unsold) cho Owner
+├── notification/               # Thông báo và phát thông báo thời gian thực
 ├── feedback/                   # Tiếp nhận & xử lý phản hồi từ Owner/Employee tới Manager/Admin
 ├── announcement/               # Quản lý và phát thông báo toàn hệ thống
-├── audit/                      # Audit Log ghi vết thao tác nhạy cảm
-└── seed/                       # Khởi tạo dữ liệu hệ thống tự động từ JSON có kiểm tra version/checksum
+├── seed/                       # Khởi tạo dữ liệu hệ thống tự động từ JSON có kiểm tra version/checksum
+└── repository/                 # Spring Data JPA repository dùng chung
 
-ai-order-service/               # Service FastAPI triển khai độc lập
-├── channel_adapter/            # Webhook Zalo OA / tiếp nhận audio thoại
-├── stt/                        # Speech-to-Text adapter
-├── nlp_parser/                 # Trích xuất thực thể (sản phẩm, số lượng, khách hàng)
-├── matching/                   # Gọi API Backend (tenant-scoped) để match danh mục
-└── draft_order_generator/      # Sinh Draft Order có tính điểm tin cậy (Confidence score)
+Code/AI/                        # AI Service (FastAPI) triển khai độc lập
+├── main.py                     # Khởi tạo FastAPI, mount router tại /api/v1/ai, endpoint /health
+├── requirements.txt
+├── Dockerfile
+├── .env.example                # BAI_API_KEY, BAI_MODEL, BAI_BASE_URL, AI_SERVICE_API_SECRET
+├── scripts/try_bai.py          # Script thử nhanh provider B.ai
+├── src/
+│   ├── config.py               # Cấu hình đọc từ .env
+│   ├── models.py               # Pydantic models (ParseOrderRequest, ExtractedOrder, BookkeepingDraft...)
+│   ├── router.py               # /parse-order, /ready, /draft-bookkeeping + xác thực X-API-Secret
+│   └── services/
+│       ├── bai_client.py       # Gọi B.ai Chat Completions, validate output, xử lý lỗi/timeout
+│       ├── nlp_parser.py       # Chuẩn hoá kết quả trích xuất tiếng Việt
+│       └── order_builder.py    # Dựng cấu trúc đơn đề xuất từ dữ liệu trích xuất
+└── tests/test_bai.py           # Kiểm thử service (pytest)
 ```
+
+> **Ghi chú §4.4 — chưa triển khai:** các thành phần **Channel Adapter** (Zalo OA, tổng đài), **STT** (speech-to-text), hàng đợi tin nhắn và **idempotency key `ai:draftorder:{msgId}`** mới ở mức thiết kế. Phiên bản hiện tại nhận câu văn bản trực tiếp từ giao diện POS; chống trùng đơn dựa trên đơn nháp `PENDING` và thao tác xác nhận của người dùng.
 
 ---
 
@@ -431,6 +447,8 @@ ai-order-service/               # Service FastAPI triển khai độc lập
 
 ## 6. Kiến trúc AI Order Service
 
+> **Trạng thái triển khai (15/09/2026):** mục này mô tả **kiến trúc đích**. Phần **đã triển khai**: nhận câu **văn bản** từ giao diện POS/Owner → AI Service (FastAPI, xác thực `X-API-Secret`) gọi **B.ai** để trích xuất → backend tự resolve sản phẩm/khách hàng/giá theo tenant → lưu `ai_order_drafts` (`PENDING` / `REJECTED` / `CONFIRMED`) → gửi notification thời gian thực cho hộ. Phần **chưa triển khai**: Channel Adapter (Zalo OA, tổng đài), STT (giọng nói), confidence scoring, idempotency key và hàng đợi — xem ghi chú §4.4.
+
 ### 6.1. Tổng quan tích hợp
 
 ```
@@ -504,7 +522,7 @@ Matching Product/Customer (qua Application Tier API, tenant-scoped)
 Ambiguity Detection + Confidence Scoring
    │
    ▼
-Sinh Draft Order → lưu trạng thái PENDING_REVIEW
+Sinh Draft Order → lưu `ai_order_drafts` trạng thái PENDING
    │
    ▼
 Notification Service → Employee/Owner nhận realtime notification
@@ -566,10 +584,10 @@ Order & Checkout module xử lý như đơn thủ công (transaction đầy đ�
           │ 1:N
           ▼
 ┌────────────────────┐   ┌────────────────────┐   ┌────────────────────┐
-│  SalesOrderItems   │   │ RevenueLedgerEntry │   │   AI Requests /    │
-│ • salesOrderId(FK) │   │ (denormalized)     │   │   Draft context    │
-│ • productId(FK)    │   │ • salesOrderId     │   │ • rawInput         │
-│ • qty/unit/price   │   │ • productId        │   │ • confidence/status│
+│  SalesOrderItems   │   │ RevenueLedgerEntry │   │  AiOrderDraft      │
+│ • salesOrderId(FK) │   │ (denormalized)     │   │ • sourceText       │
+│ • productId(FK)    │   │ • salesOrderId     │   │ • proposalJson     │
+│ • qty/unit/price   │   │ • productId        │   │ • status/reviewed  │
 └────────────────────┘   │ • confirmedAt      │   └────────────────────┘
                          │ • lineTotal        │
                          └────────────────────┘
@@ -593,14 +611,16 @@ Order & Checkout module xử lý như đơn thủ công (transaction đầy đ�
 
 ### 7.2. Redis Cache Strategy
 
+> **Trạng thái:** đây là **thiết kế đề xuất**, chưa triển khai. Phiên bản hiện tại **không dùng Redis** (không có dependency trong `pom.xml`); rate limiting dùng **Bucket4j in-memory**, notification realtime phát qua stream service, còn trạng thái đơn nháp AI được lưu bền trong bảng `ai_order_drafts`.
+
 | Key Pattern | Giá trị | TTL | Mục đích |
 |---|---|---|---|
 | `session:{token}` | User session | 15 phút | Giảm DB lookup |
 | `business:{id}:products` | Danh mục sản phẩm | 10 phút | Tăng tốc tìm kiếm khi bán hàng |
 | `business:{id}:customer:{id}` | Thông tin khách hàng + công nợ | 5 phút | Hiển thị nhanh khi tạo đơn |
 | `notification:{userId}:unread` | Số thông báo chưa đọc | 1 phút | Badge realtime |
-| `rate_limit:{ip}` | Đếm request | 1 phút | Rate limiting |
-| `ai:draftorder:{msgId}` | Idempotency key AI | 24 giờ | Tránh sinh trùng Draft Order |
+| `rate_limit:{ip}` | Đếm request | 1 phút | Rate limiting (hiện dùng Bucket4j in-memory) |
+| `ai:draftorder:{msgId}` | Idempotency key AI (đề xuất) | 24 giờ | Tránh sinh trùng Draft Order khi có retry từ kênh nhắn tin |
 
 ### 7.3. Chiến lược Indexing
 
@@ -613,7 +633,8 @@ Order & Checkout module xử lý như đơn thủ công (transaction đầy đ�
 | `debt_transactions` | `business_id`, `customer_id`, `sales_order_id`, `transaction_date` | Lịch sử công nợ và đối soát thanh toán |
 | `inventory_transactions` | `product_id`, `created_at` | Lịch sử nhập/xuất kho |
 | `revenue_ledger_entries` | `business_id`, `confirmed_at`, `product_id`, `customer_id` | Báo cáo doanh thu và mặt hàng bán chạy |
-| `ai_requests` | `business_id`, `status` | Danh sách yêu cầu AI/Draft Order chờ xác nhận |
+| `ai_order_drafts` | `business_id`, `status`, `created_at` | Danh sách đơn nháp AI chờ xác nhận |
+| `accounting_report_reviews` | `business_id`, `period_from`, `period_to`, `data_signature` | Vết kiểm tra/duyệt báo cáo kế toán theo kỳ |
 
 ---
 
@@ -988,6 +1009,7 @@ PENDING (thủ công hoặc AI Draft) → CONFIRMED → (thanh toán đủ | ghi
 | 1.1 | 19/08/2026 | Thay đổi RBAC, Thêm Manager |
 | 1.2 | 23/08/2026 | Tách Purchase/Debt/Payment thành riêng |
 | 2.0 | 14/09/2026 | Hoàn thành và cập nhật các tính năng chính cho hệ thống |
+| 2.1 | 15/09/2026 | Đồng bộ theo nhánh `feature/AI_Service`: cập nhật cấu trúc `Code/AI` thực tế (B.ai, `bai_client`/`nlp_parser`/`order_builder`), bổ sung package `ai`/`accounting`/`admin`/`revenue`/`debt`, thay `ai_requests` bằng `ai_order_drafts` (giữ `ai_requests` là legacy), ghi rõ trạng thái chưa triển khai của Channel Adapter/STT/Redis cache |
 
 ---
 

@@ -7,8 +7,8 @@ import {
   Store, UserCircle, Lock, CreditCard,
   AlertTriangle, LogOut, Menu, X, ChevronRight,
   Shield, Users, PackageOpen, ReceiptText, ListOrdered, BellRing, UserSearch,
-  Building2, ShieldCheck, ClipboardList, ShoppingCart, Warehouse, TrendingUp,
-  FileBarChart, History, BookOpen, MessageSquare,
+  Building2, ShieldCheck, ClipboardList, ShoppingCart, Warehouse, TrendingUp, History, BookOpen,
+  MessageSquare, FileBarChart,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
