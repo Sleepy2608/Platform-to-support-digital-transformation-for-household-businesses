@@ -10,9 +10,9 @@
 | Character Set | `utf8mb4` |
 | Collation | `utf8mb4_0900_ai_ci` |
 | Mô hình dữ liệu | Cơ sở dữ liệu quan hệ, multi-tenant dùng chung schema |
-| Quy mô đã xác minh | **36 bảng, 68 khóa ngoại, 10 trigger** |
+| Quy mô | **38 bảng** theo cách đếm ở mục 5 (bản 3.0 là 36 bảng; bổ sung `ai_order_drafts` và `accounting_report_reviews`), 68 khóa ngoại, 10 trigger — cần chạy lại mục 17 để chốt số liệu cuối |
 | Cơ chế tạo schema | Spring Data JPA `ddl-auto=update` (không dùng migration SQL) |
-| Phiên bản tài liệu | 3.0 |
+| Phiên bản tài liệu | 3.1 |
 
 ---
 
@@ -188,7 +188,7 @@ Các giá trị phải được cập nhật trong cùng transaction để trán
 
 ## 5. Tổ chức dữ liệu theo phân hệ
 
-Cơ sở dữ liệu gồm **34 bảng nghiệp vụ** (chia thành 5 phân hệ) + **2 bảng seed tracking** (`seed_config`, `seed_key`) = **36 bảng** do JPA quản lý.
+Cơ sở dữ liệu gồm **36 bảng nghiệp vụ** (chia thành 5 phân hệ) + **2 bảng seed tracking** (`seed_config`, `seed_key`) = **38 bảng** do JPA quản lý. So với bản 3.0, hai bảng mới được bổ sung là `ai_order_drafts` (đơn nháp AI) và `accounting_report_reviews` (lịch sử kiểm tra/duyệt báo cáo kế toán).
 
 > **Ghi chú về dữ liệu không phải bảng**: `province`, `district`, `ward` và `otp_codes` **không phải bảng**. Địa giới hành chính được tải từ API `provinces.open-api.vn` lúc khởi động và lưu in-memory (`GeoReferenceStore`); OTP do `OtpService` quản lý in-memory. Cột `businesses.address` lưu địa chỉ dưới dạng **JSON compact** (chứa `businessType`, `provinceCode`, `districtCode`, `wardCode`, `detailAddress`, `representativeEmail`, `storeName`) — không có bảng địa chỉ riêng.
 
@@ -250,18 +250,35 @@ Backend tạo signed URL có thời hạn từ object key và trả `logoUrl`, `
 | `sales_order_items` | Sản phẩm, số lượng, giá bán và snapshot tỷ lệ tính thuế |
 | `debt_transactions` | Phát sinh nợ, trả nợ, điều chỉnh và thông tin giao dịch |
 
-### 5.4. AI & System Operations – 6 bảng
+### 5.4. AI & System Operations – 7 bảng
 
 | Bảng | Chức năng |
 |---|---|
-| `ai_requests` | Yêu cầu văn bản/giọng nói và kết quả trích xuất của AI |
+| `ai_order_drafts` | Đơn nháp AI đang dùng: nội dung nguồn, proposal JSON, trạng thái duyệt |
+| `ai_requests` | Bảng **legacy** của thiết kế ban đầu; entity `AiRequest` còn khai báo nhưng không còn service/repository sử dụng |
 | `notifications` | Thông báo theo người dùng, đơn hàng hoặc yêu cầu AI |
 | `feedback` | Phản hồi, khiếu nại hoặc sự cố |
 | `announcements` | Thông báo toàn nền tảng hoặc theo vai trò |
 | `system_configurations` | Cấu hình hệ thống và AI |
 | `audit_logs` | Nhật ký thao tác và dữ liệu trước/sau |
 
-### 5.5. Accounting, Tax & Reporting – 8 bảng
+#### 5.4.1. Bảng `ai_order_drafts` (bảng mới)
+
+| Cột | Kiểu | Ràng buộc / Ý nghĩa |
+|---|---|---|
+| `id` | `BIGINT UNSIGNED` | PK |
+| `business_id` | `BIGINT UNSIGNED` | NOT NULL, phân tách theo hộ kinh doanh |
+| `created_by`, `reviewed_by` | `BIGINT UNSIGNED` | NOT NULL / null — người tạo và người duyệt, tham chiếu `users` |
+| `sales_order_id` | `BIGINT UNSIGNED` | null — đơn thật sinh ra khi người dùng chấp nhận gợi ý |
+| `status` | `VARCHAR(20)` | NOT NULL — `PENDING` \| `REJECTED` \| `CONFIRMED` |
+| `source_text` | `VARCHAR(4000)` | NOT NULL — câu người dùng nhập |
+| `proposal_json` | `LONGTEXT` | NOT NULL — gợi ý đã resolve sản phẩm/đơn vị/giá/khách hàng |
+| `rejection_reason` | `VARCHAR(500)` | null — lý do từ chối |
+| `created_at`, `updated_at`, `reviewed_at` | `DATETIME` | NOT NULL / null |
+
+Index: `idx_ai_drafts_business_status (business_id, status, created_at)` phục vụ truy vấn danh sách đơn nháp đang chờ.
+
+### 5.5. Accounting, Tax & Reporting – 9 bảng
 
 | Bảng | Chức năng |
 |---|---|
@@ -270,9 +287,25 @@ Backend tạo signed URL có thời hạn từ object key và trả `logoUrl`, `
 | `accounting_books` | Sổ theo hộ kinh doanh, loại sổ và kỳ |
 | `accounting_book_entries` | Dòng ghi sổ, nguồn phát sinh và lịch sử điều chỉnh |
 | `generated_reports` | Báo cáo đã tạo và trạng thái duyệt |
+| `accounting_report_reviews` | Lịch sử kiểm tra/duyệt báo cáo kế toán theo kỳ |
 | `tax_types` | Danh mục loại nghĩa vụ thuế |
 | `tax_obligations` | Nghĩa vụ thuế phát sinh theo hộ và kỳ |
 | `tax_payments` | Các lần nộp thuế gắn với nghĩa vụ cụ thể |
+
+#### 5.5.1. Bảng `accounting_report_reviews` (bảng mới)
+
+| Cột | Kiểu | Ràng buộc / Ý nghĩa |
+|---|---|---|
+| `id` | `BIGINT UNSIGNED` | PK |
+| `business_id` | `BIGINT UNSIGNED` | NOT NULL, phân tách theo hộ kinh doanh |
+| `period_from`, `period_to` | `DATE` | null — kỳ báo cáo được kiểm tra |
+| `status` | `VARCHAR(20)` | NOT NULL — kết quả kiểm tra do Owner chọn |
+| `review_note` | `VARCHAR(500)` | null — ghi chú khi kiểm tra |
+| `reviewed_by` | `BIGINT UNSIGNED` | NOT NULL, tham chiếu `users` |
+| `reviewed_at`, `created_at` | `DATETIME` | NOT NULL |
+| `data_signature` | `VARCHAR(64)` | NOT NULL — chữ ký dữ liệu của kỳ; nếu số liệu thay đổi, chữ ký lệch và báo cáo được coi là đã cũ so với lần duyệt |
+
+Index: `idx_accounting_review_period (business_id, period_from, period_to)` và `idx_accounting_review_signature (business_id, data_signature)`.
 
 ### 5.6. Onboarding & Seed Tracking – 3 bảng
 
@@ -415,13 +448,23 @@ users 1 ─── N debt_transactions
 ### 6.6. AI Draft Order
 
 ```text
-users 1 ─── N ai_requests
-ai_requests 0..1 ─── 1 sales_orders
-ai_requests 1 ─── N notifications
-sales_orders 1 ─── N notifications
+businesses 1 ─── N ai_order_drafts
+users 1 ─── N ai_order_drafts            (created_by)
+users 0..1 ─── N ai_order_drafts         (reviewed_by)
+ai_order_drafts 0..1 ─── 1 sales_orders
+ai_order_drafts 1 ─── N notifications
 ```
 
-AI chỉ tạo đơn ở trạng thái `DRAFT`. Employee hoặc Owner phải kiểm tra trước khi xác nhận.
+`ai_order_drafts.status` đi theo luồng:
+
+```text
+PENDING ──(người dùng đưa gợi ý vào giỏ và đơn tạo thành công)──► CONFIRMED
+PENDING ──(POST /api/ai/drafts/{id}/reject)────────────────────► REJECTED
+```
+
+AI chỉ tạo bản nháp. Employee hoặc Owner phải kiểm tra; đơn chính thức vẫn đi qua `sales_orders` theo luồng bán hàng chuẩn.
+
+> `ai_requests` là bảng legacy của thiết kế ban đầu, được giữ lại để tham chiếu lịch sử nhưng không còn nằm trong luồng nghiệp vụ hiện tại.
 
 ### 6.7. Thuế
 
@@ -468,6 +511,17 @@ OPENING_BALANCE
 ```
 
 Nhờ đó, dòng sổ có thể truy ngược về giao dịch nguồn.
+
+### 6.9. Kiểm tra và duyệt báo cáo kế toán
+
+```text
+businesses 1 ─── N accounting_report_reviews
+users 1 ─── N accounting_report_reviews   (reviewed_by)
+```
+
+Mỗi lần Owner kiểm tra/duyệt sổ kế toán hoặc báo cáo vận hành sẽ tạo một bản ghi mới, không ghi đè bản ghi cũ, nhờ đó giữ được vết kiểm tra theo thời gian.
+
+`data_signature` là chữ ký của tập số liệu trong kỳ. Khi dữ liệu nguồn thay đổi (đơn hàng, kho, thuế), chữ ký tính lại sẽ khác chữ ký đã lưu, giúp hệ thống biết báo cáo đã cũ so với lần duyệt gần nhất và cần được kiểm tra lại.
 
 ---
 
@@ -1034,7 +1088,7 @@ MySQL là nguồn dữ liệu chính. Redis không thuộc phạm vi thiết k�
 | Đăng nhập và phân quyền | `users`, `roles`, `businesses` |
 | Quản lý sản phẩm | `categories`, `products`, `units`, `product_units`, `product_prices` |
 | Tạo đơn tại quầy | `sales_orders`, `sales_order_items` |
-| AI tạo Draft Order | `ai_requests`, `sales_orders`, `sales_order_items`, `notifications` |
+| AI tạo Draft Order | `ai_order_drafts`, `sales_orders`, `sales_order_items`, `notifications` (`ai_requests` là legacy) |
 | Quản lý nhập và tồn kho | `stock_imports`, `stock_import_items`, `inventory_transactions`, `inventory_balances` |
 | Quản lý khách hàng và công nợ | `customers`, `sales_orders`, `debt_transactions` |
 | Nhật ký thanh toán công nợ | `debt_transactions` và các trường thông tin thanh toán |
@@ -1042,7 +1096,7 @@ MySQL là nguồn dữ liệu chính. Redis không thuộc phạm vi thiết k�
 | S2-HKD | `stock_import_items`, `inventory_transactions`, `inventory_balances`, hệ thống sổ/báo cáo |
 | S4-HKD | `tax_types`, `tax_obligations`, `tax_payments`, hệ thống sổ/báo cáo |
 | Quản lý biểu mẫu | `report_templates`, `report_template_versions` |
-| Tạo và duyệt báo cáo | `generated_reports` |
+| Tạo và duyệt báo cáo | `generated_reports`, `accounting_report_reviews` |
 | Ghi sổ tự động | `accounting_books`, `accounting_book_entries` |
 | Quản lý thuê bao | `subscription_plans`, `subscriptions` |
 | Quản trị cấu hình | `system_configurations` |
@@ -1057,13 +1111,15 @@ Các chức năng như WebSocket/SSE, xuất PDF, xử lý AI và phân quyền 
 
 Cấu trúc đã được kiểm tra trực tiếp trong MySQL Workbench.
 
-Kết quả:
+Kết quả (đo trên schema của bản 3.0):
 
 ```text
 33 bảng
 688 khóa ngoại
 10 trigger
 ```
+
+> **Lưu ý:** sau khi bổ sung `ai_order_drafts` và `accounting_report_reviews`, số bảng đo được sẽ tăng thêm 2. Hai cách đếm trong tài liệu này (mục 5 ghi 38 bảng, mục 17 ghi 33 bảng cho bản 3.0) vốn đã lệch nhau, nên cần chạy lại truy vấn bên dưới trên schema hiện tại để chốt số liệu.
 
 Truy vấn xác minh tổng hợp:
 
@@ -1096,7 +1152,7 @@ Kết quả mong đợi:
 
 | total_tables | total_foreign_keys | total_triggers |
 |---:|---:|---:|
-| 33 | 68 | 10 |
+| 33 (+2 sau khi thêm `ai_order_drafts`, `accounting_report_reviews`) | 68 | 10 |
 
 Kiểm tra ba mẫu sổ:
 
@@ -1107,7 +1163,7 @@ WHERE template_code IN ('S1-HKD', 'S2-HKD', 'S4-HKD')
 ORDER BY template_code;
 ```
 
-Kiểm tra bốn bảng mới:
+Kiểm tra các bảng mới:
 
 ```sql
 SELECT TABLE_NAME
@@ -1117,7 +1173,9 @@ WHERE TABLE_SCHEMA = DATABASE()
       'tax_activity_groups',
       'tax_types',
       'tax_obligations',
-      'tax_payments'
+      'tax_payments',
+      'ai_order_drafts',
+      'accounting_report_reviews'
   )
 ORDER BY TABLE_NAME;
 ```
@@ -1214,12 +1272,14 @@ Các điểm chính:
 - schema do JPA sinh tự động, seed data theo dõi bằng `seed_config`;
 - schema đã được xác minh thành công.
 
-Thông số cuối cùng:
+Thông số cuối cùng (đo trên bản 3.0):
 
 ```text
 36 bảng
 68 khóa ngoại
 10 trigger
 ```
+
+> Bản 3.1 bổ sung `ai_order_drafts` và `accounting_report_reviews`, nâng tổng số bảng lên **38** theo cách đếm ở mục 5. Cần chạy lại mục 17 để chốt số liệu đo thực tế.
 
 Trong phạm vi học thuật được giảng viên xác nhận, cấu trúc hiện tại đủ để triển khai S1-HKD, S2-HKD và S4-HKD mà không làm hệ thống phức tạp quá mức.

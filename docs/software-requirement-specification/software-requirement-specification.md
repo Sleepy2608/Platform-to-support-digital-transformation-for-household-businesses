@@ -2169,6 +2169,8 @@ Người dùng có thể chỉnh sửa văn bản đã nhận dạng trước kh
 
 Giọng nói được chuyển đổi với độ chính xác chấp nhận được.
 
+> **Trạng thái triển khai (15/09/2026):** yêu cầu này **chưa được triển khai**. Nhánh `feature/AI_Service` hiện chỉ hỗ trợ **tạo đơn hàng bằng văn bản** (HBDT-09.1); AI Service chưa có bước chuyển giọng nói thành văn bản (STT), và giao diện chỉ có ô nhập câu.
+
 ---
 
 ## HBDT-09.3 Phân tích đơn hàng bằng ngôn ngữ tự nhiên
@@ -3300,13 +3302,16 @@ Bảng sau tổng hợp các điểm cuối REST API chính của hệ thống.
 | Khách hàng | `/api/customers/*` | 8 |
 | Công nợ | `/api/debts/*` | 6 |
 | Đơn bán hàng | `/api/sales-orders/*` | 8 |
-| Đơn hàng AI | `/api/ai/*` | 6 |
+| Đơn hàng AI | `/api/ai/*` | 5 |
 | Gói thuê bao | `/api/subscriptions/*` | 8 |
-| Ghi sổ kế toán | `/api/accounting/*` | 8 |
+| Ghi sổ kế toán & Thuế TT88 | `/api/accounting/*` | 4 |
+| Sổ doanh thu & báo cáo vận hành | `/api/revenue-ledger/*` | 2 |
 | Báo cáo & Phân tích | `/api/reports/*` | 6 |
-| Quản trị | `/api/admin/*` | 10 |
+| Quản trị (gồm `/api/admin/report-templates/*`) | `/api/admin/*` | 13 |
 | Thông báo | `/api/notifications/*` | 4 |
 | **Tổng cộng** | | **~101** |
+
+> **Ghi chú (cập nhật theo nhánh `feature/AI_Service`):** `/api/ai/*` gồm `parse-order`, `drafts`, `drafts/{id}/reject`, `draft-bookkeeping`, `health`; `/api/accounting/*` gồm `books`, `books/review`, `books/tax-payments`, `template-reports`; `/api/admin/*` bổ sung 3 endpoint quản lý biểu mẫu báo cáo và phiên bản. AI Service (Python/FastAPI) có hợp đồng riêng, không tính vào bảng trên.
 
 ## 10.2. Quy ước mã yêu cầu
 
@@ -3366,3 +3371,4 @@ Bảng sau tổng hợp các điểm cuối REST API chính của hệ thống.
 | Phiên bản | Ngày | Mô tả thay đổi |
 |-----------|------|----------------|
 | 1.1 | 30/07/2026 | Thêm link Jira để phân công việc dựa trên task Jira|
+| 1.2 | 15/09/2026 | Cập nhật §10.1 theo nhánh `feature/AI_Service`: chỉnh số endpoint `/api/ai/*`, `/api/accounting/*`, `/api/admin/*` và bổ sung nhóm `/api/revenue-ledger/*`; ghi chú trạng thái chưa triển khai của HBDT-09.2 (nhập bằng giọng nói) |

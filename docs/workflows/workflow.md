@@ -28,7 +28,11 @@
 │     └──► NLP Parser trích xuất: sản phẩm, số lượng, khách hàng, ghi nợ?     │
 │     └──► Matching Product/Customer (gọi Application Tier API)               │
 │     └──► Ambiguity Detection + Confidence Scoring                           │
-│     └──► Sinh Draft Order, trạng thái PENDING_REVIEW                        │
+│     └──► Sinh Draft Order → lưu `ai_order_drafts`, trạng thái PENDING       │
+│                                                                             │
+│  ⚠ Phạm vi đã triển khai: hiện chỉ có kênh (a) tại quầy với ô nhập câu      │
+│    văn bản (B.ai). Channel Adapter (Zalo/tổng đài), STT và Confidence       │
+│    Scoring mới ở mức thiết kế — xem ghi chú §4.4 của tài liệu kiến trúc.    │
 │                                                                             │
 │  ⑥ NOTIFICATION SERVICE: Đẩy thông báo realtime                             │
 │     └──► WebSocket/Push tới Employee & Owner đang online                    │

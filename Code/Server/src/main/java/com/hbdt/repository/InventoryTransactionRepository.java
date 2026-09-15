@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface InventoryTransactionRepository extends JpaRepository<InventoryTransaction, Long>, JpaSpecificationExecutor<InventoryTransaction> {
+    List<InventoryTransaction> findAllByBusinessIdAndCreatedAtLessThanEqualOrderByCreatedAtAscIdAsc(
+            Long businessId, LocalDateTime to);
+
     List<InventoryTransaction> findAllByBusinessIdAndProductIdOrderByCreatedAtDesc(
             Long businessId,
             Long productId

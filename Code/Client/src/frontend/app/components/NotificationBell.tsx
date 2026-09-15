@@ -10,6 +10,7 @@ import {
   LoaderCircle,
   PackageCheck,
   RefreshCw,
+  Sparkles,
   X,
 } from 'lucide-react';
 import { apiClient, getAccessToken } from '../lib/apiClient';
@@ -46,6 +47,13 @@ function formatRelativeTime(value: string) {
 }
 
 function notificationTone(type: string) {
+  if (type === 'AI_DRAFT') {
+    return {
+      icon: Sparkles,
+      iconClass: 'border-indigo-200 bg-indigo-50 text-indigo-700',
+      dotClass: 'bg-indigo-500',
+    };
+  }
   if (type === 'LOW_STOCK') {
     return {
       icon: AlertTriangle,

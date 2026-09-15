@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   AlertCircle,
   ArrowRight,
@@ -71,7 +71,15 @@ export interface CheckoutData {
   customerId?: number;
 }
 
+export interface InitialCheckout {
+  orderCode: string;
+  customer?: CustomerOption;
+  paymentType: 'CASH' | 'TRANSFER' | 'DEBT';
+  note: string;
+}
+
 interface OrderCartDrawerProps {
+  initialCheckout?: InitialCheckout;
   isOpen: boolean;
   onClose: () => void;
   items: CartItem[];
@@ -83,6 +91,7 @@ interface OrderCartDrawerProps {
 }
 
 export function OrderCartDrawer({
+  initialCheckout,
   isOpen,
   onClose,
   items,
@@ -92,14 +101,16 @@ export function OrderCartDrawer({
   onClearCart,
   onCheckout,
 }: OrderCartDrawerProps) {
-  const [orderCode, setOrderCode] = useState('');
+  const [orderCode, setOrderCode] = useState(initialCheckout?.orderCode || '');
   const [source, setSource] = useState<'POS' | 'ONLINE'>('POS');
-  const [paidAmount, setPaidAmount] = useState('');
-  const [note, setNote] = useState('');
+  const [paidAmount, setPaidAmount] = useState(initialCheckout?.paymentType === 'DEBT' ? '0' : '');
+  const [note, setNote] = useState(initialCheckout?.note || '');
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerOption | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerOption | null>(
+    initialCheckout?.customer ?? null,
+  );
   const [showQr, setShowQr] = useState(false);
   const [downloadingQr, setDownloadingQr] = useState(false);
   const [copiedAcc, setCopiedAcc] = useState(false);
@@ -185,9 +196,9 @@ export function OrderCartDrawer({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 260 }}
-            className="relative z-10 flex h-full w-full max-w-2xl flex-col bg-white shadow-2xl"
+            className="relative z-10 flex h-full w-full max-w-2xl flex-col bg-white shadow-2xl overflow-hidden"
           >
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-7">
+            <div className="shrink-0 flex items-center justify-between border-b border-slate-200 px-5 py-4 sm:px-7">
               <div className="flex items-center gap-3">
                 <div className="rounded-xl bg-slate-950 p-2.5 text-white">
                   <ShoppingBag className="h-5 w-5" />
@@ -204,7 +215,9 @@ export function OrderCartDrawer({
               </button>
             </div>
 
-            <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5 sm:px-7">
+            {/* Scrollable Body containing both item list and checkout form */}
+            <div className="flex-1 min-h-0 overflow-y-auto">
+              <div className="space-y-4 px-5 py-5 sm:px-7">
               {successMessage && (
                 <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
                   <CheckCircle2 className="h-5 w-5" /> {successMessage}
@@ -302,7 +315,7 @@ export function OrderCartDrawer({
             </div>
 
             {items.length > 0 && (
-              <form onSubmit={handleCheckout} className="space-y-4 border-t border-slate-200 bg-slate-50/90 px-5 py-5 sm:px-7">
+              <form onSubmit={handleCheckout} className="space-y-4 border-t border-slate-200 bg-slate-50/90 px-5 py-5 pb-10 sm:px-7">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label>
                     <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Mã đơn hàng</span>
@@ -498,13 +511,14 @@ export function OrderCartDrawer({
                   })()}
                 </div>
 
-                <button type="submit" disabled={submitting || hasInvalidItem} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3.5 text-sm font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40">
+                <button type="submit" disabled={submitting || hasInvalidItem} className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3.5 text-sm font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 shadow-sm transition-all active:scale-[0.99] cursor-pointer">
                   <ShoppingBag className="h-4 w-4" />
                   {submitting ? 'Đang tạo đơn...' : `Xác nhận tạo đơn (${formatVnd(totalAmount)})`}
                   {!submitting && <ArrowRight className="h-4 w-4" />}
                 </button>
               </form>
             )}
+            </div>
           </motion.aside>
         </div>
       )}

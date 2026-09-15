@@ -43,6 +43,20 @@ public interface StockImportRepository extends JpaRepository<StockImport, Long> 
     );
 
     @Query("""
+        SELECT COUNT(s)
+        FROM StockImport s
+        WHERE s.businessId = :businessId
+          AND s.status = 'CONFIRMED'
+          AND (:fromDateTime IS NULL OR s.importDate >= :fromDateTime)
+          AND (:toDateTime IS NULL OR s.importDate <= :toDateTime)
+    """)
+    Long countConfirmedInPeriod(
+            @Param("businessId") Long businessId,
+            @Param("fromDateTime") LocalDateTime fromDateTime,
+            @Param("toDateTime") LocalDateTime toDateTime
+    );
+
+    @Query("""
         SELECT s FROM StockImport s
         WHERE s.businessId = :businessId
           AND s.status = 'CONFIRMED'

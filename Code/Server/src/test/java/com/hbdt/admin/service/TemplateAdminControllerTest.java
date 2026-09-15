@@ -44,4 +44,14 @@ class TemplateAdminControllerTest {
                 .as("Endpoint must be under /api/admin/ which is secured to ADMIN in SecurityConfig")
                 .anyMatch(path -> path.startsWith("/api/admin/"));
     }
+
+    @Test
+    @DisplayName("TC 16: RBAC — Non-ADMIN roles (such as OWNER) must not have access to Admin template endpoints")
+    void controller_mustNotAllowOwnerRole() {
+        PreAuthorize preAuthorize = TemplateAdminController.class.getAnnotation(PreAuthorize.class);
+        assertThat(preAuthorize).isNotNull();
+        assertThat(preAuthorize.value())
+                .doesNotContain("OWNER")
+                .doesNotContain("BUSINESS_OWNER");
+    }
 }
