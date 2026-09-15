@@ -96,7 +96,6 @@ export default function AdminLayout({
     { name: 'Gói thuê bao', href: '/admin/subscription-plans', icon: BadgeDollarSign },
     { name: 'Quản lý tính năng', href: '/admin/features', icon: Boxes },
     { name: 'Hỗ trợ', href: '/admin/feedback', icon: MessageSquare },
-    { name: 'Biểu mẫu kế toán', href: '/admin/report-templates', icon: FileCog },
     { name: 'Thông báo hệ thống', href: '/admin/announcements', icon: Store },
     { name: 'Mẫu báo cáo', href: '/admin/templates', icon: FileText },
     { name: 'Hồ sơ cá nhân', href: '/admin/profile', icon: UserCircle },

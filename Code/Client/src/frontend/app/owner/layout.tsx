@@ -71,8 +71,8 @@ const MANAGE_NAV_ITEMS: Array<{
   { label: 'Doanh thu', href: '/owner/revenue', icon: TrendingUp, path: '/owner/revenue', children: [
     { label: 'Doanh thu cửa hàng', href: '/owner/revenue', icon: ReceiptText },
     { label: 'Mặt hàng bán chạy', href: '/owner/revenue/products', icon: TrendingUp },
+    { label: 'Báo cáo tài chính', href: '/owner/reports', icon: FileBarChart },
   ] },
-  { label: 'Báo cáo tài chính', href: '/owner/reports', icon: FileBarChart, path: '/owner/reports' },
   { label: 'Khách hàng', href: '/owner/customers', icon: UserSearch, path: '/owner/customers' },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
   { label: 'Viết hỗ trợ', href: '/owner/feedback', icon: MessageSquare, path: '/owner/feedback' },
