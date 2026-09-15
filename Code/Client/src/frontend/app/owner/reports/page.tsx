@@ -5,6 +5,7 @@ import {
   FileBarChart, Search, RefreshCw, ChevronLeft, ChevronRight,
   Eye, Pencil, CheckCircle2, XCircle, Clock, AlertCircle,
   FileText, Calendar, Hash, User, X, Loader2, Plus, BookOpen,
+  Trash2, Table, RotateCcw, Calculator, AlertTriangle,
 } from 'lucide-react';
 import { apiClient } from '@/app/lib/apiClient';
 
@@ -122,6 +123,77 @@ function formatCurrency(value: unknown): string {
   return String(value ?? '—');
 }
 
+const STANDARD_COLUMN_ORDER = [
+  'stt',
+  'số hiệu',
+  'ngày',
+  'người mua',
+  'họ tên',
+  'mặt hàng',
+  'diễn giải',
+  'nội dung',
+  'doanh thu',
+  'đã thanh toán',
+  'còn nợ',
+  'phương thức',
+  'ghi chú',
+];
+
+function orderColumns(cols: string[]): string[] {
+  const getPriority = (col: string): number => {
+    const c = col.toLowerCase();
+    for (let i = 0; i < STANDARD_COLUMN_ORDER.length; i++) {
+      if (c.includes(STANDARD_COLUMN_ORDER[i])) {
+        return i;
+      }
+    }
+    return 999;
+  };
+
+  return [...cols].sort((a, b) => getPriority(a) - getPriority(b));
+}
+
+function isAmountColumn(colName?: string): boolean {
+  if (!colName) return false;
+  const c = colName.toLowerCase();
+  return (
+    c.includes('tiền') ||
+    c.includes('doanh thu') ||
+    c.includes('thanh toán') ||
+    c.includes('nợ') ||
+    c.includes('giá') ||
+    c.includes('chi phí')
+  );
+}
+
+function calculateTotals(rows: Array<Record<string, unknown>>) {
+  let totalRevenue = 0;
+  let totalPaid = 0;
+  let totalDebt = 0;
+  let hasRevenue = false;
+  let hasPaid = false;
+  let hasDebt = false;
+
+  rows.forEach((r) => {
+    Object.keys(r).forEach((k) => {
+      const kl = k.toLowerCase();
+      const val = Number(r[k]) || 0;
+      if (kl.includes('doanh thu') || kl.includes('tổng tiền')) {
+        totalRevenue += val;
+        hasRevenue = true;
+      } else if (kl.includes('đã thanh toán') || kl.includes('thực thu')) {
+        totalPaid += val;
+        hasPaid = true;
+      } else if (kl.includes('còn nợ') || kl.includes('công nợ')) {
+        totalDebt += val;
+        hasDebt = true;
+      }
+    });
+  });
+
+  return { totalRevenue, totalPaid, totalDebt, hasRevenue, hasPaid, hasDebt };
+}
+
 /* ─── Status Badge Component ─────────────────────────────────────── */
 
 function StatusBadge({ status }: { status: ReportStatus }) {
@@ -150,7 +222,9 @@ export default function ReportReviewPage() {
   const [selectedReport, setSelectedReport] = useState<ReportReview | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [editData, setEditData] = useState<string>('');
+  const [editRows, setEditRows] = useState<Array<Record<string, unknown>>>([]);
+  const [editObject, setEditObject] = useState<Record<string, unknown>>({});
+  const [isDataArray, setIsDataArray] = useState(true);
 
   // Reject modal state
   const [rejectOpen, setRejectOpen] = useState(false);
@@ -248,7 +322,23 @@ export default function ReportReviewPage() {
     void loadReports();
   }, [loadReports]);
 
-  /* ─── Open Detail ────────────────────────────────────────────── */
+  /* ─── Detail & Interactive Edit Handlers ────────────────────── */
+
+  const initEditData = (data: unknown) => {
+    if (Array.isArray(data)) {
+      setIsDataArray(true);
+      setEditRows(JSON.parse(JSON.stringify(data)));
+      setEditObject({});
+    } else if (data && typeof data === 'object') {
+      setIsDataArray(false);
+      setEditRows([]);
+      setEditObject(JSON.parse(JSON.stringify(data)));
+    } else {
+      setIsDataArray(false);
+      setEditRows([]);
+      setEditObject({});
+    }
+  };
 
   const openDetail = async (reportId: number) => {
     setError('');
@@ -256,7 +346,7 @@ export default function ReportReviewPage() {
       const report = await apiClient.get<ReportReview>(`/api/owner/reports/${reportId}`);
       setSelectedReport(report);
       setEditing(false);
-      setEditData(JSON.stringify(report.reportData, null, 2));
+      initEditData(report.reportData);
       setDetailOpen(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể tải chi tiết báo cáo');
@@ -269,22 +359,147 @@ export default function ReportReviewPage() {
     setEditing(false);
   };
 
-  /* ─── Edit Report ────────────────────────────────────────────── */
+  const handleStartEdit = () => {
+    if (selectedReport) {
+      initEditData(selectedReport.reportData);
+      setEditing(true);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditing(false);
+    if (selectedReport) {
+      initEditData(selectedReport.reportData);
+    }
+  };
+
+  const handleUpdateRow = (idx: number, field: string, val: unknown) => {
+    setEditRows((prev) => {
+      const next = [...prev];
+      const updatedRow = { ...next[idx], [field]: val };
+
+      // Auto calculate "Tiền còn nợ" = Doanh thu bán hàng - Đã thanh toán
+      if (field === 'Doanh thu bán hàng' || field === 'Đã thanh toán') {
+        const rev = field === 'Doanh thu bán hàng' ? Number(val) || 0 : Number(updatedRow['Doanh thu bán hàng']) || 0;
+        const paid = field === 'Đã thanh toán' ? Number(val) || 0 : Number(updatedRow['Đã thanh toán']) || 0;
+        updatedRow['Tiền còn nợ'] = Math.max(0, rev - paid);
+      }
+
+      next[idx] = updatedRow;
+      return next;
+    });
+  };
+
+  const handleAddRow = () => {
+    setEditRows((prev) => {
+      const templateRow = prev.length > 0 ? prev[0] : null;
+      const newStt = prev.length + 1;
+      const todayStr = new Date().toLocaleDateString('vi-VN', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+      });
+
+      let newRow: Record<string, unknown> = {};
+      if (templateRow) {
+        Object.keys(templateRow).forEach((key) => {
+          const kl = key.toLowerCase();
+          if (kl === 'stt') newRow[key] = newStt;
+          else if (kl.includes('ngày')) newRow[key] = todayStr;
+          else if (kl.includes('số hiệu')) newRow[key] = `DH-${String(newStt).padStart(2, '0')}`;
+          else if (kl.includes('người mua')) newRow[key] = 'Khách mua hàng';
+          else if (kl.includes('diễn giải') || kl.includes('mặt hàng')) newRow[key] = `Bán hàng theo đơn #${newStt}`;
+          else if (kl.includes('phương thức')) newRow[key] = 'CASH';
+          else if (typeof templateRow[key] === 'number') newRow[key] = 0;
+          else newRow[key] = '';
+        });
+      } else {
+        newRow = {
+          'STT': newStt,
+          'Số hiệu hóa đơn / chứng từ': `DH-${String(newStt).padStart(2, '0')}`,
+          'Ngày ghi chứng từ': todayStr,
+          'Họ tên người mua hàng': 'Khách mua hàng',
+          'Tên mặt hàng / Diễn giải': `Bán hàng theo đơn #${newStt}`,
+          'Doanh thu bán hàng': 0,
+          'Đã thanh toán': 0,
+          'Tiền còn nợ': 0,
+          'Phương thức thanh toán': 'CASH',
+        };
+      }
+      return [...prev, newRow];
+    });
+  };
+
+  const handleDeleteRow = (idx: number) => {
+    setEditRows((prev) => {
+      const next = prev.filter((_, i) => i !== idx);
+      return next.map((row, i) => {
+        if ('STT' in row) return { ...row, STT: i + 1 };
+        if ('stt' in row) return { ...row, stt: i + 1 };
+        return row;
+      });
+    });
+  };
+
+  const handleUpdateObjectField = (key: string, val: unknown) => {
+    setEditObject((prev) => ({
+      ...prev,
+      [key]: val,
+    }));
+  };
+
+  /* ─── Save Edit ──────────────────────────────────────────────── */
 
   const handleSaveEdit = async () => {
     if (!selectedReport) return;
     setSaving(true);
     setError('');
     try {
-      const parsedData = JSON.parse(editData);
+      let parsedData: unknown;
+      if (isDataArray) {
+        // Normalize rows: ensure numbers are numbers, STT is 1..N
+        parsedData = editRows.map((row, idx) => {
+          const clean: Record<string, unknown> = { ...row };
+          Object.keys(clean).forEach((k) => {
+            const kl = k.toLowerCase();
+            if (kl === 'stt') {
+              clean[k] = idx + 1;
+            } else if (
+              kl.includes('doanh thu') ||
+              kl.includes('tiền') ||
+              kl.includes('thanh toán') ||
+              kl.includes('nợ')
+            ) {
+              clean[k] = Number(clean[k]) || 0;
+            }
+          });
+          return clean;
+        });
+      } else {
+        // Flat object: normalize numbers
+        const cleanObj: Record<string, unknown> = { ...editObject };
+        Object.keys(cleanObj).forEach((k) => {
+          const kl = k.toLowerCase();
+          if (
+            kl.includes('doanh thu') ||
+            kl.includes('tiền') ||
+            kl.includes('thuế') ||
+            kl.includes('lượng')
+          ) {
+            if (cleanObj[k] !== '' && !isNaN(Number(cleanObj[k]))) {
+              cleanObj[k] = Number(cleanObj[k]);
+            }
+          }
+        });
+        parsedData = cleanObj;
+      }
+
       const updated = await apiClient.put<ReportReview>(
         `/api/owner/reports/${selectedReport.id}`,
         { reportData: parsedData },
       );
       setSelectedReport(updated);
       setEditing(false);
-      setEditData(JSON.stringify(updated.reportData, null, 2));
-      showNotice('Đã lưu chỉnh sửa báo cáo');
+      initEditData(updated.reportData);
+      showNotice('Đã lưu chỉnh sửa số liệu báo cáo thành công');
       void loadReports();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể lưu chỉnh sửa');
@@ -304,7 +519,7 @@ export default function ReportReviewPage() {
         `/api/owner/reports/${selectedReport.id}/confirm`,
       );
       setSelectedReport(updated);
-      setEditData(JSON.stringify(updated.reportData, null, 2));
+      initEditData(updated.reportData);
       showNotice('Đã xác nhận báo cáo thành công');
       void loadReports();
     } catch (err) {
@@ -331,7 +546,7 @@ export default function ReportReviewPage() {
         { rejectionReason: rejectReason.trim() },
       );
       setSelectedReport(updated);
-      setEditData(JSON.stringify(updated.reportData, null, 2));
+      initEditData(updated.reportData);
       setRejectOpen(false);
       showNotice('Đã từ chối báo cáo');
       void loadReports();
@@ -690,7 +905,7 @@ export default function ReportReviewPage() {
          ═══════════════════════════════════════════════════════════════ */}
       {detailOpen && selectedReport && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-900/50 backdrop-blur-xs overflow-y-auto py-8">
-          <div className="relative w-full max-w-4xl mx-4 bg-white rounded-2xl border border-slate-200 shadow-xl">
+          <div className="relative w-full max-w-5xl mx-4 bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50/60 rounded-t-2xl">
               <div className="flex items-center gap-3">
@@ -761,46 +976,390 @@ export default function ReportReviewPage() {
               )}
 
               {/* Report Data Section */}
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-bold text-slate-900">Dữ liệu báo cáo</h3>
-                  {canEdit && !editing && (
-                    <button
-                      onClick={() => setEditing(true)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition cursor-pointer"
-                    >
-                      <Pencil className="w-3.5 h-3.5" /> Chỉnh sửa
-                    </button>
-                  )}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                      {editing ? (
+                        <>
+                          <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-600">
+                            <Pencil className="w-4 h-4" />
+                          </span>
+                          <span>Chỉnh sửa số liệu sổ kế toán</span>
+                          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                            Đang điều chỉnh
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="w-4 h-4 text-slate-500" />
+                          <span>Dữ liệu báo cáo</span>
+                        </>
+                      )}
+                    </h3>
+                    {editing && (
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Điều chỉnh trực tiếp số tiền, chứng từ hoặc công nợ. Hệ thống tự động tính toán tổng số phát sinh.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Toolbar */}
+                  <div className="flex items-center gap-2">
+                    {canEdit && !editing && (
+                      <button
+                        onClick={handleStartEdit}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition cursor-pointer shadow-xs"
+                      >
+                        <Pencil className="w-3.5 h-3.5" /> Chỉnh sửa số liệu
+                      </button>
+                    )}
+
+                    {editing && isDataArray && (
+                      <button
+                        onClick={handleAddRow}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition cursor-pointer shadow-xs"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Thêm dòng chứng từ
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {editing ? (
-                  <div className="space-y-3">
-                    <textarea
-                      value={editData}
-                      onChange={(e) => setEditData(e.target.value)}
-                      rows={16}
-                      className="w-full rounded-xl border border-slate-300 p-4 text-sm font-mono bg-slate-50 outline-none focus:border-slate-500 resize-y transition-colors"
-                      spellCheck={false}
-                    />
-                    <div className="flex items-center gap-3 justify-end">
-                      <button
-                        onClick={() => {
-                          setEditing(false);
-                          setEditData(JSON.stringify(selectedReport.reportData, null, 2));
-                        }}
-                        className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
-                      >
-                        Hủy
-                      </button>
-                      <button
-                        onClick={() => void handleSaveEdit()}
-                        disabled={saving}
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 disabled:opacity-50 transition cursor-pointer"
-                      >
-                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                        Lưu thay đổi
-                      </button>
+                  <div className="space-y-4">
+                    {isDataArray ? (
+                        /* Interactive Accounting Table Editor */
+                        <div className="space-y-3">
+                          {(() => {
+                            const columns =
+                              editRows.length > 0
+                                ? orderColumns(Object.keys(editRows[0]))
+                                : [
+                                    'STT',
+                                    'Số hiệu hóa đơn / chứng từ',
+                                    'Ngày ghi chứng từ',
+                                    'Họ tên người mua hàng',
+                                    'Tên mặt hàng / Diễn giải',
+                                    'Doanh thu bán hàng',
+                                    'Đã thanh toán',
+                                    'Tiền còn nợ',
+                                    'Phương thức thanh toán',
+                                  ];
+                            const { totalRevenue, totalPaid, totalDebt, hasRevenue, hasPaid, hasDebt } =
+                              calculateTotals(editRows);
+                            const isBalanced = totalRevenue === totalPaid + totalDebt;
+
+                            return (
+                              <>
+                                <div className="overflow-x-auto rounded-xl border border-slate-300 shadow-2xs max-h-[48vh]">
+                                  <table className="w-full text-xs">
+                                    <thead className="sticky top-0 z-10 bg-slate-100 border-b border-slate-300 shadow-2xs">
+                                      <tr>
+                                        {columns.map((col) => (
+                                          <th
+                                            key={col}
+                                            className={`px-3 py-2.5 text-xs font-bold text-slate-700 uppercase tracking-wider whitespace-nowrap ${
+                                              isAmountColumn(col) ? 'text-right' : 'text-left'
+                                            } ${col.toLowerCase() === 'stt' ? 'w-12 text-center' : ''}`}
+                                          >
+                                            {col}
+                                          </th>
+                                        ))}
+                                        <th className="px-3 py-2.5 text-center text-xs font-bold text-slate-700 uppercase tracking-wider w-12">
+                                          Xóa
+                                        </th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-200 bg-white">
+                                      {editRows.map((row, idx) => (
+                                        <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                                          {columns.map((col) => {
+                                            const kl = col.toLowerCase();
+                                            const val = row[col];
+                                            const isStt = kl === 'stt';
+                                            const isAmount = isAmountColumn(col);
+
+                                            if (isStt) {
+                                              return (
+                                                <td key={col} className="px-2 py-1.5 text-center whitespace-nowrap">
+                                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-slate-100 font-bold text-slate-700 text-xs">
+                                                    {idx + 1}
+                                                  </span>
+                                                </td>
+                                              );
+                                            }
+
+                                            if (isAmount) {
+                                              return (
+                                                <td key={col} className="px-2 py-1.5 whitespace-nowrap min-w-[130px]">
+                                                  <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="1000"
+                                                    value={val !== undefined && val !== null ? String(val) : 0}
+                                                    onChange={(e) =>
+                                                      handleUpdateRow(
+                                                        idx,
+                                                        col,
+                                                        Math.max(0, Number(e.target.value) || 0)
+                                                      )
+                                                    }
+                                                    className="w-full px-2.5 py-1.5 text-xs font-mono font-semibold text-right text-slate-900 rounded-lg border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 bg-slate-50/50 hover:bg-white transition-colors"
+                                                  />
+                                                </td>
+                                              );
+                                            }
+
+                                            if (kl.includes('phương thức')) {
+                                              return (
+                                                <td key={col} className="px-2 py-1.5 whitespace-nowrap min-w-[120px]">
+                                                  <select
+                                                    value={String(val || 'CASH')}
+                                                    onChange={(e) => handleUpdateRow(idx, col, e.target.value)}
+                                                    className="w-full px-2 py-1.5 text-xs font-bold text-slate-800 rounded-lg border border-slate-300 bg-slate-50/50 hover:bg-white focus:border-slate-800 focus:ring-1 focus:ring-slate-800 cursor-pointer transition-colors"
+                                                  >
+                                                    <option value="CASH">CASH (Tiền mặt)</option>
+                                                    <option value="BANK">BANK (Chuyển khoản)</option>
+                                                    <option value="DEBT">DEBT (Ghi nợ)</option>
+                                                    <option value="OTHER">OTHER (Khác)</option>
+                                                  </select>
+                                                </td>
+                                              );
+                                            }
+
+                                            if (kl.includes('số hiệu')) {
+                                              return (
+                                                <td key={col} className="px-2 py-1.5 whitespace-nowrap min-w-[110px]">
+                                                  <input
+                                                    type="text"
+                                                    value={String(val ?? '')}
+                                                    onChange={(e) => handleUpdateRow(idx, col, e.target.value)}
+                                                    placeholder="DH-..."
+                                                    className="w-full px-2.5 py-1.5 text-xs font-mono font-bold text-slate-800 rounded-lg border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 bg-slate-50/50 hover:bg-white transition-colors"
+                                                  />
+                                                </td>
+                                              );
+                                            }
+
+                                            if (kl.includes('ngày')) {
+                                              return (
+                                                <td key={col} className="px-2 py-1.5 whitespace-nowrap min-w-[120px]">
+                                                  <input
+                                                    type="text"
+                                                    value={String(val ?? '')}
+                                                    onChange={(e) => handleUpdateRow(idx, col, e.target.value)}
+                                                    placeholder="DD/MM/YYYY"
+                                                    className="w-full px-2.5 py-1.5 text-xs text-slate-800 rounded-lg border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 bg-slate-50/50 hover:bg-white transition-colors"
+                                                  />
+                                                </td>
+                                              );
+                                            }
+
+                                            return (
+                                              <td key={col} className="px-2 py-1.5 whitespace-nowrap min-w-[150px]">
+                                                <input
+                                                  type={typeof val === 'number' ? 'number' : 'text'}
+                                                  value={val !== undefined && val !== null ? String(val) : ''}
+                                                  onChange={(e) =>
+                                                    handleUpdateRow(
+                                                      idx,
+                                                      col,
+                                                      typeof val === 'number'
+                                                        ? Number(e.target.value) || 0
+                                                        : e.target.value
+                                                    )
+                                                  }
+                                                  className="w-full px-2.5 py-1.5 text-xs text-slate-800 rounded-lg border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 bg-slate-50/50 hover:bg-white transition-colors"
+                                                />
+                                              </td>
+                                            );
+                                          })}
+                                          <td className="px-2 py-1.5 text-center whitespace-nowrap">
+                                            <button
+                                              onClick={() => handleDeleteRow(idx)}
+                                              disabled={editRows.length <= 1}
+                                              title="Xóa dòng chứng từ này"
+                                              className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition cursor-pointer"
+                                            >
+                                              <Trash2 className="w-4 h-4" />
+                                            </button>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                    {/* Live Summary Footer */}
+                                    {(hasRevenue || hasPaid || hasDebt) && (
+                                      <tfoot className="sticky bottom-0 z-10 bg-slate-100 border-t-2 border-slate-300 font-bold text-slate-900">
+                                        <tr>
+                                          {columns.map((col, idx) => {
+                                            const kl = col.toLowerCase();
+                                            if (idx === 0) {
+                                              return (
+                                                <td
+                                                  key={col}
+                                                  className="px-3.5 py-3 text-left font-bold text-slate-800 uppercase"
+                                                  colSpan={Math.max(
+                                                    1,
+                                                    columns.findIndex((c) => isAmountColumn(c))
+                                                  )}
+                                                >
+                                                  TỔNG CỘNG PHÁT SINH ({editRows.length} chứng từ)
+                                                </td>
+                                              );
+                                            }
+                                            const firstAmountIdx = columns.findIndex((c) =>
+                                              isAmountColumn(c)
+                                            );
+                                            if (idx < firstAmountIdx) {
+                                              return null;
+                                            }
+                                            if (kl.includes('doanh thu') || kl.includes('tổng tiền')) {
+                                              return (
+                                                <td
+                                                  key={col}
+                                                  className="px-3.5 py-3 text-right font-bold font-mono text-emerald-700 whitespace-nowrap"
+                                                >
+                                                  {formatCurrency(totalRevenue)}
+                                                </td>
+                                              );
+                                            }
+                                            if (kl.includes('đã thanh toán') || kl.includes('thực thu')) {
+                                              return (
+                                                <td
+                                                  key={col}
+                                                  className="px-3.5 py-3 text-right font-bold font-mono text-blue-700 whitespace-nowrap"
+                                                >
+                                                  {formatCurrency(totalPaid)}
+                                                </td>
+                                              );
+                                            }
+                                            if (kl.includes('còn nợ') || kl.includes('công nợ')) {
+                                              return (
+                                                <td
+                                                  key={col}
+                                                  className="px-3.5 py-3 text-right font-bold font-mono text-amber-700 whitespace-nowrap"
+                                                >
+                                                  {formatCurrency(totalDebt)}
+                                                </td>
+                                              );
+                                            }
+                                            return (
+                                              <td key={col} className="px-3.5 py-3 text-slate-400 text-center">
+                                                —
+                                              </td>
+                                            );
+                                          })}
+                                          <td className="px-3.5 py-3 text-center text-slate-400">—</td>
+                                        </tr>
+                                      </tfoot>
+                                    )}
+                                  </table>
+                                </div>
+
+                                {/* Balancing Verification in Edit Mode */}
+                                {(hasRevenue && hasPaid && hasDebt) && (
+                                  <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                                    <div className="flex items-center gap-2">
+                                      <Calculator className="w-4 h-4 text-slate-500" />
+                                      <span className="text-slate-600 font-medium">Cân đối thu - nợ:</span>
+                                      {isBalanced ? (
+                                        <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-100/80 px-2.5 py-1 rounded-md">
+                                          <CheckCircle2 className="w-3.5 h-3.5" /> Chuẩn kế toán: Doanh thu = Đã thanh toán + Còn nợ
+                                        </span>
+                                      ) : (
+                                        <span className="inline-flex items-center gap-1 font-bold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-md">
+                                          <AlertTriangle className="w-3.5 h-3.5" /> Cảnh báo lệch: Chênh {formatCurrency(Math.abs(totalRevenue - (totalPaid + totalDebt)))} so với (Đã thanh toán + Còn nợ)
+                                        </span>
+                                      )}
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditRows((prev) =>
+                                          prev.map((r) => {
+                                            const rev = Number(r['Doanh thu bán hàng']) || 0;
+                                            const paid = Number(r['Đã thanh toán']) || 0;
+                                            return { ...r, 'Tiền còn nợ': Math.max(0, rev - paid) };
+                                          })
+                                        );
+                                      }}
+                                      className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:text-blue-800 hover:underline cursor-pointer"
+                                    >
+                                      <RotateCcw className="w-3 h-3" /> Tự động cân đối lại công nợ
+                                    </button>
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        /* Interactive Key-Value Form Editor */
+                        <div className="overflow-x-auto rounded-xl border border-slate-300 shadow-2xs">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="bg-slate-100 border-b border-slate-300">
+                                <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-1/2">
+                                  Chỉ tiêu kế toán
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-bold text-slate-700 uppercase tracking-wider w-1/2">
+                                  Giá trị điều chỉnh
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200 bg-white">
+                              {Object.entries(editObject).map(([k, val]) => (
+                                <tr key={k} className="hover:bg-slate-50/60">
+                                  <td className="px-4 py-3 text-slate-800 font-semibold text-xs">
+                                    {k}
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    <input
+                                      type={typeof val === 'number' ? 'number' : 'text'}
+                                      value={val !== undefined && val !== null ? String(val) : ''}
+                                      onChange={(e) =>
+                                        handleUpdateObjectField(
+                                          k,
+                                          typeof val === 'number'
+                                            ? Number(e.target.value) || 0
+                                            : e.target.value
+                                        )
+                                      }
+                                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-slate-800 focus:ring-1 focus:ring-slate-800 bg-slate-50/50 hover:bg-white font-medium text-slate-900 transition-colors"
+                                    />
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                    {/* Editor Action Buttons (Save / Cancel) */}
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-200">
+                      <span className="text-xs text-slate-500 italic">
+                        * Sau khi lưu, báo cáo sẽ được cập nhật số liệu mới và giữ ở trạng thái Chờ duyệt.
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={handleCancelEdit}
+                          disabled={saving}
+                          className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                        >
+                          Hủy bỏ
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleSaveEdit()}
+                          disabled={saving}
+                          className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 disabled:opacity-50 transition cursor-pointer shadow-sm"
+                        >
+                          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                          Lưu thay đổi số liệu
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -999,7 +1558,7 @@ function InfoCard({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
-function ReportDataTable({ data }: { data: Record<string, unknown> }) {
+function ReportDataTable({ data }: { data: Record<string, unknown> | Array<Record<string, unknown>> }) {
   if (!data || typeof data !== 'object') {
     return <p className="text-sm text-slate-400 italic">Không có dữ liệu</p>;
   }
@@ -1009,31 +1568,142 @@ function ReportDataTable({ data }: { data: Record<string, unknown> }) {
     if (data.length === 0) {
       return <p className="text-sm text-slate-400 italic">Không có dòng dữ liệu</p>;
     }
-    const columns = Object.keys(data[0] as Record<string, unknown>);
+    const rawCols = Object.keys(data[0] as Record<string, unknown>);
+    const columns = orderColumns(rawCols);
+    const { totalRevenue, totalPaid, totalDebt, hasRevenue, hasPaid, hasDebt } =
+      calculateTotals(data as Array<Record<string, unknown>>);
+    const isBalanced = totalRevenue === totalPaid + totalDebt;
+
     return (
-      <div className="overflow-x-auto rounded-xl border border-slate-200">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
-              {columns.map((col) => (
-                <th key={col} className="px-3 py-2.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap">
-                  {col}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {data.map((row, idx) => (
-              <tr key={idx} className="hover:bg-slate-50/50">
+      <div className="space-y-3">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-slate-50/80 border-b border-slate-200">
                 {columns.map((col) => (
-                  <td key={col} className="px-3 py-2.5 text-slate-700 whitespace-nowrap">
-                    {formatCellValue((row as Record<string, unknown>)[col])}
-                  </td>
+                  <th
+                    key={col}
+                    className={`px-3.5 py-3 text-xs font-bold text-slate-600 uppercase tracking-wider whitespace-nowrap ${
+                      isAmountColumn(col) ? 'text-right' : 'text-left'
+                    } ${col.toLowerCase() === 'stt' ? 'w-14 text-center' : ''}`}
+                  >
+                    {col}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {data.map((row, idx) => (
+                <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
+                  {columns.map((col) => {
+                    const val = (row as Record<string, unknown>)[col];
+                    const isAmount = isAmountColumn(col);
+                    const isStt = col.toLowerCase() === 'stt';
+                    return (
+                      <td
+                        key={col}
+                        className={`px-3.5 py-2.5 text-slate-700 whitespace-nowrap text-xs ${
+                          isAmount ? 'text-right font-medium font-mono text-slate-900' : ''
+                        } ${isStt ? 'text-center' : ''}`}
+                      >
+                        {isStt ? (
+                          <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-slate-100 font-bold text-slate-700 text-xs">
+                            {idx + 1}
+                          </span>
+                        ) : (
+                          formatCellValue(val, col)
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+            {/* Accounting Summary Footer */}
+            {(hasRevenue || hasPaid || hasDebt) && (
+              <tfoot>
+                <tr className="bg-slate-100/80 border-t-2 border-slate-300 font-bold text-slate-900 text-xs">
+                  {columns.map((col, idx) => {
+                    const kl = col.toLowerCase();
+                    if (idx === 0) {
+                      return (
+                        <td
+                          key={col}
+                          className="px-3.5 py-3 text-left font-bold text-slate-800"
+                          colSpan={Math.max(
+                            1,
+                            columns.findIndex((c) => isAmountColumn(c))
+                          )}
+                        >
+                          TỔNG CỘNG PHÁT SINH ({data.length} chứng từ)
+                        </td>
+                      );
+                    }
+                    const firstAmountIdx = columns.findIndex((c) => isAmountColumn(c));
+                    if (idx < firstAmountIdx) {
+                      return null;
+                    }
+                    if (kl.includes('doanh thu') || kl.includes('tổng tiền')) {
+                      return (
+                        <td
+                          key={col}
+                          className="px-3.5 py-3 text-right font-bold font-mono text-emerald-700 whitespace-nowrap"
+                        >
+                          {formatCurrency(totalRevenue)}
+                        </td>
+                      );
+                    }
+                    if (kl.includes('đã thanh toán') || kl.includes('thực thu')) {
+                      return (
+                        <td
+                          key={col}
+                          className="px-3.5 py-3 text-right font-bold font-mono text-blue-700 whitespace-nowrap"
+                        >
+                          {formatCurrency(totalPaid)}
+                        </td>
+                      );
+                    }
+                    if (kl.includes('còn nợ') || kl.includes('công nợ')) {
+                      return (
+                        <td
+                          key={col}
+                          className="px-3.5 py-3 text-right font-bold font-mono text-amber-700 whitespace-nowrap"
+                        >
+                          {formatCurrency(totalDebt)}
+                        </td>
+                      );
+                    }
+                    return (
+                      <td key={col} className="px-3.5 py-3 text-slate-400 text-center">
+                        —
+                      </td>
+                    );
+                  })}
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+
+        {/* Balancing Verification Banner */}
+        {hasRevenue && hasPaid && hasDebt && (
+          <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+            <div className="flex items-center gap-2">
+              <Calculator className="w-4 h-4 text-slate-500" />
+              <span className="text-slate-600 font-medium">Đối chiếu cân đối sổ sách:</span>
+              {isBalanced ? (
+                <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Khớp số liệu: Doanh thu = Đã thanh toán + Còn nợ
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">
+                  <AlertCircle className="w-3.5 h-3.5" /> Có chênh lệch thu - nợ: {formatCurrency(Math.abs(totalRevenue - (totalPaid + totalDebt)))}
+                </span>
+              )}
+            </div>
+            <span className="text-slate-400 italic">Theo mẫu biểu chuẩn Thông tư 88/2021/TT-BTC</span>
+          </div>
+        )}
       </div>
     );
   }
@@ -1041,20 +1711,24 @@ function ReportDataTable({ data }: { data: Record<string, unknown> }) {
   // If data is a flat object (key-value pairs), render as a simple list
   const entries = Object.entries(data);
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200">
+    <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-2xs">
       <table className="w-full text-sm">
         <thead>
-          <tr className="bg-slate-50 border-b border-slate-200">
-            <th className="px-4 py-2.5 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Chỉ tiêu</th>
-            <th className="px-4 py-2.5 text-right text-xs font-bold text-slate-600 uppercase tracking-wider">Giá trị</th>
+          <tr className="bg-slate-50/80 border-b border-slate-200">
+            <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">
+              Chỉ tiêu kế toán
+            </th>
+            <th className="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider">
+              Giá trị ghi nhận
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
           {entries.map(([key, val]) => (
             <tr key={key} className="hover:bg-slate-50/50">
-              <td className="px-4 py-2.5 text-slate-700 font-medium">{key}</td>
-              <td className="px-4 py-2.5 text-slate-900 text-right font-semibold">
-                {formatCellValue(val)}
+              <td className="px-4 py-2.5 text-slate-700 font-medium text-xs">{key}</td>
+              <td className="px-4 py-2.5 text-slate-900 text-right font-semibold font-mono text-xs">
+                {formatCellValue(val, key)}
               </td>
             </tr>
           ))}
@@ -1064,9 +1738,24 @@ function ReportDataTable({ data }: { data: Record<string, unknown> }) {
   );
 }
 
-function formatCellValue(val: unknown): string {
+function formatCellValue(val: unknown, colName?: string): string {
   if (val === null || val === undefined) return '—';
-  if (typeof val === 'number') return formatCurrency(val);
+  if (typeof val === 'number') {
+    if (
+      colName &&
+      (colName.toLowerCase() === 'stt' ||
+        colName.toLowerCase().includes('năm') ||
+        colName.toLowerCase().includes('tháng') ||
+        colName.toLowerCase().includes('lần') ||
+        colName.toLowerCase() === 'id')
+    ) {
+      return String(val);
+    }
+    if (!colName || isAmountColumn(colName)) {
+      return formatCurrency(val);
+    }
+    return val.toLocaleString('vi-VN');
+  }
   if (typeof val === 'boolean') return val ? 'Có' : 'Không';
   if (typeof val === 'object') return JSON.stringify(val);
   return String(val);
