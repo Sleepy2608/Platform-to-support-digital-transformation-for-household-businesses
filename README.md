@@ -28,22 +28,21 @@
 
 ## Tiến độ triển khai dự án (Project Deployment Progress)
 
-*Tiến độ: Sprint 8*
+*Tiến độ: Đã hoàn thành*
 
 > Nhiệm vụ được giao sẽ được dựa vào nhiệm vụ được giao trên [Issue](https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/issues) trên Github và cập nhật tiến độ ở [Jira](https://java-project-platform-for-household-business.atlassian.net/jira/software/projects/SCRUM/summary).<br>
 > Các issue trên Github sẽ được cập nhật theo tiến độ của Jira và sẽ được test trước khi merge vào nhánh Main.<br>
-> Mức độ hoàn thành dự án: 93%<br>
-> Ngày cập nhật lần cuối: 15/09/2026.
-
-### Tính năng mới nhất cập nhật gần đây
-- Thêm tính tăng AI Service
-- Thêm tính năng feedback cho Owner/Employee
-- Thêm các báo cáo doanh thu, lợi nhuận, chi phí nhập hàng, doanh thu theo ngày
-- Fast Sales UI cho điện thoại (Owner/Employee)
+> Mức độ hoàn thành dự án: 98%<br>
+> Ngày cập nhật lần cuối: 16/09/2026.
 
 ### Các tính năng đã hoàn thành
 
 Xem ở file `docs/project-progress-and-feature/feature.md` để biết chi tiết các tính năng đã hoàn thành.
+
+### Các tính năng chưa hoàn thiện
+
+- AI Voice-to-text: Đây là tính năng AI duy nhất còn thiếu. Hiện tại hệ thống đã hỗ trợ **Text Input**, nhưng chưa hoàn thiện khả năng nhận yêu cầu bằng **Voice**.
+- Release Package: Release Package vẫn chưa được hoàn thành.
 
 ---
 
@@ -177,7 +176,11 @@ Platform-to-support-digital-transformation-for-household-businesses/
 │   └── ...
 ├── .gitattributes                                # Cấu hình Git
 ├── .gitignore                                    # Bỏ qua file nhạy cảm / build output
-└── .md                                           # Tệp markdown phụ trợ nếu có
+├── .md                                           # Tệp markdown phụ trợ nếu có
+├── run-ai.bat                                    # Script chạy AI Service (FastAPI)                  
+├── run-backend.bat                               # Script chạy nhanh backend hệ thống
+├── run-frontend.bat                              # Script chạy nhanh frontend hệ thống
+└── run-frontend-clean.bat                        # Script chạy nhanh frontend hệ thống (xóa `.next` + `node_modules` trước khi cài lại)
 ```
 
 ---
