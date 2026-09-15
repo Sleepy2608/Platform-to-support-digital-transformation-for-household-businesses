@@ -15,12 +15,12 @@
 
 | STT | Họ và Tên | MSSV | Vai trò | Nhiệm vụ được giao |
 | :---: | :--- | :---: | :---: | :--- |
-| 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Leader | Repository & Git Management, Docs (Installation/Run Guide, User Manual, Technical Documentation, SRS, Compliance), Authorization, Password Encoder and Security, Admin Account Management, User Account Management (Basic CRUD, Profile), Payment Process, Subscription Pricing & Plans, Revenue Reports (Revenue Ledger, Platform Analytics, Trend Analysis) |
-| 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer | Register/Login UI, Owner Account Management, Searching Engine, Image Uploads (Avatar, Products), CRUD (Customer, Owner Employee, Product), Automatic Bookkeeping (Debt, Sales, Inventory) |
-| 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger | Database Management, Docs (Data Model, AI), Audit Log, Measurement & Product Pricing Rules, Product Stock Management (Automatic Update, Debt History/Searching), Service Invoice Management, Order Management (At-counter Order, Confirm/Cancel Order, Confirm Debt/Debt Payment), AI Service, Feedback Management |
-| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager | Database Management, Docs (ERD, Data Model, Diagram, User Requirements), CRUD (Category, Product, Subcription), Product Stock Management (Low Stock Alert), Operational Analytics for Owner/Employee, System-wide Announcement |
-| 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Feature Developer | Employee Account Management, Product Stock Management (Stock Import), Feature Plans Management |
-| 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer | Manage purchase package payments, Manager Account Management, Subscription Features (Pricing Plans, Notifications), RBAC, Service Invoice Management, Platform Analytics for Admin/Manager |
+| 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Leader | Repository & Git Management, Docs (Installation/Run Guide, User Manual, Technical Documentation, SRS, Compliance), Authorization, Password Encoder and Security, Performance (Testing and Enhancing), Admin Account Management, User Account Management (Basic CRUD, Profile), Payment Process, Subscription Pricing & Plans, Revenue Reports (Revenue Ledger, Platform Analytics, Trend Analysis) |
+| 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer | Register/Login/Dashboard UI, OTP Code Verification, Owner Account Management, Searching Engine, Image Uploads (Avatar, Products), CRUD (Customer, Owner Employee, Product), Automatic Bookkeeping (Debt, Sales, Inventory) |
+| 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger | Database Management, Docs (Data Model, AI, Calculate taxes in Compliance), Audit Log, Measurement & Product Pricing Rules, Product Stock Management (Automatic Update/Calculating, Debt History/Searching), Service Invoice Management, Order Management (At-counter Order, Confirm/Cancel Order, Confirm Debt/Debt Payment), AI Service, Feedback Management |
+| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager | Database Management, Docs (ERD, Data Model, Diagram, User Requirements, Test Cases Management), CRUD (Category, Product, Subcription), Product Stock Management (Low Stock Alert), Operational Analytics for Owner/Employee, System-wide Announcement |
+| 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Feature Developer | Employee Account Management, Product Stock Management (Stock Import), Feature Plans Management, Report (Review, Edit, Reject & Template Version) |
+| 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer | Manage purchase package payments, Manager Account Management, Subscription Features (Pricing Plans, Notifications), RBAC, Service Invoice Management, Platform Analytics for Admin/Manager, Fast Sales UI for mobile (Owner/Employee) |
 
 > Mọi người đều được giao task có backend code bằng Java (Vai trò trên chỉ bao gồm các vai trò khác ngoài Backend Developer).
 
@@ -28,17 +28,18 @@
 
 ## Tiến độ triển khai dự án (Project Deployment Progress)
 
-*Tiến độ: Sprint 7 + 8*
+*Tiến độ: Sprint 8*
 
 > Nhiệm vụ được giao sẽ được dựa vào nhiệm vụ được giao trên [Issue](https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/issues) trên Github và cập nhật tiến độ ở [Jira](https://java-project-platform-for-household-business.atlassian.net/jira/software/projects/SCRUM/summary).<br>
 > Các issue trên Github sẽ được cập nhật theo tiến độ của Jira và sẽ được test trước khi merge vào nhánh Main.<br>
-> Ngày cập nhật lần cuối: 13/09/2026.
+> Mức độ hoàn thành dự án: 90%<br>
+> Ngày cập nhật lần cuối: 15/09/2026.
 
 ### Tính năng mới nhất cập nhật gần đây
-- Tích hợp bookkeeping tự động cho tồn kho và doanh thu
-- Thêm khu vực báo cáo hoạt động và xuất/viết báo cáo cho trang Admin
-- Thêm tính năng feedback và thông báo cho toàn bộ hệ thống và 
-- Mở rộng seed data và dữ liệu demo cho Admin
+- Thêm tính tăng AI Service
+- Thêm tính năng feedback cho Owner/Employee
+- Thêm các báo cáo doanh thu, lợi nhuận, chi phí nhập hàng, doanh thu theo ngày
+- Fast Sales UI cho điện thoại (Owner/Employee)
 
 ---
 
@@ -178,6 +179,8 @@ Platform-to-support-digital-transformation-for-household-businesses/
 
 ## Cách chạy (How to run)
 
+> Repo có sẵn **4 file `.bat`** ở thư mục gốc để chạy nhanh bằng cách double-click — xem **mục 4**. Cách chạy thủ công bằng IDE / dòng lệnh vẫn được giữ nguyên ở **mục 5 và 6**.
+
 ### 1. Yêu cầu
 - **Intellij IDEA 2026.2**
 - **Java 21**
@@ -202,12 +205,42 @@ DB_PASSWORD=<password>
 
 Vào mục Edit Configurations -> Chọn Evironment variables -> Thêm file .env vừa tạo
 
-### 4. Backend
+### 4. Chạy nhanh bằng file `.bat` (khuyến nghị)
+
+Repo có sẵn **4 file script ở thư mục gốc** — chỉ cần **double-click**, không phải gõ lệnh:
+
+| File | Chạy gì | Cần cài trước |
+| :--- | :--- | :--- |
+| `run-backend.bat` | Backend Spring Boot — cổng **8080** | **JDK 21** + biến môi trường `JAVA_HOME` |
+| `run-frontend.bat` | Frontend Next.js — cổng **3000** | **Node.js 20+** |
+| `run-frontend-clean.bat` | Như trên nhưng **xóa `.next` + `node_modules`** rồi cài lại | **Node.js 20+** |
+| `run-ai.bat` | AI Service (FastAPI) — cổng **8000** | **Python 3.10+** |
+
+Script sẽ tự kiểm tra môi trường, tự chạy `npm install` nếu chưa có `node_modules`, và giữ cửa sổ lại khi có lỗi để bạn đọc thông báo.
+
+> **Ghi chú cho `run-ai.bat` — cần tải thư viện về máy:**
+> Lần chạy **đầu tiên** script sẽ tự tạo môi trường ảo riêng `Code\AI\.venv` (khoảng 50 MB) và **tải các thư viện cần thiết** (fastapi, uvicorn, pydantic, httpx, python-dotenv…) về máy. Vì vậy lần đầu **bắt buộc có kết nối Internet** và mất khoảng **1–2 phút**. Các lần sau chạy gần như tức thì vì đã dùng lại `.venv`.
+> Khi `requirements.txt` có thư viện mới, cài lại bằng: `run-ai.bat reinstall`.
+> Có thể bỏ qua bước này nếu không dùng tính năng AI Service.
+
+> **Ghi chú cho `run-backend.bat`:** script cần biến môi trường `JAVA_HOME`. Nếu máy chưa có, mở PowerShell chạy 1 lần (thay bằng đường dẫn JDK 21 thật trên máy bạn):
+>
+> ```powershell
+> [Environment]::SetEnvironmentVariable('JAVA_HOME', 'C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot', 'User')
+> ```
+>
+> rồi **mở lại terminal**. Kiểm tra bằng: `echo $env:JAVA_HOME`
+
+**LƯU Ý:** 
+- Nếu chạy script mà báo lỗi `JAVA_HOME` hoặc `node_modules`/`.next` chưa tồn tại, hãy kiểm tra lại các bước cài đặt môi trường trước khi chạy lại.
+- Nếu chạy file .bat không được, hãy thử chạy thủ công bằng IDE hoặc dòng lệnh (xem mục 5. Backend và 6. Frontend).
+
+### 5. Backend (cách chạy thủ công)
 
 - Click chuột phải vào thư mục `HbdtApplication.java`. Chọn vào `Run 'HbdtApplication.main()'`
 - Hãy đảm bảo rằng bạn đã có đủ các thông tin cho file .env và MySQL đang hoạt động
 
-### 5. Frontend
+### 6. Frontend (cách chạy thủ công)
 
 - Chuyển đường dẫn sang file frontend (`Code\Client\src\frontend`)
 ```text
@@ -229,6 +262,7 @@ npm run dev
   * Network: http://[IP_ADDRESS]/
 > Lưu ý: Trang đăng nhập vào Manager/Owner/Employee được chạy ở url `http://localhost:3000/login` còn trang Admin được chạy ở url `http://localhost:3000/admin/login`.
 > Cần chọn đúng trang đăng nhập để tránh bị báo lỗi 404 hoặc không tìm thấy trang, nếu không thấy thì xóa các file trong thư mục `.next` và `node_modules` rồi chạy lại `npm install`.
+> Thay vì xóa tay, có thể double-click `run-frontend-clean.bat` ở thư mục gốc — script làm đúng các bước này và hỏi xác nhận trước khi xóa.
 
 ---
 

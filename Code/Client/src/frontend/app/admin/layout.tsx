@@ -7,6 +7,7 @@ import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, BadgeDollarSi
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
+import BackToTop from '../components/BackToTop';
 
 export default function AdminLayout({
   children,
@@ -94,7 +95,7 @@ export default function AdminLayout({
     { name: 'Tài khoản Manager', href: '/admin/accounts', icon: Users },
     { name: 'Gói thuê bao', href: '/admin/subscription-plans', icon: BadgeDollarSign },
     { name: 'Quản lý tính năng', href: '/admin/features', icon: Boxes },
-    { name: 'Phản hồi', href: '/admin/feedback', icon: MessageSquare },
+    { name: 'Hỗ trợ', href: '/admin/feedback', icon: MessageSquare },
     { name: 'Thông báo hệ thống', href: '/admin/announcements', icon: Store },
     { name: 'Mẫu báo cáo', href: '/admin/templates', icon: FileText },
     { name: 'Hồ sơ cá nhân', href: '/admin/profile', icon: UserCircle },
@@ -129,19 +130,22 @@ export default function AdminLayout({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -260, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className={`fixed md:sticky top-0 left-0 bottom-0 z-50 w-[260px] bg-zinc-900 border-r border-zinc-800/80 flex flex-col justify-between p-6 h-screen md:translate-x-0 ${
+            className={`fixed md:sticky top-0 left-0 bottom-0 z-50 w-[260px] bg-zinc-900 border-r border-zinc-800/80 flex flex-col h-screen md:translate-x-0 ${
               sidebarOpen ? 'flex' : 'hidden md:flex'
             }`}
           >
-            <div className="flex flex-col gap-8">
-              {/* Logo */}
+            {/* Logo Header */}
+            <div className="p-6 pb-4 border-b border-zinc-800/80 shrink-0">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-white/10 rounded-xl border border-zinc-700">
                   <Store className="w-5 h-5 text-white" />
                 </div>
                 <span className="text-lg font-bold tracking-wider">HBDT.DIGITAL</span>
               </div>
+            </div>
 
+            {/* Scrollable Navigation & Profile Body */}
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 py-4 flex flex-col gap-6 custom-scrollbar-dark">
               {/* User Profile Summary */}
               <Link
                 href="/admin/profile"
@@ -191,13 +195,15 @@ export default function AdminLayout({
             </div>
 
             {/* Logout Button */}
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-950/20 border border-transparent hover:border-red-900/30 rounded-xl text-sm font-medium transition-all active:scale-95 cursor-pointer"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Đăng xuất</span>
-            </button>
+            <div className="p-6 pt-4 border-t border-zinc-800/80 shrink-0">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-3 w-full px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-950/20 border border-transparent hover:border-red-900/30 rounded-xl text-sm font-medium transition-all active:scale-95 cursor-pointer"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Đăng xuất</span>
+              </button>
+            </div>
           </motion.aside>
         )}
       </AnimatePresence>
@@ -214,6 +220,8 @@ export default function AdminLayout({
       <main className="flex-1 min-w-0 px-6 py-8 sm:px-10 overflow-y-auto max-h-screen">
         {children}
       </main>
+
+      <BackToTop variant="dark" />
     </div>
   );
 }

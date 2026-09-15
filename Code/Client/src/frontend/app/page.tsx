@@ -1,14 +1,10 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
 import Navbar from './components/Navbar';
 import ScrollReveal from './components/ScrollReveal';
 import PricingPlans from './components/PricingPlans';
-import { CheckCircle, Bot, Receipt, Package, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
+import HomePrimaryCta from './components/HomePrimaryCta';
+import { Bot, Receipt, Package, Zap } from 'lucide-react';
 
 export default function Home() {
-  const router = useRouter();
-
   return (
     <main className="min-h-screen bg-zinc-950 text-white relative overflow-hidden select-none" style={{ cursor: 'default' }}>
       {/* Background Image công ty */}
@@ -45,13 +41,7 @@ export default function Home() {
 
           <ScrollReveal delay={0.3}>
             <div className="mt-6 sm:mt-8 flex justify-center gap-4">
-              <button
-                onClick={() => router.push('/login')}
-                className="w-full sm:w-auto bg-white hover:bg-zinc-200 active:bg-zinc-300 text-zinc-950 font-bold px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center gap-2 group text-sm sm:text-base"
-              >
-                Bắt đầu trải nghiệm ngay 
-                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200 group-hover:translate-x-1" />
-              </button>
+              <HomePrimaryCta />
             </div>
           </ScrollReveal>
         </section>
@@ -113,3 +103,4 @@ export default function Home() {
     </main>
   );
 }
+

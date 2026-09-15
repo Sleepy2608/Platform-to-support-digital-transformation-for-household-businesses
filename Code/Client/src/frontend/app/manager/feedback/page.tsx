@@ -25,14 +25,14 @@ export default function ManagerFeedbackPage() {
               </div>
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold tracking-wide">MANAGER</p>
-                <p className="hidden text-xs text-zinc-400 sm:block">Trung tâm xử lý phản hồi</p>
+                <p className="hidden text-xs text-zinc-400 sm:block">Trung tâm xử lý hỗ trợ</p>
               </div>
             </div>
           </div>
 
           <div className="hidden items-center gap-2 text-sm font-semibold text-zinc-400 sm:flex">
             <MessageSquare className="h-4 w-4" />
-            Phản hồi người dùng
+            Hỗ trợ người dùng
           </div>
         </div>
       </header>
