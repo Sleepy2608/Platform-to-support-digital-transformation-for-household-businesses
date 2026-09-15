@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   UserCircle, Lock, LogOut, Menu, X,
   ChevronRight, Briefcase, ListOrdered, ShoppingCart, BellRing,
-  Warehouse, UserSearch, ShieldCheck, TrendingUp,
+  Warehouse, UserSearch, ShieldCheck, TrendingUp, Zap,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient, clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';
@@ -17,6 +17,7 @@ import BackToTop from '../components/BackToTop';
 
 const NAV_ITEMS = [
   { label: 'Bán hàng tại quầy', href: '/employee/orders/new', icon: ShoppingCart, hash: '' },
+  { label: 'Bán hàng nhanh tại quầy', href: '/employee/fast-sales', icon: Zap, hash: '' },
   { label: 'Danh sách đơn hàng', href: '/employee/orders/history', icon: ListOrdered, hash: '' },
   { label: 'Doanh thu', href: '/employee/revenue', icon: TrendingUp, hash: '' },
   { label: 'Tồn kho hiện tại', href: '/employee/inventory', icon: Warehouse, hash: '' },

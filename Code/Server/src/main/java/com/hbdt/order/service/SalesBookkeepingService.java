@@ -7,9 +7,12 @@ import com.hbdt.entity.enums.AccountingTransactionType;
 import com.hbdt.entity.enums.PaymentMethod;
 import com.hbdt.order.dto.AccountingTransactionResponse;
 import com.hbdt.order.dto.RevenueSummaryResponse;
+import com.hbdt.order.event.SalesBookkeepingEvent;
 import com.hbdt.repository.AccountingTransactionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -43,9 +46,17 @@ public class SalesBookkeepingService {
     private static final String BOOKKEEPING_ORDER_STATUS = "CONFIRMED";
 
     private final AccountingTransactionRepository accountingTransactionRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public SalesBookkeepingService(AccountingTransactionRepository accountingTransactionRepository) {
+        this(accountingTransactionRepository, null);
+    }
+
+    @Autowired
+    public SalesBookkeepingService(AccountingTransactionRepository accountingTransactionRepository,
+                                   ApplicationEventPublisher eventPublisher) {
         this.accountingTransactionRepository = accountingTransactionRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     // -------------------------------------------------------------------------
@@ -107,6 +118,10 @@ public class SalesBookkeepingService {
 
         log.info("[Bookkeeping] Da ghi so don hang #{} | total={} | paid={} | debt={} | method={}",
                 order.getId(), totalAmount, paidAmount, debtAmount, paymentMethod);
+
+        if (eventPublisher != null) {
+            eventPublisher.publishEvent(new SalesBookkeepingEvent(order.getBusinessId(), order.getId()));
+        }
     }
 
     /**

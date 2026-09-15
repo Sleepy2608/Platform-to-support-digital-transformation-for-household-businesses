@@ -39,6 +39,7 @@ public class ProductImportRequest {
     @Size(max = 30, message = "Mã đơn vị tính không được vượt quá 30 ký tự")
     private String baseUnitCode;
 
+    @NotNull(message = "Giá bán không được để trống")
     @DecimalMin(value = "0.0", inclusive = true, message = "Giá bán không được âm")
     @Digits(integer = 16, fraction = 2, message = "Giá bán không hợp lệ")
     private BigDecimal salePrice;

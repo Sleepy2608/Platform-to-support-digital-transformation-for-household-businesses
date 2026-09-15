@@ -37,6 +37,8 @@ class RevenueLedgerServiceTest {
     @Mock private SalesOrderItemRepository salesOrderItemRepository;
     @Mock private StockImportRepository stockImportRepository;
     @Mock private UserRepository userRepository;
+    @Mock private DebtTransactionRepository debtTransactionRepository;
+    @Mock private AccountingReportReviewRepository accountingReportReviewRepository;
 
     private RevenueLedgerService service;
 
@@ -51,7 +53,9 @@ class RevenueLedgerServiceTest {
                 salesOrderRepository,
                 salesOrderItemRepository,
                 stockImportRepository,
-                userRepository
+                userRepository,
+                debtTransactionRepository,
+                accountingReportReviewRepository
         );
     }
 
@@ -164,7 +168,7 @@ class RevenueLedgerServiceTest {
                 .build();
 
         Page<RevenueLedgerEntry> page = new PageImpl<>(List.of(entry));
-        when(revenueLedgerRepository.searchLedger(eq(1L), eq("ACTIVE"), any(), any(), isNull(), eq("SO-001"), any(Pageable.class)))
+        when(revenueLedgerRepository.searchLedger(eq(1L), eq("ACTIVE"), any(), any(), isNull(), eq("Nguyễn"), any(Pageable.class)))
                 .thenReturn(page);
 
         RevenueLedgerRepository.RevenueSummaryProjection summaryProj = mock(RevenueLedgerRepository.RevenueSummaryProjection.class);
@@ -176,21 +180,48 @@ class RevenueLedgerServiceTest {
         RevenueLedgerRepository.OrderPaymentSummaryProjection paymentProj = mock(RevenueLedgerRepository.OrderPaymentSummaryProjection.class);
         when(paymentProj.getTotalPaid()).thenReturn(new BigDecimal("70000.00"));
 
-        when(revenueLedgerRepository.calculateSummary(eq(1L), eq("ACTIVE"), any(), any(), isNull(), eq("SO-001")))
+        when(revenueLedgerRepository.calculateSummary(eq(1L), eq("ACTIVE"), any(), any(), isNull(), eq("Nguyễn")))
                 .thenReturn(summaryProj);
-        when(revenueLedgerRepository.calculateOrderPaymentSummary(eq(1L), eq("ACTIVE"), any(), any(), isNull(), eq("SO-001")))
+        when(revenueLedgerRepository.calculateOrderPaymentSummary(eq(1L), eq("ACTIVE"), any(), any(), isNull(), eq("Nguyễn")))
                 .thenReturn(paymentProj);
 
         when(stockImportRepository.calculateTotalImportCost(eq(1L), any(), any()))
                 .thenReturn(new BigDecimal("30000.00"));
-        when(stockImportRepository.searchConfirmedStockImports(eq(1L), any(), any(), eq("SO-001"), any(Pageable.class)))
+        when(stockImportRepository.searchConfirmedStockImports(eq(1L), any(), any(), eq("Nguyễn"), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
+
+        DebtTransaction debtIncrease = DebtTransaction.builder()
+                .businessId(1L)
+                .customerId(10L)
+                .transactionType("DEBT_INCREASE")
+                // Deliberately different from order debt: operations cash must use
+                // the filtered orders' paidAmount, not reconstruct it from this ledger.
+                .amount(new BigDecimal("90000"))
+                .transactionDate(LocalDateTime.now())
+                .build();
+        DebtTransaction legacyPayment = DebtTransaction.builder()
+                .businessId(1L).customerId(10L).transactionType("DEBT_PAYMENT")
+                .amount(new BigDecimal("20000")).transactionDate(LocalDateTime.now()).build();
+        DebtTransaction legacyReversal = DebtTransaction.builder()
+                .businessId(1L).customerId(10L).transactionType("DEBT_REVERSAL")
+                .amount(new BigDecimal("10000")).transactionDate(LocalDateTime.now()).build();
+        DebtTransaction signedAdjustment = DebtTransaction.builder()
+                .businessId(1L).customerId(10L).transactionType("ADJUSTMENT")
+                .amount(new BigDecimal("-5000")).transactionDate(LocalDateTime.now()).build();
+        when(debtTransactionRepository.findForAccountingReport(eq(1L), any()))
+                .thenReturn(List.of(debtIncrease, legacyPayment, legacyReversal, signedAdjustment));
+        when(customerRepository.findAllById(List.of(10L))).thenReturn(List.of(Customer.builder()
+                .id(10L)
+                .businessId(1L)
+                .customerCode("KH-010")
+                .customerName("Nguyễn Văn A")
+                .build()));
 
         RevenueLedgerPageResponse response = service.search(
                 "testuser",
                 LocalDate.now(),
                 LocalDate.now(),
-                "SO-001",
+                "Nguyễn",
                 null,
                 0,
                 15
@@ -204,5 +235,11 @@ class RevenueLedgerServiceTest {
         assertThat(response.summary().expectedProfit()).isEqualByComparingTo("70000.00");
         assertThat(response.summary().actualProfit()).isEqualByComparingTo("40000.00");
         assertThat(response.summary().totalOrders()).isEqualTo(1L);
+        assertThat(response.debts()).hasSize(1);
+        assertThat(response.debtSummary().debtIncurred()).isEqualByComparingTo("90000");
+        assertThat(response.debtSummary().amountCollected()).isEqualByComparingTo("20000");
+        assertThat(response.debtSummary().adjustments()).isEqualByComparingTo("-15000");
+        assertThat(response.debtSummary().closingBalance()).isEqualByComparingTo("55000");
+        assertThat(response.operations().cashCollected()).isEqualByComparingTo("70000");
     }
 }

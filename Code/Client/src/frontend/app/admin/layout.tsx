@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, BadgeDollarSign, UserCircle, Boxes, FileText, BarChart3, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Store, Menu, X, Database, BadgeDollarSign, UserCircle, Boxes, FileText, BarChart3, FileCog, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { clearAuth, getAccessToken, getAuthItem } from '../lib/apiClient';

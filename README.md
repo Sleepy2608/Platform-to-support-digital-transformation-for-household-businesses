@@ -28,22 +28,21 @@
 
 ## Tiến độ triển khai dự án (Project Deployment Progress)
 
-*Tiến độ: Sprint 8*
+*Tiến độ: Đã hoàn thành*
 
 > Nhiệm vụ được giao sẽ được dựa vào nhiệm vụ được giao trên [Issue](https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/issues) trên Github và cập nhật tiến độ ở [Jira](https://java-project-platform-for-household-business.atlassian.net/jira/software/projects/SCRUM/summary).<br>
 > Các issue trên Github sẽ được cập nhật theo tiến độ của Jira và sẽ được test trước khi merge vào nhánh Main.<br>
-> Mức độ hoàn thành dự án: 93%<br>
-> Ngày cập nhật lần cuối: 15/09/2026.
-
-### Tính năng mới nhất cập nhật gần đây
-- Thêm tính tăng AI Service
-- Thêm tính năng feedback cho Owner/Employee
-- Thêm các báo cáo doanh thu, lợi nhuận, chi phí nhập hàng, doanh thu theo ngày
-- Fast Sales UI cho điện thoại (Owner/Employee)
+> Mức độ hoàn thành dự án: 98%<br>
+> Ngày cập nhật lần cuối: 16/09/2026.
 
 ### Các tính năng đã hoàn thành
 
 Xem ở file `docs/project-progress-and-feature/feature.md` để biết chi tiết các tính năng đã hoàn thành.
+
+### Các tính năng chưa hoàn thiện
+
+- AI Voice-to-text: Đây là tính năng AI duy nhất còn thiếu. Hiện tại hệ thống đã hỗ trợ **Text Input**, nhưng chưa hoàn thiện khả năng nhận yêu cầu bằng **Voice**.
+- Release Package: Release Package vẫn chưa được hoàn thành.
 
 ---
 
@@ -54,7 +53,7 @@ Xem ở file `docs/project-progress-and-feature/feature.md` để biết chi ti�
 | **Frontend** | React 19, TypeScript 5, Next.js 16 (App Router), Tailwind CSS 4, Framer Motion, Lucide React |
 | **Backend** | Java 21, Spring Boot 3.3, Spring Web, Spring Data JPA, Spring Security, JWT (JJWT) |
 | **Database** | MySQL 8 |
-| **AI Service (Tentative)** | Python, FastAPI, Uvicorn, Pydantic |
+| **AI Service** | Python 3.12, FastAPI, Uvicorn, Pydantic; tích hợp **B.ai** (Chat Completions) để trích xuất câu đặt hàng tiếng Việt |
 | **Build & Công cụ** | Maven, npm, ESLint, Lombok |
 | **DevOps** | Docker, Docker Compose |
 
@@ -122,7 +121,7 @@ Platform-to-support-digital-transformation-for-household-businesses/
 ├── README.md                                     # Tổng quan dự án
 ├── docker-compose.yml                            # Triển khai Docker toàn hệ thống
 ├── Code/
-│   ├── AI/                                       # AI Service (FastAPI) xử lý đơn hàng bằng ngôn ngữ tự nhiên
+│   ├── AI/                                       # AI Service (FastAPI) gọi B.ai trích xuất câu đặt hàng tiếng Việt
 │   ├── Client/
 │   │   └── src/
 │   │       └── frontend/                         # Frontend Next.js 16 / TypeScript
@@ -164,6 +163,7 @@ Platform-to-support-digital-transformation-for-household-businesses/
 │   ├── requirements/                             # Yêu cầu đề tài / phân tích yêu cầu
 │   ├── run-guide/                                # Hướng dẫn chạy trên IDE / VS Code
 │   ├── software-requirement-specification/       # SRS
+│   ├── system-implementation/                     # Tài liệu hiện thực hệ thống
 │   ├── testing-documents/                        # Tài liệu kiểm thử
 │   ├── user-guides/                              # Hướng dẫn sử dụng theo vai trò
 │   ├── user-requirements/                        # Yêu cầu người dùng
@@ -176,8 +176,20 @@ Platform-to-support-digital-transformation-for-household-businesses/
 │   └── ...
 ├── .gitattributes                                # Cấu hình Git
 ├── .gitignore                                    # Bỏ qua file nhạy cảm / build output
-└── .md                                           # Tệp markdown phụ trợ nếu có
+├── .md                                           # Tệp markdown phụ trợ nếu có
+├── run-ai.bat                                    # Script chạy AI Service (FastAPI)                  
+├── run-backend.bat                               # Script chạy nhanh backend hệ thống
+├── run-frontend.bat                              # Script chạy nhanh frontend hệ thống
+└── run-frontend-clean.bat                        # Script chạy nhanh frontend hệ thống (xóa `.next` + `node_modules` trước khi cài lại)
 ```
+
+---
+
+## Tài liệu hiện thực hệ thống
+
+Tài liệu mô tả kiến trúc hiện thực, tổ chức mã nguồn, bảo mật, các luồng nghiệp vụ, cấu hình, kiểm thử và đóng gói:
+
+- [System Implementation Document](docs/system-implementation/system-implementation.md)
 
 ---
 
@@ -201,10 +213,19 @@ git clone https://github.com/Sleepy2608/Platform-to-support-digital-transformati
 Tạo file `Code/Server/.env`:
 ```env
 DB_HOST=<host>
-DB_PORT=3000
+DB_PORT=3306
 DB_NAME=<dbname>
 DB_USERNAME=<username>
 DB_PASSWORD=<password>
+```
+
+Nếu dùng tính năng AI tạo đơn nháp, bổ sung thêm các biến AI (xem đầy đủ trong `Code/Server/.env.example`):
+```env
+AI_SERVICE_URL=http://127.0.0.1:8000
+AI_SERVICE_API_SECRET=<chuoi_bi_mat>
+AI_SERVICE_TIMEOUT_SECONDS=35
+AI_SERVICE_AUTO_START=true
+AI_SERVICE_WORK_DIR=../AI
 ```
 
 Vào mục Edit Configurations -> Chọn Evironment variables -> Thêm file .env vừa tạo
@@ -267,6 +288,22 @@ npm run dev
 > Lưu ý: Trang đăng nhập vào Manager/Owner/Employee được chạy ở url `http://localhost:3000/login` còn trang Admin được chạy ở url `http://localhost:3000/admin/login`.
 > Cần chọn đúng trang đăng nhập để tránh bị báo lỗi 404 hoặc không tìm thấy trang, nếu không thấy thì xóa các file trong thư mục `.next` và `node_modules` rồi chạy lại `npm install`.
 > Thay vì xóa tay, có thể double-click `run-frontend-clean.bat` ở thư mục gốc — script làm đúng các bước này và hỏi xác nhận trước khi xóa.
+
+### 6. AI Service (cần cho tính năng AI tạo đơn nháp)
+
+```text
+cd Code/AI
+python -m venv venv
+.\venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+
+- Kiểm tra service đang sống: `curl http://localhost:8000/health`
+- Kiểm tra đã cấu hình B.ai: `curl http://localhost:8000/api/v1/ai/ready` (trả `503 BAI_NOT_CONFIGURED` nghĩa là thiếu `BAI_API_KEY` hoặc `BAI_MODEL`)
+- Service hiện chỉ nhận **văn bản**, chưa hỗ trợ nhận diện giọng nói (STT).
+- Backend có thể tự khởi động service này khi `AI_SERVICE_AUTO_START=true`.
+- Tài liệu chi tiết: [docs/ai-design/ai-service-guide.md](docs/ai-design/ai-service-guide.md), [docs/installation-guide/installation-guide.md](docs/installation-guide/installation-guide.md).
 
 ---
 

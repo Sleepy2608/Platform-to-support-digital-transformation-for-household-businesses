@@ -676,7 +676,7 @@ Final Documentation
 # 15. Tổng hợp theo Epic
 
 | Epic | Status | Mức độ hoàn thiện | Việc còn đáng chú ý |
-|---|---|---|---|
+|---|:---:|:---:|---|
 | EPIC-01 Foundation & Design | ✅ Done | 🟢 Cao | UML Diagram |
 | EPIC-02 Public & Onboarding | ✅ Done | 🟢 Cao | Không đáng kể |
 | EPIC-03 Auth & Security | ✅ Done | 🟢 Cao | Không đáng kể |

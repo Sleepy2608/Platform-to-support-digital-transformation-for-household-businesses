@@ -1,5 +1,6 @@
 package com.hbdt.entity;
 
+import com.hbdt.entity.enums.VersionStatus;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.*;
 import lombok.*;
@@ -67,9 +68,13 @@ public class ReportTemplateVersion {
     @Column(name = "effective_to")
     private LocalDate effectiveTo;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
-    private String status = "ACTIVE";
+    private VersionStatus status = VersionStatus.ACTIVE;
+
+    @Column(name = "change_summary", length = 500)
+    private String changeSummary;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

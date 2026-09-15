@@ -2,6 +2,7 @@ package com.hbdt.order.service;
 
 import com.hbdt.debt.service.DebtBookkeepingService;
 import com.hbdt.entity.Customer;
+import com.hbdt.entity.AiOrderDraft;
 import com.hbdt.entity.DebtTransaction;
 import com.hbdt.entity.SalesOrder;
 import com.hbdt.entity.SalesOrderItem;
@@ -13,6 +14,7 @@ import com.hbdt.order.dto.SalesOrderResponse;
 import com.hbdt.pricing.service.ProductPricingService;
 import com.hbdt.product.service.BusinessContextService;
 import com.hbdt.repository.CustomerRepository;
+import com.hbdt.repository.AiOrderDraftRepository;
 import com.hbdt.repository.ProductRepository;
 import com.hbdt.repository.SalesOrderItemRepository;
 import com.hbdt.repository.SalesOrderRepository;
@@ -56,6 +58,7 @@ class SalesOrderServiceTest {
     @Mock private RevenueLedgerService revenueLedgerService;
     @Mock private SalesBookkeepingService salesBookkeepingService;
     @Mock private DebtBookkeepingService debtBookkeepingService;
+    @Mock private AiOrderDraftRepository aiOrderDraftRepository;
 
     private SalesOrderService service;
 
@@ -65,7 +68,8 @@ class SalesOrderServiceTest {
                 salesOrderRepository, salesOrderItemRepository, productPricingService,
                 businessContextService, userRepository, productRepository, unitRepository,
                 inventoryMovementService, customerRepository,
-                revenueLedgerService, salesBookkeepingService, debtBookkeepingService
+                revenueLedgerService, salesBookkeepingService, debtBookkeepingService,
+                aiOrderDraftRepository
         );
     }
 
@@ -78,6 +82,8 @@ class SalesOrderServiceTest {
         Customer customer = Customer.builder()
                 .id(22L).businessId(5L).status("ACTIVE").debtBalance(new BigDecimal("50000")).build();
         when(customerRepository.findActiveForUpdate(22L, 5L)).thenReturn(Optional.of(customer));
+        AiOrderDraft aiDraft = AiOrderDraft.builder().id(90L).businessId(5L).status("PENDING").build();
+        when(aiOrderDraftRepository.findByIdAndBusinessId(90L, 5L)).thenReturn(Optional.of(aiDraft));
 
         when(productPricingService.snapshotOrderItemPrice(any(), any(SalesOrderItem.class)))
                 .thenAnswer(invocation -> {
@@ -119,7 +125,7 @@ class SalesOrderServiceTest {
         ));
 
         SalesOrderResponse response = service.create("owner", new CreateSalesOrderRequest(
-                " SO-001 ", 22L, "POS", new BigDecimal("100000"), null,
+                90L, " SO-001 ", 22L, "POS", new BigDecimal("100000"), null,
                 List.of(
                         new CreateSalesOrderItemRequest(10L, 2L, BigDecimal.ONE, null),
                         new CreateSalesOrderItemRequest(10L, 3L, new BigDecimal("10"), null),
@@ -145,6 +151,9 @@ class SalesOrderServiceTest {
         // ── HBDT-66: phát sinh nợ phải đi qua DebtBookkeepingService (SSOT) ──
         verify(debtBookkeepingService).recordDebtIncrease(
                 any(SalesOrder.class), eq(customer), eq(7L), any(BigDecimal.class));
+        assertThat(aiDraft.getStatus()).isEqualTo("CONFIRMED");
+        assertThat(aiDraft.getSalesOrderId()).isEqualTo(100L);
+        verify(aiOrderDraftRepository).save(aiDraft);
     }
 
     @Test
@@ -153,7 +162,7 @@ class SalesOrderServiceTest {
         when(userRepository.findByUsername("owner")).thenReturn(Optional.of(User.builder().id(7L).build()));
 
         CreateSalesOrderRequest request = new CreateSalesOrderRequest(
-                "SO-002", null, "POS", BigDecimal.ZERO, null,
+                null, "SO-002", null, "POS", BigDecimal.ZERO, null,
                 List.of(new CreateSalesOrderItemRequest(
                         10L, 2L, new BigDecimal("19.0001"), null
                 ))
@@ -179,7 +188,7 @@ class SalesOrderServiceTest {
                 });
 
         CreateSalesOrderRequest request = new CreateSalesOrderRequest(
-                "SO-DEBT", null, "POS", BigDecimal.ZERO, null,
+                null, "SO-DEBT", null, "POS", BigDecimal.ZERO, null,
                 List.of(new CreateSalesOrderItemRequest(10L, 2L, BigDecimal.ONE, null))
         );
 
@@ -282,7 +291,7 @@ class SalesOrderServiceTest {
         mockOrderItemDisplay();
 
         SalesOrderResponse response = service.create("owner", new CreateSalesOrderRequest(
-                "SO-PAID", null, "POS", new BigDecimal("100000"), null,
+                null, "SO-PAID", null, "POS", new BigDecimal("100000"), null,
                 List.of(new CreateSalesOrderItemRequest(10L, 2L, BigDecimal.ONE, null))
         ));
 
@@ -320,7 +329,7 @@ class SalesOrderServiceTest {
         mockOrderItemDisplay();
 
         SalesOrderResponse response = service.create("owner", new CreateSalesOrderRequest(
-                "SO-FULL-DEBT", 22L, "POS", BigDecimal.ZERO, null,
+                null, "SO-FULL-DEBT", 22L, "POS", BigDecimal.ZERO, null,
                 List.of(new CreateSalesOrderItemRequest(10L, 2L, BigDecimal.ONE, null))
         ));
 
@@ -345,7 +354,7 @@ class SalesOrderServiceTest {
                 });
 
         CreateSalesOrderRequest request = new CreateSalesOrderRequest(
-                "SO-NEG", 22L, "POS", new BigDecimal("-50000"), null,
+                null, "SO-NEG", 22L, "POS", new BigDecimal("-50000"), null,
                 List.of(new CreateSalesOrderItemRequest(10L, 2L, BigDecimal.ONE, null))
         );
 
@@ -510,7 +519,7 @@ class SalesOrderServiceTest {
                 .when(inventoryMovementService).stockOut(any(), any());
 
         assertThatThrownBy(() -> service.create("owner", new CreateSalesOrderRequest(
-                "SO-FAIL", null, "POS", new BigDecimal("50000"), null,
+                null, "SO-FAIL", null, "POS", new BigDecimal("50000"), null,
                 List.of(new CreateSalesOrderItemRequest(10L, 2L, BigDecimal.ONE, null))
         )))
                 .isInstanceOf(com.hbdt.common.exception.BadRequestException.class)

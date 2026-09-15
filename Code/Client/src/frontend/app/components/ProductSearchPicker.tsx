@@ -14,6 +14,8 @@ export interface SearchProduct {
   baseUnitId: number;
   baseUnitName?: string;
   salePrice: number;
+  saleUnitId?: number;
+  saleUnitName?: string;
   quantityOnHand: number;
   imageUrl?: string;
   status: 'ACTIVE' | 'INACTIVE';
@@ -178,7 +180,7 @@ export function ProductSearchPicker({
             {products.map((p) => {
               const isSelected = selectedIds.includes(p.id);
               const price = Number(p.salePrice || 0);
-              const unit = p.baseUnitName || 'SP';
+              const unit = p.saleUnitName || p.baseUnitName || 'SP';
 
               return (
                 <div

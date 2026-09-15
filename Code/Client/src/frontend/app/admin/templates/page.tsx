@@ -29,6 +29,7 @@ interface TemplateVersionItem {
   status: string;
   effectiveFrom: string | null;
   effectiveTo: string | null;
+  changeSummary?: string | null;
   createdAt: string | null;
 }
 
@@ -95,6 +96,25 @@ const STANDARD_PRESETS: Record<string, TemplatePreset> = {
       { key: 'notes', label: 'Ghi chú', type: 'text', required: false },
     ],
   },
+  INVENTORY_LEDGER: {
+    name: 'Sổ chi tiết vật liệu, dụng cụ, sản phẩm, hàng hóa',
+    officialFormCode: 'Mẫu số S2-HKD',
+    legalBasis: 'Thông tư 88/2021/TT-BTC',
+    description: 'Theo dõi số lượng và giá trị nhập, xuất, tồn theo dữ liệu kho đã xác nhận.',
+    columns: [
+      { key: 'productCode', label: 'Mã sản phẩm', type: 'text', required: true },
+      { key: 'productName', label: 'Tên sản phẩm', type: 'text', required: true },
+      { key: 'unit', label: 'Đơn vị tính', type: 'text', required: true },
+      { key: 'openingQuantity', label: 'Tồn đầu số lượng', type: 'number', required: true },
+      { key: 'openingValue', label: 'Tồn đầu tiền', type: 'currency', required: true },
+      { key: 'stockInQuantity', label: 'Nhập số lượng', type: 'number', required: true },
+      { key: 'stockInValue', label: 'Tiền nhập', type: 'currency', required: true },
+      { key: 'stockOutQuantity', label: 'Xuất số lượng', type: 'number', required: true },
+      { key: 'stockOutValue', label: 'Giá vốn xuất', type: 'currency', required: true },
+      { key: 'closingQuantity', label: 'Tồn cuối số lượng', type: 'number', required: true },
+      { key: 'closingValue', label: 'Tồn cuối tiền', type: 'currency', required: true },
+    ],
+  },
   EXPENSE_LEDGER: {
     name: 'Sổ chi tiết chi phí sản xuất, kinh doanh',
     officialFormCode: 'Mẫu số S2-HKD',
@@ -151,6 +171,20 @@ const STANDARD_PRESETS: Record<string, TemplatePreset> = {
       { key: 'totalTax', label: 'Tổng tiền thuế phải nộp', type: 'currency', required: true },
     ],
   },
+  TAX_OBLIGATION_LEDGER: {
+    name: 'Sổ theo dõi tình hình thực hiện nghĩa vụ thuế',
+    officialFormCode: 'Mẫu số S4-HKD',
+    legalBasis: 'Thông tư 88/2021/TT-BTC',
+    description: 'Theo dõi số thuế phải nộp, đã nộp và còn phải nộp theo từng sắc thuế.',
+    columns: [
+      { key: 'taxCode', label: 'Mã sắc thuế', type: 'text', required: true },
+      { key: 'taxName', label: 'Tên sắc thuế', type: 'text', required: true },
+      { key: 'taxableRevenue', label: 'Doanh thu tính thuế', type: 'currency', required: true },
+      { key: 'taxPayable', label: 'Số phải nộp', type: 'currency', required: true },
+      { key: 'paidAmount', label: 'Số đã nộp', type: 'currency', required: true },
+      { key: 'remainingAmount', label: 'Số còn phải nộp', type: 'currency', required: true },
+    ],
+  },
   BALANCE_SHEET: {
     name: 'Bảng cân đối tình hình tài chính quản trị',
     officialFormCode: 'Báo cáo tài chính quản trị',
@@ -167,29 +201,35 @@ const STANDARD_PRESETS: Record<string, TemplatePreset> = {
 
 const TYPE_PREFIX: Record<string, string> = {
   REVENUE_LEDGER: 'RL',
+  INVENTORY_LEDGER: 'IL',
   EXPENSE_LEDGER: 'EL',
   DEBT_REPORT: 'DR',
   CASH_FLOW: 'CF',
   TAX_SUMMARY: 'TS',
+  TAX_OBLIGATION_LEDGER: 'TL',
   BALANCE_SHEET: 'BS',
 };
 
 const TYPE_OPTIONS = [
   { value: '', label: 'Tất cả loại báo cáo' },
   { value: 'REVENUE_LEDGER', label: 'Sổ chi tiết doanh thu' },
+  { value: 'INVENTORY_LEDGER', label: 'S2-HKD · Sổ nhập, xuất, tồn' },
   { value: 'EXPENSE_LEDGER', label: 'Sổ chi phí kinh doanh' },
   { value: 'DEBT_REPORT', label: 'Báo cáo công nợ' },
   { value: 'CASH_FLOW', label: 'Lưu chuyển tiền tệ' },
   { value: 'TAX_SUMMARY', label: 'Tờ khai tổng hợp thuế' },
+  { value: 'TAX_OBLIGATION_LEDGER', label: 'S4-HKD · Sổ nghĩa vụ thuế' },
   { value: 'BALANCE_SHEET', label: 'Bảng cân đối kế toán' },
 ];
 
 const TYPE_LABELS: Record<string, string> = {
   REVENUE_LEDGER: 'Sổ doanh thu',
+  INVENTORY_LEDGER: 'Sổ nhập, xuất, tồn',
   EXPENSE_LEDGER: 'Sổ chi phí',
   DEBT_REPORT: 'Báo cáo công nợ',
   CASH_FLOW: 'Lưu chuyển tiền tệ',
   TAX_SUMMARY: 'Tổng hợp thuế',
+  TAX_OBLIGATION_LEDGER: 'Sổ nghĩa vụ thuế',
   BALANCE_SHEET: 'Bảng cân đối',
 };
 
@@ -333,6 +373,7 @@ export default function FinancialTemplateManagementPage() {
   const [formOfficialCode, setFormOfficialCode] = useState('');
   const [formLegalBasis, setFormLegalBasis] = useState('');
   const [formDescription, setFormDescription] = useState('');
+  const [formEffectiveFrom, setFormEffectiveFrom] = useState('');
   const [changeSummary, setChangeSummary] = useState('');
 
   // Column Configuration Table State
@@ -523,6 +564,7 @@ export default function FinancialTemplateManagementPage() {
 
   const openCreate = () => {
     setEditId(null);
+    setFormEffectiveFrom('');
     setChangeSummary('');
     loadStandardProfile('REVENUE_LEDGER', true);
     setModalOpen(true);
@@ -543,6 +585,7 @@ export default function FinancialTemplateManagementPage() {
       setFormOfficialCode(detail.officialFormCode || '');
       setFormLegalBasis(detail.legalBasis || '');
       setFormDescription(detail.description || '');
+      setFormEffectiveFrom('');
       setChangeSummary('');
 
       // Parse existing columns configuration
@@ -627,6 +670,7 @@ export default function FinancialTemplateManagementPage() {
           legalBasis: formLegalBasis.trim() || null,
           description: formDescription.trim() || null,
           configurationJson: finalConfig,
+          effectiveFrom: formEffectiveFrom ? formEffectiveFrom : null,
           changeSummary: changeSummary.trim() || 'Cập nhật cấu hình cột báo cáo',
         });
         setNotice(`Đã cập nhật mẫu "${formName}" (phiên bản mới được lưu thành công)`);
@@ -1129,22 +1173,39 @@ export default function FinancialTemplateManagementPage() {
                   </div>
                 </div>
 
-                {/* 3. Lý do điều chỉnh (chỉ hiện khi cập nhật) */}
+                {/* 3. Ngày hiệu lực & Lý do điều chỉnh (chỉ hiện khi cập nhật) */}
                 {editId && (
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
-                      Ghi chú thay đổi (Change summary) <span className="text-red-400">*</span>
-                    </label>
-                    <input
-                      className={inputClass}
-                      value={changeSummary}
-                      onChange={(e) => setChangeSummary(e.target.value)}
-                      placeholder="VD: Cập nhật tiêu đề cột doanh thu, bổ sung cột chiết khấu..."
-                      required
-                    />
-                    <p className="text-[11px] text-zinc-500 mt-1">
-                      Cơ chế Bất biến (Immutability): Mọi cập nhật sẽ tự động nâng lên phiên bản mới v(N+1) mà không ảnh hưởng đến các báo cáo cũ.
-                    </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
+                        Ngày hiệu lực phiên bản mới
+                      </label>
+                      <input
+                        type="date"
+                        className={inputClass}
+                        value={formEffectiveFrom}
+                        onChange={(e) => setFormEffectiveFrom(e.target.value)}
+                      />
+                      <p className="text-[11px] text-zinc-500 mt-1">
+                        Để trống nếu áp dụng ngay hôm nay. Nếu chọn ngày tương lai, phiên bản sẽ lưu ở trạng thái Chờ kích hoạt (DRAFT).
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
+                        Ghi chú thay đổi (Change summary) <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        className={inputClass}
+                        value={changeSummary}
+                        onChange={(e) => setChangeSummary(e.target.value)}
+                        placeholder="VD: Cập nhật tiêu đề cột doanh thu, bổ sung cột..."
+                        required
+                      />
+                      <p className="text-[11px] text-zinc-500 mt-1">
+                        Cơ chế Bất biến: Tự động sinh phiên bản v(N+1) bảo toàn dữ liệu báo cáo lịch sử.
+                      </p>
+                    </div>
                   </div>
                 )}
 
@@ -1222,9 +1283,24 @@ export default function FinancialTemplateManagementPage() {
                             <span className="font-mono text-sm font-bold text-white">
                               Phiên bản v{ver.versionNumber}
                             </span>
-                            {isCurrent && (
+                            {ver.status === 'ACTIVE' && (
                               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                                 <Check className="w-3 h-3 stroke-[3]" /> Hiện hành
+                              </span>
+                            )}
+                            {ver.status === 'DRAFT' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                Chờ hiệu lực
+                              </span>
+                            )}
+                            {ver.status === 'SUPERSEDED' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-800 text-zinc-400 border border-zinc-700/50">
+                                Đã thay thế
+                              </span>
+                            )}
+                            {ver.status === 'ARCHIVED' && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-zinc-900 text-zinc-500 border border-zinc-800">
+                                Đã lưu trữ
                               </span>
                             )}
                           </div>
@@ -1233,10 +1309,22 @@ export default function FinancialTemplateManagementPage() {
                           </span>
                         </div>
 
-                        <div className="mt-2 text-xs text-zinc-400 flex items-center justify-between">
-                          <span>
-                            Người cập nhật: Admin #{ver.updatedBy ?? 'Hệ thống'}
-                          </span>
+                        {ver.changeSummary && (
+                          <p className="mt-1.5 text-xs text-zinc-300">
+                            <span className="text-zinc-500 font-semibold">Ghi chú:</span> {ver.changeSummary}
+                          </p>
+                        )}
+
+                        <div className="mt-2 text-xs text-zinc-400 flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex items-center gap-3">
+                            <span>Admin #{ver.updatedBy ?? 'Hệ thống'}</span>
+                            {ver.effectiveFrom && (
+                              <span>
+                                Hiệu lực: <strong className="text-zinc-300">{formatDate(ver.effectiveFrom)}</strong>
+                                {ver.effectiveTo ? ` → ${formatDate(ver.effectiveTo)}` : ''}
+                              </span>
+                            )}
+                          </div>
                           <button
                             type="button"
                             onClick={() =>

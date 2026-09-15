@@ -1,107 +1,133 @@
-# Tài liệu Kiểm thử (Test Cases Document)
-## Module: Quản lý Công nợ và Thanh toán (HBDT-66 Automatic Debt Bookkeeping)
+# Tài liệu kiểm thử hệ thống
 
----
+## 1. Thông tin chung
 
-## 1. Thông tin tổng quan
+- **Dự án:** Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh.
+- **Loại kiểm thử:** Kiểm thử hệ thống thủ công (manual system testing).
+- **Phạm vi:** 39 test case, từ TC01 đến TC39.
+- **Nguồn nội dung:** Workbook test case của nhóm, cập nhật ngày 15/09/2026.
+- **Kết quả ghi nhận trong workbook:** 39/39 test case có trạng thái **Đạt**.
+- **File Excel và ảnh minh chứng:** [Mở bộ test case hệ thống](./hbdt-system-test-cases.xlsx).
 
-- **Dự án**: Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh (Platform to support digital transformation for household businesses).
-- **Module**: Quản lý bán hàng & Công nợ khách hàng (Sales Order & Debt Bookkeeping).
-- **Mã tính năng**: **HBDT-66** (Automatic Debt Bookkeeping).
-- **Yêu cầu SRS liên quan**: `HBDT-07.3` (Ghi nhận công nợ), `HBDT-07.4` (Thanh toán công nợ), `HBDT-07.5` (Lịch sử & Tổng hợp công nợ), `HBDT-08.1` (Tạo đơn bán hàng), `HBDT-08.4` (Hủy đơn bán hàng).
-- **Môi trường thực thi**:
-  - Ngôn ngữ: Java 21 LTS
-  - Framework: Spring Boot 3.x, Spring Data JPA, Hibernate, JUnit 5, Mockito, AssertJ
-  - Cơ sở dữ liệu: MySQL 8.x / H2 in-memory (cho test runner)
-  - Lệnh chạy kiểm thử: `.\mvnw.cmd test`
+> Trong workbook, cột **Ảnh minh chứng** trên sheet `Test Cases` liên kết đến các sheet `TC1`–`TC39` để tra cứu kết quả thực hiện tương ứng.
 
----
+## 2. Tổng hợp phạm vi kiểm thử
 
-## 2. Tiêu chuẩn và Phạm vi kiểm thử
+| Nhóm chức năng | Test case | Số lượng |
+|---|---:|---:|
+| Đăng nhập và phân quyền | TC01–TC05 | 5 |
+| Quản lý sản phẩm | TC06–TC11 | 6 |
+| Quản lý danh mục | TC12–TC15 | 4 |
+| Quản lý tồn kho và nhập kho | TC16–TC21 | 6 |
+| Cảnh báo tồn kho thấp | TC22–TC25 | 4 |
+| Khách hàng, đơn hàng và thanh toán | TC26–TC31 | 6 |
+| Doanh thu và biểu đồ | TC32–TC36 | 5 |
+| Nhân viên, Admin và cô lập dữ liệu | TC37–TC39 | 3 |
+| **Tổng cộng** | **TC01–TC39** | **39** |
 
-### 2.1. Mục tiêu kiểm thử
-1. Đảm bảo tính toán công nợ dựa trên **Single Source of Truth (SSOT)**: Mọi biến động nợ đều được ghi nhật ký vào bảng `debt_transactions`.
-2. Kiểm tra tính toàn vẹn dữ liệu: `Customer.debtBalance` luôn đồng bộ chính xác với `balanceAfter` của giao dịch mới nhất.
-3. Kiểm tra kiểm soát tính hợp lệ (Validation): Chặn triệt để thanh toán số tiền <= 0, thanh toán vượt nợ đơn, vượt nợ khách, thanh toán đơn chưa xác nhận, hoặc đơn sai tenant.
-4. Kiểm tra luồng đảo nợ (Debt Reversal): Khi hủy đơn hàng đang có nợ, tự động sinh giao dịch loại `VOID` để hoàn trả công nợ.
-5. Kiểm tra phòng chống Deadlock: Tuân thủ thứ tự khóa tài nguyên nhất quán (Lock `SalesOrder` trước, Lock `Customer` sau).
-6. Kiểm tra bảo mật đa người dùng / đa hộ kinh doanh (Multi-tenancy): Dữ liệu công nợ bị cô lập tuyệt đối theo `business_id`.
+## 3. Nội dung test case
 
-### 2.2. Danh mục Enum chuẩn hóa
-- **Loại giao dịch (`DebtTransactionType`)**: `DEBT_INCREASE`, `PAYMENT`, `ADJUSTMENT`, `VOID`.
-- **Trạng thái giao dịch (`DebtTransactionStatus`)**: `ACTIVE`, `VOIDED`.
-- **Phương thức thanh toán (`PaymentMethod`)**: `CASH`, `BANK_TRANSFER`.
-- **Trạng thái thanh toán đơn (`PaymentStatus`)**: `UNPAID`, `PARTIALLY_PAID`, `PAID`.
+### 3.1. Đăng nhập và phân quyền
 
----
+| ID | Tên test case | Mô tả | Dữ liệu đầu vào / Thao tác | Kết quả mong đợi | Minh chứng | Trạng thái |
+|---|---|---|---|---|---|:---:|
+| **TC01** | Đăng nhập Owner thành công | Kiểm tra Owner đăng nhập bằng tài khoản hợp lệ. | Điều kiện trước: Tài khoản Owner đang hoạt động.<br>Dữ liệu: Email và mật khẩu Owner hợp lệ.<br>Thao tác:<br>1) Mở trang Đăng nhập.<br>2) Nhập email.<br>3) Nhập mật khẩu.<br>4) Nhấn Đăng nhập.  | Đăng nhập thành công, lưu phiên đăng nhập và chuyển đến giao diện Owner. | Sheet `TC1` | **Đạt** |
+| **TC02** | Đăng nhập sai mật khẩu | Kiểm tra hệ thống từ chối mật khẩu không chính xác. | Dữ liệu: Email Owner hợp lệ; mật khẩu SaiMatKhau123.<br>Thao tác:<br>1) Mở trang Đăng nhập.<br>2) Nhập email hợp lệ.<br>3) Nhập mật khẩu sai.<br>4) Nhấn Đăng nhập. | Hiển thị thông báo đăng nhập thất bại, không tạo phiên và vẫn ở trang đăng nhập. | Sheet `TC2` | **Đạt** |
+| **TC03** | Đăng nhập khi bỏ trống dữ liệu | Kiểm tra ràng buộc bắt buộc của form đăng nhập. | Dữ liệu: Email trống; mật khẩu trống.<br>Thao tác:<br>1) Mở trang Đăng nhập.<br>2) Không nhập email và mật khẩu.<br>3) Nhấn Đăng nhập. | Form báo lỗi tại các trường bắt buộc và không gửi yêu cầu đăng nhập hợp lệ. | Sheet `TC3` | **Đạt** |
+| **TC04** | Truy cập trang Owner khi chưa đăng nhập | Kiểm tra bảo vệ route dành cho Owner. | Điều kiện trước: Đã đăng xuất hoặc xóa phiên đăng nhập.<br>Thao tác:<br>1) Nhập trực tiếp /owner/products trên thanh địa chỉ.<br>2) Nhấn Enter. | Hệ thống chuyển về trang đăng nhập và giữ đường dẫn chuyển tiếp nếu có. | Sheet `TC4` | **Đạt** |
+| **TC05** | Employee truy cập chức năng Owner | Kiểm tra phân quyền giữa Employee và Owner. | Điều kiện trước: Có tài khoản Employee đang hoạt động.<br>Thao tác:<br>1) Đăng nhập bằng Employee.<br>2) Nhập trực tiếp /owner/employees.<br>3) Nhấn Enter. | Hệ thống từ chối truy cập hoặc chuyển về trang đúng quyền; không hiển thị dữ liệu nhân viên của Owner. | Sheet `TC5` | **Đạt** |
 
-## 3. Danh mục Test Cases Chi tiết
+### 3.2. Quản lý sản phẩm
 
-### Nhóm 1: Phát sinh công nợ khi tạo đơn hàng (Sales Order Creation)
+| ID | Tên test case | Mô tả | Dữ liệu đầu vào / Thao tác | Kết quả mong đợi | Minh chứng | Trạng thái |
+|---|---|---|---|---|---|:---:|
+| **TC06** | Xem danh sách sản phẩm | Kiểm tra danh sách sản phẩm theo hộ kinh doanh. | Điều kiện trước: Owner có hồ sơ hộ kinh doanh và ít nhất một sản phẩm.<br>Thao tác:<br>1) Đăng nhập Owner.<br>2) Chọn Sản phẩm & Danh mục.<br>3) Chọn tab Sản phẩm. | Hiển thị đúng các sản phẩm thuộc businessId của Owner; không lộ sản phẩm của hộ kinh doanh khác. | Sheet `TC6` | **Đạt** |
+| **TC07** | Tạo sản phẩm hợp lệ | Kiểm tra tạo sản phẩm với dữ liệu đầy đủ. | Dữ liệu: Mã P_TC_001; tên Nước suối; số lượng ban đầu 20; trạng thái Đang hoạt động.<br>Thao tác:<br>1) Mở danh sách sản phẩm.<br>2) Nhấn Thêm sản phẩm.<br>3) Nhập dữ liệu và chọn danh mục, đơn vị.<br>4) Nhấn Lưu thay đổi. | Tạo thành công; P_TC_001 xuất hiện trong danh sách với đúng thông tin và tồn ban đầu 20. | Sheet `TC7` | **Đạt** |
+| **TC08** | Tạo sản phẩm trùng mã | Kiểm tra ràng buộc mã sản phẩm không trùng trong cùng hộ kinh doanh. | Điều kiện trước: P_TC_001 đã tồn tại.<br>Dữ liệu: Mã P_TC_001; tên Nước suối khác.<br>Thao tác:<br>1) Nhấn Thêm sản phẩm.<br>2) Nhập đầy đủ dữ liệu.<br>3) Nhấn Lưu thay đổi. | Hệ thống báo mã sản phẩm đã tồn tại và không tạo thêm bản ghi. | Sheet `TC8` | **Đạt** |
+| **TC09** | Tạo sản phẩm với dữ liệu không hợp lệ | Kiểm tra validation tên và số lượng ban đầu. | Dữ liệu: Mã P_TC_002; tên trống; số lượng -1.<br>Thao tác:<br>1) Nhấn Thêm sản phẩm.<br>2) Nhập dữ liệu trên.<br>3) Nhấn Lưu thay đổi. | Form hoặc API báo lỗi cụ thể; sản phẩm không được lưu và tồn kho không thay đổi. | Sheet `TC9` | **Đạt** |
+| **TC10** | Cập nhật sản phẩm | Kiểm tra chỉnh sửa thông tin sản phẩm hiện có. | Điều kiện trước: P_TC_001 đang tồn tại.<br>Dữ liệu mới: Tên Nước suối 500ml.<br>Thao tác:<br>1) Tìm P_TC_001.<br>2) Nhấn Chỉnh sửa.<br>3) Đổi tên.<br>4) Nhấn Lưu thay đổi.<br>5) Tải lại trang. | Tên mới hiển thị sau khi tải lại; mã và số lượng sản phẩm không bị thay đổi ngoài ý muốn. | Sheet `TC10` | **Đạt** |
+| **TC11** | Xóa sản phẩm chưa phát sinh giao dịch | Kiểm tra thao tác xóa mềm sản phẩm. | Điều kiện trước: Có sản phẩm thử nghiệm chưa được dùng trong giao dịch.<br>Thao tác:<br>1) Tìm sản phẩm thử nghiệm.<br>2) Nhấn Xóa.<br>3) Xác nhận.<br>4) Làm mới danh sách. | Sản phẩm chuyển sang INACTIVE hoặc không còn trong danh sách hoạt động; sản phẩm khác không bị ảnh hưởng. | Sheet `TC11` | **Đạt** |
 
-| Test Case ID | Tên kịch bản | Điều kiện đầu vào | Các bước thực hiện | Kết quả mong đợi | Test Code tương ứng |
-|---|---|---|---|---|---|
-| **TC-DEBT-01** | Tạo đơn hàng trả đủ ngay (Không phát sinh nợ) | Đơn hàng tổng 300.000đ, `paidAmount = 300.000đ` | 1. Gọi `SalesOrderService.createSalesOrder`.<br>2. Kiểm tra phát sinh nợ. | - Đơn hàng được tạo thành công với `debtAmount = 0`, `paymentStatus = PAID`.<br>- **Không tạo** bất kỳ bản ghi `DebtTransaction` nào.<br>- `Customer.debtBalance` không đổi. | `SalesOrderServiceTest.createWithPaidEqualsTotal_noDebtGenerated` |
-| **TC-DEBT-02** | Tạo đơn hàng mua chịu toàn bộ | Đơn hàng tổng 500.000đ, `paidAmount = 0`, có `customerId = 22` | 1. Gọi `SalesOrderService.createSalesOrder`.<br>2. Xác minh giao dịch nợ phát sinh. | - Đơn hàng có `debtAmount = 500.000đ`, `paymentStatus = UNPAID`.<br>- Tự động tạo 1 `DebtTransaction` loại `DEBT_INCREASE` với `amount = 500.000đ`, `status = ACTIVE`.<br>- `Customer.debtBalance` tăng đúng 500.000đ. | `SalesOrderServiceTest.createWithPaidZero_fullDebtGenerated` |
-| **TC-DEBT-03** | Tạo đơn hàng mua chịu một phần | Đơn hàng tổng 400.000đ, `paidAmount = 150.000đ`, có `customerId = 22` | 1. Gọi `SalesOrderService.createSalesOrder`.<br>2. Xác minh giao dịch nợ phát sinh. | - Đơn hàng có `paidAmount = 150.000đ`, `debtAmount = 250.000đ`, `paymentStatus = PARTIALLY_PAID`.<br>- Tạo 1 `DebtTransaction` loại `DEBT_INCREASE` với `amount = 250.000đ`.<br>- `Customer.debtBalance` tăng đúng 250.000đ. | `DebtBookkeepingServiceTest.recordDebtIncrease_success` |
-| **TC-DEBT-04** | Từ chối tạo đơn có nợ nhưng thiếu khách hàng | Đơn hàng tổng 200.000đ, `paidAmount = 0`, `customerId = null` | 1. Gọi `SalesOrderService.createSalesOrder` không truyền `customerId`. | - Ném ngoại lệ `IllegalArgumentException: Customer is required when debt amount is greater than zero`.<br>- Giao dịch bị rollback hoàn toàn. | `SalesOrderServiceTest.createRejectsDebtWithoutCustomer` |
-| **TC-DEBT-05** | Từ chối tạo đơn với `paidAmount` âm | Đơn hàng tổng 200.000đ, `paidAmount = -50.000đ` | 1. Gọi `SalesOrderService.createSalesOrder` với `paidAmount < 0`. | - Ném ngoại lệ `IllegalArgumentException: Paid amount cannot be negative`.<br>- Không có đơn hàng nào được tạo. | `SalesOrderServiceTest.createRejectsNegativePaidAmount` |
-| **TC-DEBT-06** | Khách hàng thuộc hộ kinh doanh khác | `businessId = 1`, nhưng `customer.businessId = 2` | 1. Gọi ghi nhận công nợ với ID khách hàng khác tenant. | - Ném ngoại lệ `ResourceNotFoundException: Customer not found`.<br>- Không can thiệp dữ liệu chéo tenant. | `DebtBookkeepingServiceTest.recordDebtIncrease_tenantMismatch` |
+### 3.3. Quản lý danh mục
 
----
+| ID | Tên test case | Mô tả | Dữ liệu đầu vào / Thao tác | Kết quả mong đợi | Minh chứng | Trạng thái |
+|---|---|---|---|---|---|:---:|
+| **TC12** | Tạo danh mục hợp lệ | Kiểm tra Owner tạo danh mục mới. | Dữ liệu: Mã DM_TC_01; tên Đồ uống; trạng thái Đang hoạt động.<br>Thao tác:<br>1) Mở Sản phẩm & Danh mục.<br>2) Chọn tab Danh mục.<br>3) Nhấn Thêm danh mục.<br>4) Nhập dữ liệu.<br>5) Nhấn Lưu. | Danh mục DM_TC_01 được tạo và xuất hiện trong danh sách của đúng hộ kinh doanh. | Sheet `TC12` | **Đạt** |
+| **TC13** | Tạo danh mục trùng mã | Kiểm tra ràng buộc mã danh mục không trùng. | Điều kiện trước: DM_TC_01 đã tồn tại.<br>Dữ liệu: Mã DM_TC_01; tên Danh mục khác.<br>Thao tác:<br>1) Nhấn Thêm danh mục.<br>2) Nhập dữ liệu.<br>3) Nhấn Lưu. | Hệ thống báo trùng mã và không tạo danh mục thứ hai. | Sheet `TC13` | **Đạt** |
+| **TC14** | Cập nhật danh mục | Kiểm tra chỉnh sửa tên danh mục. | Điều kiện trước: DM_TC_01 đang tồn tại.<br>Dữ liệu mới: Đồ uống đóng chai.<br>Thao tác:<br>1) Tìm DM_TC_01.<br>2) Nhấn Chỉnh sửa.<br>3) Đổi tên.<br>4) Nhấn Lưu.<br>5) Tải lại trang. | Tên mới được lưu; các sản phẩm đã gán vẫn liên kết với danh mục. | Sheet `TC14` | **Đạt** |
+| **TC15** | Xóa danh mục đang có sản phẩm | Kiểm tra xóa mềm danh mục không làm mất sản phẩm. | Điều kiện trước: Có sản phẩm thuộc DM_TC_01.<br>Thao tác:<br>1) Mở tab Danh mục.<br>2) Chọn DM_TC_01.<br>3) Nhấn Xóa.<br>4) Xác nhận.<br>5) Mở lại danh sách sản phẩm. | Danh mục chuyển INACTIVE; sản phẩm liên quan không bị xóa và dữ liệu lịch sử vẫn còn. | Sheet `TC15` | **Đạt** |
 
-### Nhóm 2: Thanh toán công nợ (Debt Payment Processing)
+### 3.4. Quản lý tồn kho và nhập kho
 
-| Test Case ID | Tên kịch bản | Điều kiện đầu vào | Các bước thực hiện | Kết quả mong đợi | Test Code tương ứng |
-|---|---|---|---|---|---|
-| **TC-PAY-01** | Thanh toán công nợ một phần | Đơn CONFIRMED đang nợ 175.000đ. Khách hàng nợ 175.000đ. | 1. Gọi `POST /api/payments` với `amount = 75.000đ`, `paymentMethod = CASH`. | - `SalesOrder.paidAmount` tăng thành 200.000đ.<br>- `SalesOrder.debtAmount` giảm còn 100.000đ.<br>- `paymentStatus = PARTIALLY_PAID`.<br>- Tạo `DebtTransaction` loại `PAYMENT`, `amount = 75.000đ`, `balanceAfter = 100.000đ`.<br>- `Customer.debtBalance` giảm về 100.000đ. | `PaymentControllerTest.createPayment_success`<br>`PaymentServiceTest.createPaymentSynchronizesCustomerDebtBalance` |
-| **TC-PAY-02** | Thanh toán hết nợ của đơn hàng (Paid in full) | Đơn CONFIRMED đang nợ 100.000đ. Khách hàng nợ 100.000đ. | 1. Gọi `POST /api/payments` với `amount = 100.000đ`. | - `SalesOrder.debtAmount = 0đ`.<br>- `SalesOrder.paymentStatus = PAID`.<br>- `Customer.debtBalance = 0đ`.<br>- Tạo `DebtTransaction` loại `PAYMENT` với `balanceAfter = 0đ`. | `DebtBookkeepingServiceTest.recordPayment_paidInFull` |
-| **TC-PAY-03** | Từ chối thanh toán khi đơn chưa CONFIRMED | Đơn hàng trạng thái `DRAFT` | 1. Gọi `makePayment` trên đơn hàng `DRAFT`. | - Ném ngoại lệ `IllegalStateException: Only CONFIRMED orders can receive payments`.<br>- Không phát sinh thanh toán. | `SalesOrderServiceTest.makePaymentRejectsWhenOrderNotConfirmed` |
-| **TC-PAY-04** | Từ chối thanh toán khi đơn đã trả hết | Đơn hàng trạng thái `CONFIRMED` nhưng `paymentStatus = PAID` và `debtAmount = 0` | 1. Gọi `makePayment` trên đơn đã thanh toán xong. | - Ném ngoại lệ `IllegalStateException: Order is already paid in full`. | `SalesOrderServiceTest.makePaymentRejectsWhenOrderAlreadyPaid` |
-| **TC-PAY-05** | Từ chối thanh toán số tiền <= 0 | Đơn hàng đang nợ 100.000đ | 1. Gọi thanh toán với `amount = 0` hoặc `amount = -10.000đ`. | - Ném ngoại lệ `IllegalArgumentException: Payment amount must be greater than zero`. | `SalesOrderServiceTest.makePaymentRejectsWhenAmountZeroOrNegative` |
-| **TC-PAY-06** | Từ chối thanh toán vượt quá số nợ của đơn hàng | Đơn hàng đang nợ 100.000đ | 1. Gọi thanh toán với `amount = 150.000đ`. | - Ném ngoại lệ `IllegalArgumentException: Payment amount (150000) exceeds remaining debt amount (100000)`. | `SalesOrderServiceTest.makePaymentRejectsWhenAmountExceedsDebtAmount`<br>`PaymentControllerTest.createPayment_amountExceedsDebt_throws` |
-| **TC-PAY-07** | Từ chối thanh toán vượt quá tổng công nợ khách hàng | Đơn hàng nợ 200.000đ, nhưng khách hàng chỉ còn nợ 50.000đ | 1. Gọi thanh toán nợ 100.000đ cho đơn. | - Ném ngoại lệ `IllegalArgumentException: Payment amount exceeds customer debt balance`. | `DebtBookkeepingServiceTest.recordPayment_exceedsRemaining` |
-| **TC-PAY-08** | Từ chối thanh toán đơn hàng bị hủy | Đơn hàng trạng thái `CANCELLED` | 1. Gọi `POST /api/payments` cho đơn hàng đã hủy. | - Ném ngoại lệ `IllegalStateException: Cannot process payment for cancelled order`. | `PaymentControllerTest.createPayment_cancelledOrder_throws` |
-| **TC-PAY-09** | Từ chối thanh toán đơn/khách khác tenant | Đơn hàng hoặc khách hàng thuộc `businessId` khác | 1. Gọi `POST /api/payments` từ tài khoản hộ kinh doanh khác. | - Ném ngoại lệ `ResourceNotFoundException: Order not found` hoặc `Customer not found`. | `PaymentControllerTest.createPayment_orderNotInBusiness_throws`<br>`PaymentControllerTest.createPayment_customerNotInBusiness_throws` |
+| ID | Tên test case | Mô tả | Dữ liệu đầu vào / Thao tác | Kết quả mong đợi | Minh chứng | Trạng thái |
+|---|---|---|---|---|---|:---:|
+| **TC16** | Xem tồn kho hiện tại | Kiểm tra số dư tồn kho của từng sản phẩm. | Điều kiện trước: P_TC_001 có tồn kho 20.<br>Thao tác:<br>1) Đăng nhập Owner.<br>2) Chọn Tồn kho hiện tại.<br>3) Tìm P_TC_001.<br>4) Đối chiếu với số lượng đã tạo. | Hiển thị P_TC_001 với tồn kho 20 và đúng đơn vị chuẩn. | Sheet `TC16` | **Đạt** |
+| **TC17** | Nhập kho hợp lệ | Kiểm tra xác nhận phiếu nhập làm tăng tồn kho. | Điều kiện trước: P_TC_001 đang tồn 20.<br>Dữ liệu: Số lượng nhập 30; đơn giá nhập hợp lệ.<br>Thao tác:<br>1) Chọn Nhập kho.<br>2) Tạo phiếu nhập mới.<br>3) Chọn P_TC_001 và nhập dữ liệu.<br>4) Lưu rồi xác nhận phiếu.<br>5) Mở Tồn kho hiện tại. | Phiếu được xác nhận; tồn kho tăng từ 20 lên 50 và có giao dịch STOCK_IN số lượng 30. | Sheet `TC17` | **Đạt** |
+| **TC18** | Nhập kho số lượng bằng 0 | Kiểm tra hệ thống không nhận số lượng nhập bằng 0. | Dữ liệu: Sản phẩm P_TC_001; số lượng 0.<br>Thao tác:<br>1) Tạo phiếu nhập mới.<br>2) Nhập số lượng 0.<br>3) Nhấn Lưu hoặc Xác nhận. | Hệ thống báo số lượng phải lớn hơn 0; không tạo giao dịch kho. | Sheet `TC18` | **Đạt** |
+| **TC19** | Nhập kho số lượng âm | Kiểm tra hệ thống không nhận số lượng nhập âm. | Dữ liệu: Sản phẩm P_TC_001; số lượng -10.<br>Thao tác:<br>1) Tạo phiếu nhập mới.<br>2) Nhập số lượng -10.<br>3) Nhấn Lưu. | Hệ thống từ chối; phiếu không được xác nhận và tồn kho không thay đổi. | Sheet `TC19` | **Đạt** |
+| **TC20** | Xuất kho vượt số lượng tồn | Kiểm tra tồn kho không được âm. | Điều kiện trước: Sản phẩm đang tồn 88.<br>Dữ liệu: Số lượng xuất 89.<br>Thao tác:<br>1) Mở chức năng xuất kho hoặc tạo đơn bán.<br>2) Chọn sản phẩm.<br>3) Nhập số lượng 89.<br>4) Xác nhận. | Hệ thống từ chối xuất; số dư tồn kho vẫn là 88 và không tạo giao dịch STOCK_OUT. | Sheet `TC20` | **Đạt** |
+| **TC21** | Xem lịch sử giao dịch kho | Kiểm tra sổ kho sau khi nhập hàng. | Điều kiện trước: Đã xác nhận phiếu nhập 1 sản phẩm.<br>Thao tác:<br>1) Mở lịch sử hoặc sổ kho.<br>2) Lọc theo sản phẩm mới nhất.<br>3) Kiểm tra giao dịch mới nhất. | Hiển thị đúng loại nhập kho, số lượng 30, thời gian, người thực hiện và mã tham chiếu. | Sheet `TC21` | **Đạt** |
 
----
+### 3.5. Cảnh báo tồn kho thấp
 
-### Nhóm 3: Hủy đơn hàng và Đảo công nợ (Order Cancellation & Debt Reversal)
+| ID | Tên test case | Mô tả | Dữ liệu đầu vào / Thao tác | Kết quả mong đợi | Minh chứng | Trạng thái |
+|---|---|---|---|---|---|:---:|
+| **TC22** | Thiết lập ngưỡng tồn kho | Kiểm tra lưu ngưỡng cảnh báo riêng cho sản phẩm. | Dữ liệu: Nhập các ngưỡng tồn kho cho các sản phẩm mẫu.<br>Thao tác:<br>1) Mở Cảnh báo tồn kho.<br>2) Chọn cấu hình ngưỡng tồn kho thấp cần thông báo.<br>3) Nhập ngưỡng tồn kho.<br>4) Nhấn Lưu.<br>5) Tải lại trang. | Ngưỡng tồn kho được lưu và sẽ thông báo cần nhập kho nếu ngưỡng nhập kho thấp hơn ngưỡng được đặt | Sheet `TC22` | **Đạt** |
+| **TC23** | Tồn kho thấp hơn ngưỡng | Kiểm tra phát sinh cảnh báo khi tồn kho nhỏ hơn ngưỡng. | Dữ liệu: Nhập các ngưỡng tồn kho cho các sản phẩm mẫu.<br>Thao tác:<br>1) Mở Cảnh báo tồn kho.<br>2) Chọn cấu hình ngưỡng tồn kho thấp cần thông báo.<br>3) Nhập ngưỡng tồn kho.<br>4) Nhấn Lưu.<br>5) Tải lại trang.<br>6) Có thông báo về ngưỡng tồn kho thấp hơn hiện tại | Khi có sản phẩm dưới ngưỡng tồn kho quy định thì sẽ được thông báo ngay bên cạnh và ngay trên góc trái góc màn hình (hình cái chuông) | Sheet `TC23` | **Đạt** |
+| **TC24** | Tồn kho bằng ngưỡng | Kiểm tra đúng điều kiện cảnh báo nhỏ hơn ngưỡng. | Điều kiện trước: Nhập các ngưỡng tồn kho cho các sản phẩm mẫu bằng với số lượng hiện có của sản phẩm mẫu đó.<br>Thao tác:<br>1) Mở Cảnh báo tồn kho.<br>2) Nhấn Làm mới.<br>3) Tìm sản phẩm mẫu vừa nhập | Sản phẩm sẽ không bị đánh dấu tồn kho thấp vì hệ thống chỉ cảnh báo khi tồn kho nhỏ hơn ngưỡng. | Sheet `TC24` | **Đạt** |
+| **TC25** | Bổ sung hàng sau cảnh báo | Kiểm tra cảnh báo được gỡ khi tồn kho đã đủ. | Điều kiện trước: Sản phẩm mẫu đang có 5 mặt hàng tồn kho với ngưỡng cảnh cáo là 7<br>Thao tác:<br>1) Nhập thêm 6 sản phẩm.<br>2) Xác nhận phiếu nhập.<br>3) Mở lại Cảnh báo tồn kho.<br>4) Nhấn Làm mới. | Tồn kho thành 11; Sản phẩm mẫu không còn trong danh sách cảnh báo thấp. | Sheet `TC25` | **Đạt** |
 
-| Test Case ID | Tên kịch bản | Điều kiện đầu vào | Các bước thực hiện | Kết quả mong đợi | Test Code tương ứng |
-|---|---|---|---|---|---|
-| **TC-CANCEL-01** | Hủy đơn hàng có công nợ thành công | Đơn CONFIRMED đang nợ 150.000đ. Khách hàng nợ 150.000đ. | 1. Gọi `SalesOrderService.cancelSalesOrder`.<br>2. Kiểm tra số dư và giao dịch nợ. | - Đơn hàng chuyển `status = CANCELLED`, `debtAmount = 0đ`.<br>- Tự động sinh `DebtTransaction` loại `VOID` với `amount = 150.000đ`.<br>- `balanceAfter` của giao dịch `VOID` = 0đ.<br>- `Customer.debtBalance` giảm về 0đ.<br>- Hàng tồn kho được hoàn trả lại kho. | `SalesOrderServiceTest.cancelWithDebtDelegatesToDebtBookkeepingService`<br>`DebtBookkeepingServiceTest.recordDebtVoid_success` |
-| **TC-CANCEL-02** | Khóa phòng chống Deadlock khi thanh toán và hủy đơn | Đồng thời thao tác thanh toán hoặc hủy đơn | 1. Gọi `makePayment` hoặc `cancelSalesOrder`.<br>2. Kiểm tra thứ tự gọi khóa hàng. | - Luôn khóa `SalesOrder` (`findForUpdateByIdAndBusinessId`) trước.<br>- Sau đó mới khóa `Customer` (`findForUpdateByIdAndBusinessId`).<br>- Thứ tự cố định ngăn ngừa triệt để tình trạng Deadlock. | `SalesOrderServiceTest.makePaymentLocksOrderBeforeCustomer`<br>`SalesOrderServiceTest.cancelLocksOrderBeforeCustomer` |
-| **TC-CANCEL-03** | Rollback khi đảo nợ gây số dư âm bất thường | Số dư khách hàng nhỏ hơn số nợ cần đảo | 1. Gọi `cancelSalesOrder` trong điều kiện số dư nợ bị sai lệch. | - Giao dịch đảo nợ bị chặn, toàn bộ thao tác hủy đơn bị `ROLLBACK`. | `SalesOrderServiceTest.cancelRejectsWhenDebtVoidFailsNegativeBalance` |
+### 3.6. Khách hàng, đơn hàng và thanh toán
 
----
+| ID | Tên test case | Mô tả | Dữ liệu đầu vào / Thao tác | Kết quả mong đợi | Minh chứng | Trạng thái |
+|---|---|---|---|---|---|:---:|
+| **TC26** | Tạo khách hàng hợp lệ | Kiểm tra thêm khách hàng mới. | Dữ liệu: Đinh Thái , Sdt : 0889231234<br>Thao tác:<br>1) Mở Khách hàng.<br>2) Nhấn Thêm khách hàng.<br>3) Nhập dữ liệu.<br>4) Nhấn Lưu.<br>5) Tìm theo số điện thoại. | Khách hàng được tạo và xuất hiện trong đúng hộ kinh doanh với thông tin đã nhập. | Sheet `TC26` | **Đạt** |
+| **TC27** | Tạo đơn bán hợp lệ | Kiểm tra tạo đơn và tính thành tiền. | Điều kiện trước: sản phẩm đủ tồn kho, có giá bán <br>Dữ liệu: Số lượng 2.<br>Thao tác:<br>1) Mở Đơn hàng.<br>2) Nhấn Tạo đơn.<br>3) Chọn khách và sản phẩm.<br>4) Nhập số lượng 2.<br>5) Kiểm tra tổng tiền.<br>6) Lưu đơn. | Đơn được tạo; thành tiền bằng số lượng nhân đơn giá và thông tin khách hàng chính xác. | Sheet `TC27` | **Đạt** |
+| **TC28** | Tạo đơn vượt tồn kho | Kiểm tra hệ thống chặn bán vượt tồn. | Điều kiện trước: Sản phẩm chỉ còn 10<br>Dữ liệu: Số lượng bán 11<br>Thao tác:<br>1) Tạo đơn mới.<br>2) Chọn sản phẩm.<br>3) Nhập số lượng 11<br>4) Xác nhận đơn. | Hệ thống báo không đủ tồn kho; đơn không được xác nhận và tồn kho không âm. | Sheet `TC28` | **Đạt** |
+| **TC29** | Thanh toán đủ giá trị đơn | Kiểm tra ghi nhận thanh toán toàn bộ. | Điều kiện trước: Đơn có tổng tiền 900000 và chưa thanh toán.<br>Dữ liệu: Số tiền trả 900000<br>Thao tác:<br>1) Mở chi tiết đơn.<br>2) Chọn cập nhật thanh toán.<br>3) Nhập số tiền.<br>4) Xác nhận. | Đã thu 900.000đ, còn nợ 0đ và trạng thái thanh toán là đã thanh toán đủ. | Sheet `TC29` | **Đạt** |
+| **TC30** | Thanh toán một phần | Kiểm tra tính công nợ sau thanh toán một phần. | Điều kiện trước: Đơn có tổng tiền 300.000đ và chưa thanh toán.<br>Dữ liệu: Số tiền trả 150.000đ.<br>Thao tác:<br>1) Mở chi tiết đơn.<br>2) Nhập số tiền 150.000đ.<br>3) Xác nhận.<br>4) Mở công nợ khách hàng. | Đã thu 150.000đ, còn nợ 150.000đ; giao dịch thanh toán xuất hiện trong lịch sử. | Sheet `TC30` | **Đạt** |
+| **TC31** | Hủy đơn đã xác nhận | Kiểm tra hủy đơn và hoàn tồn kho đúng một lần. | Điều kiện trước: Có đơn đã xác nhận và chưa hủy.<br>Thao tác:<br>1) Ghi nhận tồn kho hiện tại.<br>2) Mở chi tiết đơn.<br>3) Chọn Yêu cầu hủy.<br>4) Nhập lý do.<br>5) Xác nhận hủy.<br>6) Kiểm tra lại tồn kho. | Đơn chuyển sang đã hủy; hàng được hoàn đúng số lượng một lần và có giao dịch khôi phục kho. | Sheet `TC31` | **Đạt** |
 
-### Nhóm 4: Lịch sử và Báo cáo công nợ (History & Summary Queries)
+### 3.7. Doanh thu và biểu đồ
 
-| Test Case ID | Tên kịch bản | Điều kiện đầu vào | Các bước thực hiện | Kết quả mong đợi | Test Code tương ứng |
-|---|---|---|---|---|---|
-| **TC-HIST-01** | Lấy lịch sử công nợ khách hàng (Sắp xếp & Thông tin đầy đủ) | Khách hàng có 3 giao dịch: `DEBT_INCREASE`, `PAYMENT`, `VOID` | 1. Gọi `GET /api/payments/customers/{id}/history?page=0&size=20`. | - HTTP 200 OK.<br>- Danh sách trả về được sắp xếp theo `transactionDate DESC, id DESC`.<br>- Trả về đầy đủ: `transactionCode`, `orderCode`, `customerId`, `customerName`, `transactionType`, `amount`, `balanceAfter`, `paymentMethod`, `referenceNumber`, `status`.<br>- Giao dịch `VOID` vẫn hiển thị đầy đủ trong lịch sử. | `PaymentControllerTest.getCustomerPaymentHistory_success` |
-| **TC-HIST-02** | Xác thực phân trang lịch sử công nợ | Gọi API lịch sử với `size = 150` (> 100) hoặc `page = -1` | 1. Gọi `GET /api/payments/customers/{id}/history?page=-1` hoặc `size=150`. | - Ném ngoại lệ `IllegalArgumentException: Page index must not be less than zero` hoặc `Page size must not exceed 100`.<br>- HTTP 400 Bad Request. | `PaymentControllerTest.getCustomerPaymentHistory_sizeExceedsMax_throws` |
-| **TC-HIST-03** | Bảo mật truy vấn lịch sử công nợ theo Tenant | Khách hàng thuộc `businessId = 2`, người gọi thuộc `businessId = 1` | 1. Gọi `GET /api/payments/customers/{id}/history`. | - Ném ngoại lệ `ResourceNotFoundException: Customer not found`.<br>- HTTP 404 Not Found. | `PaymentControllerTest.getCustomerPaymentHistory_wrongBusiness_throws` |
-| **TC-SUMM-01** | Báo cáo tổng hợp công nợ khách hàng | Khách phát sinh nợ 60tr, đã trả 600k, đã đảo nợ 59.4tr | 1. Gọi `GET /api/payments/customers/{id}/debt-summary`. | - HTTP 200 OK.<br>- `totalDebtIncreased = 60.000.000`.<br>- `totalPaid = 600.000`.<br>- `totalVoid = 59.400.000`.<br>- `currentBalance = 0.00`. | `PaymentControllerTest.getCustomerDebtSummary_success` |
-| **TC-SUMM-02** | Lịch sử thanh toán theo đơn hàng | Đơn hàng có 2 đợt thanh toán nợ | 1. Gọi `GET /api/payments/orders/{orderId}`.<br>2. Gọi `GET /api/payments/orders/{orderId}/summary`. | - `GET /api/payments/orders/{orderId}`: Trả về 2 bản ghi `PAYMENT`.<br>- `GET /api/payments/orders/{orderId}/summary`: Trả về `totalAmount`, `paidAmount`, `debtAmount`, `paymentStatus`. | `PaymentControllerTest.getOrderPayments_success`<br>`PaymentControllerTest.getOrderPaymentSummary_success` |
+| ID | Tên test case | Mô tả | Dữ liệu đầu vào / Thao tác | Kết quả mong đợi | Minh chứng | Trạng thái |
+|---|---|---|---|---|---|:---:|
+| **TC32** | Hiển thị sổ doanh thu | Kiểm tra đơn đã xác nhận được phản ánh vào doanh thu. | Điều kiện trước: Có một đơn bán đã xác nhận trong ngày kiểm thử.<br>Thao tác:<br>1) Đăng nhập Owner.<br>2) Mở Doanh thu.<br>3) Chọn khoảng ngày chứa ngày xác nhận đơn.<br>4) Nhấn Làm mới. | Giao dịch xuất hiện trong sổ; tổng doanh thu tăng đúng giá trị của đơn. | Sheet `TC32` | **Đạt** |
+| **TC33** | Lọc doanh thu theo ngày | Kiểm tra bộ lọc chỉ trả dữ liệu trong khoảng đã chọn. | Điều kiện trước: Có hai đơn ở hai ngày khác nhau.<br>Thao tác:<br>1) Mở Doanh thu.<br>2) Chọn từ ngày và đến ngày chỉ chứa một đơn.<br>3) Nhấn áp dụng hoặc làm mới. | Chỉ đơn nằm trong khoảng ngày xuất hiện; tổng tiền bằng đúng đơn đó. | Sheet `TC33` | **Đạt** |
+| **TC34** | Khoảng ngày không hợp lệ | Kiểm tra ngày bắt đầu lớn hơn ngày kết thúc. | Dữ liệu: Từ ngày 14/09/2026; đến ngày 01/09/2026.<br>Thao tác:<br>1) Mở Biểu đồ doanh thu.<br>2) Chọn hai ngày trên.<br>3) Nhấn Xem biểu đồ. | Hiển thị thông báo khoảng ngày không hợp lệ; không thay thế biểu đồ bằng dữ liệu sai. | Sheet `TC34` | **Đạt** |
+| **TC35** | Nhóm biểu đồ theo thời gian | Kiểm tra tổng hợp doanh thu theo ngày, tuần và tháng. | Điều kiện trước: Khoảng thời gian có dữ liệu nhiều ngày.<br>Thao tác:<br>1) Chọn Theo ngày và ghi nhận tổng.<br>2) Đổi sang Theo tuần.<br>3) Đổi sang Theo tháng.<br>4) So sánh các tổng. | Số điểm dữ liệu thay đổi theo nhóm thời gian; tổng doanh thu của cùng khoảng ngày không thay đổi. | Sheet `TC35` | **Đạt** |
+| **TC36** | Biểu đồ khi không có dữ liệu | Kiểm tra trạng thái rỗng của biểu đồ. | Dữ liệu: Khoảng ngày chưa có đơn xác nhận.<br>Thao tác:<br>1) Chọn khoảng ngày không có dữ liệu.<br>2) Nhấn Xem biểu đồ. | Hiển thị thông báo không có dữ liệu; không lỗi trang và không giữ dữ liệu của lần lọc trước. | Sheet `TC36` | **Đạt** |
 
----
+### 3.8. Nhân viên, Admin và cô lập dữ liệu
 
-## 4. Ma trận truy xuất yêu cầu (Requirements Traceability Matrix - RTM)
+| ID | Tên test case | Mô tả | Dữ liệu đầu vào / Thao tác | Kết quả mong đợi | Minh chứng | Trạng thái |
+|---|---|---|---|---|---|:---:|
+| **TC37** | Owner tạo nhân viên | Kiểm tra tạo nhân viên thuộc đúng hộ kinh doanh. | Điều kiện trước: Owner có quyền quản lý nhân viên.<br>Dữ liệu: Thông tin nhân viên hợp lệ và email chưa tồn tại.<br>Thao tác:<br>1) Mở Quản lý nhân viên.<br>2) Nhấn Thêm nhân viên.<br>3) Nhập dữ liệu.<br>4) Nhấn Lưu. | Nhân viên được tạo, xuất hiện trong danh sách và liên kết với đúng businessId. | Sheet `TC37` | **Đạt** |
+| **TC38** | Owner khóa tài khoản nhân viên | Kiểm tra nhân viên bị khóa không thể tiếp tục sử dụng hệ thống. | Điều kiện trước: Nhân viên đang hoạt động.<br>Thao tác:<br>1) Mở chi tiết nhân viên.<br>2) Nhấn Khóa tài khoản.<br>3) Xác nhận.<br>4) Đăng xuất Owner.<br>5) Thử đăng nhập bằng nhân viên vừa khóa. | Tài khoản chuyển trạng thái khóa; nhân viên không đăng nhập hoặc sử dụng API được. | Sheet `TC38` | **Đạt** |
+| **TC39** | Admin tạo gói thuê bao | Kiểm tra Admin tạo và tra cứu gói thuê bao. | Điều kiện trước: Đăng nhập Admin.<br>Dữ liệu: Mã PLAN_TC; tên Gói kiểm thử; giá tháng 199000; giá năm 1990000.<br>Thao tác:<br>1) Mở Gói thuê bao.<br>2) Nhấn Thêm gói.<br>3) Nhập dữ liệu.<br>4) Nhấn Lưu.<br>5) Tìm PLAN_TC. | Gói được lưu và hiển thị đúng mã, tên, giá tháng, giá năm và trạng thái. | Sheet `TC39` | **Đạt** |
 
-| Mã SRS | Yêu cầu nghiệp vụ | Test Cases tương ứng | Unit / Integration Test Class | Trạng thái |
-|---|---|---|---|:---:|
-| **HBDT-07.3** | Ghi nhận công nợ tự động | TC-DEBT-01, TC-DEBT-02, TC-DEBT-03, TC-DEBT-04, TC-DEBT-05, TC-DEBT-06 | `SalesOrderServiceTest`, `DebtBookkeepingServiceTest` | **PASS** |
-| **HBDT-07.4** | Thanh toán công nợ khách hàng | TC-PAY-01, TC-PAY-02, TC-PAY-03, TC-PAY-04, TC-PAY-05, TC-PAY-06, TC-PAY-07, TC-PAY-08, TC-PAY-09 | `PaymentServiceTest`, `PaymentControllerTest`, `SalesOrderServiceTest` | **PASS** |
-| **HBDT-07.5** | Lịch sử & Tổng hợp công nợ | TC-HIST-01, TC-HIST-02, TC-HIST-03, TC-SUMM-01, TC-SUMM-02 | `PaymentControllerTest`, `DebtTransactionRepository` | **PASS** |
-| **HBDT-08.4** | Đảo nợ khi hủy đơn hàng | TC-CANCEL-01, TC-CANCEL-02, TC-CANCEL-03 | `SalesOrderServiceTest`, `DebtBookkeepingServiceTest` | **PASS** |
+## 4. Hướng dẫn tra cứu
 
----
+1. Mở [file Excel test case](./hbdt-system-test-cases.xlsx) và chọn sheet `Test Cases` để xem danh sách tổng.
+2. Nhấn liên kết trong cột **Ảnh minh chứng** để chuyển đến sheet `TC1`–`TC39` tương ứng.
+3. Đối chiếu dữ liệu đầu vào, thao tác, kết quả mong đợi và minh chứng của từng test case.
+4. Trạng thái thực hiện được ghi nhận trực tiếp trên sheet `Test Cases`.
 
-## 5. Kết quả thực thi kiểm thử (Test Execution Summary)
+## 5. Nội dung cần lưu ý
 
-- **Tổng số bài kiểm thử tự động**: **216 tests**.
-- **Kết quả**: **216 passed**, **0 failures**, **0 errors**, **0 skipped**.
-- **Thời gian chạy**: ~8.5 giây.
-- **Đánh giá chất lượng**: Toàn bộ luồng công nợ tự động (HBDT-66) đạt 100% tiêu chí nghiệm thu, không có hồi quy và tuân thủ tuyệt đối kiến trúc bảo mật đa tenant.
+- **Phạm vi:** Tài liệu bao gồm 39 test case kiểm thử hệ thống, từ TC01 đến TC39.
+- **Kết quả:** Cả 39 test case đều có trạng thái **Đạt** theo kết quả đã ghi nhận trong workbook.
+- **Thứ tự thực hiện:** Một số kịch bản sử dụng dữ liệu được tạo ở test trước, như `P_TC_001` và `DM_TC_01`; vì vậy nên tra cứu theo thứ tự TC01–TC39.
+- **Cô lập dữ liệu:** Các chức năng theo vai trò Owner và Employee được kiểm tra trong phạm vi đúng `businessId`, bảo đảm không hiển thị dữ liệu của hộ kinh doanh khác.
+- **Dữ liệu kiểm thử:** Các tài khoản, mã sản phẩm, mã danh mục, khách hàng và gói thuê bao trong tài liệu là dữ liệu phục vụ kiểm thử.
+- **Ảnh minh chứng:** Minh chứng được tổ chức theo từng sheet `TC1`–`TC39` và được truy cập từ cột **Ảnh minh chứng** trên sheet tổng.
+- **Định dạng dữ liệu:** Ngày sử dụng định dạng `dd/MM/yyyy`; số tiền sử dụng Việt Nam đồng; các mã nghiệp vụ được giữ nguyên theo dữ liệu kiểm thử.
+
+## 6. Kết luận
+
+- **Tổng số test case:** 39.
+- **Đạt:** 39.
+- **Không đạt:** 0.
+- **Tỷ lệ đạt:** 100%.
+
+Bộ test case đã kiểm tra các luồng chính của hệ thống gồm đăng nhập và phân quyền, sản phẩm, danh mục, tồn kho, cảnh báo tồn kho thấp, khách hàng, đơn hàng, thanh toán, doanh thu, biểu đồ, nhân viên và gói thuê bao Admin. Kết quả ghi nhận cho thấy toàn bộ 39 test case đều đáp ứng kết quả mong đợi.

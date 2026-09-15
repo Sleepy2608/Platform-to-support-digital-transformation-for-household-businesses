@@ -7,6 +7,7 @@ import com.hbdt.entitlement.service.FeatureEntitlementService;
 import com.hbdt.entity.Category;
 import com.hbdt.entity.InventoryBalance;
 import com.hbdt.entity.Product;
+import com.hbdt.entity.ProductPrice;
 import com.hbdt.entity.ProductUnit;
 import com.hbdt.entity.Unit;
 import com.hbdt.product.dto.ProductRequest;
@@ -14,6 +15,7 @@ import com.hbdt.product.dto.ProductResponse;
 import com.hbdt.repository.CategoryRepository;
 import com.hbdt.repository.InventoryBalanceRepository;
 import com.hbdt.repository.ProductRepository;
+import com.hbdt.repository.ProductPriceRepository;
 import com.hbdt.repository.ProductUnitRepository;
 import com.hbdt.repository.TaxActivityGroupRepository;
 import com.hbdt.repository.UnitRepository;
@@ -42,6 +44,8 @@ class ProductServiceTest {
     @Mock
     private ProductUnitRepository productUnitRepository;
     @Mock
+    private ProductPriceRepository productPriceRepository;
+    @Mock
     private CategoryRepository categoryRepository;
     @Mock
     private UnitRepository unitRepository;
@@ -64,7 +68,8 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
-        productService = new ProductService(productRepository, productUnitRepository, categoryRepository, unitRepository,
+        productService = new ProductService(productRepository, productUnitRepository, productPriceRepository,
+                categoryRepository, unitRepository,
                 inventoryBalanceRepository, taxActivityGroupRepository, businessContextService,
                 productImageService, imageStorageService, featureEntitlementService, lowStockAlertService);
         when(businessContextService.requireBusinessId("owner")).thenReturn(10L);
@@ -208,5 +213,84 @@ class ProductServiceTest {
         verify(productRepository).findByIdAndBusinessId(8L, 10L);
         verify(productRepository).save(product);
         verify(lowStockAlertService).synchronizeProductStatus(10L, 8L);
+    }
+
+    @Test
+    void getUsesCurrentBaseUnitPriceInsteadOfLegacyProductPrice() {
+        Product product = Product.builder()
+                .id(16L)
+                .businessId(10L)
+                .productCode("SP_002")
+                .productName("Laptop")
+                .baseUnitId(1L)
+                .salePrice(BigDecimal.ZERO)
+                .status("ACTIVE")
+                .build();
+        ProductUnit baseUnit = ProductUnit.builder()
+                .id(8L)
+                .productId(16L)
+                .unitId(1L)
+                .baseUnit(true)
+                .status("ACTIVE")
+                .build();
+        ProductPrice currentPrice = ProductPrice.builder()
+                .id(9L)
+                .productUnitId(8L)
+                .salePrice(new BigDecimal("30000000.00"))
+                .status("ACTIVE")
+                .build();
+        when(productRepository.findByIdAndBusinessId(16L, 10L)).thenReturn(Optional.of(product));
+        when(productUnitRepository.findAllByProductIdAndStatusOrderByBaseUnitDesc(16L, "ACTIVE"))
+                .thenReturn(java.util.List.of(baseUnit));
+        when(productPriceRepository.findFirstByProductUnitIdAndStatusOrderByEffectiveFromDesc(8L, "ACTIVE"))
+                .thenReturn(Optional.of(currentPrice));
+
+        ProductResponse response = productService.get("owner", 16L);
+
+        assertEquals(new BigDecimal("30000000.00"), response.salePrice());
+        assertEquals(1L, response.saleUnitId());
+    }
+
+    @Test
+    void getUsesConfiguredSalesUnitWhenDeclaredBaseUnitHasNoConfiguration() {
+        Product product = Product.builder()
+                .id(18L)
+                .businessId(10L)
+                .productCode("SP002")
+                .productName("Nước Ngọt Cola")
+                .baseUnitId(8L)
+                .salePrice(new BigDecimal("12000.00"))
+                .status("ACTIVE")
+                .build();
+        Unit bottle = Unit.builder().id(8L).unitName("Chai").status("ACTIVE").build();
+        Unit productUnitName = Unit.builder().id(1L).unitName("Sản phẩm").status("ACTIVE").build();
+        ProductUnit configuredSalesUnit = ProductUnit.builder()
+                .id(11L)
+                .productId(18L)
+                .unitId(1L)
+                .baseUnit(true)
+                .status("ACTIVE")
+                .build();
+        ProductPrice currentPrice = ProductPrice.builder()
+                .id(12L)
+                .productUnitId(11L)
+                .salePrice(new BigDecimal("10000.00"))
+                .status("ACTIVE")
+                .build();
+        when(productRepository.findByIdAndBusinessId(18L, 10L)).thenReturn(Optional.of(product));
+        when(unitRepository.findById(8L)).thenReturn(Optional.of(bottle));
+        when(unitRepository.findById(1L)).thenReturn(Optional.of(productUnitName));
+        when(productUnitRepository.findAllByProductIdAndStatusOrderByBaseUnitDesc(18L, "ACTIVE"))
+                .thenReturn(java.util.List.of(configuredSalesUnit));
+        when(productPriceRepository.findFirstByProductUnitIdAndStatusOrderByEffectiveFromDesc(11L, "ACTIVE"))
+                .thenReturn(Optional.of(currentPrice));
+
+        ProductResponse response = productService.get("owner", 18L);
+
+        assertEquals(8L, response.baseUnitId());
+        assertEquals("Chai", response.baseUnitName());
+        assertEquals(new BigDecimal("10000.00"), response.salePrice());
+        assertEquals(1L, response.saleUnitId());
+        assertEquals("Sản phẩm", response.saleUnitName());
     }
 }
