@@ -16,6 +16,7 @@ import { apiClient, clearAuth, getAccessToken, getAuthItem } from '../lib/apiCli
 import { isOwner } from '../lib/roles';
 import { EntitlementProvider } from '../lib/EntitlementContext';
 import NotificationBell from '../components/NotificationBell';
+import BackToTop from '../components/BackToTop';
 
 function getCleanHash(rawHash?: string): string {
   if (!rawHash) return 'profile';
@@ -73,7 +74,7 @@ const MANAGE_NAV_ITEMS: Array<{
   ] },
   { label: 'Khách hàng', href: '/owner/customers', icon: UserSearch, path: '/owner/customers' },
   { label: 'Quản lý nhân viên', href: '/owner/employees', icon: Users, path: '/owner/employees' },
-  { label: 'Phản hồi', href: '/owner/feedback', icon: MessageSquare, path: '/owner/feedback' },
+  { label: 'Viết hỗ trợ', href: '/owner/feedback', icon: MessageSquare, path: '/owner/feedback' },
 ];
 
 function isChildActive(childHref: string, pathname: string, searchParams: URLSearchParams | null): boolean {
@@ -240,9 +241,12 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
     if (loading) return;
     let active = true;
     const refreshCount = async () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+
       try {
         const summary = await apiClient.get<{ totalLowStock: number }>(
           '/api/inventory/low-stock/summary?limit=1',
+          { cacheTtlMs: 25_000 },
         );
         if (active) setLowStockCount(summary.totalLowStock);
       } catch {
@@ -250,17 +254,22 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
       }
     };
     void refreshCount();
-    const timer = window.setInterval(() => void refreshCount(), 30_000);
+    const timer = window.setInterval(() => void refreshCount(), 60_000);
     const handleNotification = () => void refreshCount();
+    const handleVisibilityChange = () => {
+      if (!document.hidden) void refreshCount();
+    };
 
     window.addEventListener('hbdt-notification', handleNotification);
     window.addEventListener('product-updated', handleNotification);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       active = false;
       window.clearInterval(timer);
       window.removeEventListener('hbdt-notification', handleNotification);
       window.removeEventListener('product-updated', handleNotification);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [loading]);
 
@@ -374,13 +383,12 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
             exit={{ x: -280, opacity: 0 }}
             transition={{ type: 'spring', damping: 28, stiffness: 220 }}
             className={`fixed md:sticky top-0 left-0 bottom-0 z-50 w-[270px] bg-white border-r border-slate-200/80
-              flex flex-col justify-between py-6 h-screen md:translate-x-0 shadow-xs
+              flex flex-col h-screen md:translate-x-0 shadow-xs
               ${sidebarOpen ? 'flex' : 'hidden md:flex'}`}
           >
-            {/* Top Container */}
-            <div className="flex flex-col gap-6 px-5">
-              {/* Brand Logo */}
-              <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-100">
+            {/* Brand Logo Header */}
+            <div className="px-5 py-4 border-b border-slate-100 shrink-0">
+              <div className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="p-2.5 bg-slate-900 text-white rounded-xl shadow-sm">
                     <Store className="w-5 h-5" />
@@ -392,7 +400,10 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
                 </div>
                 <NotificationBell className="shrink-0" />
               </div>
+            </div>
 
+            {/* Scrollable Navigation & Profile Body */}
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-5 py-4 flex flex-col gap-6 custom-scrollbar">
               {/* User Profile Summary */}
               <div className="p-3.5 bg-slate-50 border border-slate-200/70 rounded-2xl flex items-center gap-3 shadow-2xs">
                 {avatarUrl ? (
@@ -463,24 +474,22 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
             </div>
 
             {/* Footer / Logout */}
-            <div className="px-5">
-              <div className="pt-4 border-t border-slate-100 space-y-1">
-                <Link
-                  href="/"
-                  className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <Store className="w-4 h-4" />
-                  <span>Trang chủ</span>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer border border-transparent hover:border-red-200/60"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Đăng xuất</span>
-                </button>
-              </div>
+            <div className="px-5 py-3 border-t border-slate-100 shrink-0 space-y-1">
+              <Link
+                href="/"
+                className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-100/70 transition-colors"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Store className="w-4 h-4" />
+                <span>Trang chủ</span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer border border-transparent hover:border-red-200/60"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Đăng xuất</span>
+              </button>
             </div>
           </motion.aside>
         )}
@@ -500,6 +509,8 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
           {children}
         </EntitlementProvider>
       </main>
+
+      <BackToTop variant="light" />
     </div>
   );
 }
