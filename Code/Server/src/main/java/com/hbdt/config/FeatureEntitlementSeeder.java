@@ -87,8 +87,8 @@ public class FeatureEntitlementSeeder implements CommandLineRunner {
      * - FREE (0đ - Dùng thử): SP (≤3), Đơn (≤5), KH (≤3) -> Rất nhanh để test chạm trần quota
      * - BASIC (99k - Hộ nhỏ): SP (≤15), Đơn (≤30), KH (≤15), Báo cáo (∞)
      * - STANDARD (199k - Chuẩn): Bán hàng (∞), Kho (∞), Công nợ (∞), Kế toán TT88 (∞), Báo cáo (∞), Nhân viên (≤2 NV)
-     * - PREMIUM (299k - Cao cấp): Đầy đủ tính năng + Thuế (∞) + Marketing (∞) + AI (∞) + Nhân viên (≤5 NV)
-     * - VIP (499k - Trọn gói): Toàn bộ 10 tính năng không giới hạn, Nhân viên (∞)
+     * - PREMIUM (299k - Cao cấp): Các tính năng nâng cao, trừ AI; Nhân viên (≤5 NV)
+     * - VIP (499k - Trọn gói): Toàn bộ tính năng, gồm AI, không giới hạn
      *
      * TỐI ƯU HÓA: Nếu DB đã có cấu hình (Admin đã tùy chỉnh trên UI) -> Giữ nguyên, KHÔNG ghi đè khi restart server!
      */
@@ -119,8 +119,8 @@ public class FeatureEntitlementSeeder implements CommandLineRunner {
                     shouldMap = true;
                     quota = null;
                 } else if (planCode.contains("PREMIUM") || planCode.contains("CAO CẤP") || planCode.contains("PRO")) {
-                    // Gói Cao Cấp (299k): Mở Full tính năng gồm Thuế, AI, Marketing; Nhân viên tối đa 5
-                    shouldMap = true;
+                    // AI_ASSISTANT dành cho VIP; gói Cao Cấp vẫn có các tính năng nâng cao còn lại.
+                    shouldMap = !"AI_ASSISTANT".equals(code);
                     if ("EMPLOYEE_MANAGEMENT".equals(code)) {
                         quota = 5;
                     }

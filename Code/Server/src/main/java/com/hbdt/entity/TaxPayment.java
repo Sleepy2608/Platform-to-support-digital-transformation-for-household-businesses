@@ -45,6 +45,11 @@ public class TaxPayment {
     @Column(name = "created_by", columnDefinition = "BIGINT UNSIGNED")
     private Long createdBy;
 
-    @Column(name = "created_at", nullable = false, insertable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
+    }
 }

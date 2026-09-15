@@ -5,6 +5,7 @@ import com.hbdt.common.exception.ResourceNotFoundException;
 import com.hbdt.debt.service.DebtBookkeepingService;
 import com.hbdt.entity.Customer;
 import com.hbdt.entity.DebtTransaction;
+import com.hbdt.entity.AiOrderDraft;
 import com.hbdt.entity.Product;
 import com.hbdt.entity.SalesOrder;
 import com.hbdt.entity.SalesOrderItem;
@@ -23,6 +24,7 @@ import com.hbdt.order.dto.SalesOrderSummaryResponse;
 import com.hbdt.pricing.service.ProductPricingService;
 import com.hbdt.product.service.BusinessContextService;
 import com.hbdt.repository.CustomerRepository;
+import com.hbdt.repository.AiOrderDraftRepository;
 import com.hbdt.repository.ProductRepository;
 import com.hbdt.repository.SalesOrderItemRepository;
 import com.hbdt.repository.SalesOrderRepository;
@@ -65,6 +67,7 @@ public class SalesOrderService {
     private final RevenueLedgerService revenueLedgerService;
     private final SalesBookkeepingService salesBookkeepingService;
     private final DebtBookkeepingService debtBookkeepingService;
+    private final AiOrderDraftRepository aiOrderDraftRepository;
 
     public SalesOrderService(
             SalesOrderRepository salesOrderRepository,
@@ -78,7 +81,8 @@ public class SalesOrderService {
             CustomerRepository customerRepository,
             RevenueLedgerService revenueLedgerService,
             SalesBookkeepingService salesBookkeepingService,
-            DebtBookkeepingService debtBookkeepingService
+            DebtBookkeepingService debtBookkeepingService,
+            AiOrderDraftRepository aiOrderDraftRepository
     ) {
         this.salesOrderRepository = salesOrderRepository;
         this.salesOrderItemRepository = salesOrderItemRepository;
@@ -92,6 +96,7 @@ public class SalesOrderService {
         this.revenueLedgerService = revenueLedgerService;
         this.salesBookkeepingService = salesBookkeepingService;
         this.debtBookkeepingService = debtBookkeepingService;
+        this.aiOrderDraftRepository = aiOrderDraftRepository;
     }
 
     @Transactional
@@ -99,6 +104,14 @@ public class SalesOrderService {
         Long businessId = businessContextService.requireBusinessId(actorUsername);
         User actor = userRepository.findByUsername(actorUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tài khoản"));
+        AiOrderDraft aiDraft = null;
+        if (request.aiDraftId() != null) {
+            aiDraft = aiOrderDraftRepository.findByIdAndBusinessId(request.aiDraftId(), businessId)
+                    .orElseThrow(() -> new BadRequestException("Đơn nháp AI không tồn tại hoặc không thuộc cửa hàng"));
+            if (!"PENDING".equals(aiDraft.getStatus())) {
+                throw new BadRequestException("Đơn nháp AI đã được xử lý trước đó");
+            }
+        }
         String orderCode = request.orderCode().trim();
         if (salesOrderRepository.existsByBusinessIdAndOrderCodeIgnoreCase(businessId, orderCode)) {
             throw new BadRequestException("Mã đơn hàng đã tồn tại");
@@ -191,6 +204,14 @@ public class SalesOrderService {
         // ── HBDT-59: Ghi sổ kế toán tự động ──────────────────────────────────
         // Chạy trong cùng @Transactional — nếu ghi sổ thất bại, đơn hàng cũng rollback.
         salesBookkeepingService.recordSaleFromOrder(order);
+
+        if (aiDraft != null) {
+            aiDraft.setStatus("CONFIRMED");
+            aiDraft.setReviewedBy(actor.getId());
+            aiDraft.setReviewedAt(LocalDateTime.now());
+            aiDraft.setSalesOrderId(order.getId());
+            aiOrderDraftRepository.save(aiDraft);
+        }
 
         return toResponse(order, savedItems);
     }

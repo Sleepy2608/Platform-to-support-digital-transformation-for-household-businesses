@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -15,6 +16,12 @@ public interface ReportTemplateRepository
                 JpaSpecificationExecutor<ReportTemplate> {
 
     boolean existsByTemplateCode(String templateCode);
+
+    boolean existsByTemplateCodeIgnoreCase(String code);
+
+    List<ReportTemplate> findAllByOrderByTemplateCodeAsc();
+
+    List<ReportTemplate> findAllByStatusOrderByUpdatedAtDesc(TemplateStatus status);
 
     Optional<ReportTemplate> findByTemplateTypeAndStatus(TemplateType type, TemplateStatus status);
 }

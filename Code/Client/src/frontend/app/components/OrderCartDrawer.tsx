@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   AlertCircle,
   ArrowRight,
@@ -71,7 +71,15 @@ export interface CheckoutData {
   customerId?: number;
 }
 
+export interface InitialCheckout {
+  orderCode: string;
+  customer?: CustomerOption;
+  paymentType: 'CASH' | 'TRANSFER' | 'DEBT';
+  note: string;
+}
+
 interface OrderCartDrawerProps {
+  initialCheckout?: InitialCheckout;
   isOpen: boolean;
   onClose: () => void;
   items: CartItem[];
@@ -83,6 +91,7 @@ interface OrderCartDrawerProps {
 }
 
 export function OrderCartDrawer({
+  initialCheckout,
   isOpen,
   onClose,
   items,
@@ -92,14 +101,16 @@ export function OrderCartDrawer({
   onClearCart,
   onCheckout,
 }: OrderCartDrawerProps) {
-  const [orderCode, setOrderCode] = useState('');
+  const [orderCode, setOrderCode] = useState(initialCheckout?.orderCode || '');
   const [source, setSource] = useState<'POS' | 'ONLINE'>('POS');
-  const [paidAmount, setPaidAmount] = useState('');
-  const [note, setNote] = useState('');
+  const [paidAmount, setPaidAmount] = useState(initialCheckout?.paymentType === 'DEBT' ? '0' : '');
+  const [note, setNote] = useState(initialCheckout?.note || '');
   const [submitting, setSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerOption | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerOption | null>(
+    initialCheckout?.customer ?? null,
+  );
   const [showQr, setShowQr] = useState(false);
   const [downloadingQr, setDownloadingQr] = useState(false);
   const [copiedAcc, setCopiedAcc] = useState(false);

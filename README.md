@@ -54,7 +54,7 @@ Xem ở file `docs/project-progress-and-feature/feature.md` để biết chi ti�
 | **Frontend** | React 19, TypeScript 5, Next.js 16 (App Router), Tailwind CSS 4, Framer Motion, Lucide React |
 | **Backend** | Java 21, Spring Boot 3.3, Spring Web, Spring Data JPA, Spring Security, JWT (JJWT) |
 | **Database** | MySQL 8 |
-| **AI Service (Tentative)** | Python, FastAPI, Uvicorn, Pydantic |
+| **AI Service** | Python 3.12, FastAPI, Uvicorn, Pydantic; tích hợp **B.ai** (Chat Completions) để trích xuất câu đặt hàng tiếng Việt |
 | **Build & Công cụ** | Maven, npm, ESLint, Lombok |
 | **DevOps** | Docker, Docker Compose |
 
@@ -122,7 +122,7 @@ Platform-to-support-digital-transformation-for-household-businesses/
 ├── README.md                                     # Tổng quan dự án
 ├── docker-compose.yml                            # Triển khai Docker toàn hệ thống
 ├── Code/
-│   ├── AI/                                       # AI Service (FastAPI) xử lý đơn hàng bằng ngôn ngữ tự nhiên
+│   ├── AI/                                       # AI Service (FastAPI) gọi B.ai trích xuất câu đặt hàng tiếng Việt
 │   ├── Client/
 │   │   └── src/
 │   │       └── frontend/                         # Frontend Next.js 16 / TypeScript
@@ -201,10 +201,19 @@ git clone https://github.com/Sleepy2608/Platform-to-support-digital-transformati
 Tạo file `Code/Server/.env`:
 ```env
 DB_HOST=<host>
-DB_PORT=3000
+DB_PORT=3306
 DB_NAME=<dbname>
 DB_USERNAME=<username>
 DB_PASSWORD=<password>
+```
+
+Nếu dùng tính năng AI tạo đơn nháp, bổ sung thêm các biến AI (xem đầy đủ trong `Code/Server/.env.example`):
+```env
+AI_SERVICE_URL=http://127.0.0.1:8000
+AI_SERVICE_API_SECRET=<chuoi_bi_mat>
+AI_SERVICE_TIMEOUT_SECONDS=35
+AI_SERVICE_AUTO_START=true
+AI_SERVICE_WORK_DIR=../AI
 ```
 
 Vào mục Edit Configurations -> Chọn Evironment variables -> Thêm file .env vừa tạo
@@ -267,6 +276,22 @@ npm run dev
 > Lưu ý: Trang đăng nhập vào Manager/Owner/Employee được chạy ở url `http://localhost:3000/login` còn trang Admin được chạy ở url `http://localhost:3000/admin/login`.
 > Cần chọn đúng trang đăng nhập để tránh bị báo lỗi 404 hoặc không tìm thấy trang, nếu không thấy thì xóa các file trong thư mục `.next` và `node_modules` rồi chạy lại `npm install`.
 > Thay vì xóa tay, có thể double-click `run-frontend-clean.bat` ở thư mục gốc — script làm đúng các bước này và hỏi xác nhận trước khi xóa.
+
+### 6. AI Service (cần cho tính năng AI tạo đơn nháp)
+
+```text
+cd Code/AI
+python -m venv venv
+.\venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+
+- Kiểm tra service đang sống: `curl http://localhost:8000/health`
+- Kiểm tra đã cấu hình B.ai: `curl http://localhost:8000/api/v1/ai/ready` (trả `503 BAI_NOT_CONFIGURED` nghĩa là thiếu `BAI_API_KEY` hoặc `BAI_MODEL`)
+- Service hiện chỉ nhận **văn bản**, chưa hỗ trợ nhận diện giọng nói (STT).
+- Backend có thể tự khởi động service này khi `AI_SERVICE_AUTO_START=true`.
+- Tài liệu chi tiết: [docs/ai-design/ai-service-guide.md](docs/ai-design/ai-service-guide.md), [docs/installation-guide/installation-guide.md](docs/installation-guide/installation-guide.md).
 
 ---
 

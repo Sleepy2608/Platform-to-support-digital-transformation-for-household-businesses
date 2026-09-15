@@ -25,7 +25,8 @@ Bản đồ này xác định phần nào của Thông tư 88/2021/TT-BTC, Quy�
 | Ghi nhận chứng từ và lịch sử giao dịch | Hệ thống lưu giao dịch theo sự kiện đã xác nhận | `debt_transactions`, `inventory_transactions`, `accounting_book_entries`, `audit_logs` | Có triển khai |
 | Công khai chính sách kế toán & văn bản Thông tư 88 | Giao diện Chính sách & Điều khoản (Dashboard Owner/Employee) | `Circular88PolicyCard`, `88-btc.pdf`, `terms_consents` | Có triển khai |
 | Phê duyệt báo cáo trước khi dùng | Owner kiểm tra, chỉnh sửa và xác nhận báo cáo | `generated_reports`, `audit_logs`, `report_template_versions` | Có triển khai |
-| Quản lý AI tạo Draft Order | AI nhận dữ liệu văn bản/giọng nói, sinh đơn nháp | `ai_requests`, `notifications`, `feedback` | Có triển khai |
+| Quản lý AI tạo Draft Order | AI nhận câu văn bản tiếng Việt, sinh đơn nháp | `ai_order_drafts`, `notifications` (`ai_requests` là bảng legacy) | Có triển khai |
+| Quản lý phiên bản biểu mẫu & lịch sử duyệt báo cáo | Admin phát hành phiên bản biểu mẫu; Owner kiểm tra/duyệt sổ kế toán | `report_templates`, `report_template_versions`, `accounting_report_reviews` | Có triển khai |
 | Xác nhận quyền truy cập theo vai trò | RBAC 4 tầng: Admin, Manager, Owner, Employee | `users`, `roles`, `user_roles` hoặc mô hình tương đương | Có triển khai |
 | Hệ thống kế toán điện tử / lưu trữ dữ liệu | Lưu dữ liệu sự kiện, lịch sử thay đổi, báo cáo theo kỳ | `audit_logs`, `generated_reports`, `accounting_books` | Có triển khai ở mức hỗ trợ |
 | S3-HKD, S5-HKD, S6-HKD, S7-HKD | Không nằm trong phạm vi hiện tại | Không có mô hình kế toán tương ứng | Không triển khai |
@@ -112,11 +113,11 @@ Liên quan: [docs/compliance/circular-88-2021-BTC.md](circular-88-2021-BTC.md), 
 
 ### 3.6. AI Draft Order và vai trò người xác nhận
 
-- Hệ thống có AI tạo Draft Order từ văn bản/giọng nói, nhưng ai cũng biết quy định kế toán không cho phép xác nhận tự động không có con người kiểm tra.
+- Hệ thống có AI tạo Draft Order từ **văn bản tiếng Việt** (chưa hỗ trợ nhận giọng nói), nhưng ai cũng biết quy định kế toán không cho phép xác nhận tự động không có con người kiểm tra.
 - Trong thực tế đồ án:
-  - AI sinh đơn nháp từ `ai_requests`
-  - người dùng được cảnh báo qua `notifications`
-  - Employee/Owner phải xác nhận hoặc chỉnh sửa trước khi ghi nhận chính thức
+  - AI sinh đơn nháp lưu trong `ai_order_drafts` với trạng thái `PENDING`
+  - người dùng được cảnh báo qua `notifications` (thông báo thời gian thực)
+  - Employee/Owner phải xác nhận hoặc chỉnh sửa trước khi ghi nhận chính thức; khi xác nhận, đơn nháp chuyển `CONFIRMED`, nếu từ chối thì chuyển `REJECTED` kèm lý do
 - Đây là mô hình human-in-the-loop phù hợp với các yêu cầu nghĩa vụ thuế và báo cáo.
 
 Liên quan: [docs/user_requirements/user-requirements.md](../user_requirements/user-requirements.md), [docs/architecture_design/architecture_design_document.md](../architecture_design/architecture_design_document.md)

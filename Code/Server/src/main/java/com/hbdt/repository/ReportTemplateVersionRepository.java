@@ -11,6 +11,10 @@ import java.util.Optional;
 public interface ReportTemplateVersionRepository
         extends JpaRepository<ReportTemplateVersion, Long> {
 
+    boolean existsByReportTemplateIdAndVersionNumber(Long templateId, Integer version);
+
+    List<ReportTemplateVersion> findAllByReportTemplateIdOrderByEffectiveFromDesc(Long templateId);
+
     /**
      * Returns all versions for a template, newest first.
      */
