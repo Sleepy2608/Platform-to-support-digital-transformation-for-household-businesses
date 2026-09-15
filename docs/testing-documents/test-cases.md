@@ -1,4 +1,9 @@
 # Tài liệu Kiểm thử (Test Cases Document)
+
+## Bộ test case hệ thống
+
+- [Danh sách 40 test case và ảnh minh chứng](./hbdt-system-test-cases.xlsx)
+
 ## Module: Quản lý Công nợ và Thanh toán (HBDT-66 Automatic Debt Bookkeeping)
 
 ---
