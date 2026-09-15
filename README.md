@@ -11,6 +11,90 @@
 
 ---
 
+## Mục lục
+
+1. [Giới thiệu hệ thống](#giới-thiệu-hệ-thống-system-introduction)
+2. [Các tính năng chính](#các-tính-năng-chính-key-features)
+3. [Danh sách thành viên nhóm](#danh-sách-thành-viên-nhóm-member)
+4. [Tiến độ triển khai dự án](#tiến-độ-triển-khai-dự-án-project-deployment-progress)
+   - [Các tính năng đã hoàn thành](#các-tính-năng-đã-hoàn-thành)
+   - [Các tính năng chưa hoàn thiện](#các-tính-năng-chưa-hoàn-thiện)
+5. [Công nghệ sử dụng](#công-nghệ-sử-dụng-tech-stack)
+6. [Quản lý database & schema](#quản-lý-database--schema-database--schema)
+7. [Cấu trúc thư mục](#cấu-trúc-thư-mục-project-structure)
+8. [Tài liệu hiện thực hệ thống](#tài-liệu-hiện-thực-hệ-thống)
+9. [Cách chạy](#cách-chạy-how-to-run)
+   - [1. Yêu cầu](#1-yêu-cầu)
+   - [2. Clone source code](#2-clone-source-code)
+   - [3. Cấu hình `.env` cho server](#3-cấu-hình-env-cho-server)
+   - [4. Chạy nhanh bằng file `.bat` (khuyến nghị)](#4-chạy-nhanh-bằng-file-bat-khuyến-nghị)
+   - [5. Backend (cách chạy thủ công)](#5-backend-cách-chạy-thủ-công)
+   - [6. Frontend (cách chạy thủ công)](#6-frontend-cách-chạy-thủ-công)
+   - [7. AI Service (cần cho tính năng AI tạo đơn nháp)](#7-ai-service-cần-cho-tính-năng-ai-tạo-đơn-nháp)
+
+---
+
+## Giới thiệu hệ thống (System Introduction)
+
+**Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh (HBDT)** là hệ thống quản lý kinh doanh trên nền web, được thiết kế riêng cho các hộ kinh doanh truyền thống tại Việt Nam (vật liệu xây dựng, vật tư công trình, tạp hóa, bán lẻ...).
+
+### 1. Bối cảnh
+
+- Hộ kinh doanh giữ vai trò quan trọng trong nền kinh tế địa phương; phần lớn thuộc **Nhóm 1 / Nhóm 2** theo **Quyết định 3389/QĐ-BTC (2025)** của Bộ Tài chính.
+- Đa số vẫn vận hành **hoàn toàn thủ công**: ghi bán hàng, quản lý kho, theo dõi công nợ và nhận đơn qua điện thoại/Zalo bằng sổ tay hoặc file Excel; hầu như không có ngân sách thuê kế toán.
+- Các giải pháp POS/thương mại hiện có chủ yếu phục vụ nhà hàng, thời trang hoặc doanh nghiệp lớn, không đáp ứng đặc thù của hộ kinh doanh: **đơn hàng đa kênh** (tại quầy + điện thoại/Zalo), **quản lý công nợ với lịch sử giao dịch dài hạn**, và người dùng có **trình độ số thấp**.
+- Phần lớn hộ kinh doanh chỉ có **một chiếc điện thoại thông minh**, không có máy tính, máy quét mã vạch, máy in hoá đơn hay POS terminal → các hệ thống đòi hỏi nhiều thiết bị trở nên bất khả thi.
+- Hệ quả: tính toán sai sót, xử lý đơn chậm, khó kiểm soát tồn kho, sổ nợ không nhất quán và **không có thông tin kinh doanh theo thời gian thực**.
+
+### 2. Giải pháp
+
+Ứng dụng web (mobile + web) sử dụng được chỉ với một chiếc điện thoại thông minh:
+
+- **Trợ lý AI** hiểu yêu cầu ngôn ngữ tự nhiên tiếng Việt (văn bản) và tự động sinh **đơn hàng nháp** để nhân viên/chủ hộ kiểm tra và xác nhận.
+- **Ghi sổ kế toán tự động** cho mọi giao dịch bán hàng, nhập kho và công nợ; tự tổng hợp sổ/biểu mẫu theo **Thông tư 88/2021/TT-BTC**.
+- **Báo cáo & phân tích** doanh thu, mặt hàng bán chạy, tồn kho thấp và công nợ còn lại.
+- **Quản lý gói thuê bao** và phân quyền 4 cấp: Administrator → Manager → Owner → Employee.
+
+### 3. Đối tượng sử dụng
+
+| Vai trò | Mô tả |
+| :--- | :--- |
+| **Administrator (ADMIN)** | Quản trị hệ thống: quản lý tài khoản Owner/Manager, bảng giá gói thuê bao, cấu hình hệ thống & AI, biểu mẫu báo cáo tài chính, thông báo toàn hệ thống, xử lý phản hồi, Platform Analytics |
+| **Manager (MANAGER)** | Quản lý vận hành nền tảng: duyệt hồ sơ hộ kinh doanh, hỗ trợ/đối soát gói thuê bao, theo dõi revenue ledger, stock import và bookkeeping, xử lý phản hồi |
+| **Owner (BUSINESS_OWNER)** | Chủ hộ kinh doanh: toàn quyền nghiệp vụ trong hộ của mình — sản phẩm, kho, khách hàng, công nợ, đơn hàng, nhân viên, doanh thu, sổ kế toán |
+| **Employee (EMPLOYEE)** | Nhân viên cửa hàng: tạo đơn tại quầy, in hoá đơn, ghi nợ, xác nhận/từ chối đơn nháp do AI tạo, nhận thông báo thời gian thực |
+| **Khách hàng** | Không có tài khoản trên hệ thống; tương tác gián tiếp qua Zalo/điện thoại hoặc được nhân viên thao tác đại diện |
+
+### 4. Nguyên tắc thiết kế
+
+- **Human-in-the-loop**: AI chỉ tạo đơn nháp, luôn có nhân viên/chủ hộ kiểm tra và xác nhận trước khi ghi nhận chính thức.
+- **Fallback thủ công**: khi AI không khả dụng, hệ thống vẫn bán hàng và nhập đơn bình thường.
+- **Cách ly dữ liệu (multi-tenant)**: mỗi hộ kinh doanh là một tenant độc lập; `businessId` luôn suy ra từ token, không tin dữ liệu do client gửi lên.
+- **Tuân thủ**: tự động hoá 3 mẫu sổ **S1-HKD** (doanh thu), **S2-HKD** (kho hàng) và **S4-HKD** (nghĩa vụ thuế) theo Thông tư 88/2021/TT-BTC.
+
+---
+
+## Các tính năng chính (Key Features)
+
+| # | Tính năng | Mô tả |
+| :---: | :--- | :--- |
+| 1 | **Trợ lý AI Đặt hàng** | Nhập hoặc nhắn tin bằng tiếng Việt tự nhiên, AI đọc hiểu và tạo đơn hàng nháp. Nhân viên chỉ cần kiểm tra, sửa hoặc xác nhận — AI không khả dụng vẫn nhập đơn tay bình thường. |
+| 2 | **Bán hàng tại quầy (POS)** | Tạo đơn cực nhanh: tìm sản phẩm tức thời, chọn số lượng, gán khách hàng, xác nhận hoặc huỷ đơn. Giao diện Fast Sales tối ưu cho điện thoại. |
+| 3 | **Hoá đơn & In ấn** | In hoặc xuất hoá đơn bán hàng ra PDF theo mẫu có sẵn, lưu toàn bộ lịch sử đơn để tra cứu và gửi lại cho khách khi cần. |
+| 4 | **Kế toán Thông tư 88** | Tự động ghi sổ S1-HKD (doanh thu), S2-HKD (kho hàng) và S4-HKD (nghĩa vụ thuế); duyệt – sửa – từ chối báo cáo và xuất file Excel/PDF. |
+| 5 | **Nhập – Xuất – Tồn kho** | Lập phiếu nhập kho, theo dõi tồn theo nhiều đơn vị tính, tự động trừ kho khi xác nhận đơn, hoàn kho khi huỷ đơn và cảnh báo hàng sắp hết. |
+| 6 | **Công nợ khách hàng** | Bán chịu và thu nợ theo từng đợt, mọi biến động nợ đều được ghi nhật ký, tự hoàn nợ khi huỷ đơn — không còn thất lạc sổ nợ. |
+| 7 | **Khách hàng & Lịch sử mua** | Lưu hồ sơ khách hàng, tra cứu toàn bộ lịch sử mua hàng và số dư công nợ hiện tại của từng khách chỉ trong vài giây. |
+| 8 | **Sản phẩm, Đơn vị tính & Giá bán** | Quản lý danh mục, ảnh sản phẩm, nhiều đơn vị tính với tỷ lệ quy đổi và quy tắc giá linh hoạt; nhập danh mục hàng loạt từ file Excel. |
+| 9 | **Báo cáo & Phân tích** | Doanh thu theo ngày/tuần/tháng, biểu đồ trực quan, lọc theo khoảng ngày, thống kê mặt hàng bán chạy – bán chậm và công nợ còn lại. |
+| 10 | **Quản lý Nhân viên & Phân quyền** | Tạo tài khoản nhân viên, đặt lại mật khẩu, khoá/mở tài khoản. Bốn cấp quyền rõ ràng và dữ liệu tách biệt tuyệt đối theo từng hộ kinh doanh. |
+| 11 | **Gói thuê bao linh hoạt** | Chọn gói Miễn phí, Cơ bản hoặc VIP, chủ động gia hạn 1–24 tháng; tính năng của hệ thống tự mở khoá tương ứng với gói đang dùng. |
+| 12 | **Thông báo thời gian thực** | Chuông thông báo báo ngay khi AI tạo đơn nháp, khi đơn đổi trạng thái hoặc khi kho sắp hết hàng — không bỏ lỡ đơn nào. |
+
+> Danh sách tính năng đã hoàn thành chi tiết theo từng Epic xem tại [`docs/project-progress-and-feature/feature.md`](docs/project-progress-and-feature/feature.md).
+
+---
+
 ## Danh sách thành viên nhóm (Member)
 
 | STT | Họ và Tên | MSSV | Vai trò | Nhiệm vụ được giao |
@@ -33,16 +117,7 @@
 > Nhiệm vụ được giao sẽ được dựa vào nhiệm vụ được giao trên [Issue](https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/issues) trên Github và cập nhật tiến độ ở [Jira](https://java-project-platform-for-household-business.atlassian.net/jira/software/projects/SCRUM/summary).<br>
 > Các issue trên Github sẽ được cập nhật theo tiến độ của Jira và sẽ được test trước khi merge vào nhánh Main.<br>
 > Mức độ hoàn thành dự án: 98%<br>
-> Ngày cập nhật lần cuối: 16/09/2026.
-
-### Các tính năng đã hoàn thành
-
-Xem ở file `docs/project-progress-and-feature/feature.md` để biết chi tiết các tính năng đã hoàn thành.
-
-### Các tính năng chưa hoàn thiện
-
-- AI Voice-to-text: Đây là tính năng AI duy nhất còn thiếu. Hiện tại hệ thống đã hỗ trợ **Text Input**, nhưng chưa hoàn thiện khả năng nhận yêu cầu bằng **Voice**.
-- Release Package: Release Package vẫn chưa được hoàn thành.
+> Ngày cập nhật lần cuối: 15/09/2026.
 
 ---
 
@@ -159,7 +234,9 @@ Platform-to-support-digital-transformation-for-household-businesses/
 │   ├── architecture-design/                      # Thiết kế kiến trúc hệ thống
 │   ├── compliance/                               # Thông tin luật, quy định, mapping
 │   ├── detailed-design/                          # Thiết kế chi tiết, ERD, sơ đồ
+│   ├── final-report/                             # Báo cáo cuối cùng
 │   ├── installation-guide/                       # Hướng dẫn cài đặt
+│   ├── project-progress-and-feature/             # Tiến độ dự án và tính năng
 │   ├── requirements/                             # Yêu cầu đề tài / phân tích yêu cầu
 │   ├── run-guide/                                # Hướng dẫn chạy trên IDE / VS Code
 │   ├── software-requirement-specification/       # SRS
@@ -289,7 +366,7 @@ npm run dev
 > Cần chọn đúng trang đăng nhập để tránh bị báo lỗi 404 hoặc không tìm thấy trang, nếu không thấy thì xóa các file trong thư mục `.next` và `node_modules` rồi chạy lại `npm install`.
 > Thay vì xóa tay, có thể double-click `run-frontend-clean.bat` ở thư mục gốc — script làm đúng các bước này và hỏi xác nhận trước khi xóa.
 
-### 6. AI Service (cần cho tính năng AI tạo đơn nháp)
+### 7. AI Service (cần cho tính năng AI tạo đơn nháp)
 
 ```text
 cd Code/AI

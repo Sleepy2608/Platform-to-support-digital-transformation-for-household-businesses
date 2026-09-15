@@ -10,7 +10,6 @@
 | **Môn học** | Lập trình Java |
 | **Loại tài liệu** | Báo cáo tổng kết toàn bộ quá trình phát triển |
 | **Thời gian phát triển** | 22/07/2026 → 16/09/2026 |
-| **Số commit** | 553 commits (6 thành viên) |
 | **Tiến độ** | 13/13 Epic `Done` trên Jira — mức độ hoàn thành 93% (Sprint 8) |
 | **Ngày tổng hợp** | 15/09/2026 |
 
@@ -160,7 +159,7 @@ Hệ thống theo **kiến trúc phân tầng (Layered / Three-Tier)**, backend 
 | **Database** | **36 bảng** do JPA quản lý (34 bảng nghiệp vụ + 2 bảng seed tracking), **68 khóa ngoại**, **10 trigger** |
 | **Tài liệu** | **28 file `.md`** trong `docs/` (URD, SRS, Architecture, Detailed Design, Database Design, Compliance, User Guides, Test Cases, Run Guide) |
 | **Kiểm thử** | Backend: **308 test — 0 fail, 0 error** (5 skipped), `BUILD SUCCESS`; Frontend: **71 test — 0 fail** |
-| **Git** | **553 commits**, **6 thành viên** |
+| **Số thành viên** | **6 thành viên** |
 
 ---
 
@@ -183,18 +182,6 @@ Dự án phát triển qua **13 Epic** quản lý trên Jira, chia thành các g
 | 11 | **EPIC-11** Reports & Analytics | Dashboard doanh thu cho Owner, revenue ledger chi tiết, biểu đồ doanh thu, lọc theo ngày, operational analytics, báo cáo công nợ & vận hành | 07/09 → 14/09/2026 |
 | 12 | **EPIC-12** Administrator Management | Quản lý tài khoản Admin & Manager, hồ sơ quản trị, quản lý tài khoản Owner, giá gói thuê bao, cấu hình hệ thống/AI, biểu mẫu tài chính, thông báo toàn hệ thống, quản lý phản hồi, Platform Analytics | 27/07 → 12/09/2026 |
 | 13 | **EPIC-13** Testing, Deployment & Documentation | UAT end-to-end, kiểm thử bảo mật, kiểm thử hiệu năng, unit & integration testing, viết test cases, regression toàn bộ chức năng, script `.bat` chạy nhanh, deployment/migration/backup, installation guide, user manuals, cập nhật tài liệu cuối | 01/09 → 16/09/2026 |
-
-**Phân bổ commit theo thành viên:**
-
-| Thành viên | Vai trò | Số commit |
-|---|---|---|
-| Nguyễn Lê Huy Tâm | Leader | 204 |
-| Trần Văn Ngọc Thắng | Tester & Debugger | 94 |
-| Trần Hồng Sơn | Feature Developer | 80 |
-| Trần Duy Tân | UI Designer | 68 |
-| Nguyễn Ngọc Gia Bảo | Database Manager | 56 |
-| Huỳnh Đình Chấn | Feature Developer | 51 |
-| **Tổng** | | **553** |
 
 ---
 
@@ -697,4 +684,4 @@ uvicorn main:app --reload --port 8000
 
 ---
 
-*Báo cáo được tổng hợp từ toàn bộ source code, 553 commit (6 thành viên), 28 tài liệu trong `docs/`, kết quả chạy kiểm thử thực tế (`mvnw test` = 308 test PASS; 4 bộ test frontend = 71 test PASS) và thống kê trực tiếp trên repo. Thời điểm tổng kết: 15/09/2026.*
+*Báo cáo được tổng hợp từ toàn bộ source code, Các commit trên [đồ án Github](https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses) (được 6 thành viên thực hiện), 28 tài liệu trong `docs/`, kết quả chạy kiểm thử thực tế (`mvnw test` = 308 test PASS; 4 bộ test frontend = 71 test PASS; 39 test cases ở docs/testing-documents) và thống kê trực tiếp trên repo. Thời điểm tổng kết: 15/09/2026.*
