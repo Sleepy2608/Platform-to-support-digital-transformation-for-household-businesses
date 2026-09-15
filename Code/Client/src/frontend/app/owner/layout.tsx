@@ -406,8 +406,8 @@ export default function OwnerLayout({ children }: { children: React.ReactNode })
 
             {/* Scrollable Navigation & Profile Body */}
             <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-5 py-4 flex flex-col gap-6 custom-scrollbar">
-              {/* User Profile Summary */}
-              <div className="p-3.5 bg-slate-50 border border-slate-200/70 rounded-2xl flex items-center gap-3 shadow-2xs">
+              {/* User Profile Summary — no own background so it matches the sidebar background */}
+              <div className="p-3.5 border border-slate-200/70 rounded-2xl flex items-center gap-3 shadow-2xs">
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
