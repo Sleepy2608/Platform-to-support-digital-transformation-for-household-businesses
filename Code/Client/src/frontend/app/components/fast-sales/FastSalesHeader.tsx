@@ -26,20 +26,20 @@ export function FastSalesHeader({
 
   return (
     <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30 shadow-2xs">
-      {/* Mobile: 3 stacked sections (Brand / Store mode / Controls) — Desktop: single row (unchanged) */}
+      {/* Mobile: 2 stacked sections (Brand + badge / Controls) — Desktop: single row (unchanged) */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3 lg:py-3.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 lg:gap-4">
-        {/* ── Section 1: Brand / Title ───────────────────────────────────── */}
+        {/* ── Section 1: Brand + Title + Store-mode badge (same line on every breakpoint) ── */}
         <div className="flex items-center gap-3 min-w-0">
           <div className="p-2 lg:p-2.5 bg-slate-900 text-amber-400 rounded-xl shadow-xs flex items-center justify-center shrink-0">
             <Zap className="w-5 h-5 fill-amber-400" />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
+            {/* flex-nowrap + whitespace-nowrap: badge stays inline and never breaks to two lines */}
+            <div className="flex flex-nowrap items-center gap-2 min-w-0">
               <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight whitespace-nowrap">
                 Fast Sales
               </h1>
-              {/* Desktop keeps the badge inline next to the title */}
-              <span className="hidden lg:inline-flex items-center px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-md text-[10px] font-bold tracking-wide whitespace-nowrap">
+              <span className="inline-flex shrink-0 items-center px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-md text-[10px] font-bold tracking-wide whitespace-nowrap">
                 BÁN TẠI QUẦY
               </span>
             </div>
@@ -49,14 +49,7 @@ export function FastSalesHeader({
           </div>
         </div>
 
-        {/* ── Section 2 (mobile only): Store mode badge on its own row ────── */}
-        <div className="lg:hidden">
-          <span className="inline-flex items-center px-3 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200/60 rounded-lg text-[11px] font-extrabold tracking-wide whitespace-nowrap">
-            BÁN TẠI QUẦY
-          </span>
-        </div>
-
-        {/* ── Section 3: Tabs + Quick actions ────────────────────────────── */}
+        {/* ── Section 2: Tabs + Quick actions ────────────────────────────── */}
         <div className="flex items-center gap-2 w-full lg:w-auto min-w-0">
           {/* Mobile Tab Switcher (full-width balanced row) */}
           <div className="flex lg:hidden items-center gap-1 flex-1 min-w-0 bg-slate-100 p-1 rounded-xl border border-slate-200/60">
