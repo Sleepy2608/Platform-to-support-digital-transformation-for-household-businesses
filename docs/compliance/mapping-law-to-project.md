@@ -1,157 +1,164 @@
-# Bản Đồ Ánh Xạ: Quy Định Kế Toán Hộ Kinh Doanh -> Tính Năng Của Đồ Án
+# Bản Đồ Ánh Xạ: Quy Định Kế Toán & Thuế Hộ Kinh Doanh -> Tính Năng Của Đồ Án
 
-> Người tạo: Nguyễn Lê Huy Tâm
-> Phiên bản tài liệu: 1.0 
-> Cập nhật lần cuối: 01/09/2026
-
----
-
-## 1. Mục tiêu của bản đồ ánh xạ
-
-Bản đồ này xác định phần nào của Thông tư 88/2021/TT-BTC, Quyết định 3389/QĐ-BTC và các quy định kế toán liên quan được hệ thống hiện tại triển khai trực tiếp, phần nào chỉ hỗ trợ ở mức báo cáo, phần nào nằm ngoài phạm vi đồ án.
-
-> Mục tiêu của hệ thống là hỗ trợ quản lý bán hàng, kho, công nợ và nghĩa vụ thuế cho hộ kinh doanh theo mô hình đơn giản, không thay thế vai trò kiểm tra cuối cùng của chủ hộ kinh doanh, người quản lý hoặc cơ quan có thẩm quyền.
+> **Người tạo**: Nguyễn Lê Huy Tâm  
+> **Phiên bản tài liệu**: 2.0  
+> **Cập nhật lần cuối**: 2026  
 
 ---
 
-## 2. Bản đồ ánh xạ theo nhóm nội dung
+## 1. Mục Tiêu Của Bản Đồ Ánh Xạ
 
-| Nội dung pháp lý / chuẩn mực | Tính năng / module trong đồ án | Dữ liệu hoặc thành phần hỗ trợ | Mức độ triển khai |
-|---|---|---|---|
-| Tiêu chí phân loại hộ kinh doanh theo nhóm ngành và mức độ hoạt động | Phân loại sản phẩm, nhóm tính thuế, doanh thu theo loại hoạt động | `tax_activity_groups`, `products.default_tax_activity_group_id`, `sales_order_items.tax_activity_group_id` | Có triển khai |
-| S1-HKD: sổ chi tiết doanh thu bán hàng hóa, dịch vụ | Quản lý đơn hàng, doanh thu bán hàng, tổng hợp theo nhóm thuế | `sales_orders`, `sales_order_items`, `accounting_books`, `generated_reports` | Có triển khai |
-| S2-HKD: sổ chi tiết vật liệu, dụng cụ, sản phẩm, hàng hóa | Quản lý nhập kho, xuất kho, tồn kho, giá xuất kho | `products`, `inventory_balances`, `inventory_transactions`, `product_units` | Có triển khai |
-| S4-HKD: sổ theo dõi nghĩa vụ thuế với NSNN | Theo dõi thuế phát sinh, đã nộp, còn phải nộp / nộp thừa | `tax_types`, `tax_obligations`, `tax_payments`, `generated_reports` | Có triển khai |
-| Ghi nhận chứng từ và lịch sử giao dịch | Hệ thống lưu giao dịch theo sự kiện đã xác nhận | `debt_transactions`, `inventory_transactions`, `accounting_book_entries`, `audit_logs` | Có triển khai |
-| Công khai chính sách kế toán & văn bản Thông tư 88 | Giao diện Chính sách & Điều khoản (Dashboard Owner/Employee) | `Circular88PolicyCard`, `88-btc.pdf`, `terms_consents` | Có triển khai |
-| Phê duyệt báo cáo trước khi dùng | Owner kiểm tra, chỉnh sửa và xác nhận báo cáo | `generated_reports`, `audit_logs`, `report_template_versions` | Có triển khai |
-| Quản lý AI tạo Draft Order | AI nhận câu văn bản tiếng Việt, sinh đơn nháp | `ai_order_drafts`, `notifications` (`ai_requests` là bảng legacy) | Có triển khai |
-| Quản lý phiên bản biểu mẫu & lịch sử duyệt báo cáo | Admin phát hành phiên bản biểu mẫu; Owner kiểm tra/duyệt sổ kế toán | `report_templates`, `report_template_versions`, `accounting_report_reviews` | Có triển khai |
-| Xác nhận quyền truy cập theo vai trò | RBAC 4 tầng: Admin, Manager, Owner, Employee | `users`, `roles`, `user_roles` hoặc mô hình tương đương | Có triển khai |
-| Hệ thống kế toán điện tử / lưu trữ dữ liệu | Lưu dữ liệu sự kiện, lịch sử thay đổi, báo cáo theo kỳ | `audit_logs`, `generated_reports`, `accounting_books` | Có triển khai ở mức hỗ trợ |
-| S3-HKD, S5-HKD, S6-HKD, S7-HKD | Không nằm trong phạm vi hiện tại | Không có mô hình kế toán tương ứng | Không triển khai |
-| Quản lý quỹ tiền mặt, ngân hàng, lương, bảo hiểm | Không nằm trong phạm vi đồ án hiện tại | Không có module tương ứng | Ngoài phạm vi |
+Bản đồ này xác định chi tiết sự liên kết giữa các quy định pháp lý (Thông tư 88/2021/TT-BTC, Quyết định 3389/QĐ-BTC, Chính sách thuế Hộ kinh doanh 2026) với cấu trúc cơ sở dữ liệu, nghiệp vụ và tính năng trong đồ án **Nền tảng hỗ trợ chuyển đổi số cho Hộ kinh doanh**.
+
+> [!NOTE]
+> **Định vị phạm vi nền tảng**: Nền tảng hướng tới đối tượng **Hộ kinh doanh cá thể** (đặc biệt là mô hình cửa hàng vật liệu xây dựng, đồ kim khí, phụ tùng...), hỗ trợ tự động hóa ghi nhận doanh thu, quản lý kho hàng và hỗ trợ tính toán nghĩa vụ thuế GTGT & TNCN. Hệ thống **không** quản lý thuế TNDN (thuế của doanh nghiệp) và **không thay thế** vai trò kiểm tra, phê duyệt cuối cùng của Chủ hộ (Owner) hoặc cơ quan quản lý thuế.
 
 ---
 
-## 3. Mỗi mục pháp lý tương ứng với đâu trong thực tế đồ án
+## 2. Bản Đồ Ánh Xạ Theo Nhóm Nội Dung Pháp Lý
 
-### 3.1. Quy định phân loại hộ kinh doanh và nhóm hoạt động tính thuế
-
-- Theo Quyết định 3389/QĐ-BTC, hệ thống cần xác định nhóm hoạt động doanh thu để tính thuế đúng.
-- Trong đồ án, dữ liệu này được lưu trong:
-  - `tax_activity_groups`
-  - `products.default_tax_activity_group_id`
-  - `sales_order_items.tax_activity_group_id`
-- Đây là căn cứ để tính:
-  - doanh thu S1-HKD
-  - nghĩa vụ thuế S4-HKD
-  - báo cáo theo nhóm nghề
-
-Liên quan: [docs/compliance/decision-3389-BTC.md](decision-3389-BTC.md), [docs/detailed-design/database-design.md](../detailed-design/database-design.md)
-
-### 3.2. S1-HKD: doanh thu bán hàng hóa, dịch vụ
-
-- Phần này ánh xạ trực tiếp với luồng bán hàng và doanh thu của hộ kinh doanh.
-- Dữ liệu nguồn gồm:
-  - `sales_orders` — đơn hàng
-  - `sales_order_items` — chi tiết mặt hàng, số lượng, giá, tỷ lệ thuế
-  - `customers` — khách hàng và công nợ
-  - `debt_transactions` — nợ / trả nợ
-- Tính năng trong đồ án:
-  - Employee tạo bán hàng tại quầy
-  - Owner xem báo cáo doanh thu
-  - Số liệu dùng để tổng hợp S1-HKD
-
-Liên quan: [docs/user_requirements/user-requirements.md](../user_requirements/user-requirements.md), [docs/detailed-design/database-design.md](../detailed-design/database-design.md)
-
-### 3.3. S2-HKD: nhập - xuất - tồn kho
-
-- Phần này ánh xạ với hoạt động kho của hộ kinh doanh.
-- Dữ liệu chính:
-  - `products`
-  - `product_units`
-  - `inventory_balances`
-  - `inventory_transactions`
-- Tính năng trong đồ án:
-  - nhập kho
-  - xuất kho khi bán hàng
-  - xem tồn hiện tại
-  - tính giá trị tồn / giá xuất kho theo phương pháp đã chọn
-
-Liên quan: [docs/detailed-design/database-design.md](../detailed-design/database-design.md), [docs/compliance/circular-88-2021-BTC.md](circular-88-2021-BTC.md)
-
-### 3.4. S4-HKD: nghĩa vụ thuế với NSNN
-
-- Đây là phần kế toán thuế được hệ thống hỗ trợ trực tiếp.
-- Dữ liệu chính:
-  - `tax_types`
-  - `tax_obligations`
-  - `tax_payments`
-  - `report_templates` / `report_template_versions`
-- Tính năng trong đồ án:
-  - sinh nghĩa vụ thuế từ doanh thu và nhóm thuế
-  - ghi nhận lần nộp thuế
-  - tính số đã nộp, còn phải nộp, nộp thừa
-  - cho Owner duyệt hoặc từ chối báo cáo thuế
-
-Liên quan: [docs/compliance/circular-88-2021-BTC.md](circular-88-2021-BTC.md), [docs/detailed-design/database-design.md](../detailed-design/database-design.md)
-
-### 3.5. Phê duyệt báo cáo và kiểm soát dữ liệu
-
-- Quy định pháp lý trong kế toán đòi hỏi báo cáo có thể được kiểm tra, sửa chữa và xác nhận.
-- Trong đồ án, điều này được thực hiện bằng:
-  - `generated_reports` — báo cáo đã tạo
-  - `report_template_versions` — phiên bản biểu mẫu có hiệu lực
-  - `audit_logs` — nhật ký hành động
-- Owner có quyền:
-  - xem báo cáo
-  - chỉnh sửa dữ liệu được phép sửa
-  - xác nhận hoặc từ chối báo cáo
-
-Đây là yếu tố thiết yếu để phù hợp với mục tiêu “hỗ trợ kế toán” chứ không phải “tự động thay thế quyền kiểm tra con người”.
-
-### 3.6. AI Draft Order và vai trò người xác nhận
-
-- Hệ thống có AI tạo Draft Order từ **văn bản tiếng Việt** (chưa hỗ trợ nhận giọng nói), nhưng ai cũng biết quy định kế toán không cho phép xác nhận tự động không có con người kiểm tra.
-- Trong thực tế đồ án:
-  - AI sinh đơn nháp lưu trong `ai_order_drafts` với trạng thái `PENDING`
-  - người dùng được cảnh báo qua `notifications` (thông báo thời gian thực)
-  - Employee/Owner phải xác nhận hoặc chỉnh sửa trước khi ghi nhận chính thức; khi xác nhận, đơn nháp chuyển `CONFIRMED`, nếu từ chối thì chuyển `REJECTED` kèm lý do
-- Đây là mô hình human-in-the-loop phù hợp với các yêu cầu nghĩa vụ thuế và báo cáo.
-
-Liên quan: [docs/user_requirements/user-requirements.md](../user_requirements/user-requirements.md), [docs/architecture_design/architecture_design_document.md](../architecture_design/architecture_design_document.md)
+| Nội dung pháp lý / Chuẩn mực | Tính năng / Phân hệ trong Đồ án | Dữ liệu & Thành phần hỗ trợ | Mức độ triển khai |
+| :--- | :--- | :--- | :---: |
+| **Phân loại hộ kinh doanh & Nhóm ngành tính thuế** | Cấu hình nhóm hoạt động kinh doanh, phân loại mặt hàng theo biểu thuế | `tax_activity_groups`, `products.default_tax_activity_group_id`, `sales_order_items.tax_activity_group_id` | **Triển khai đầy đủ** |
+| **S1-HKD: Sổ chi tiết doanh thu bán hàng hóa, dịch vụ** | Quản lý đơn bán hàng tại quầy, duyệt đơn nháp AI, tổng hợp doanh thu theo nhóm thuế | `sales_orders`, `sales_order_items`, `customers`, `customer_debts`, `debt_transactions`, `accounting_books`, `generated_reports` | **Triển khai đầy đủ** |
+| **S2-HKD: Sổ chi tiết vật liệu, dụng cụ, sản phẩm, hàng hóa** | Quản lý nhập kho, xuất kho bán hàng, tính tồn kho & giá vốn xuất kho (Bình quân gia quyền / FIFO) | `products`, `product_units`, `inventory_balances`, `inventory_transactions`, `generated_reports` | **Triển khai đầy đủ** |
+| **S4-HKD: Sổ theo dõi nghĩa vụ thuế với NSNN** | Bộ máy tính thuế (Tax Engine) hỗ trợ GTGT và TNCN theo ngưỡng doanh thu năm & phương pháp tính | `tax_types`, `tax_activity_groups`, `tax_rules`, `tax_obligations`, `tax_payments`, `generated_reports` | **Triển khai đầy đủ (Core: GTGT & TNCN)** |
+| **Snapshot quy tắc thuế theo đơn hàng** | Lưu vết thuế suất và phương pháp tính tại thời điểm phát sinh đơn hàng | `sales_order_items.tax_rule_id`, `sales_order_items.tax_rate`, `sales_order_items.tax_calculation_method` | **Triển khai đầy đủ** |
+| **Quản lý phiên bản biểu mẫu & chính sách thuế** | Quản lý thời gian hiệu lực của biểu mẫu kế toán và quy tắc thuế (Versioning) | `report_templates`, `report_template_versions`, `tax_rules` (`effective_from`, `effective_to`, `version_tag`) | **Triển khai đầy đủ** |
+| **Quy trình kiểm soát & Phê duyệt (Human-in-the-Loop)** | Owner xem xét, chỉnh sửa được phép, phê duyệt hoặc từ chối báo cáo kế toán và thuế | `generated_reports.status`, `tax_obligations.status`, `audit_logs` | **Triển khai đầy đủ** |
+| **Tạo đơn nháp tự động bằng AI (AI Order Draft)** | Trợ lý AI phân tích câu lệnh tiếng Việt thành đơn hàng nháp ở trạng thái PENDING | `ai_order_drafts`, `notifications`, giao diện xác nhận đơn | **Triển khai đầy đủ** |
+| **Thuế tùy chọn / mở rộng (TTĐB, BVMT, Tài nguyên, XNK)** | Thiết kế kiến trúc & CSDL mở rộng, sẵn sàng cấu hình quy tắc khi có phát sinh | Bảng `tax_types`, `tax_rules` hỗ trợ mở rộng mã thuế linh hoạt | **Sẵn sàng cấu hình (Configurable)** |
+| **Thuế Thu nhập Doanh nghiệp (CIT/TNDN)** | Thuế của doanh nghiệp, không áp dụng cho hộ kinh doanh | Không triển khai trong module thuế HKD | **Ngoài phạm vi (Out of Scope)** |
+| **S3-HKD, S5-HKD, S6-HKD, S7-HKD** | Các sổ chi phí toàn diện, tiền lương, quỹ tiền mặt, tiền gửi ngân hàng chuyên sâu | Không nằm trong phạm vi trọng tâm của đồ án | **Ngoài phạm vi (Out of Scope)** |
 
 ---
 
-## 4. Bản đồ theo từng nhóm nghiệp vụ thực tế của đồ án
+## 3. Chi Tiết Ánh Xạ Nghiệp Vụ & Cơ Sở Dữ Liệu
 
-| Nhóm nghiệp vụ | Mục tiêu pháp lý tương ứng | Kết luận |
-|---|---|---|
-| Quản lý đơn hàng | S1-HKD doanh thu | Triển khai đầy đủ trong phạm vi đồ án |
-| Quản lý kho | S2-HKD nhập - xuất - tồn | Triển khai đầy đủ trong phạm vi đồ án |
-| Quản lý nợ / thanh toán | Tài liệu kế toán hỗ trợ kê khai và đối chiếu | Triển khai đầy đủ trong phạm vi đồ án |
-| Tính thuế theo nhóm hoạt động | Gắn dữ liệu doanh thu với thuế | Triển khai đầy đủ trong phạm vi đồ án |
-| Theo dõi nộp thuế | S4-HKD | Triển khai đầy đủ trong phạm vi đồ án |
-| Phê duyệt báo cáo | Bảo đảm tính minh bạch và khả năng kiểm tra | Triển khai đầy đủ trong phạm vi đồ án |
-| Quản lý quỹ tiền mặt | S6-HKD | Ngoài phạm vi |
-| Quản lý lương, bảo hiểm | S5-HKD | Ngoài phạm vi |
-| Tài khoản ngân hàng, đối soát ngân hàng | S7-HKD | Ngoài phạm vi |
-| Chi phí sản xuất - kinh doanh chi tiết | S3-HKD | Ngoài phạm vi |
+### 3.1. Phân loại nhóm hoạt động tính thuế
+- Theo quy định, doanh thu HKD được phân loại theo các nhóm ngành nghề chính để áp dụng tỷ lệ thuế GTGT và TNCN tương ứng:
+  - `DISTRIBUTION`: Phân phối, cung cấp hàng hóa (VLXD, kim khí...).
+  - `SERVICE`: Dịch vụ, xây dựng không bao thầu NVL.
+  - `PRODUCTION_TRANSPORT`: Sản xuất, vận tải, xây dựng có bao thầu NVL.
+  - `OTHER`: Hoạt động kinh doanh khác.
+- Trong CSDL, thông tin được lưu tại `tax_activity_groups`. Mỗi sản phẩm có `default_tax_activity_group_id`, khi bán hàng được snapshot vào `sales_order_items.tax_activity_group_id`.
+
+### 3.2. S1-HKD: Doanh thu bán hàng hóa, dịch vụ
+- Dữ liệu bán hàng từ đơn hàng tại quầy (`sales_orders`) hoặc đơn nháp AI đã xác nhận (`ai_order_drafts` $\to$ `CONFIRMED`).
+- Phân tách doanh thu từng mặt hàng theo nhóm ngành để ghi nhận vào các cột tương ứng của sổ S1-HKD.
+- Nếu bán chịu/công nợ: Doanh thu vẫn ghi nhận vào S1-HKD, đồng thời theo dõi qua `customer_debts` và `debt_transactions`.
+
+### 3.3. S2-HKD: Nhập - Xuất - Tồn kho
+- Nhập kho: Ghi nhận số lượng và giá trị mua thực tế (`inventory_transactions` loại `IMPORT`).
+- Xuất kho: Tự động trừ tồn khi đơn bán hàng hoàn tất (`inventory_transactions` loại `EXPORT`).
+- Hỗ trợ tính giá xuất kho theo phương pháp Bình quân gia quyền hoặc FIFO.
+
+### 3.4. S4-HKD: Nghĩa vụ thuế với NSNN & Tax Engine 2026
+- **Phân tầng 3 cấp độ thuế trong đồ án**:
+  1. **Core Scope (Triển khai thực tế)**:
+     - **Thuế GTGT**: Tính theo tỷ lệ % doanh thu với HKD có doanh thu năm $> 500$ triệu đồng.
+     - **Thuế TNCN**:
+       - Doanh thu $\le 500$ triệu: Miễn nộp.
+       - Doanh thu $500\text{tr} - 3\text{ tỷ}$: Hỗ trợ phương pháp trên doanh thu $(\text{Doanh thu} - 500\text{tr}) \times \text{Tỷ lệ TNCN}$ hoặc phương pháp thu nhập tính thuế $(\text{Doanh thu} - \text{Chi phí}) \times 15\%$.
+       - Doanh thu $> 3\text{ tỷ}$: Phương pháp thu nhập tính thuế với thuế suất 17% (đến 50 tỷ) hoặc 20% (trên 50 tỷ).
+  2. **Configurable / Future Extension (Kiến trúc sẵn sàng)**:
+     - `SCT` (Tiêu thụ đặc biệt), `ENVIRONMENTAL` (Bảo vệ môi trường), `RESOURCE` (Tài nguyên), `IMPORT_EXPORT` (Xuất nhập khẩu).
+  3. **Out of Scope (Ngoài phạm vi)**:
+     - Thuế TNDN (CIT), Thuế nhà thầu, Thuế sử dụng đất phi nông nghiệp.
+- **Dữ liệu thực thể**:
+  - `tax_obligations`: Lưu nghĩa vụ thuế phát sinh theo từng kỳ (tháng, quý, năm) sau khi Tax Engine tính toán.
+  - `tax_payments`: Lưu vết các lần nộp thuế thực tế theo Giấy nộp tiền vào NSNN.
+  - Số liệu S4-HKD thể hiện rõ: Số dư đầu kỳ, phát sinh phải nộp, số đã nộp, và số còn phải nộp / nộp thừa cuối kỳ.
+
+### 3.5. Xử lý ranh giới dữ liệu chi phí đối với TNCN trên thu nhập tính thuế
+- Hệ thống không quản lý sổ chi phí S3-HKD toàn diện.
+- Khi áp dụng phương pháp TNCN trên thu nhập tính thuế $(\text{Doanh thu} - \text{Chi phí}) \times \text{Thuế suất}$, hệ thống tự động trích xuất giá vốn hàng bán từ **S2-HKD**, đồng thời cung cấp giao diện để Chủ hộ (Owner) kiểm tra và nhập bổ sung các chi phí vận hành hợp lý khác trước khi chốt số liệu nghĩa vụ thuế.
+
+### 3.6. Quản lý phiên bản chính sách thuế (Tax Policy Versioning)
+- Đảm bảo tính nhất quán lịch sử: Mọi giao dịch phát sinh trong quá khứ được tính toán và lưu snapshot theo quy tắc thuế có hiệu lực tại thời điểm đó (`sales_order_items.tax_rule_id`, `sales_order_items.tax_rate`).
+- Khi chính sách thuế thay đổi theo năm tài chính mới, quy tắc mới chỉ áp dụng cho các giao dịch phát sinh sau ngày hiệu lực.
+
+### 3.7. Luồng Quy Trình Nghiệp Vụ & Tax Engine Workflow
+
+```
+                     SALES ORDER
+                          │
+                          ▼
+                ┌───────────────────┐
+                │  Confirmed Order  │
+                └─────────┬─────────┘
+                          │
+                          ▼
+                    Record Revenue
+                          │
+                          ▼
+                  Determine Activity
+                          │
+                          ▼
+                 Check Annual Revenue
+                          │
+         ┌────────────────┼────────────────┐
+         │                │                │
+      ≤ 500m           500m–3b            > 3b
+         │                │                │
+       No VAT           VAT %            VAT %
+       No PIT           + PIT            + PIT
+                          │                │
+                    Choose method     Income-based
+                          │                │
+                          ▼                ▼
+                             Tax Engine
+                                  │
+                                  ▼
+                               S4-HKD
+                                  │
+                                  ▼
+                             Owner Review
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │                           │
+                 APPROVE                      REJECT
+                    │                           │
+                    ▼                           ▼
+              Tax Obligation            Edit / Recalculate
+                    │
+                    ▼
+               Tax Payment
+                    │
+                    ▼
+             Payment History
+```
+
+### 3.8. Nguyên tắc Human-in-the-Loop & Audit Trail
+- Toàn bộ đề xuất tính thuế, đơn hàng nháp AI và báo cáo sổ sách S1/S2/S4 đều yêu cầu sự xác nhận hoặc phê duyệt của người dùng (Employee xác nhận đơn, Owner phê duyệt báo cáo).
+- Mọi thao tác phê duyệt, chỉnh sửa số liệu, nộp thuế đều được ghi lại trong `audit_logs`.
 
 ---
 
-## 5. Kết luận ngắn gọn
+## 4. Bảng Tóm Tắt Trạng Thái Triển Khai
 
-Hệ thống hiện tại phù hợp với phần cốt lõi của Thông tư 88/2021/TT-BTC nếu giới hạn ở 3 trục chính:
-
-1. doanh thu và phân nhóm thuế (S1-HKD)
-2. tồn kho và biến động hàng hóa (S2-HKD)
-3. nghĩa vụ thuế và nộp thuế (S4-HKD)
-
-Các phần còn lại của thông tư như S3-HKD, S5-HKD, S6-HKD, S7-HKD, cũng như các quy trình kế toán chi tiết khác, không nằm trong phạm vi hiện tại và không nên được tuyên bố là đã triển khai hoàn chỉnh trong đồ án.
+```
+┌───────────────────────────────┬───────────────────────────────────┬──────────────────────┐
+│ Phân Hệ Nghiệp Vụ             │ Mục Tiêu Pháp Lý & Quy Chuẩn      │ Trạng Thái Đồ Án     │
+├───────────────────────────────┼───────────────────────────────────┼──────────────────────┤
+│ Bán hàng & Doanh thu          │ S1-HKD Doanh thu chi tiết         │ Hoàn thiện           │
+│ Quản lý tồn kho               │ S2-HKD Nhập - Xuất - Tồn          │ Hoàn thiện           │
+│ Quản lý công nợ               │ Sổ theo dõi nợ khách hàng         │ Hoàn thiện           │
+│ Bộ máy tính thuế (Tax Engine) │ Ngưỡng DT 2026, Thuế GTGT + TNCN  │ Hoàn thiện (Core)    │
+│ Sổ theo dõi nghĩa vụ thuế     │ S4-HKD Nghĩa vụ thuế với NSNN     │ Hoàn thiện           │
+│ Phiên bản hoá biểu mẫu/thuế   │ Quản trị hiệu lực theo thời gian  │ Hoàn thiện           │
+│ Phê duyệt & Nhật ký (Audit)   │ Minh bạch, kiểm soát trách nhiệm  │ Hoàn thiện           │
+│ Thuế mở rộng (TTĐB, BVMT...)  │ Sẵn sàng cấu hình trong CSDL      │ Sẵn sàng mở rộng     │
+│ Thuế TNDN (Doanh nghiệp)      │ Thuế CIT cho pháp nhân            │ Ngoài phạm vi HKD    │
+│ S3, S5, S6, S7-HKD            │ Chi phí toàn diện, lương, quỹ...  │ Ngoài phạm vi HKD    │
+└───────────────────────────────┴───────────────────────────────────┴──────────────────────┘
+```
 
 ---
 
-> Hệ thống hiện tại triển khai các module kế toán và thuế theo mô hình hỗ trợ cho hộ kinh doanh trong phạm vi S1-HKD, S2-HKD và S4-HKD theo Thông tư 88/2021/TT-BTC.
-> Các chức năng liên quan đến S3-HKD, S5-HKD, S6-HKD, S7-HKD và các quy trình kế toán chi tiết khác không nằm trong phạm vi đồ án hiện tại.
+## 5. Kết Luận
+
+Bản đồ ánh xạ khẳng định sự gắn kết chặt chẽ giữa thiết kế kỹ thuật của đồ án với khung pháp lý thực tế:
+- Đồ án đáp ứng trọn vẹn mô hình kế toán cốt lõi của Thông tư 88/2021/TT-BTC với 3 sổ: **S1-HKD, S2-HKD, S4-HKD**.
+- Hệ thống bám sát chính sách thuế 2026 với cơ chế phân tầng ngưỡng doanh thu 500 triệu, 3 tỷ, 50 tỷ và hỗ trợ các phương pháp tính thuế GTGT và TNCN linh hoạt.
+- Phạm vi được phân định rõ ràng, không ôm đồm các loại thuế doanh nghiệp (TNDN) hay các sổ kế toán phức tạp ngoài mục tiêu chuyển đổi số cho hộ kinh doanh.
