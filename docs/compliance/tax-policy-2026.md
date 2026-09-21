@@ -72,11 +72,80 @@ Từ năm 2026, cơ chế quản lý thuế đối với hộ và cá nhân kinh
 
 ---
 
-## 4. Thiết Kế Cơ Sở Dữ Liệu Cho Tax Engine
+## 4. Luồng Quy Trình Nghiệp Vụ Thuế (Tax Calculation & Obligation Workflow)
+
+Hệ thống tuân thủ nghiêm ngặt quy trình chuẩn từ đơn bán hàng đến ghi nhận thanh toán nghĩa vụ thuế:
+
+```
+                     SALES ORDER
+                          │
+                          ▼
+                ┌───────────────────┐
+                │  Confirmed Order  │
+                └─────────┬─────────┘
+                          │
+                          ▼
+                    Record Revenue
+                          │
+                          ▼
+                  Determine Activity
+                          │
+                          ▼
+                 Check Annual Revenue
+                          │
+         ┌────────────────┼────────────────┐
+         │                │                │
+      ≤ 500m           500m–3b            > 3b
+         │                │                │
+       No VAT           VAT %            VAT %
+       No PIT           + PIT            + PIT
+                          │                │
+                    Choose method     Income-based
+                          │                │
+                          ▼                ▼
+                             Tax Engine
+                                  │
+                                  ▼
+                               S4-HKD
+                                  │
+                                  ▼
+                             Owner Review
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │                           │
+                 APPROVE                      REJECT
+                    │                           │
+                    ▼                           ▼
+              Tax Obligation            Edit / Recalculate
+                    │
+                    ▼
+               Tax Payment
+                    │
+                    ▼
+             Payment History
+```
+
+### Chi tiết các bước thực hiện trong luồng:
+1. **Sales Order $\to$ Confirmed Order**: Đơn hàng bán tại quầy hoặc đơn hàng nháp do AI đề xuất được xác nhận chính thức.
+2. **Record Revenue**: Tự động ghi nhận doanh thu vào Sổ chi tiết doanh thu (**S1-HKD**).
+3. **Determine Activity**: Phân loại từng dòng sản phẩm theo Nhóm hoạt động kinh doanh tính thuế (`tax_activity_groups`).
+4. **Check Annual Revenue**: Đối chiếu tổng doanh thu lũy kế trong năm với các mốc ngưỡng:
+   - **$\le 500$ triệu**: Không phát sinh thuế GTGT (`No VAT`), không phải nộp TNCN (`No PIT`).
+   - **$500$ triệu đến $3$ tỷ**: Thuế GTGT tính theo % doanh thu; Thuế TNCN cho phép lựa chọn giữa Phương pháp tỷ lệ trên doanh thu vượt 500 triệu hoặc Phương pháp thu nhập tính thuế (15%).
+   - **$> 3$ tỷ**: Thuế GTGT tính theo % doanh thu; Thuế TNCN bắt buộc tính theo Phương pháp thu nhập tính thuế (17% cho 3–50 tỷ, 20% cho trên 50 tỷ).
+5. **Tax Engine**: Tự động tải quy tắc thuế có hiệu lực (`Tax Rule Versioning`) và tính toán số thuế GTGT và TNCN phải nộp.
+6. **S4-HKD**: Điền số liệu dự kiến vào Sổ theo dõi tình hình thực hiện nghĩa vụ thuế với NSNN (**S4-HKD**).
+7. **Owner Review**: Chủ hộ kinh doanh (Owner) trực tiếp kiểm tra, rà soát số liệu:
+   - **APPROVE (Chấp thuận)**: Chuyển nghĩa vụ thành chính thức (`tax_obligations`), sẵn sàng cho việc ghi nhận nộp thuế (`tax_payments`) và lưu vết lịch sử thanh toán (`payment_history`).
+   - **REJECT (Từ chối)**: Yêu cầu điều chỉnh, bổ sung chi phí hợp lệ hoặc tính toán lại (`Edit / Recalculate`), lưu nhật ký hệ thống (`audit_logs`).
+
+---
+
+## 5. Thiết Kế Cơ Sở Dữ Liệu Cho Tax Engine
 
 Hệ thống quản lý thuế qua các thực thể linh hoạt, không hard-code công thức trong mã nguồn:
 
-### 4.1. Bảng `tax_types`
+### 5.1. Bảng `tax_types`
 Quản lý danh mục các loại thuế:
 ```sql
 CREATE TABLE tax_types (
@@ -91,7 +160,7 @@ CREATE TABLE tax_types (
 );
 ```
 
-### 4.2. Bảng `tax_activity_groups`
+### 5.2. Bảng `tax_activity_groups`
 Quản lý nhóm ngành nghề tính thuế theo quy định:
 ```sql
 CREATE TABLE tax_activity_groups (
@@ -103,7 +172,7 @@ CREATE TABLE tax_activity_groups (
 );
 ```
 
-### 4.3. Bảng `tax_rules` & `tax_rule_versions`
+### 5.3. Bảng `tax_rules` & `tax_rule_versions`
 Quản lý các quy tắc thuế theo ngưỡng doanh thu, phương pháp tính và khoảng thời gian hiệu lực:
 ```sql
 CREATE TABLE tax_rules (
@@ -122,7 +191,7 @@ CREATE TABLE tax_rules (
 );
 ```
 
-### 4.4. Snapshot Dữ Liệu Bán Hàng Trong `sales_order_items`
+### 5.4. Snapshot Dữ Liệu Bán Hàng Trong `sales_order_items`
 Để đảm bảo dữ liệu quá khứ không bị thay đổi khi cấu hình thuế cập nhật:
 ```sql
 ALTER TABLE sales_order_items ADD COLUMN tax_activity_group_id VARCHAR(36) REFERENCES tax_activity_groups(id);
@@ -131,7 +200,7 @@ ALTER TABLE sales_order_items ADD COLUMN tax_rate NUMERIC(5, 4);
 ALTER TABLE sales_order_items ADD COLUMN tax_calculation_method VARCHAR(50);
 ```
 
-### 4.5. Bảng `tax_obligations` & `tax_payments` (S4-HKD)
+### 5.5. Bảng `tax_obligations` & `tax_payments` (S4-HKD)
 ```sql
 CREATE TABLE tax_obligations (
     id VARCHAR(36) PRIMARY KEY,
@@ -162,7 +231,7 @@ CREATE TABLE tax_payments (
 
 ---
 
-## 5. Các Kịch Bản Nghiệp Vụ Cụ Thể (Business Test Cases)
+## 6. Các Kịch Bản Nghiệp Vụ Cụ Thể (Business Test Cases)
 
 ### Kịch bản 1: HKD quy mô nhỏ, doanh thu năm 400.000.000 VNĐ
 - **Đầu vào**: Doanh thu cả năm 400 triệu đồng.
@@ -195,7 +264,7 @@ CREATE TABLE tax_payments (
 
 ---
 
-## 6. Ranh Giới Học Thuật & Nguyên Tắc Human-in-the-Loop
+## 7. Ranh Giới Học Thuật & Nguyên Tắc Human-in-the-Loop
 
 1. **Phạm vi dữ liệu chi phí**: Hệ thống không triển khai kế toán chi phí toàn diện (S3-HKD). Với phương pháp TNCN theo thu nhập tính thuế, hệ thống hỗ trợ tính toán dựa trên dữ liệu giá vốn hàng hóa sẵn có từ S2-HKD, đồng thời cho phép Owner bổ sung/xác nhận các chi phí hợp lý khác trước khi chốt số liệu.
 2. **Quyền quyết định thuộc về Owner**: Mọi nghĩa vụ thuế do Tax Engine tính toán đều ở dạng bản nháp đề xuất. Chủ hộ kinh doanh phải xem xét, kiểm tra, xác nhận hoặc chỉnh sửa trước khi xuất sổ S4-HKD chính thức.

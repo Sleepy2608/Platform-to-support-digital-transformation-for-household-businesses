@@ -164,6 +164,55 @@ $$\text{Thuế TNCN} = \text{Thu nhập tính thuế} \times \text{Thuế suất
 - **Sự kiện kích hoạt (Trigger)**: Định kỳ (Cuối tháng/Quý/Năm) hoặc khi Chủ hộ yêu cầu tổng hợp nghĩa vụ thuế kỳ báo cáo.
 - **Quy trình xử lý của Tax Engine**:
 
+```
+                     SALES ORDER
+                          │
+                          ▼
+                ┌───────────────────┐
+                │  Confirmed Order  │
+                └─────────┬─────────┘
+                          │
+                          ▼
+                    Record Revenue
+                          │
+                          ▼
+                  Determine Activity
+                          │
+                          ▼
+                 Check Annual Revenue
+                          │
+         ┌────────────────┼────────────────┐
+         │                │                │
+      ≤ 500m           500m–3b            > 3b
+         │                │                │
+       No VAT           VAT %            VAT %
+       No PIT           + PIT            + PIT
+                          │                │
+                    Choose method     Income-based
+                          │                │
+                          ▼                ▼
+                             Tax Engine
+                                  │
+                                  ▼
+                               S4-HKD
+                                  │
+                                  ▼
+                             Owner Review
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │                           │
+                 APPROVE                      REJECT
+                    │                           │
+                    ▼                           ▼
+              Tax Obligation            Edit / Recalculate
+                    │
+                    ▼
+               Tax Payment
+                    │
+                    ▼
+             Payment History
+```
+
 ```mermaid
 flowchart TD
     A[Giao dịch bán hàng xác nhận] --> B[Ghi nhận doanh thu S1-HKD]

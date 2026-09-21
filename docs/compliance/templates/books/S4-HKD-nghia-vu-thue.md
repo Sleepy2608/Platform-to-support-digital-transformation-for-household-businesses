@@ -39,7 +39,57 @@
    - Phương pháp tính thuế TNCN được lựa chọn (Phương pháp tỷ lệ trên doanh thu vượt 500tr hoặc Phương pháp thu nhập tính thuế).
    - Chứng từ nộp thuế thực tế (Giấy nộp tiền vào NSNN kèm xác nhận của Owner).
 
-2. **Processing (Quy trình tính toán Tax Engine)**:
+3. **Processing (Quy trình tính toán Tax Engine)**:
+
+```
+                     SALES ORDER
+                          │
+                          ▼
+                ┌───────────────────┐
+                │  Confirmed Order  │
+                └─────────┬─────────┘
+                          │
+                          ▼
+                    Record Revenue
+                          │
+                          ▼
+                  Determine Activity
+                          │
+                          ▼
+                 Check Annual Revenue
+                          │
+         ┌────────────────┼────────────────┐
+         │                │                │
+      ≤ 500m           500m–3b            > 3b
+         │                │                │
+       No VAT           VAT %            VAT %
+       No PIT           + PIT            + PIT
+                          │                │
+                    Choose method     Income-based
+                          │                │
+                          ▼                ▼
+                             Tax Engine
+                                  │
+                                  ▼
+                               S4-HKD
+                                  │
+                                  ▼
+                             Owner Review
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │                           │
+                 APPROVE                      REJECT
+                    │                           │
+                    ▼                           ▼
+              Tax Obligation            Edit / Recalculate
+                    │
+                    ▼
+               Tax Payment
+                    │
+                    ▼
+             Payment History
+```
+
    - **Xác định điều kiện miễn/không chịu thuế**: Nếu doanh thu năm $\le 500$ triệu đồng $\implies$ `tax_payable = 0` (Trạng thái *NOT_SUBJECT_TO_TAX*).
    - **Tính thuế GTGT**:
      $$\text{Thuế GTGT} = \text{Doanh thu tính thuế} \times \text{Tỷ lệ GTGT theo ngành}$$
@@ -49,6 +99,7 @@
    - **Tính toán số dư nghĩa vụ cuối kỳ**:
      $$\text{Số thuế còn phải nộp/nộp thừa} = (\text{Thuế phải nộp đầu kỳ} + \text{Phát sinh phải nộp trong kỳ}) - \text{Số đã nộp trong kỳ}$$
 
-3. **Owner Review & Output**:
-   - Chủ hộ kinh doanh (Owner) kiểm tra các số liệu tính toán, chỉnh sửa chi phí (nếu áp dụng phương pháp thu nhập) và tiến hành **Phê duyệt (Approve)**.
+4. **Owner Review & Output**:
+   - Chủ hộ kinh doanh (Owner) kiểm tra các số liệu tính toán, chỉnh sửa chi phí (nếu áp dụng phương pháp thu nhập) và tiến hành **Phê duyệt (Approve)** hoặc **Từ chối (Reject/Recalculate)**.
+   - Khi Approve $\to$ ghi nhận `tax_obligations`, tiến hành nộp thuế `tax_payments` và lưu `payment_history`.
    - Xuất file sổ **S4-HKD** dưới dạng PDF hoặc Excel đúng biểu mẫu Thông tư 88/2021/TT-BTC.

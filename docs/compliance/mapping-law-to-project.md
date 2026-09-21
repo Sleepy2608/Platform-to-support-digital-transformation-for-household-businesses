@@ -78,7 +78,58 @@ Bản đồ này xác định chi tiết sự liên kết giữa các quy địn
 - Đảm bảo tính nhất quán lịch sử: Mọi giao dịch phát sinh trong quá khứ được tính toán và lưu snapshot theo quy tắc thuế có hiệu lực tại thời điểm đó (`sales_order_items.tax_rule_id`, `sales_order_items.tax_rate`).
 - Khi chính sách thuế thay đổi theo năm tài chính mới, quy tắc mới chỉ áp dụng cho các giao dịch phát sinh sau ngày hiệu lực.
 
-### 3.7. Nguyên tắc Human-in-the-Loop & Audit Trail
+### 3.7. Luồng Quy Trình Nghiệp Vụ & Tax Engine Workflow
+
+```
+                     SALES ORDER
+                          │
+                          ▼
+                ┌───────────────────┐
+                │  Confirmed Order  │
+                └─────────┬─────────┘
+                          │
+                          ▼
+                    Record Revenue
+                          │
+                          ▼
+                  Determine Activity
+                          │
+                          ▼
+                 Check Annual Revenue
+                          │
+         ┌────────────────┼────────────────┐
+         │                │                │
+      ≤ 500m           500m–3b            > 3b
+         │                │                │
+       No VAT           VAT %            VAT %
+       No PIT           + PIT            + PIT
+                          │                │
+                    Choose method     Income-based
+                          │                │
+                          ▼                ▼
+                             Tax Engine
+                                  │
+                                  ▼
+                               S4-HKD
+                                  │
+                                  ▼
+                             Owner Review
+                                  │
+                    ┌─────────────┴─────────────┐
+                    │                           │
+                 APPROVE                      REJECT
+                    │                           │
+                    ▼                           ▼
+              Tax Obligation            Edit / Recalculate
+                    │
+                    ▼
+               Tax Payment
+                    │
+                    ▼
+             Payment History
+```
+
+### 3.8. Nguyên tắc Human-in-the-Loop & Audit Trail
 - Toàn bộ đề xuất tính thuế, đơn hàng nháp AI và báo cáo sổ sách S1/S2/S4 đều yêu cầu sự xác nhận hoặc phê duyệt của người dùng (Employee xác nhận đơn, Owner phê duyệt báo cáo).
 - Mọi thao tác phê duyệt, chỉnh sửa số liệu, nộp thuế đều được ghi lại trong `audit_logs`.
 
