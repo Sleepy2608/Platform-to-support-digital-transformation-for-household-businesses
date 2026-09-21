@@ -51,7 +51,7 @@
 Ứng dụng web (mobile + web) sử dụng được chỉ với một chiếc điện thoại thông minh:
 
 - **Trợ lý AI** hiểu yêu cầu ngôn ngữ tự nhiên tiếng Việt (văn bản) và tự động sinh **đơn hàng nháp** để nhân viên/chủ hộ kiểm tra và xác nhận.
-- **Ghi sổ kế toán tự động** cho mọi giao dịch bán hàng, nhập kho và công nợ; tự tổng hợp sổ/biểu mẫu theo **Thông tư 88/2021/TT-BTC**.
+- **Ghi sổ kế toán tự động & Tax Engine 2026** cho mọi giao dịch bán hàng, nhập kho và công nợ; tự tổng hợp sổ/biểu mẫu theo **Thông tư 88/2021/TT-BTC** (S1-HKD, S2-HKD, S4-HKD) và hỗ trợ tính toán nghĩa vụ thuế GTGT & TNCN theo **Chính sách thuế 2026** (ngưỡng 500 triệu, 3 tỷ, 50 tỷ; đa dạng phương pháp tính; quản lý phiên bản quy tắc thuế).
 - **Báo cáo & phân tích** doanh thu, mặt hàng bán chạy, tồn kho thấp và công nợ còn lại.
 - **Quản lý gói thuê bao** và phân quyền 4 cấp: Administrator → Manager → Owner → Employee.
 
@@ -59,18 +59,18 @@
 
 | Vai trò | Mô tả |
 | :--- | :--- |
-| **Administrator (ADMIN)** | Quản trị hệ thống: quản lý tài khoản Owner/Manager, bảng giá gói thuê bao, cấu hình hệ thống & AI, biểu mẫu báo cáo tài chính, thông báo toàn hệ thống, xử lý phản hồi, Platform Analytics |
+| **Administrator (ADMIN)** | Quản trị hệ thống: quản lý tài khoản Owner/Manager, bảng giá gói thuê bao, cấu hình hệ thống & AI, biểu mẫu báo cáo tài chính, danh mục quy tắc thuế và phiên bản chính sách (Tax Policy Versioning), thông báo toàn hệ thống, xử lý phản hồi, Platform Analytics |
 | **Manager (MANAGER)** | Quản lý vận hành nền tảng: duyệt hồ sơ hộ kinh doanh, hỗ trợ/đối soát gói thuê bao, theo dõi revenue ledger, stock import và bookkeeping, xử lý phản hồi |
-| **Owner (BUSINESS_OWNER)** | Chủ hộ kinh doanh: toàn quyền nghiệp vụ trong hộ của mình — sản phẩm, kho, khách hàng, công nợ, đơn hàng, nhân viên, doanh thu, sổ kế toán |
+| **Owner (BUSINESS_OWNER)** | Chủ hộ kinh doanh: toàn quyền nghiệp vụ trong hộ của mình — sản phẩm, kho, khách hàng, công nợ, đơn hàng, nhân viên, doanh thu, kiểm tra & phê duyệt sổ kế toán và nghĩa vụ thuế |
 | **Employee (EMPLOYEE)** | Nhân viên cửa hàng: tạo đơn tại quầy, in hoá đơn, ghi nợ, xác nhận/từ chối đơn nháp do AI tạo, nhận thông báo thời gian thực |
 | **Khách hàng** | Không có tài khoản trên hệ thống; tương tác gián tiếp qua Zalo/điện thoại hoặc được nhân viên thao tác đại diện |
 
 ### 4. Nguyên tắc thiết kế
 
-- **Human-in-the-loop**: AI chỉ tạo đơn nháp, luôn có nhân viên/chủ hộ kiểm tra và xác nhận trước khi ghi nhận chính thức.
+- **Human-in-the-loop**: AI chỉ tạo đơn nháp; Tax Engine đề xuất nghĩa vụ thuế dự kiến — luôn có nhân viên/chủ hộ (Owner) kiểm tra và phê duyệt trước khi ghi nhận chính thức.
 - **Fallback thủ công**: khi AI không khả dụng, hệ thống vẫn bán hàng và nhập đơn bình thường.
 - **Cách ly dữ liệu (multi-tenant)**: mỗi hộ kinh doanh là một tenant độc lập; `businessId` luôn suy ra từ token, không tin dữ liệu do client gửi lên.
-- **Tuân thủ**: tự động hoá 3 mẫu sổ **S1-HKD** (doanh thu), **S2-HKD** (kho hàng) và **S4-HKD** (nghĩa vụ thuế) theo Thông tư 88/2021/TT-BTC.
+- **Tuân thủ pháp lý (Compliance)**: tự động hoá 3 mẫu sổ **S1-HKD** (doanh thu), **S2-HKD** (kho hàng) và **S4-HKD** (nghĩa vụ thuế) theo Thông tư 88/2021/TT-BTC kết hợp chính sách thuế Hộ kinh doanh 2026 và đề án chuyển đổi số quản lý thuế theo Quyết định 3389/QĐ-BTC.
 
 ---
 
@@ -81,7 +81,7 @@
 | 1 | **Trợ lý AI Đặt hàng** | Nhập hoặc nhắn tin bằng tiếng Việt tự nhiên, AI đọc hiểu và tạo đơn hàng nháp. Nhân viên chỉ cần kiểm tra, sửa hoặc xác nhận — AI không khả dụng vẫn nhập đơn tay bình thường. |
 | 2 | **Bán hàng tại quầy (POS)** | Tạo đơn cực nhanh: tìm sản phẩm tức thời, chọn số lượng, gán khách hàng, xác nhận hoặc huỷ đơn. Giao diện Fast Sales tối ưu cho điện thoại. |
 | 3 | **Hoá đơn & In ấn** | In hoặc xuất hoá đơn bán hàng ra PDF theo mẫu có sẵn, lưu toàn bộ lịch sử đơn để tra cứu và gửi lại cho khách khi cần. |
-| 4 | **Kế toán Thông tư 88** | Tự động ghi sổ S1-HKD (doanh thu), S2-HKD (kho hàng) và S4-HKD (nghĩa vụ thuế); duyệt – sửa – từ chối báo cáo và xuất file Excel/PDF. |
+| 4 | **Kế toán Thông tư 88 & Tax Engine 2026** | Tự động ghi sổ S1-HKD (doanh thu), S2-HKD (kho hàng) và S4-HKD (nghĩa vụ thuế); tính toán thuế GTGT & TNCN theo ngưỡng 500tr/3 tỷ, hỗ trợ phiên bản quy tắc thuế (Tax Rule Versioning), quy trình duyệt – sửa – từ chối báo cáo của Owner và xuất file Excel/PDF. |
 | 5 | **Nhập – Xuất – Tồn kho** | Lập phiếu nhập kho, theo dõi tồn theo nhiều đơn vị tính, tự động trừ kho khi xác nhận đơn, hoàn kho khi huỷ đơn và cảnh báo hàng sắp hết. |
 | 6 | **Công nợ khách hàng** | Bán chịu và thu nợ theo từng đợt, mọi biến động nợ đều được ghi nhật ký, tự hoàn nợ khi huỷ đơn — không còn thất lạc sổ nợ. |
 | 7 | **Khách hàng & Lịch sử mua** | Lưu hồ sơ khách hàng, tra cứu toàn bộ lịch sử mua hàng và số dư công nợ hiện tại của từng khách chỉ trong vài giây. |
@@ -97,16 +97,17 @@
 
 ## Danh sách thành viên nhóm (Member)
 
-| STT | Họ và Tên | MSSV | Vai trò | Nhiệm vụ được giao |
-| :---: | :--- | :---: | :---: | :--- |
-| 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Leader | Repository & Git Management, Docs (Installation/Run Guide, User Manual, Technical Documentation, SRS, Compliance), Authorization, Password Encoder and Security, Performance (Testing and Enhancing), Admin Account Management, User Account Management (Basic CRUD, Profile), Payment Process, Subscription Pricing & Plans, Revenue Reports (Revenue Ledger, Platform Analytics, Trend Analysis) |
-| 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer | Register/Login/Dashboard UI, OTP Code Verification, Owner Account Management, Searching Engine, Image Uploads (Avatar, Products), CRUD (Customer, Owner Employee, Product), Automatic Bookkeeping (Debt, Sales, Inventory) |
-| 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger | Database Management, Docs (Data Model, AI, Calculate taxes in Compliance), Audit Log, Measurement & Product Pricing Rules, Product Stock Management (Automatic Update/Calculating, Debt History/Searching), Service Invoice Management, Order Management (At-counter Order, Confirm/Cancel Order, Confirm Debt/Debt Payment), AI Service, Feedback Management |
-| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager | Database Management, Docs (ERD, Data Model, Diagram, User Requirements, Test Cases Management), CRUD (Category, Product, Subcription), Product Stock Management (Low Stock Alert), Operational Analytics for Owner/Employee (Report, Chart), System-wide Announcement |
-| 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Feature Developer | Employee Account Management, Product Stock Management (Stock Import), Feature Plans Management, Financial Template Management (Admin), Report (Review, Edit, Reject & Template Version) |
-| 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer | Manage purchase package payments, Manager Account Management, Subscription Features (Pricing Plans, Notifications), RBAC, Service Invoice Management, Platform Analytics for Admin/Manager, Fast Sales UI for mobile (Owner/Employee) |
+| STT | Họ và Tên | MSSV | Vai trò |
+| :---: | :--- | :---: | :---: |
+| 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Leader |
+| 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer |
+| 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger |
+| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager |
+| 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Feature Developer |
+| 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer |
 
-> Mọi người đều được giao task có backend code bằng Java (Vai trò trên chỉ bao gồm các vai trò khác ngoài Backend Developer).
+> *Ghi chú:* Tất cả các thành viên đều tham gia phát triển mã nguồn Backend bằng Java.<br>
+> Chi tiết phân công nhiệm vụ và đóng góp cụ thể của từng thành viên xem tại [`docs/final-report/phan-cong-nhiem-vu-nhom.md`](docs/final-report/phan-cong-nhiem-vu-nhom.md).
 
 ---
 
@@ -232,7 +233,13 @@ Platform-to-support-digital-transformation-for-household-businesses/
 ├── docs/                                         # Tài liệu dự án
 │   ├── ai-design/                                # Thiết kế AI / pipeline
 │   ├── architecture-design/                      # Thiết kế kiến trúc hệ thống
-│   ├── compliance/                               # Thông tin luật, quy định, mapping
+│   ├── compliance/                               # Thông tin luật, chính sách thuế 2026 & biểu mẫu
+│   │   ├── circular-88-2021-BTC.md               # Quy định kế toán Thông tư 88 & Tax Engine
+│   │   ├── decision-3389-BTC.md                  # Tiêu chí phân loại HKD theo QĐ 3389/QĐ-BTC
+│   │   ├── tax-policy-2026.md                    # Chính sách thuế 2026 & kiến trúc Tax Engine
+│   │   ├── mapping-law-to-project.md             # Bản đồ ánh xạ pháp lý vào CSDL và tính năng
+│   │   ├── templates/                            # Biểu mẫu sổ kế toán S1, S2, S4
+│   │   └── references/                           # Danh mục văn bản pháp lý chính thống
 │   ├── detailed-design/                          # Thiết kế chi tiết, ERD, sơ đồ
 │   ├── final-report/                             # Báo cáo cuối cùng
 │   ├── installation-guide/                       # Hướng dẫn cài đặt
@@ -240,7 +247,7 @@ Platform-to-support-digital-transformation-for-household-businesses/
 │   ├── requirements/                             # Yêu cầu đề tài / phân tích yêu cầu
 │   ├── run-guide/                                # Hướng dẫn chạy trên IDE / VS Code
 │   ├── software-requirement-specification/       # SRS
-│   ├── system-implementation/                     # Tài liệu hiện thực hệ thống
+│   ├── system-implementation/                    # Tài liệu hiện thực hệ thống
 │   ├── testing-documents/                        # Tài liệu kiểm thử
 │   ├── user-guides/                              # Hướng dẫn sử dụng theo vai trò
 │   ├── user-requirements/                        # Yêu cầu người dùng
@@ -262,11 +269,16 @@ Platform-to-support-digital-transformation-for-household-businesses/
 
 ---
 
-## Tài liệu hiện thực hệ thống
+## Tài liệu hiện thực hệ thống & Tuân thủ pháp lý
 
-Tài liệu mô tả kiến trúc hiện thực, tổ chức mã nguồn, bảo mật, các luồng nghiệp vụ, cấu hình, kiểm thử và đóng gói:
+Tài liệu kỹ thuật mô tả kiến trúc hiện thực, tổ chức mã nguồn, bảo mật, các luồng nghiệp vụ, cấu hình, kiểm thử, đóng gói và căn cứ tuân thủ pháp lý:
 
 - [System Implementation Document](docs/system-implementation/system-implementation.md)
+- [Chính sách Thuế Hộ Kinh Doanh 2026 & Thiết kế Tax Engine](docs/compliance/tax-policy-2026.md)
+- [Quy định Kế toán Thông tư 88/2021/TT-BTC & Tự động hóa](docs/compliance/circular-88-2021-BTC.md)
+- [Quyết định 3389/QĐ-BTC: Phân loại HKD & Đề án Chuyển đổi quản lý thuế](docs/compliance/decision-3389-BTC.md)
+- [Bản đồ Ánh xạ: Pháp lý Kế toán & Thuế $\to$ Tính năng Đồ án](docs/compliance/mapping-law-to-project.md)
+- [Kho Tham chiếu Văn bản Quy phạm Pháp luật Chính thống](docs/compliance/references/README.md)
 
 ---
 
