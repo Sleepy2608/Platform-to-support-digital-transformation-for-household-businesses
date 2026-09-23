@@ -107,7 +107,6 @@ export default function BackToTop({
             } ${className}`}
           >
             <ChevronUp className="w-5 h-5 transition-transform group-hover:-translate-y-0.5" />
-            <span className="hidden sm:inline text-xs font-bold tracking-tight">Đầu trang</span>
           </motion.button>
         )}
       </AnimatePresence>
