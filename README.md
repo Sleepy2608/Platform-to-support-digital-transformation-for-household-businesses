@@ -1,13 +1,17 @@
-<p align="center">
-  <h1 align="center"> Platform to Support Digital Transformation for Household Businesses </h1>
-</p>
-
-<p align="center"><em>
-<b>Đề tài:</b> Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh <br>
-<b>Môn học:</b> Lập trình Java </em>
-<br>
-  <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"/>
-</p>
+<div align="center">
+  <h1>Platform to Support Digital Transformation for Household Businesses</h1>
+  <img src="Code/Client/src/frontend/public/images/hbdt-digital.png" alt="HBDT Digital Logo" width="110" />
+  <br><br>
+  <p><em>
+    <b>Đề tài:</b> Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh <br>
+    <b>Môn học:</b> Lập trình Java
+  </em></p>
+  <p>
+    <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"/>
+    <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot"/>
+    <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js"/>
+  </p>
+</div>
 
 ---
 
@@ -15,15 +19,14 @@
 
 1. [Giới thiệu hệ thống](#giới-thiệu-hệ-thống-system-introduction)
 2. [Các tính năng chính](#các-tính-năng-chính-key-features)
-3. [Danh sách thành viên nhóm](#danh-sách-thành-viên-nhóm-member)
-4. [Tiến độ triển khai dự án](#tiến-độ-triển-khai-dự-án-project-deployment-progress)
-   - [Các tính năng đã hoàn thành](#các-tính-năng-đã-hoàn-thành)
-   - [Các tính năng chưa hoàn thiện](#các-tính-năng-chưa-hoàn-thiện)
-5. [Công nghệ sử dụng](#công-nghệ-sử-dụng-tech-stack)
-6. [Quản lý database & schema](#quản-lý-database--schema-database--schema)
-7. [Cấu trúc thư mục](#cấu-trúc-thư-mục-project-structure)
-8. [Tài liệu hiện thực hệ thống](#tài-liệu-hiện-thực-hệ-thống)
-9. [Cách chạy](#cách-chạy-how-to-run)
+3. [Bảng giá các gói dịch vụ](#bảng-giá-các-gói-dịch-vụ-pricing-plans)
+4. [Danh sách thành viên nhóm](#danh-sách-thành-viên-nhóm-member)
+5. [Tiến độ triển khai dự án](#tiến-độ-triển-khai-dự-án-project-deployment-progress)
+6. [Công nghệ sử dụng](#công-nghệ-sử-dụng-tech-stack)
+7. [Quản lý database & schema](#quản-lý-database--schema-database--schema)
+8. [Cấu trúc thư mục](#cấu-trúc-thư-mục-project-structure)
+9. [Tài liệu hiện thực hệ thống & Tuân thủ pháp lý](#tài-liệu-hiện-thực-hệ-thống--tuân-thủ-pháp-lý)
+10. [Cách chạy](#cách-chạy-how-to-run)
    - [1. Yêu cầu](#1-yêu-cầu)
    - [2. Clone source code](#2-clone-source-code)
    - [3. Cấu hình `.env` cho server](#3-cấu-hình-env-cho-server)
@@ -35,6 +38,10 @@
 ---
 
 ## Giới thiệu hệ thống (System Introduction)
+
+<p align="center">
+  <img src="Code/Client/src/frontend/public/images/dashboard-portal.png" alt="HBDT Dashboard Portal" width="100%" />
+</p>
 
 **Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh (HBDT)** là hệ thống quản lý kinh doanh trên nền web, được thiết kế riêng cho các hộ kinh doanh truyền thống tại Việt Nam (vật liệu xây dựng, vật tư công trình, tạp hóa, bán lẻ...).
 
@@ -92,6 +99,26 @@
 | 12 | **Thông báo thời gian thực** | Chuông thông báo báo ngay khi AI tạo đơn nháp, khi đơn đổi trạng thái hoặc khi kho sắp hết hàng — không bỏ lỡ đơn nào. |
 
 > Danh sách tính năng đã hoàn thành chi tiết theo từng Epic xem tại [`docs/project-progress-and-feature/feature.md`](docs/project-progress-and-feature/feature.md).
+
+<p align="center">
+  <img src="Code/Client/src/frontend/public/images/features-summary.png" alt="Tổng quan tính năng hệ thống" width="100%" />
+</p>
+
+---
+
+## Bảng giá các gói dịch vụ (Pricing Plans)
+
+Hệ thống cung cấp các gói dịch vụ linh hoạt phù hợp với từng giai đoạn và quy mô hoạt động của hộ kinh doanh:
+
+| Gói dịch vụ | Giá theo tháng | Giá theo năm | Tính năng nổi bật |
+| :--- | :---: | :---: | :--- |
+| **Gói Miễn Phí (FREE)** | **0đ** / tháng | Miễn phí vĩnh viễn | Quản lý sản phẩm & danh mục, tạo đơn hàng bán lẻ, quản lý khách hàng cơ bản. |
+| **Gói Cơ Bản (BASIC)** | **199.000đ** / tháng | 2.200.000đ / năm | Đầy đủ tính năng gói FREE + Quản lý xuất nhập tồn kho, quản lý nhân viên & phân quyền, quản lý sổ nợ khách hàng, báo cáo doanh thu & quản lý thuế. |
+| **Gói VIP (VIP)** *(Đề xuất)* | **399.000đ** / tháng | 4.500.000đ / năm | Đầy đủ tính năng gói BASIC + **Trợ lý AI thông minh** (đọc hiểu đơn tiếng Việt tự nhiên, gợi ý đơn nháp), **Kế toán tự động & Tax Engine 2026** (ghi sổ S1, S2, S4 theo Thông tư 88), không giới hạn khách hàng. |
+
+<p align="center">
+  <img src="Code/Client/src/frontend/public/images/planning-prices.png" alt="Bảng giá các gói dịch vụ HBDT" width="100%" />
+</p>
 
 ---
 
