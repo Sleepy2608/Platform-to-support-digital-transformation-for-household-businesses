@@ -130,7 +130,7 @@ export function UpgradeModal({
               {/* Action buttons */}
               <div className="flex flex-col gap-2.5">
                 <a
-                  href="/owner/account#subscription"
+                  href="/owner/account/change-plan"
                   className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all duration-200 group"
                 >
                   <Crown className="w-4 h-4" />

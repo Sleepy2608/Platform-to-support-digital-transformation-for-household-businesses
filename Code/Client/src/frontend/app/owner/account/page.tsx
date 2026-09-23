@@ -893,7 +893,7 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
         {hasActiveSubscription && (
           <button
             type="button"
-            onClick={() => router.push('/onboarding/package-selection?from=account')}
+            onClick={() => router.push('/owner/account/change-plan')}
             className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 active:scale-95 transition-all cursor-pointer shadow-xs"
           >
             <Crown className="w-3.5 h-3.5" />
@@ -906,11 +906,11 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
       {/* Package Name Badge */}
       {packageType && packageLabel ? (
         <div className="flex items-center gap-3">
+          <span className="text-xs text-slate-1000">Gói dịch vụ hiện tại:</span>
           <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${packageBadgeClass}`}>
             <Crown className="w-3.5 h-3.5" />
             {packageLabel}
           </span>
-          <span className="text-xs text-slate-500">Gói dịch vụ hiện tại</span>
         </div>
       ) : (
         <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
@@ -921,7 +921,7 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
             <div className="flex gap-2 mt-3">
               <button
                 type="button"
-                onClick={() => router.push('/onboarding/package-selection?from=account')}
+                onClick={() => router.push('/owner/account/change-plan')}
                 className="px-4 py-2 bg-amber-600 text-white text-xs font-bold rounded-xl hover:bg-amber-700 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
               >
                 <Crown className="w-3.5 h-3.5" /> Chọn gói ngay
