@@ -358,25 +358,24 @@ function ChangePlanInner() {
               key={pkg.id}
               className={`relative flex flex-col justify-between rounded-3xl p-6 sm:p-8 transition-all duration-300 ${
                 isCurrent
-                  ? 'bg-white border-2 border-emerald-500 shadow-xl ring-4 ring-emerald-500/10'
-                  : isVip
-                    ? 'bg-slate-900 text-white border-2 border-slate-800 shadow-2xl hover:border-slate-700 hover:-translate-y-1'
-                    : 'bg-white text-slate-900 border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-lg hover:-translate-y-1'
+                  ? 'bg-[#121417] text-white border-2 border-[#22c55e] shadow-2xl ring-2 ring-[#22c55e]/30'
+                  : 'bg-white text-slate-900 border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-lg hover:-translate-y-1'
               }`}
             >
-              {/* Badges */}
+              {/* Top Badges */}
               <div className="flex items-center justify-between gap-2 mb-4">
                 {isCurrent ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
-                    <Check className="w-3.5 h-3.5" /> Gói đang sử dụng
+                  <span className="absolute -top-3.5 left-6 bg-[#86efac] text-zinc-950 text-[11px] font-black px-3.5 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse inline-block" />
+                    ĐANG SỬ DỤNG
                   </span>
                 ) : isVip ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-400 text-slate-950 shadow-xs">
                     <Sparkles className="w-3.5 h-3.5" /> Khuyên dùng
                   </span>
                 ) : isStandard ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
-                    Phổ biến
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                    Cơ bản
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
@@ -385,31 +384,40 @@ function ChangePlanInner() {
                 )}
               </div>
 
+              {/* Top Right Checkmark for Active Plan */}
+              {isCurrent && (
+                <span className="absolute top-6 right-6 text-[#86efac]">
+                  <CheckCircle2 className="w-7 h-7" />
+                </span>
+              )}
+
               {/* Header Info */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2.5">
-                  {isVip && <Crown className="w-6 h-6 text-amber-400" />}
-                  {isStandard && <ShieldCheck className="w-6 h-6 text-blue-600" />}
-                  {isFree && <Zap className="w-6 h-6 text-slate-600" />}
-                  <h3 className={`text-xl sm:text-2xl font-black tracking-tight ${isVip ? 'text-white' : 'text-slate-900'}`}>
+                  <div className={`p-2.5 rounded-2xl shrink-0 ${isCurrent ? 'bg-white/10 text-white' : 'bg-slate-100 text-slate-900'}`}>
+                    {isVip && <Crown className="w-5 h-5 text-amber-400" />}
+                    {isStandard && <ShieldCheck className="w-5 h-5 text-blue-600" />}
+                    {isFree && <Zap className="w-5 h-5 text-slate-600" />}
+                  </div>
+                  <h3 className={`text-xl sm:text-2xl font-black tracking-tight ${isCurrent ? 'text-white' : 'text-slate-900'}`}>
                     {pkg.name}
                   </h3>
                 </div>
-                <p className={`text-xs sm:text-sm min-h-[38px] leading-relaxed ${isVip ? 'text-slate-300' : 'text-slate-500'}`}>
+                <p className={`text-xs sm:text-sm min-h-[38px] leading-relaxed ${isCurrent ? 'text-zinc-400' : 'text-slate-500'}`}>
                   {pkg.description}
                 </p>
 
                 {/* Price Display */}
-                <div className="pt-4 pb-2 border-t border-b my-4 border-slate-100 dark:border-slate-800">
+                <div className={`pt-4 pb-2 border-t border-b my-4 ${isCurrent ? 'border-zinc-800' : 'border-slate-100'}`}>
                   <div className="flex items-baseline gap-1.5">
-                    <span className={`text-3xl sm:text-4xl font-extrabold tracking-tight ${isVip ? 'text-white' : 'text-slate-900'}`}>
+                    <span className={`text-3xl sm:text-4xl font-extrabold tracking-tight ${isCurrent ? 'text-white' : 'text-slate-900'}`}>
                       {formatVnd(price)}
                     </span>
-                    <span className={`text-xs font-medium ${isVip ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <span className={`text-xs font-medium ${isCurrent ? 'text-zinc-400' : 'text-slate-500'}`}>
                       /{cycle === 'YEARLY' ? 'năm' : 'tháng'}
                     </span>
                   </div>
-                  <p className={`text-[11px] mt-1 ${isVip ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <p className={`text-[11px] mt-1 ${isCurrent ? 'text-zinc-400' : 'text-slate-500'}`}>
                     {isFree
                       ? 'Miễn phí sử dụng vĩnh viễn'
                       : cycle === 'YEARLY'
@@ -417,26 +425,32 @@ function ChangePlanInner() {
                         : `${formatVnd(pkg.yearlyPrice)} khi đăng ký gói theo năm`}
                   </p>
                 </div>
+
+                {/* Expiry Pill Box for Active Plan */}
+                {isCurrent && currentExpiresAt && (
+                  <div className="my-3 px-3.5 py-2.5 rounded-xl text-xs font-medium bg-[#1e2329] border border-zinc-800 text-zinc-300 flex items-center gap-2">
+                    <span>🗓️</span>
+                    <span>Hết hạn: <strong className="text-white font-bold">{formatExpiryDate(currentExpiresAt)}</strong></span>
+                  </div>
+                )}
               </div>
 
               {/* Features List */}
               <div className="my-6 space-y-3 flex-1">
-                <p className={`text-xs font-bold uppercase tracking-wider ${isVip ? 'text-slate-400' : 'text-slate-500'}`}>
-                  Tính năng bao gồm:
+                <p className={`text-[11px] font-bold uppercase tracking-wider ${isCurrent ? 'text-zinc-400' : 'text-slate-400'}`}>
+                  TÍNH NĂNG BAO GỒM:
                 </p>
                 <ul className="space-y-2.5">
                   {pkg.features.map((feature, idx) => (
                     <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm">
                       <CheckCircle2
                         className={`w-4 h-4 shrink-0 mt-0.5 ${
-                          isVip
-                            ? 'text-amber-400'
-                            : isCurrent
-                              ? 'text-emerald-600'
-                              : 'text-blue-600'
+                          isCurrent
+                            ? 'text-[#86efac]'
+                            : 'text-blue-600'
                         }`}
                       />
-                      <span className={`leading-snug ${isVip ? 'text-slate-200' : 'text-slate-700'}`}>
+                      <span className={`leading-snug ${isCurrent ? 'text-zinc-200' : 'text-slate-700'}`}>
                         {feature}
                       </span>
                     </li>
@@ -450,20 +464,16 @@ function ChangePlanInner() {
                   <button
                     type="button"
                     disabled
-                    className="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center justify-center gap-2 cursor-not-allowed opacity-90"
+                    className="w-full py-3.5 px-4 rounded-2xl text-xs sm:text-sm font-black bg-[#86efac] text-zinc-950 shadow-md flex items-center justify-center gap-2 cursor-default"
                   >
-                    <Check className="w-4 h-4" /> Gói đang sử dụng
+                    ✓ Gói đang sử dụng
                   </button>
                 ) : (
                   <button
                     type="button"
                     disabled={submitting}
                     onClick={() => handleSelectPackage(pkg)}
-                    className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all active:scale-95 flex items-center justify-center gap-2 shadow-xs cursor-pointer ${
-                      isVip
-                        ? 'bg-amber-400 text-slate-950 hover:bg-amber-300 hover:shadow-amber-400/20'
-                        : 'bg-slate-900 text-white hover:bg-slate-800'
-                    }`}
+                    className="w-full py-3.5 px-4 rounded-2xl text-xs sm:text-sm font-bold bg-slate-900 text-white hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-2 shadow-xs cursor-pointer"
                   >
                     {submitting && selectedPkgId === pkg.id ? (
                       <>
@@ -472,7 +482,7 @@ function ChangePlanInner() {
                       </>
                     ) : (
                       <>
-                        {isVip ? <Crown className="w-4 h-4" /> : <CreditCard className="w-4 h-4" />}
+                        <CreditCard className="w-4 h-4" />
                         {isFree ? 'Chọn gói Miễn Phí' : `Chọn ${pkg.name}`}
                       </>
                     )}
