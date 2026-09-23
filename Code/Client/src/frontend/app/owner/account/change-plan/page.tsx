@@ -248,9 +248,6 @@ function ChangePlanInner() {
             Quay lại Cài đặt tài khoản
           </button>
         </div>
-        <div className="text-xs text-slate-500 font-medium">
-          Trang chủ / Cài đặt tài khoản / <span className="text-slate-900 font-bold">Chọn gói dịch vụ</span>
-        </div>
       </div>
 
       {/* Hero Header */}

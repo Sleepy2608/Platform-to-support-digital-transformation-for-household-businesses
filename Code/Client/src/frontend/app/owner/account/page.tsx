@@ -7,6 +7,7 @@ import {
   Camera, Save, CheckCircle2, AlertCircle, Loader2,
   Eye, EyeOff, Phone, Shield, Calendar, ShieldCheck,
   Pencil, X, RefreshCw, Trash2, Crown, Building2,
+  Ban, ShieldAlert, Send, Clock,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient, clearAuth } from '../../lib/apiClient';
@@ -59,6 +60,22 @@ interface SubscriptionHistory {
   action: string;
   changedBy: string;
   changedAt: string;
+}
+
+interface SubscriptionResponse {
+  id: number;
+  businessId: number;
+  planId: number;
+  planCode: string;
+  planName: string;
+  billingCycle: string;
+  startDate: string;
+  endDate: string | null;
+  status: 'PENDING_PAYMENT' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+  cancelledAt: string | null;
+  cancellationReason: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 function syncOwnerSummary(data: { fullName?: string; avatarUrl?: string | null }) {
@@ -786,6 +803,140 @@ function ContactTab({ profile, onUpdated }: { profile: OwnerProfile | null; onUp
   );
 }
 
+// ─── Cancel Confirmation Modal ────────────────────────────────────────────────
+function CancelConfirmationModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  cancelling,
+  cancelError,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (reason: string) => void;
+  cancelling: boolean;
+  cancelError: string | null;
+}) {
+  const [reason, setReason] = useState('');
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setReason('');
+      setLocalError(null);
+    }
+  }, [isOpen]);
+
+  const handleSubmit = () => {
+    if (!reason.trim()) {
+      setLocalError('Lý do hủy không được để trống.');
+      return;
+    }
+    setLocalError(null);
+    onConfirm(reason);
+  };
+
+  const displayError = cancelError || localError;
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => !cancelling && onClose()}
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs"
+          />
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 10 }}
+            className="relative bg-white w-full max-w-md rounded-2xl border border-slate-200 shadow-2xl overflow-hidden"
+          >
+            {/* Header */}
+            <div className="bg-rose-50 border-b border-rose-200 px-6 py-4 flex items-center justify-between">
+              <h3 className="text-base sm:text-lg font-bold text-rose-900 flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-rose-500" /> Xác nhận hủy gói dịch vụ
+              </h3>
+              <button
+                disabled={cancelling}
+                onClick={onClose}
+                className="p-1.5 hover:bg-rose-100 rounded-lg text-rose-400 hover:text-rose-700 cursor-pointer disabled:opacity-50"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-4">
+              <div className="p-4 bg-rose-50/60 border border-rose-100 rounded-xl flex gap-3">
+                <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs sm:text-sm text-rose-800 font-bold">Lưu ý quan trọng</p>
+                  <p className="text-xs text-rose-700 font-medium mt-1 leading-relaxed">
+                    Hủy gói dịch vụ sẽ ngắt hiệu lực <strong>ngay lập tức</strong>. Bạn sẽ có thể đăng ký gói dịch vụ mới sau khi hủy thành công.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Lý do hủy <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={reason}
+                  onChange={(e) => { setReason(e.target.value); setLocalError(null); }}
+                  disabled={cancelling}
+                  placeholder="VD: Không còn nhu cầu sử dụng, đổi sang gói khác..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 font-medium focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all disabled:opacity-60 resize-none"
+                />
+              </div>
+
+              {displayError && (
+                <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-semibold flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{displayError}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-3 bg-slate-50/50">
+              <button
+                type="button"
+                disabled={cancelling}
+                onClick={onClose}
+                className="px-4 py-2.5 border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl text-xs sm:text-sm font-bold transition-colors cursor-pointer disabled:opacity-60"
+              >
+                Không, giữ lại
+              </button>
+              <button
+                type="button"
+                disabled={cancelling}
+                onClick={handleSubmit}
+                className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-xs transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-1.5"
+              >
+                {cancelling ? (
+                  <>
+                    <Clock className="w-4 h-4 animate-spin" /> Đang hủy...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" /> Xác nhận hủy
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TAB 4: Subscription Package
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -797,6 +948,11 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
   const [monthlyPrice, setMonthlyPrice] = useState(0);
   const [showRenewPaymentModal, setShowRenewPaymentModal] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+  const [currentSubscription, setCurrentSubscription] = useState<SubscriptionResponse | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   const [histories, setHistories] = useState<SubscriptionHistory[]>([]);
   const [historiesLoading, setHistoriesLoading] = useState(true);
@@ -815,9 +971,19 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
     }
   }, []);
 
+  const fetchCurrentSubscription = useCallback(async () => {
+    try {
+      const data = await apiClient.get<SubscriptionResponse>('/api/owner/subscriptions/current');
+      setCurrentSubscription(data);
+    } catch {
+      // ignore
+    }
+  }, []);
+
   useEffect(() => {
     loadHistories();
-  }, [loadHistories]);
+    fetchCurrentSubscription();
+  }, [loadHistories, fetchCurrentSubscription]);
 
   const expiresAt = profile?.subscriptionExpiresAt;
   const packageType = profile?.packageType;
@@ -855,11 +1021,38 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
       setPaymentSuccess(true);
       onUpdated();
       loadHistories();
+      fetchCurrentSubscription();
       setTimeout(() => setShowRenewPaymentModal(false), 1800);
     } catch (err: unknown) {
       setMsg({ type: 'error', text: (err as Error).message });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelSubscription = async (reason: string) => {
+    setCancelling(true);
+    setCancelError(null);
+    try {
+      let subId = currentSubscription?.id;
+      if (!subId) {
+        const current = await apiClient.get<SubscriptionResponse>('/api/owner/subscriptions/current');
+        subId = current?.id;
+      }
+      if (!subId) {
+        throw new Error('Không tìm thấy thông tin gói dịch vụ hiện tại để hủy.');
+      }
+      await apiClient.post(`/api/owner/subscriptions/${subId}/cancel`, { reason });
+      setShowCancelModal(false);
+      setMsg({ type: 'success', text: 'Gói dịch vụ đã được hủy thành công. Bạn có thể chọn đăng ký gói mới.' });
+      onUpdated();
+      loadHistories();
+      fetchCurrentSubscription();
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Lỗi khi hủy gói dịch vụ.';
+      setCancelError(errorMsg);
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -886,19 +1079,32 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
 
   return (
     <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <SectionHeader icon={CreditCard} title="Gói dịch vụ &amp; Gia hạn" subtitle="Quản lý thời hạn truy cập nền tảng HBDT Digital" />
         </div>
         {hasActiveSubscription && (
-          <button
-            type="button"
-            onClick={() => router.push('/owner/account/change-plan')}
-            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 active:scale-95 transition-all cursor-pointer shadow-xs"
-          >
-            <Crown className="w-3.5 h-3.5" />
-            Chọn gói dịch vụ khác
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => router.push('/owner/account/change-plan')}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-900 text-white text-xs font-bold rounded-xl hover:bg-slate-800 active:scale-95 transition-all cursor-pointer shadow-xs"
+            >
+              <Crown className="w-3.5 h-3.5" />
+              Chọn gói dịch vụ khác
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCancelError(null);
+                setShowCancelModal(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold rounded-xl active:scale-95 transition-all cursor-pointer shadow-2xs"
+            >
+              <Ban className="w-3.5 h-3.5" />
+              Hủy gói
+            </button>
+          </div>
         )}
       </div>
       {msg && <Alert type={msg.type} message={msg.text} />}
@@ -1003,6 +1209,7 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${item.action === 'UPGRADE' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
                       item.action === 'DOWNGRADE' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                      item.action === 'CANCEL' || item.action === 'CANCELLED' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
                         'bg-blue-100 text-blue-800 border border-blue-200'
                       }`}>
                       {item.action}
@@ -1036,6 +1243,15 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
         error={msg?.type === 'error' ? msg.text : null}
         onClose={() => setShowRenewPaymentModal(false)}
         onConfirm={handleConfirmRenewalPayment}
+      />
+
+      {/* Cancel Confirmation Modal */}
+      <CancelConfirmationModal
+        isOpen={showCancelModal}
+        onClose={() => { setShowCancelModal(false); setCancelError(null); }}
+        onConfirm={handleCancelSubscription}
+        cancelling={cancelling}
+        cancelError={cancelError}
       />
     </div>
   );
