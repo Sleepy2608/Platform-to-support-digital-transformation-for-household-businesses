@@ -15,6 +15,9 @@ ehthumbs.db
 # IDE
 ############################
 
+#graphify
+.graphify/
+
 # Claude Code
 .claude/
 
@@ -208,6 +211,8 @@ docker-volumes/
 ############################
 # Certificates & Secrets
 ############################
+
+.plan/
 
 *.pem
 *.key
