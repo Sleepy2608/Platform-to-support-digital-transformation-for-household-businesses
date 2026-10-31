@@ -20,15 +20,20 @@ import java.time.LocalDateTime;
 public class BypassKeyCreateRequest {
 
     /**
-     * Mã Bypass Key gồm 20 chữ số.
-     * Nếu để trống, hệ thống sẽ tự động sinh 20 chữ số ngẫu nhiên an toàn.
+     * Mã Bypass Key gồm 20 ký tự chữ và số.
+     * Nếu để trống, hệ thống sẽ tự động sinh 20 ký tự ngẫu nhiên an toàn.
      */
-    @Pattern(regexp = "^$|^[0-9]{20}$", message = "Mã Bypass Key nếu tự đặt phải gồm đúng 20 chữ số")
+    @Pattern(regexp = "^$|^[a-zA-Z0-9]{20}$", message = "Mã Bypass Key nếu tự đặt phải gồm đúng 20 ký tự chữ và số")
     private String keyCode;
 
-    @NotNull(message = "Số lần sử dụng tối đa không được để trống")
-    @Min(value = 1, message = "Số lần sử dụng tối đa phải từ 1 trở lên")
     private Integer maxUses;
+
+    public Integer getMaxUses() {
+        if (maxUses == null || maxUses <= 0) {
+            return 1;
+        }
+        return maxUses;
+    }
 
     @Size(max = 255, message = "Ghi chú không được quá 255 ký tự")
     private String note;

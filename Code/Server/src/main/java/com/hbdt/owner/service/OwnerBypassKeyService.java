@@ -31,7 +31,7 @@ public class OwnerBypassKeyService {
      * Xác thực mã Bypass Key do chủ hộ kinh doanh (Owner) nhập vào khi thanh toán gói cước.
      */
     public ValidateBypassKeyResponse validateKey(ValidateBypassKeyRequest request) {
-        String keyCode = request.getKeyCode() != null ? request.getKeyCode().trim() : "";
+        String keyCode = request.getKeyCode() != null ? request.getKeyCode().trim().toUpperCase() : "";
 
         if (keyCode.isEmpty()) {
             return ValidateBypassKeyResponse.builder()
@@ -40,11 +40,11 @@ public class OwnerBypassKeyService {
                     .build();
         }
 
-        if (!keyCode.matches("^[0-9]{20}$")) {
+        if (!keyCode.matches("^[a-zA-Z0-9]{20}$")) {
             return ValidateBypassKeyResponse.builder()
                     .valid(false)
                     .keyCode(keyCode)
-                    .message("Mã Bypass Key phải gồm chính xác 20 chữ số")
+                    .message("Mã Bypass Key phải gồm chính xác 20 ký tự chữ và số")
                     .build();
         }
 

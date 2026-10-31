@@ -47,7 +47,7 @@ class BypassKeyAdminServiceTest {
     }
 
     @Test
-    @DisplayName("generateSecure20DigitCode sinh chuỗi chính xác 20 chữ số và chữ số đầu từ 1-9")
+    @DisplayName("generateSecure20DigitCode sinh chuỗi chính xác 20 ký tự chữ và số (A-Z, 0-9)")
     void testGenerateSecure20DigitCode() {
         when(bypassKeyRepository.existsByKeyCode(any())).thenReturn(false);
 
@@ -55,7 +55,7 @@ class BypassKeyAdminServiceTest {
 
         assertNotNull(code);
         assertEquals(20, code.length());
-        assertTrue(code.matches("^[1-9][0-9]{19}$"));
+        assertTrue(code.matches("^[0-9A-Z]{20}$"));
     }
 
     @Test
@@ -90,9 +90,9 @@ class BypassKeyAdminServiceTest {
     }
 
     @Test
-    @DisplayName("createKey chấp nhận mã 20 chữ số hợp lệ do admin tự nhập")
+    @DisplayName("createKey chấp nhận mã 20 ký tự chữ và số hợp lệ do admin tự nhập")
     void testCreateKeyWithCustomValidCode() {
-        String customCode = "12345678901234567890";
+        String customCode = "8K2N9F7X1M4Q5Z8P3R9T";
         when(bypassKeyRepository.existsByKeyCode(customCode)).thenReturn(false);
         when(bypassKeyRepository.save(any(BypassKey.class))).thenAnswer(inv -> {
             BypassKey key = inv.getArgument(0);
@@ -112,7 +112,7 @@ class BypassKeyAdminServiceTest {
     }
 
     @Test
-    @DisplayName("createKey từ chối nếu mã tự nhập không đủ hoặc quá 20 chữ số")
+    @DisplayName("createKey từ chối nếu mã tự nhập không đủ hoặc quá 20 ký tự chữ và số")
     void testCreateKeyRejectsInvalidLengthCode() {
         BypassKeyCreateRequest request = BypassKeyCreateRequest.builder()
                 .keyCode("123456789")
@@ -121,7 +121,7 @@ class BypassKeyAdminServiceTest {
 
         BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> bypassKeyAdminService.createKey(request, "admin"));
-        assertTrue(ex.getMessage().contains("20 chữ số"));
+        assertTrue(ex.getMessage().contains("20 ký tự chữ và số"));
     }
 
     @Test
@@ -141,16 +141,29 @@ class BypassKeyAdminServiceTest {
     }
 
     @Test
-    @DisplayName("createKey từ chối nếu maxUses < 1")
-    void testCreateKeyRejectsZeroOrNegativeMaxUses() {
+    @DisplayName("createKey tự động gán maxUses = 1 nếu giá trị đầu vào <= 0 hoặc null")
+    void testCreateKeyDefaultsMaxUsesToOneWhenZeroOrNegative() {
+        String customCode = "ABC123XYZ456DEF78901";
+        when(bypassKeyRepository.existsByKeyCode(customCode)).thenReturn(false);
+        when(bypassKeyRepository.save(any(BypassKey.class))).thenAnswer(inv -> {
+            BypassKey key = inv.getArgument(0);
+            key.setId(3L);
+            return key;
+        });
+
         BypassKeyCreateRequest request = BypassKeyCreateRequest.builder()
-                .keyCode("12345678901234567890")
+                .keyCode(customCode)
                 .maxUses(0)
                 .build();
 
-        BadRequestException ex = assertThrows(BadRequestException.class,
-                () -> bypassKeyAdminService.createKey(request, "admin"));
-        assertTrue(ex.getMessage().contains("từ 1 trở lên"));
+        BypassKeyResponse response = bypassKeyAdminService.createKey(request, "admin");
+        assertNotNull(response);
+        assertEquals(1, response.getMaxUses());
+
+        request.setMaxUses(-5);
+        BypassKeyResponse responseNeg = bypassKeyAdminService.createKey(request, "admin");
+        assertNotNull(responseNeg);
+        assertEquals(1, responseNeg.getMaxUses());
     }
 
     @Test

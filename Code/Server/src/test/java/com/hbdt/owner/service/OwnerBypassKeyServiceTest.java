@@ -38,9 +38,9 @@ class OwnerBypassKeyServiceTest {
     }
 
     @Test
-    @DisplayName("validateKey thành công khi mã hợp lệ, còn lượt dùng, tính đúng số tiền 0đ")
+    @DisplayName("validateKey thành công khi mã chữ và số hợp lệ, còn lượt dùng, tính đúng số tiền 0đ")
     void testValidateKeySuccess() {
-        String code = "12345678901234567890";
+        String code = "8K2N9F7X1M4Q5Z8P3R9T";
         BypassKey key = BypassKey.builder()
                 .id(1L)
                 .keyCode(code)
@@ -88,13 +88,13 @@ class OwnerBypassKeyServiceTest {
     }
 
     @Test
-    @DisplayName("validateKey thất bại khi keyCode không đủ 20 chữ số")
+    @DisplayName("validateKey thất bại khi keyCode không đủ 20 ký tự chữ và số")
     void testValidateKeyInvalidLength() {
         ValidateBypassKeyRequest request = ValidateBypassKeyRequest.builder().keyCode("12345").build();
         ValidateBypassKeyResponse res = ownerBypassKeyService.validateKey(request);
 
         assertFalse(res.isValid());
-        assertTrue(res.getMessage().contains("20 chữ số"));
+        assertTrue(res.getMessage().contains("20 ký tự chữ và số"));
     }
 
     @Test

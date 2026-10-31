@@ -29,6 +29,7 @@ public class BypassKeyAdminService {
     private final BypassKeyRepository bypassKeyRepository;
     private final BypassKeyUsageRepository bypassKeyUsageRepository;
     private final SecureRandom secureRandom = new SecureRandom();
+    private static final String ALPHANUMERIC_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     public BypassKeyAdminService(BypassKeyRepository bypassKeyRepository,
                                  BypassKeyUsageRepository bypassKeyUsageRepository) {
@@ -37,17 +38,15 @@ public class BypassKeyAdminService {
     }
 
     /**
-     * Sinh ngẫu nhiên mã Bypass Key gồm chính xác 20 chữ số bảo mật cao.
-     * Chữ số đầu tiên từ 1-9, 19 chữ số sau từ 0-9.
+     * Sinh ngẫu nhiên mã Bypass Key gồm chính xác 20 ký tự chữ và số (A-Z, 0-9) bảo mật cao.
      * Kiểm tra chống trùng lặp trong cơ sở dữ liệu.
      */
     public String generateSecure20DigitCode() {
         int maxAttempts = 10;
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
             StringBuilder builder = new StringBuilder(20);
-            builder.append(secureRandom.nextInt(9) + 1); // 1-9
-            for (int i = 1; i < 20; i++) {
-                builder.append(secureRandom.nextInt(10)); // 0-9
+            for (int i = 0; i < 20; i++) {
+                builder.append(ALPHANUMERIC_CHARS.charAt(secureRandom.nextInt(ALPHANUMERIC_CHARS.length())));
             }
             String candidate = builder.toString();
             if (!bypassKeyRepository.existsByKeyCode(candidate)) {
@@ -61,22 +60,21 @@ public class BypassKeyAdminService {
      * Tạo Bypass Key mới (Admin).
      */
     public BypassKeyResponse createKey(BypassKeyCreateRequest request, String adminUsername) {
-        String keyCode = request.getKeyCode() != null ? request.getKeyCode().trim() : "";
+        String keyCode = request.getKeyCode() != null ? request.getKeyCode().trim().toUpperCase() : "";
 
         if (keyCode.isEmpty()) {
             keyCode = generateSecure20DigitCode();
         } else {
-            if (!keyCode.matches("^[0-9]{20}$")) {
-                throw new BadRequestException("Mã Bypass Key phải gồm đúng 20 chữ số (0-9)");
+            if (!keyCode.matches("^[a-zA-Z0-9]{20}$")) {
+                throw new BadRequestException("Mã Bypass Key phải gồm đúng 20 ký tự chữ và số (0-9, A-Z)");
             }
             if (bypassKeyRepository.existsByKeyCode(keyCode)) {
                 throw new BadRequestException("Mã Bypass Key " + keyCode + " đã tồn tại trên hệ thống");
             }
         }
 
-        if (request.getMaxUses() == null || request.getMaxUses() < 1) {
-            throw new BadRequestException("Số lần sử dụng tối đa phải từ 1 trở lên");
-        }
+        // Nếu số lần dùng <= 0 hoặc để trống thì mặc định tính là 1
+        int maxUses = (request.getMaxUses() == null || request.getMaxUses() <= 0) ? 1 : request.getMaxUses();
 
         if (request.getExpiresAt() != null && request.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Thời gian hết hạn phải ở tương lai");
@@ -84,7 +82,7 @@ public class BypassKeyAdminService {
 
         BypassKey bypassKey = BypassKey.builder()
                 .keyCode(keyCode)
-                .maxUses(request.getMaxUses())
+                .maxUses(maxUses)
                 .usedCount(0)
                 .discountPercent(100)
                 .status(BypassKeyStatus.ACTIVE)
