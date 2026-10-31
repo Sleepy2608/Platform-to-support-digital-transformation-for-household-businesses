@@ -248,7 +248,7 @@ export default function PaymentQrModal({
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                         <div>
                           <p className="font-bold text-emerald-950">
-                            Đã áp dụng mã Bypass Key thành công!
+                            {bypassSuccessMsg || 'Đã áp dụng mã Bypass Key thành công!'}
                           </p>
                           <p className="text-[11px] text-emerald-700 mt-0.5">
                             Mã: <span className="font-mono font-bold tracking-wider">{appliedKey}</span> — Giảm giá 100% (Số tiền phải trả: 0đ).
