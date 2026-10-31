@@ -238,15 +238,16 @@ public class OwnerController {
     }
 
     /**
-     * POST /api/owner/subscription/select-package?packageType=STANDARD|VIP&billingCycle=MONTHLY|YEARLY
+     * POST /api/owner/subscription/select-package?packageType=STANDARD|VIP&billingCycle=MONTHLY|YEARLY&bypassKey=...
      * Chọn gói dịch vụ lần đầu hoặc đổi gói.
      */
     @PostMapping("/subscription/select-package")
     public ResponseEntity<ApiResponse<OwnerProfileResponse>> selectPackage(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam String packageType,
-            @RequestParam(defaultValue = "MONTHLY") String billingCycle) {
-        OwnerProfileResponse profile = ownerService.selectPackage(userDetails.getUsername(), packageType, billingCycle);
+            @RequestParam(defaultValue = "MONTHLY") String billingCycle,
+            @RequestParam(required = false) String bypassKey) {
+        OwnerProfileResponse profile = ownerService.selectPackage(userDetails.getUsername(), packageType, billingCycle, bypassKey);
         return ResponseEntity.ok(ApiResponse.success(
                 "Đã chọn gói " + packageType + " (" + billingCycle + ") thành công!", profile));
     }

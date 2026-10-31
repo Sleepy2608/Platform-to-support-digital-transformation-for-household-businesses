@@ -4,12 +4,17 @@ import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
 import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.common.service.OtpService;
+import com.hbdt.entity.BypassKey;
+import com.hbdt.entity.BypassKeyUsage;
 import com.hbdt.entity.Subscription;
 import com.hbdt.entity.SubscriptionPlan;
 import com.hbdt.entity.User;
 import com.hbdt.entity.PaymentHistory;
 import com.hbdt.entity.ServiceInvoice;
 import com.hbdt.entity.SubscriptionHistory;
+import com.hbdt.entity.enums.BypassKeyStatus;
+import com.hbdt.repository.BypassKeyRepository;
+import com.hbdt.repository.BypassKeyUsageRepository;
 import com.hbdt.repository.PaymentHistoryRepository;
 import com.hbdt.repository.ServiceInvoiceRepository;
 import com.hbdt.repository.SubscriptionHistoryRepository;
@@ -29,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -54,6 +60,8 @@ public class OwnerService {
     private final ServiceInvoiceRepository serviceInvoiceRepository;
     private final SubscriptionHistoryRepository subscriptionHistoryRepository;
     private final ISubscriptionService subscriptionService;
+    private final BypassKeyRepository bypassKeyRepository;
+    private final BypassKeyUsageRepository bypassKeyUsageRepository;
 
     public OwnerService(UserRepository userRepository,
                         SubscriptionRepository subscriptionRepository,
@@ -64,7 +72,9 @@ public class OwnerService {
                         PaymentHistoryRepository paymentHistoryRepository,
                         ServiceInvoiceRepository serviceInvoiceRepository,
                         SubscriptionHistoryRepository subscriptionHistoryRepository,
-                        ISubscriptionService subscriptionService) {
+                        ISubscriptionService subscriptionService,
+                        BypassKeyRepository bypassKeyRepository,
+                        BypassKeyUsageRepository bypassKeyUsageRepository) {
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.subscriptionPlanRepository = subscriptionPlanRepository;
@@ -75,6 +85,8 @@ public class OwnerService {
         this.serviceInvoiceRepository = serviceInvoiceRepository;
         this.subscriptionHistoryRepository = subscriptionHistoryRepository;
         this.subscriptionService = subscriptionService;
+        this.bypassKeyRepository = bypassKeyRepository;
+        this.bypassKeyUsageRepository = bypassKeyUsageRepository;
     }
 
     // =========================================================
@@ -424,6 +436,10 @@ public class OwnerService {
     }
 
     public OwnerProfileResponse selectPackage(String username, String packageType, String billingCycle) {
+        return selectPackage(username, packageType, billingCycle, null);
+    }
+
+    public OwnerProfileResponse selectPackage(String username, String packageType, String billingCycle, String bypassKey) {
         if (packageType == null || packageType.isBlank()) {
             throw new BadRequestException("Mã gói thuê bao không được để trống");
         }
@@ -437,6 +453,39 @@ public class OwnerService {
 
         SubscriptionPlan plan = findActivePlan(packageType);
         LocalDate today = LocalDate.now();
+
+        // Nếu có bypassKey, xác thực và khóa bằng Pessimistic Write Lock
+        BypassKey key = null;
+        if (bypassKey != null && !bypassKey.trim().isEmpty()) {
+            String cleanKey = bypassKey.trim();
+            key = bypassKeyRepository.findByKeyCodeForUpdate(cleanKey)
+                    .orElseThrow(() -> new BadRequestException("Mã Bypass Key không tồn tại trên hệ thống"));
+
+            if (key.getStatus() == BypassKeyStatus.DISABLED) {
+                throw new BadRequestException("Mã Bypass Key này hiện đang bị tạm khóa");
+            }
+            if (key.getStatus() == BypassKeyStatus.DEPLETED || (key.getMaxUses() != null && key.getUsedCount() >= key.getMaxUses())) {
+                throw new BadRequestException("Mã Bypass Key đã hết số lượt sử dụng tối đa (" + key.getMaxUses() + " lượt)");
+            }
+            if (key.getExpiresAt() != null && key.getExpiresAt().isBefore(LocalDateTime.now())) {
+                throw new BadRequestException("Mã Bypass Key đã hết hạn sử dụng");
+            }
+            if (key.getStatus() != BypassKeyStatus.ACTIVE) {
+                throw new BadRequestException("Mã Bypass Key không ở trạng thái khả dụng (" + key.getStatus().getDescription() + ")");
+            }
+        }
+
+        // Tự động hủy các subscription đang mở (PENDING_PAYMENT hoặc ACTIVE cũ) nếu có để tránh conflict
+        List<Subscription> existingSubs = subscriptionRepository.findAllByBusinessIdOrderByCreatedAtDesc(user.getBusinessId());
+        for (Subscription s : existingSubs) {
+            if (s.getStatus() == SubscriptionStatus.PENDING_PAYMENT || s.getStatus() == SubscriptionStatus.ACTIVE) {
+                s.setStatus(SubscriptionStatus.CANCELLED);
+                s.setCancellationReason("Hệ thống tự động hủy để kích hoạt gói mới: " + plan.getPlanCode());
+                s.setCancelledAt(LocalDateTime.now());
+                subscriptionRepository.save(s);
+            }
+        }
+
         Subscription subscription = subscriptionService.createPendingPaymentSubscription(
                 user,
                 plan,
@@ -445,10 +494,42 @@ public class OwnerService {
                 today.plusMonths("YEARLY".equals(billingCycle) ? 12 : 1)
         );
 
-        java.math.BigDecimal amount = "YEARLY".equals(billingCycle)
+        BigDecimal amount = "YEARLY".equals(billingCycle)
                 ? plan.getAnnualPrice()
                 : plan.getMonthlyPrice();
-        if (amount.signum() == 0) {
+
+        if (key != null) {
+            // Tiêu thụ 1 lượt dùng của Bypass Key
+            key.setUsedCount(key.getUsedCount() + 1);
+            if (key.getUsedCount() >= key.getMaxUses()) {
+                key.setStatus(BypassKeyStatus.DEPLETED);
+            }
+            bypassKeyRepository.save(key);
+
+            // Ghi nhận nhật ký BypassKeyUsage
+            BypassKeyUsage usage = BypassKeyUsage.builder()
+                    .bypassKey(key)
+                    .userId(user.getId())
+                    .username(user.getUsername())
+                    .businessId(user.getBusinessId())
+                    .packageType(plan.getPlanCode())
+                    .billingCycle(billingCycle)
+                    .originalAmount(amount)
+                    .discountAmount(amount)
+                    .finalAmount(BigDecimal.ZERO)
+                    .usedAt(LocalDateTime.now())
+                    .build();
+            bypassKeyUsageRepository.save(usage);
+
+            // Kích hoạt ngay lập tức với số tiền 0đ
+            subscriptionService.activateSubscription(subscription.getId());
+            PaymentHistory payment = subscriptionService.createSubscriptionPayment(
+                    subscription.getId(), BigDecimal.ZERO, "BYPASS_KEY");
+            subscriptionService.processPaymentCallback(payment.getTransactionId(), "COMPLETED");
+
+            logger.info("Subscription activated via Bypass Key: user={}, businessId={}, plan={}, key={}",
+                    username, user.getBusinessId(), plan.getPlanCode(), key.getKeyCode());
+        } else if (amount.signum() == 0) {
             subscriptionService.activateSubscription(subscription.getId());
         } else {
             PaymentHistory payment = subscriptionService.createSubscriptionPayment(
