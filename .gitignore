@@ -18,8 +18,9 @@ ehthumbs.db
 #graphify
 .graphify/
 
-# Claude Code
+# AI agents
 .claude/
+.agents/
 
 # VS Code
 .vscode/
