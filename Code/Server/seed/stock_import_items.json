@@ -1,6 +1,6 @@
 {
   "table" : "stock_import_items",
-  "version" : 1,
+  "version" : 2,
   "rows" : [ {
     "id" : 1,
     "base_quantity" : 10.000,
@@ -23,5 +23,27 @@
     "quantity" : 2.000,
     "stock_import_id" : 2,
     "unit_id" : 1
+  }, {
+    "id" : 3,
+    "base_quantity" : 3.000,
+    "conversion_rate" : 1.000000,
+    "created_at" : "2026-09-14T23:36:40.11033",
+    "line_total" : 33333.00,
+    "product_id" : 10,
+    "purchase_price" : 11111.00,
+    "quantity" : 3.000,
+    "stock_import_id" : 3,
+    "unit_id" : 2
+  }, {
+    "id" : 4,
+    "base_quantity" : 3.000,
+    "conversion_rate" : 1.000000,
+    "created_at" : "2026-09-14T23:36:42.284724",
+    "line_total" : 33333.00,
+    "product_id" : 10,
+    "purchase_price" : 11111.00,
+    "quantity" : 3.000,
+    "stock_import_id" : 4,
+    "unit_id" : 2
   } ]
 }

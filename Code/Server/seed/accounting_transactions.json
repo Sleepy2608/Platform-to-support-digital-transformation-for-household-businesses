@@ -1,0 +1,18 @@
+{
+  "table" : "accounting_transactions",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "business_id" : 5,
+    "created_at" : "2026-09-13T16:16:03.01091",
+    "created_by" : 4,
+    "customer_id" : 5,
+    "debt_amount" : 0.00,
+    "order_id" : 15,
+    "paid_amount" : 432000.00,
+    "payment_method" : "CASH",
+    "status" : "COMPLETED",
+    "total_amount" : 432000.00,
+    "transaction_type" : "SALE"
+  } ]
+}

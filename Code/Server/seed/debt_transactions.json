@@ -1,6 +1,6 @@
 {
   "table" : "debt_transactions",
-  "version" : 8,
+  "version" : 9,
   "rows" : [ {
     "id" : 1,
     "amount" : 60000000.00,

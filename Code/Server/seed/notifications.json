@@ -1,6 +1,6 @@
 {
   "table" : "notifications",
-  "version" : 5,
+  "version" : 6,
   "rows" : [ {
     "id" : 1,
     "ai_request_id" : null,
@@ -276,6 +276,150 @@
     "read_at" : "2026-08-30T06:45:16.491574",
     "sales_order_id" : null,
     "title" : "Tồn kho đã an toàn · DH2",
+    "user_id" : 16
+  }, {
+    "id" : 24,
+    "ai_request_id" : null,
+    "business_id" : 5,
+    "content" : "Sản phẩm Nước Ngọt Cola (SP002) chỉ còn 48, thấp hơn ngưỡng 50.",
+    "created_at" : "2026-09-14T23:19:27.150934",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-09-15T15:07:34.915884",
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · SP002",
+    "user_id" : 4
+  }, {
+    "id" : 25,
+    "ai_request_id" : null,
+    "business_id" : 5,
+    "content" : "Sản phẩm Nước Ngọt Cola (SP002) chỉ còn 48, thấp hơn ngưỡng 50.",
+    "created_at" : "2026-09-14T23:19:27.178771",
+    "notification_type" : "GENERAL",
+    "is_read" : false,
+    "read_at" : null,
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · SP002",
+    "user_id" : 5
+  }, {
+    "id" : 26,
+    "ai_request_id" : null,
+    "business_id" : 5,
+    "content" : "Sản phẩm Nước Ngọt Cola (SP002) chỉ còn 48, thấp hơn ngưỡng 50.",
+    "created_at" : "2026-09-14T23:19:27.193847",
+    "notification_type" : "GENERAL",
+    "is_read" : false,
+    "read_at" : null,
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · SP002",
+    "user_id" : 16
+  }, {
+    "id" : 27,
+    "ai_request_id" : null,
+    "business_id" : 5,
+    "content" : "Sản phẩm ádasdasdasdadsd (adasdadasd) chỉ còn 5, thấp hơn ngưỡng 7.",
+    "created_at" : "2026-09-14T23:19:46.907647",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-09-14T23:36:40.286954",
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · adasdadasd",
+    "user_id" : 4
+  }, {
+    "id" : 28,
+    "ai_request_id" : null,
+    "business_id" : 5,
+    "content" : "Sản phẩm ádasdasdasdadsd (adasdadasd) chỉ còn 5, thấp hơn ngưỡng 7.",
+    "created_at" : "2026-09-14T23:19:46.927294",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-09-14T23:36:40.286954",
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · adasdadasd",
+    "user_id" : 5
+  }, {
+    "id" : 29,
+    "ai_request_id" : null,
+    "business_id" : 5,
+    "content" : "Sản phẩm ádasdasdasdadsd (adasdadasd) chỉ còn 5, thấp hơn ngưỡng 7.",
+    "created_at" : "2026-09-14T23:19:46.931874",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-09-14T23:36:40.286954",
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · adasdadasd",
+    "user_id" : 16
+  }, {
+    "id" : 30,
+    "ai_request_id" : null,
+    "business_id" : 5,
+    "content" : "Sản phẩm ádsadasdasdadasdasd (đâsdasdasd) chỉ còn 20, thấp hơn ngưỡng 21.",
+    "created_at" : "2026-09-14T23:19:50.823667",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-09-15T15:07:35.064597",
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · đâsdasdasd",
+    "user_id" : 4
+  }, {
+    "id" : 31,
+    "ai_request_id" : null,
+    "business_id" : 5,
+    "content" : "Sản phẩm ádsadasdasdadasdasd (đâsdasdasd) chỉ còn 20, thấp hơn ngưỡng 21.",
+    "created_at" : "2026-09-14T23:19:50.827216",
+    "notification_type" : "GENERAL",
+    "is_read" : false,
+    "read_at" : null,
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · đâsdasdasd",
+    "user_id" : 5
+  }, {
+    "id" : 32,
+    "ai_request_id" : null,
+    "business_id" : 5,
+    "content" : "Sản phẩm ádsadasdasdadasdasd (đâsdasdasd) chỉ còn 20, thấp hơn ngưỡng 21.",
+    "created_at" : "2026-09-14T23:19:50.830745",
+    "notification_type" : "GENERAL",
+    "is_read" : false,
+    "read_at" : null,
+    "sales_order_id" : null,
+    "title" : "Cảnh báo tồn kho thấp · đâsdasdasd",
+    "user_id" : 16
+  }, {
+    "id" : 33,
+    "ai_request_id" : null,
+    "business_id" : 5,
+    "content" : "Tồn kho sản phẩm ádasdasdasdadsd (adasdadasd) đã trở lại mức an toàn: 8.",
+    "created_at" : "2026-09-14T23:36:40.292985",
+    "notification_type" : "GENERAL",
+    "is_read" : true,
+    "read_at" : "2026-09-15T15:07:35.720362",
+    "sales_order_id" : null,
+    "title" : "Tồn kho đã an toàn · adasdadasd",
+    "user_id" : 4
+  }, {
+    "id" : 34,
+    "ai_request_id" : null,
+    "business_id" : 5,
+    "content" : "Tồn kho sản phẩm ádasdasdasdadsd (adasdadasd) đã trở lại mức an toàn: 8.",
+    "created_at" : "2026-09-14T23:36:40.30815",
+    "notification_type" : "GENERAL",
+    "is_read" : false,
+    "read_at" : null,
+    "sales_order_id" : null,
+    "title" : "Tồn kho đã an toàn · adasdadasd",
+    "user_id" : 5
+  }, {
+    "id" : 35,
+    "ai_request_id" : null,
+    "business_id" : 5,
+    "content" : "Tồn kho sản phẩm ádasdasdasdadsd (adasdadasd) đã trở lại mức an toàn: 8.",
+    "created_at" : "2026-09-14T23:36:40.311804",
+    "notification_type" : "GENERAL",
+    "is_read" : false,
+    "read_at" : null,
+    "sales_order_id" : null,
+    "title" : "Tồn kho đã an toàn · adasdadasd",
     "user_id" : 16
   } ]
 }

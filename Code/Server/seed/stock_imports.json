@@ -1,6 +1,6 @@
 {
   "table" : "stock_imports",
-  "version" : 1,
+  "version" : 2,
   "rows" : [ {
     "id" : 1,
     "business_id" : 5,
@@ -23,5 +23,27 @@
     "status" : "CONFIRMED",
     "total_amount" : 0.00,
     "updated_at" : "2026-09-13T14:52:00.141485"
+  }, {
+    "id" : 3,
+    "business_id" : 5,
+    "created_at" : "2026-09-14T23:36:40.092101",
+    "created_by" : 4,
+    "import_code" : "NK-20260915-003",
+    "import_date" : "2026-09-14T23:36:40.092101",
+    "note" : null,
+    "status" : "CONFIRMED",
+    "total_amount" : 33333.00,
+    "updated_at" : "2026-09-14T23:36:40.320712"
+  }, {
+    "id" : 4,
+    "business_id" : 5,
+    "created_at" : "2026-09-14T23:36:42.278169",
+    "created_by" : 4,
+    "import_code" : "NK-20260915-004",
+    "import_date" : "2026-09-14T23:36:42.278169",
+    "note" : null,
+    "status" : "CONFIRMED",
+    "total_amount" : 33333.00,
+    "updated_at" : "2026-09-14T23:36:42.440964"
   } ]
 }
