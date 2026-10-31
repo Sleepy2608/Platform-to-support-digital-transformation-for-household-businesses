@@ -68,6 +68,7 @@ export default function PaymentQrModal({
   const [appliedKey, setAppliedKey] = useState<string | null>(null);
   const [bypassSuccessMsg, setBypassSuccessMsg] = useState<string | null>(null);
   const [bypassError, setBypassError] = useState<string | null>(null);
+  const [paymentFailedMsg, setPaymentFailedMsg] = useState<string | null>(null);
 
   // Số tiền thực tế sau khi áp dụng mã giảm giá 100%
   const effectiveAmount = appliedKey ? 0 : amount;
@@ -117,7 +118,8 @@ export default function PaymentQrModal({
 
       if (res && res.valid) {
         setAppliedKey(rawKey);
-        setBypassSuccessMsg(res.message || 'Áp dụng mã Bypass Key thành công! Giảm 100%.');
+        setBypassSuccessMsg(res.message || 'Áp dụng mã Bypass Key thành công!');
+        setPaymentFailedMsg(null);
       } else {
         setBypassError(res?.message || 'Mã Bypass Key không hợp lệ.');
       }
@@ -132,15 +134,24 @@ export default function PaymentQrModal({
     setAppliedKey(null);
     setBypassSuccessMsg(null);
     setBypassError(null);
+    setPaymentFailedMsg(null);
     setInputKey('');
   };
 
   const handleConfirmSubmit = () => {
+    if (effectiveAmount > 0) {
+      setPaymentFailedMsg(
+        `Thanh toán không thành công! Hệ thống chưa nhận được khoản thanh toán ${effectiveAmount.toLocaleString('vi-VN')}đ. Vui lòng chuyển khoản đúng nội dung hoặc áp dụng mã Bypass Key để được miễn phí 100%.`
+      );
+      return;
+    }
+    setPaymentFailedMsg(null);
     onConfirm(appliedKey || undefined);
   };
 
   const handleModalClose = () => {
     handleRemoveBypassKey();
+    setPaymentFailedMsg(null);
     onClose();
   };
 
@@ -195,7 +206,7 @@ export default function PaymentQrModal({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
                         <KeyRound className="w-4 h-4 text-amber-600" />
-                        <span>Mã ưu đãi Bypass Key (Giảm 100%)</span>
+                        <span>Áp dụng mã ưu đãi</span>
                       </div>
                       {appliedKey && (
                         <button
@@ -219,7 +230,7 @@ export default function PaymentQrModal({
                               setInputKey(e.target.value);
                               if (bypassError) setBypassError(null);
                             }}
-                            placeholder="Nhập 20 ký tự chữ và số Bypass Key..."
+                            placeholder="Nhập mã..."
                             className="flex-1 font-mono tracking-wider text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition placeholder:text-slate-400 placeholder:font-sans placeholder:tracking-normal"
                           />
                           <button
@@ -355,10 +366,20 @@ export default function PaymentQrModal({
                     </>
                   )}
 
-                  {error && (
-                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-semibold">
-                      {error}
-                    </div>
+                  {(paymentFailedMsg || error) && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-3 text-rose-800"
+                    >
+                      <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <h5 className="font-bold text-sm text-rose-900">Thanh toán không thành công</h5>
+                        <p className="text-xs text-rose-700 leading-relaxed">
+                          {paymentFailedMsg || error}
+                        </p>
+                      </div>
+                    </motion.div>
                   )}
 
                   {/* Confirm Action Button */}

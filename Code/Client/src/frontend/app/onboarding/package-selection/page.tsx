@@ -211,7 +211,7 @@ function PackageSelectionContent() {
         await selectPackageApi(selected, cycle);
         setSuccessToast('Đăng ký gói dịch vụ miễn phí thành công!');
         setTimeout(() => {
-          router.push('/owner/account');
+          window.location.href = '/owner/account#subscription';
         }, 1500);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.';
@@ -229,26 +229,21 @@ function PackageSelectionContent() {
   // Xác nhận thanh toán
   const handleConfirmPaymentTest = async (bypassKey?: string) => {
     if (!selected) return;
+    if (!bypassKey && totalAmount > 0) {
+      setError('Thanh toán không thành công! Hệ thống chưa nhận được tiền thanh toán. Vui lòng sử dụng mã Bypass Key.');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
       await selectPackageApi(selected, cycle, bypassKey);
       setPaymentSuccess(true);
-      // Xác định trang đích sau khi thanh toán thành công
-      const redirectTarget =
-        fromParam === 'account' || fromParam === 'subscription'
-          ? '/owner/account/subscription'
-          : '/owner/account';
       setTimeout(() => {
         setShowPaymentModal(false);
-        router.push(redirectTarget);
-      }, 1800);
+        window.location.href = '/owner/account#subscription';
+      }, 1500);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Xác nhận thanh toán thất bại, vui lòng thử lại.';
-      if (fromParam === 'account' || fromParam === 'subscription') {
-        router.push(`/owner/account/subscription?subscriptionError=${encodeURIComponent(message)}`);
-        return;
-      }
       setError(message);
     } finally {
       setSubmitting(false);

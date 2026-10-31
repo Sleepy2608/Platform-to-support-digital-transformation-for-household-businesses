@@ -213,6 +213,10 @@ function ChangePlanInner() {
 
   const handleConfirmPayment = async (bypassKey?: string) => {
     if (!selectedPkgId) return;
+    if (!bypassKey && unitPrice > 0) {
+      setError('Thanh toán không thành công! Hệ thống chưa nhận được tiền thanh toán. Vui lòng sử dụng mã Bypass Key.');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -222,8 +226,13 @@ function ChangePlanInner() {
       setPaymentSuccess(true);
       setTimeout(() => {
         setShowPaymentModal(false);
-        router.push('/owner/account#subscription');
-      }, 1800);
+        if (window.location.pathname === '/owner/account') {
+          window.location.hash = 'subscription';
+          window.location.reload();
+        } else {
+          window.location.href = '/owner/account#subscription';
+        }
+      }, 1500);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Xác nhận thanh toán thất bại.');
     } finally {
