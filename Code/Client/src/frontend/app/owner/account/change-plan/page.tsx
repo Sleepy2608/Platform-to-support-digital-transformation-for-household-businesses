@@ -211,14 +211,14 @@ function ChangePlanInner() {
     }
   };
 
-  const handleConfirmPayment = async () => {
+  const handleConfirmPayment = async (bypassKey?: string) => {
     if (!selectedPkgId) return;
     setSubmitting(true);
     setError(null);
     try {
-      await apiClient.post(
-        `/api/owner/subscription/select-package?packageType=${selectedPkgId}&billingCycle=${cycle}`
-      );
+      const query = `/api/owner/subscription/select-package?packageType=${selectedPkgId}&billingCycle=${cycle}`
+        + (bypassKey ? `&bypassKey=${encodeURIComponent(bypassKey)}` : '');
+      await apiClient.post(query);
       setPaymentSuccess(true);
       setTimeout(() => {
         setShowPaymentModal(false);
@@ -533,6 +533,8 @@ function ChangePlanInner() {
           successMessage="Gói dịch vụ đã được cập nhật. Hệ thống đang chuyển hướng về trang tài khoản..."
           loading={submitting}
           error={error}
+          packageType={selectedPkg.id}
+          billingCycle={cycle}
           onClose={() => setShowPaymentModal(false)}
           onConfirm={handleConfirmPayment}
         />

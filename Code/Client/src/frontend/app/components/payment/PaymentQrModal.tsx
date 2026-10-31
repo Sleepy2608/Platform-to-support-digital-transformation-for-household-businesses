@@ -2,8 +2,32 @@
 
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertTriangle, Check, CheckCircle2, Copy, CreditCard, Download, Loader2, X } from 'lucide-react';
+import {
+  AlertCircle,
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  Copy,
+  CreditCard,
+  Download,
+  KeyRound,
+  Loader2,
+  Sparkles,
+  X
+} from 'lucide-react';
 import { downloadQrImage } from '@/app/lib/qrDownload';
+import { apiClient } from '@/app/lib/apiClient';
+
+interface ValidateBypassKeyResponse {
+  valid: boolean;
+  keyCode?: string;
+  discountPercent?: number;
+  originalAmount?: number;
+  discountAmount?: number;
+  finalAmount?: number;
+  message?: string;
+  remainingUses?: number;
+}
 
 interface PaymentQrModalProps {
   isOpen: boolean;
@@ -14,8 +38,10 @@ interface PaymentQrModalProps {
   successMessage: string;
   loading: boolean;
   error?: string | null;
+  packageType?: string;
+  billingCycle?: string;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (bypassKey?: string) => void;
 }
 
 export default function PaymentQrModal({
@@ -27,6 +53,8 @@ export default function PaymentQrModal({
   successMessage,
   loading,
   error,
+  packageType,
+  billingCycle,
   onClose,
   onConfirm,
 }: PaymentQrModalProps) {
@@ -34,8 +62,18 @@ export default function PaymentQrModal({
   const [copiedTransferSyntax, setCopiedTransferSyntax] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
-  const qrImageUrl = amount > 0 && transferSyntax
-    ? `https://img.vietqr.io/image/ICB-108871728162-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(transferSyntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`
+  // Bypass Key state
+  const [inputKey, setInputKey] = useState('');
+  const [validatingKey, setValidatingKey] = useState(false);
+  const [appliedKey, setAppliedKey] = useState<string | null>(null);
+  const [bypassSuccessMsg, setBypassSuccessMsg] = useState<string | null>(null);
+  const [bypassError, setBypassError] = useState<string | null>(null);
+
+  // Số tiền thực tế sau khi áp dụng mã giảm giá 100%
+  const effectiveAmount = appliedKey ? 0 : amount;
+
+  const qrImageUrl = effectiveAmount > 0 && transferSyntax
+    ? `https://img.vietqr.io/image/ICB-108871728162-compact2.png?amount=${effectiveAmount}&addInfo=${encodeURIComponent(transferSyntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`
     : '/images/qr-code.jpg';
 
   const copyValue = (value: string, type: 'account' | 'syntax') => {
@@ -55,6 +93,57 @@ export default function PaymentQrModal({
     setTimeout(() => setDownloading(false), 1200);
   };
 
+  // Áp dụng Bypass Key
+  const handleApplyBypassKey = async () => {
+    const rawKey = inputKey.replace(/[^0-9]/g, '').trim();
+    if (!rawKey) {
+      setBypassError('Vui lòng nhập mã Bypass Key');
+      return;
+    }
+    if (rawKey.length !== 20) {
+      setBypassError('Mã Bypass Key phải gồm đúng 20 chữ số');
+      return;
+    }
+
+    setValidatingKey(true);
+    setBypassError(null);
+
+    try {
+      const res = await apiClient.post<ValidateBypassKeyResponse>('/api/owner/bypass-keys/validate', {
+        keyCode: rawKey,
+        packageType: packageType || '',
+        billingCycle: billingCycle || '',
+      });
+
+      if (res && res.valid) {
+        setAppliedKey(rawKey);
+        setBypassSuccessMsg(res.message || 'Áp dụng mã Bypass Key thành công! Giảm 100%.');
+      } else {
+        setBypassError(res?.message || 'Mã Bypass Key không hợp lệ.');
+      }
+    } catch (err: unknown) {
+      setBypassError(err instanceof Error ? err.message : 'Không thể xác thực mã Bypass Key. Vui lòng thử lại.');
+    } finally {
+      setValidatingKey(false);
+    }
+  };
+
+  const handleRemoveBypassKey = () => {
+    setAppliedKey(null);
+    setBypassSuccessMsg(null);
+    setBypassError(null);
+    setInputKey('');
+  };
+
+  const handleConfirmSubmit = () => {
+    onConfirm(appliedKey || undefined);
+  };
+
+  const handleModalClose = () => {
+    handleRemoveBypassKey();
+    onClose();
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -65,6 +154,7 @@ export default function PaymentQrModal({
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
             className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200"
           >
+            {/* Modal Header */}
             <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-blue-500/20 rounded-xl text-blue-400">
@@ -78,7 +168,7 @@ export default function PaymentQrModal({
               {!loading && !successTitle && (
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={handleModalClose}
                   className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                   aria-label="Đóng modal thanh toán"
                 >
@@ -100,75 +190,170 @@ export default function PaymentQrModal({
                 </div>
               ) : (
                 <>
-                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 text-amber-900 text-xs">
-                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-bold text-sm text-amber-950 mb-1">Yêu cầu thanh toán chuyển khoản</p>
-                      <p className="leading-relaxed">Vui lòng quét mã QR hoặc chuyển khoản theo thông tin dưới đây, sau đó bấm xác nhận thanh toán.</p>
+                  {/* Bypass Key Promo Input Box */}
+                  <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300/60 rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
+                        <KeyRound className="w-4 h-4 text-amber-600" />
+                        <span>Mã ưu đãi Bypass Key (Giảm 100%)</span>
+                      </div>
+                      {appliedKey && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveBypassKey}
+                          className="text-[11px] text-rose-600 hover:text-rose-700 font-bold underline cursor-pointer"
+                        >
+                          Hủy áp dụng
+                        </button>
+                      )}
                     </div>
+
+                    {!appliedKey ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            maxLength={24}
+                            value={inputKey}
+                            onChange={(e) => {
+                              setInputKey(e.target.value);
+                              if (bypassError) setBypassError(null);
+                            }}
+                            placeholder="Nhập 20 chữ số Bypass Key..."
+                            className="flex-1 font-mono tracking-wider text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition placeholder:text-slate-400 placeholder:font-sans placeholder:tracking-normal"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleApplyBypassKey}
+                            disabled={validatingKey || !inputKey.trim()}
+                            className="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold text-xs rounded-xl transition shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5 shrink-0"
+                          >
+                            {validatingKey ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Sparkles className="w-3.5 h-3.5" />
+                            )}
+                            <span>{validatingKey ? 'Đang kiểm tra...' : 'Áp dụng'}</span>
+                          </button>
+                        </div>
+                        {bypassError && (
+                          <div className="flex items-center gap-1.5 text-xs text-rose-600 font-medium">
+                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                            <span>{bypassError}</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-start gap-2.5 text-emerald-900 text-xs">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-bold text-emerald-950">
+                            Đã áp dụng mã Bypass Key thành công!
+                          </p>
+                          <p className="text-[11px] text-emerald-700 mt-0.5">
+                            Mã: <span className="font-mono font-bold tracking-wider">{appliedKey}</span> — Giảm giá 100% (Số tiền phải trả: 0đ).
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="bg-slate-900 text-white rounded-2xl p-5 text-center shadow-lg">
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Quét mã QR để thanh toán</p>
-                    <div className="bg-white p-2 rounded-2xl inline-block shadow-md border-4 border-slate-800">
-                      <img
-                        src={qrImageUrl}
-                        alt="Mã QR chuyển khoản"
-                        className="w-64 h-64 object-contain rounded-xl"
-                        onError={(e) => {
-                          const target = e.currentTarget as HTMLImageElement;
-                          if (target.src !== '/images/qr-code.jpg') {
-                            target.src = '/images/qr-code.jpg';
-                          }
-                        }}
-                      />
-                    </div>
-                    <div className="mt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
+                  {/* Khi áp dụng Bypass Key thành công: Ẩn QR ngân hàng & hiển thị thông báo miễn phí */}
+                  {appliedKey ? (
+                    <div className="bg-slate-900 text-white rounded-2xl p-6 text-center shadow-lg space-y-3">
+                      <div className="w-12 h-12 bg-emerald-500/20 border border-emerald-400/30 rounded-2xl flex items-center justify-center mx-auto text-emerald-400">
+                        <Sparkles className="w-6 h-6" />
+                      </div>
                       <div>
-                        <span className="text-xs text-slate-400 font-medium">Số tiền cần chuyển: </span>
-                        <span className="text-xl font-black text-amber-400">{amount.toLocaleString('vi-VN')}đ</span>
+                        <h4 className="font-extrabold text-base text-white">Thanh toán miễn phí qua Bypass Key</h4>
+                        <p className="text-xs text-slate-300 mt-1 max-w-sm mx-auto">
+                          Bạn không cần quét mã chuyển khoản. Vui lòng bấm nút bên dưới để hoàn tất kích hoạt gói dịch vụ ngay lập tức.
+                        </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={handleDownloadQr}
-                        disabled={downloading}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl border border-white/20 transition cursor-pointer active:scale-95 disabled:opacity-50"
-                        title="Tải ảnh mã QR về máy"
-                      >
-                        {downloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-amber-400" />}
-                        <span>{downloading ? 'Đang tải...' : 'Tải mã QR'}</span>
-                      </button>
+                      <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-xs px-2">
+                        <span className="text-slate-400">Số tiền cần thanh toán:</span>
+                        <div className="flex items-baseline gap-2">
+                          <span className="line-through text-slate-500 font-mono">{amount.toLocaleString('vi-VN')}đ</span>
+                          <span className="text-xl font-black text-emerald-400">0đ</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      {/* Alert transfer instructions */}
+                      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 text-amber-900 text-xs">
+                        <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-bold text-sm text-amber-950 mb-1">Yêu cầu thanh toán chuyển khoản</p>
+                          <p className="leading-relaxed">Vui lòng quét mã QR hoặc chuyển khoản theo thông tin dưới đây, sau đó bấm xác nhận thanh toán.</p>
+                        </div>
+                      </div>
 
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 text-xs">
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-200">
-                      <span className="text-slate-500 font-medium">Ngân hàng:</span>
-                      <span className="font-bold text-slate-900">VietinBank</span>
-                    </div>
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-200">
-                      <span className="text-slate-500 font-medium">Số tài khoản:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-slate-900 text-sm">108871728162</span>
-                        <button type="button" onClick={() => copyValue('108871728162', 'account')} className="p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-200" title="Sao chép số tài khoản">
-                          {copiedAccountNumber ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                        </button>
+                      {/* QR Box */}
+                      <div className="bg-slate-900 text-white rounded-2xl p-5 text-center shadow-lg">
+                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Quét mã QR để thanh toán</p>
+                        <div className="bg-white p-2 rounded-2xl inline-block shadow-md border-4 border-slate-800">
+                          <img
+                            src={qrImageUrl}
+                            alt="Mã QR chuyển khoản"
+                            className="w-64 h-64 object-contain rounded-xl"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              if (target.src !== '/images/qr-code.jpg') {
+                                target.src = '/images/qr-code.jpg';
+                              }
+                            }}
+                          />
+                        </div>
+                        <div className="mt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
+                          <div>
+                            <span className="text-xs text-slate-400 font-medium">Số tiền cần chuyển: </span>
+                            <span className="text-xl font-black text-amber-400">{amount.toLocaleString('vi-VN')}đ</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleDownloadQr}
+                            disabled={downloading}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl border border-white/20 transition cursor-pointer active:scale-95 disabled:opacity-50"
+                            title="Tải ảnh mã QR về máy"
+                          >
+                            {downloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-amber-400" />}
+                            <span>{downloading ? 'Đang tải...' : 'Tải mã QR'}</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-200">
-                      <span className="text-slate-500 font-medium">Chủ tài khoản:</span>
-                      <span className="font-bold text-slate-900">NGUYEN LE HUY TAM</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-500 font-medium">Nội dung chuyển khoản:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">{transferSyntax}</span>
-                        <button type="button" onClick={() => copyValue(transferSyntax, 'syntax')} className="p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-200" title="Sao chép nội dung chuyển khoản">
-                          {copiedTransferSyntax ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                        </button>
+
+                      {/* Bank Info */}
+                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 text-xs">
+                        <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                          <span className="text-slate-500 font-medium">Ngân hàng:</span>
+                          <span className="font-bold text-slate-900">VietinBank</span>
+                        </div>
+                        <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                          <span className="text-slate-500 font-medium">Số tài khoản:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-slate-900 text-sm">108871728162</span>
+                            <button type="button" onClick={() => copyValue('108871728162', 'account')} className="p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-200" title="Sao chép số tài khoản">
+                              {copiedAccountNumber ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                          <span className="text-slate-500 font-medium">Chủ tài khoản:</span>
+                          <span className="font-bold text-slate-900">NGUYEN LE HUY TAM</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-500 font-medium">Nội dung chuyển khoản:</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">{transferSyntax}</span>
+                            <button type="button" onClick={() => copyValue(transferSyntax, 'syntax')} className="p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-200" title="Sao chép nội dung chuyển khoản">
+                              {copiedTransferSyntax ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    </>
+                  )}
 
                   {error && (
                     <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-semibold">
@@ -176,14 +361,27 @@ export default function PaymentQrModal({
                     </div>
                   )}
 
+                  {/* Confirm Action Button */}
                   <button
                     type="button"
-                    onClick={onConfirm}
+                    onClick={handleConfirmSubmit}
                     disabled={loading}
-                    className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                    className={`w-full py-3.5 px-4 font-bold text-sm rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 text-white ${
+                      appliedKey
+                        ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/30 active:scale-[0.99]'
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                    }`}
                   >
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
-                    {loading ? 'Đang xác nhận...' : 'Xác nhận thanh toán'}
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="w-5 h-5" />
+                    )}
+                    {loading
+                      ? 'Đang xử lý kích hoạt...'
+                      : appliedKey
+                        ? 'Xác nhận kích hoạt ngay (0đ)'
+                        : 'Xác nhận thanh toán'}
                   </button>
                 </>
               )}

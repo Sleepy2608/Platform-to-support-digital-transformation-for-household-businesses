@@ -93,10 +93,10 @@ async function fetchCurrentProfile(): Promise<{ packageType: string | null; subs
   }
 }
 
-async function selectPackageApi(packageType: PackageId, billingCycle: BillingCycle): Promise<void> {
-  await apiClient.post(
-    `/api/owner/subscription/select-package?packageType=${packageType}&billingCycle=${billingCycle}`
-  );
+async function selectPackageApi(packageType: PackageId, billingCycle: BillingCycle, bypassKey?: string): Promise<void> {
+  const query = `/api/owner/subscription/select-package?packageType=${packageType}&billingCycle=${billingCycle}`
+    + (bypassKey ? `&bypassKey=${encodeURIComponent(bypassKey)}` : '');
+  await apiClient.post(query);
 
   // Đánh dấu hoàn tất Onboarding khi chọn gói thành công
   if (typeof window !== 'undefined') {
@@ -226,13 +226,13 @@ function PackageSelectionContent() {
     }
   };
 
-  // Xác nhận thanh toán (Tạm thời luôn thành công theo yêu cầu test)
-  const handleConfirmPaymentTest = async () => {
+  // Xác nhận thanh toán
+  const handleConfirmPaymentTest = async (bypassKey?: string) => {
     if (!selected) return;
     setSubmitting(true);
     setError(null);
     try {
-      await selectPackageApi(selected, cycle);
+      await selectPackageApi(selected, cycle, bypassKey);
       setPaymentSuccess(true);
       // Xác định trang đích sau khi thanh toán thành công
       const redirectTarget =
@@ -824,7 +824,7 @@ function PackageSelectionContent() {
                     <div className="pt-2">
                       <button
                         type="button"
-                        onClick={handleConfirmPaymentTest}
+                        onClick={() => handleConfirmPaymentTest()}
                         disabled={submitting}
                         className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-sm rounded-2xl shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                       >
@@ -862,6 +862,8 @@ function PackageSelectionContent() {
         successMessage={`Gói dịch vụ ${selectedPkg?.name || ''} đã được kích hoạt thành công cho tài khoản của bạn.`}
         loading={submitting}
         error={error}
+        packageType={selectedPkg?.id}
+        billingCycle={cycle}
         onClose={() => setShowPaymentModal(false)}
         onConfirm={handleConfirmPaymentTest}
       />
