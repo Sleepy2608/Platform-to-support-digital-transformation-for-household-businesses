@@ -91,9 +91,14 @@ export default function AdminBypassKeysPage() {
   // Create Modal State
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [generatingCode, setGeneratingCode] = useState(false);
-  const [createForm, setCreateForm] = useState({
+  const [createForm, setCreateForm] = useState<{
+    keyCode: string;
+    maxUses: string;
+    note: string;
+    expiresAt: string;
+  }>({
     keyCode: '',
-    maxUses: 1,
+    maxUses: '1',
     note: '',
     expiresAt: '',
   });
@@ -169,7 +174,7 @@ export default function AdminBypassKeysPage() {
   const openCreateModal = () => {
     setCreateForm({
       keyCode: '',
-      maxUses: 1,
+      maxUses: '1',
       note: '',
       expiresAt: '',
     });
@@ -179,16 +184,14 @@ export default function AdminBypassKeysPage() {
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!createForm.maxUses || createForm.maxUses < 1) {
-      showToast('Số lượt dùng phải từ 1 trở lên', 'error');
-      return;
-    }
+    const parsedUses = parseInt(String(createForm.maxUses), 10);
+    const finalMaxUses = isNaN(parsedUses) || parsedUses <= 0 ? 1 : parsedUses;
 
     setActionLoading(true);
     try {
       await apiClient.post('/api/admin/bypass-keys', {
-        keyCode: createForm.keyCode.trim(),
-        maxUses: Number(createForm.maxUses),
+        keyCode: createForm.keyCode.trim().toUpperCase(),
+        maxUses: finalMaxUses,
         note: createForm.note.trim() || null,
         expiresAt: createForm.expiresAt ? new Date(createForm.expiresAt).toISOString() : null,
       });
@@ -627,7 +630,7 @@ export default function AdminBypassKeysPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
-                      Mã Bypass Key (20 chữ số)
+                      Mã Bypass Key (20 ký tự chữ và số)
                     </label>
                     <button
                       type="button"
@@ -645,15 +648,18 @@ export default function AdminBypassKeysPage() {
                       maxLength={20}
                       value={createForm.keyCode}
                       onChange={(e) =>
-                        setCreateForm({ ...createForm, keyCode: e.target.value.replace(/[^0-9]/g, '') })
+                        setCreateForm({
+                          ...createForm,
+                          keyCode: e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase(),
+                        })
                       }
-                      placeholder="84920194857201948201"
-                      className="w-full font-mono text-base font-bold tracking-widest px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition"
+                      placeholder="8K2N9F7X1M4Q5Z8P3R9T"
+                      className="w-full font-mono text-base font-bold tracking-widest px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition uppercase"
                       required
                     />
                   </div>
                   <p className="text-[11px] text-zinc-500">
-                    Hệ thống tự động sinh 20 chữ số ngẫu nhiên an toàn. Bạn cũng có thể tự chỉnh sửa nếu muốn.
+                    Hệ thống tự động sinh 20 ký tự chữ và số ngẫu nhiên an toàn. Bạn cũng có thể tự chỉnh sửa nếu muốn.
                   </p>
                 </div>
 
@@ -663,22 +669,33 @@ export default function AdminBypassKeysPage() {
                     Số lần sử dụng tối đa
                   </label>
                   <input
-                    type="number"
-                    min={1}
-                    max={100000}
+                    type="text"
+                    inputMode="numeric"
                     value={createForm.maxUses}
-                    onChange={(e) => setCreateForm({ ...createForm, maxUses: Number(e.target.value) })}
+                    onChange={(e) => {
+                      let val = e.target.value.replace(/[^0-9]/g, '');
+                      if (val.length > 1 && val.startsWith('0')) {
+                        val = val.replace(/^0+/, '');
+                      }
+                      setCreateForm({ ...createForm, maxUses: val });
+                    }}
+                    onBlur={() => {
+                      const num = parseInt(createForm.maxUses, 10);
+                      if (isNaN(num) || num <= 0) {
+                        setCreateForm((prev) => ({ ...prev, maxUses: '1' }));
+                      }
+                    }}
+                    placeholder="1"
                     className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white outline-none focus:border-amber-500 transition text-sm"
-                    required
                   />
                   <div className="flex gap-2">
                     {[1, 5, 10, 50, 100].map((num) => (
                       <button
                         key={num}
                         type="button"
-                        onClick={() => setCreateForm({ ...createForm, maxUses: num })}
+                        onClick={() => setCreateForm({ ...createForm, maxUses: String(num) })}
                         className={`px-3 py-1 text-xs font-bold rounded-lg border transition ${
-                          createForm.maxUses === num
+                          createForm.maxUses === String(num)
                             ? 'bg-amber-500/20 border-amber-500/40 text-amber-300'
                             : 'bg-zinc-800/60 border-zinc-700 text-zinc-400 hover:text-white'
                         }`}

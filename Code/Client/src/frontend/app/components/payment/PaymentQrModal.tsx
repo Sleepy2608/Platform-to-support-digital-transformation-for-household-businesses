@@ -95,13 +95,13 @@ export default function PaymentQrModal({
 
   // Áp dụng Bypass Key
   const handleApplyBypassKey = async () => {
-    const rawKey = inputKey.replace(/[^0-9]/g, '').trim();
+    const rawKey = inputKey.replace(/[^a-zA-Z0-9]/g, '').trim().toUpperCase();
     if (!rawKey) {
       setBypassError('Vui lòng nhập mã Bypass Key');
       return;
     }
     if (rawKey.length !== 20) {
-      setBypassError('Mã Bypass Key phải gồm đúng 20 chữ số');
+      setBypassError('Mã Bypass Key phải gồm đúng 20 ký tự chữ và số');
       return;
     }
 
@@ -219,7 +219,7 @@ export default function PaymentQrModal({
                               setInputKey(e.target.value);
                               if (bypassError) setBypassError(null);
                             }}
-                            placeholder="Nhập 20 chữ số Bypass Key..."
+                            placeholder="Nhập 20 ký tự chữ và số Bypass Key..."
                             className="flex-1 font-mono tracking-wider text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition placeholder:text-slate-400 placeholder:font-sans placeholder:tracking-normal"
                           />
                           <button
