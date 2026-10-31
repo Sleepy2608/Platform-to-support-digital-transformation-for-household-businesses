@@ -29,7 +29,10 @@ public class BypassKeyAdminService {
     private final BypassKeyRepository bypassKeyRepository;
     private final BypassKeyUsageRepository bypassKeyUsageRepository;
     private final SecureRandom secureRandom = new SecureRandom();
-    private static final String ALPHANUMERIC_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static final String DIGITS = "0123456789";
+    private static final String UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static final String LOWERCASE = "abcdefghijklmnopqrstuvwxyz";
+    private static final String ALL_CHARS = DIGITS + UPPERCASE + LOWERCASE;
 
     public BypassKeyAdminService(BypassKeyRepository bypassKeyRepository,
                                  BypassKeyUsageRepository bypassKeyUsageRepository) {
@@ -38,17 +41,32 @@ public class BypassKeyAdminService {
     }
 
     /**
-     * Sinh ngẫu nhiên mã Bypass Key gồm chính xác 20 ký tự chữ và số (A-Z, 0-9) bảo mật cao.
+     * Sinh ngẫu nhiên mã Bypass Key gồm chính xác 20 ký tự (chữ hoa A-Z, chữ thường a-z và số 0-9) bảo mật cao.
+     * Đảm bảo luôn có sự xuất hiện của cả chữ số, chữ hoa và chữ thường.
      * Kiểm tra chống trùng lặp trong cơ sở dữ liệu.
      */
     public String generateSecure20DigitCode() {
         int maxAttempts = 10;
         for (int attempt = 0; attempt < maxAttempts; attempt++) {
-            StringBuilder builder = new StringBuilder(20);
-            for (int i = 0; i < 20; i++) {
-                builder.append(ALPHANUMERIC_CHARS.charAt(secureRandom.nextInt(ALPHANUMERIC_CHARS.length())));
+            char[] codeChars = new char[20];
+            // Đảm bảo có ít nhất 1 chữ số, 1 chữ hoa, 1 chữ thường
+            codeChars[0] = DIGITS.charAt(secureRandom.nextInt(DIGITS.length()));
+            codeChars[1] = UPPERCASE.charAt(secureRandom.nextInt(UPPERCASE.length()));
+            codeChars[2] = LOWERCASE.charAt(secureRandom.nextInt(LOWERCASE.length()));
+
+            for (int i = 3; i < 20; i++) {
+                codeChars[i] = ALL_CHARS.charAt(secureRandom.nextInt(ALL_CHARS.length()));
             }
-            String candidate = builder.toString();
+
+            // Trộn ngẫu nhiên (Fisher-Yates shuffle) các vị trí
+            for (int i = codeChars.length - 1; i > 0; i--) {
+                int j = secureRandom.nextInt(i + 1);
+                char temp = codeChars[i];
+                codeChars[i] = codeChars[j];
+                codeChars[j] = temp;
+            }
+
+            String candidate = new String(codeChars);
             if (!bypassKeyRepository.existsByKeyCode(candidate)) {
                 return candidate;
             }
@@ -60,13 +78,13 @@ public class BypassKeyAdminService {
      * Tạo Bypass Key mới (Admin).
      */
     public BypassKeyResponse createKey(BypassKeyCreateRequest request, String adminUsername) {
-        String keyCode = request.getKeyCode() != null ? request.getKeyCode().trim().toUpperCase() : "";
+        String keyCode = request.getKeyCode() != null ? request.getKeyCode().trim() : "";
 
         if (keyCode.isEmpty()) {
             keyCode = generateSecure20DigitCode();
         } else {
             if (!keyCode.matches("^[a-zA-Z0-9]{20}$")) {
-                throw new BadRequestException("Mã Bypass Key phải gồm đúng 20 ký tự chữ và số (0-9, A-Z)");
+                throw new BadRequestException("Mã Bypass Key phải gồm đúng 20 ký tự chữ và số (0-9, a-z, A-Z)");
             }
             if (bypassKeyRepository.existsByKeyCode(keyCode)) {
                 throw new BadRequestException("Mã Bypass Key " + keyCode + " đã tồn tại trên hệ thống");

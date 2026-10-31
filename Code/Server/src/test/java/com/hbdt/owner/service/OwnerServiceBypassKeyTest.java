@@ -83,8 +83,8 @@ class OwnerServiceBypassKeyTest {
     @DisplayName("selectPackage với BypassKey hợp lệ: tiêu thụ 1 lượt, tạo usage, kích hoạt subscription 0đ")
     void testSelectPackageWithValidBypassKey() {
         String username = "owner_test";
-        String keyCode = "8K2N9F7X1M4Q5Z8P3R9T";
-        String inputKeyCode = "8k2n9f7x1m4q5z8p3r9t"; // chữ thường để test auto-uppercase
+        String keyCode = "8k2N9f7X1m4Q5Z8p3R9t";
+        String inputKeyCode = "8k2N9f7X1m4Q5Z8p3R9t";
 
         User user = User.builder()
                 .id(100L)

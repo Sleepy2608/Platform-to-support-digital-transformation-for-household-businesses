@@ -31,7 +31,7 @@ public class OwnerBypassKeyService {
      * Xác thực mã Bypass Key do chủ hộ kinh doanh (Owner) nhập vào khi thanh toán gói cước.
      */
     public ValidateBypassKeyResponse validateKey(ValidateBypassKeyRequest request) {
-        String keyCode = request.getKeyCode() != null ? request.getKeyCode().trim().toUpperCase() : "";
+        String keyCode = request.getKeyCode() != null ? request.getKeyCode().trim() : "";
 
         if (keyCode.isEmpty()) {
             return ValidateBypassKeyResponse.builder()

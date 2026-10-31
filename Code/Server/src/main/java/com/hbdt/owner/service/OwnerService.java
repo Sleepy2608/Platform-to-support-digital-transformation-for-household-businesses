@@ -457,7 +457,7 @@ public class OwnerService {
         // Nếu có bypassKey, xác thực và khóa bằng Pessimistic Write Lock
         BypassKey key = null;
         if (bypassKey != null && !bypassKey.trim().isEmpty()) {
-            String cleanKey = bypassKey.trim().toUpperCase();
+            String cleanKey = bypassKey.trim();
             key = bypassKeyRepository.findByKeyCodeForUpdate(cleanKey)
                     .orElseThrow(() -> new BadRequestException("Mã Bypass Key không tồn tại trên hệ thống"));
 

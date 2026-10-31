@@ -47,7 +47,7 @@ class BypassKeyAdminServiceTest {
     }
 
     @Test
-    @DisplayName("generateSecure20DigitCode sinh chuỗi chính xác 20 ký tự chữ và số (A-Z, 0-9)")
+    @DisplayName("generateSecure20DigitCode sinh chuỗi 20 ký tự gồm đủ cả chữ số, chữ hoa và chữ thường")
     void testGenerateSecure20DigitCode() {
         when(bypassKeyRepository.existsByKeyCode(any())).thenReturn(false);
 
@@ -55,7 +55,10 @@ class BypassKeyAdminServiceTest {
 
         assertNotNull(code);
         assertEquals(20, code.length());
-        assertTrue(code.matches("^[0-9A-Z]{20}$"));
+        assertTrue(code.matches("^[a-zA-Z0-9]{20}$"));
+        assertTrue(code.matches(".*[0-9].*"), "Mã phải chứa ít nhất 1 chữ số");
+        assertTrue(code.matches(".*[A-Z].*"), "Mã phải chứa ít nhất 1 chữ hoa");
+        assertTrue(code.matches(".*[a-z].*"), "Mã phải chứa ít nhất 1 chữ thường");
     }
 
     @Test
@@ -90,9 +93,9 @@ class BypassKeyAdminServiceTest {
     }
 
     @Test
-    @DisplayName("createKey chấp nhận mã 20 ký tự chữ và số hợp lệ do admin tự nhập")
+    @DisplayName("createKey chấp nhận mã 20 ký tự gồm cả chữ hoa, chữ thường và số do admin tự nhập")
     void testCreateKeyWithCustomValidCode() {
-        String customCode = "8K2N9F7X1M4Q5Z8P3R9T";
+        String customCode = "8k2N9f7X1m4Q5Z8p3R9t";
         when(bypassKeyRepository.existsByKeyCode(customCode)).thenReturn(false);
         when(bypassKeyRepository.save(any(BypassKey.class))).thenAnswer(inv -> {
             BypassKey key = inv.getArgument(0);

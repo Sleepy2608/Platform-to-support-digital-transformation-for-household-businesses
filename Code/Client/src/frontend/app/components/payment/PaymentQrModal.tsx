@@ -95,7 +95,7 @@ export default function PaymentQrModal({
 
   // Áp dụng Bypass Key
   const handleApplyBypassKey = async () => {
-    const rawKey = inputKey.replace(/[^a-zA-Z0-9]/g, '').trim().toUpperCase();
+    const rawKey = inputKey.replace(/[^a-zA-Z0-9]/g, '').trim();
     if (!rawKey) {
       setBypassError('Vui lòng nhập mã Bypass Key');
       return;

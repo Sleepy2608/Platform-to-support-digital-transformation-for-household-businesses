@@ -156,23 +156,41 @@ export default function AdminBypassKeysPage() {
     void loadKeys();
   }, [loadKeys]);
 
-  // Hàm sinh mã 20 ký tự chữ và số ngẫu nhiên an toàn client-side (CSPRNG)
+  // Hàm sinh mã 20 ký tự (chữ hoa, chữ thường và số) ngẫu nhiên an toàn client-side (CSPRNG)
   const generateRandomAlphanumericKey = (): string => {
-    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const digits = '0123456789';
+    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+    const allChars = digits + uppercase + lowercase;
+
+    const codeChars: string[] = new Array(20);
+    const randomBytes = new Uint32Array(20);
     if (typeof window !== 'undefined' && window.crypto) {
-      const randomValues = new Uint32Array(20);
-      window.crypto.getRandomValues(randomValues);
-      let result = '';
+      window.crypto.getRandomValues(randomBytes);
+    } else {
       for (let i = 0; i < 20; i++) {
-        result += chars[randomValues[i] % chars.length];
+        randomBytes[i] = Math.floor(Math.random() * 1000000000);
       }
-      return result;
     }
-    let fallback = '';
-    for (let i = 0; i < 20; i++) {
-      fallback += chars[Math.floor(Math.random() * chars.length)];
+
+    // Đảm bảo luôn có ít nhất 1 chữ số, 1 chữ hoa và 1 chữ thường
+    codeChars[0] = digits[randomBytes[0] % digits.length];
+    codeChars[1] = uppercase[randomBytes[1] % uppercase.length];
+    codeChars[2] = lowercase[randomBytes[2] % lowercase.length];
+
+    for (let i = 3; i < 20; i++) {
+      codeChars[i] = allChars[randomBytes[i] % allChars.length];
     }
-    return fallback;
+
+    // Fisher-Yates shuffle
+    for (let i = codeChars.length - 1; i > 0; i--) {
+      const j = randomBytes[i] % (i + 1);
+      const temp = codeChars[i];
+      codeChars[i] = codeChars[j];
+      codeChars[j] = temp;
+    }
+
+    return codeChars.join('');
   };
 
   // Sinh mã 20 ký tự chữ và số ngẫu nhiên cho modal tạo mới (Bỏ qua hoàn toàn cache)
@@ -224,7 +242,7 @@ export default function AdminBypassKeysPage() {
     setActionLoading(true);
     try {
       await apiClient.post('/api/admin/bypass-keys', {
-        keyCode: createForm.keyCode.trim().toUpperCase(),
+        keyCode: createForm.keyCode.trim(),
         maxUses: finalMaxUses,
         note: createForm.note.trim() || null,
         expiresAt: createForm.expiresAt ? new Date(createForm.expiresAt).toISOString() : null,
@@ -684,11 +702,11 @@ export default function AdminBypassKeysPage() {
                       onChange={(e) =>
                         setCreateForm({
                           ...createForm,
-                          keyCode: e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase(),
+                          keyCode: e.target.value.replace(/[^a-zA-Z0-9]/g, ''),
                         })
                       }
-                      placeholder="8K2N9F7X1M4Q5Z8P3R9T"
-                      className="w-full font-mono text-base font-bold tracking-widest px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition uppercase"
+                      placeholder="8k2N9f7X1m4Q5Z8p3R9t"
+                      className="w-full font-mono text-base font-bold tracking-widest px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-xl text-white outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 transition"
                       required
                     />
                   </div>

@@ -14,17 +14,19 @@ import java.util.Optional;
 
 public interface BypassKeyRepository extends JpaRepository<BypassKey, Long> {
 
-    Optional<BypassKey> findByKeyCode(String keyCode);
+    @Query("SELECT b FROM BypassKey b WHERE LOWER(b.keyCode) = LOWER(:keyCode)")
+    Optional<BypassKey> findByKeyCode(@Param("keyCode") String keyCode);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT b FROM BypassKey b WHERE b.keyCode = :keyCode")
+    @Query("SELECT b FROM BypassKey b WHERE LOWER(b.keyCode) = LOWER(:keyCode)")
     Optional<BypassKey> findByKeyCodeForUpdate(@Param("keyCode") String keyCode);
 
-    boolean existsByKeyCode(String keyCode);
+    @Query("SELECT COUNT(b) > 0 FROM BypassKey b WHERE LOWER(b.keyCode) = LOWER(:keyCode)")
+    boolean existsByKeyCode(@Param("keyCode") String keyCode);
 
     @Query("SELECT b FROM BypassKey b WHERE " +
            "(:status IS NULL OR b.status = :status) AND " +
-           "(:keyword IS NULL OR b.keyCode LIKE %:keyword% OR LOWER(b.note) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+           "(:keyword IS NULL OR LOWER(b.keyCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(b.note) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<BypassKey> searchBypassKeys(@Param("keyword") String keyword,
                                      @Param("status") BypassKeyStatus status,
                                      Pageable pageable);

@@ -38,9 +38,9 @@ class OwnerBypassKeyServiceTest {
     }
 
     @Test
-    @DisplayName("validateKey thành công khi mã chữ và số hợp lệ, còn lượt dùng, tính đúng số tiền 0đ")
+    @DisplayName("validateKey thành công khi mã chữ và số hợp lệ (có chữ hoa, thường và số), còn lượt dùng, tính đúng số tiền 0đ")
     void testValidateKeySuccess() {
-        String code = "8K2N9F7X1M4Q5Z8P3R9T";
+        String code = "8k2N9f7X1m4Q5Z8p3R9t";
         BypassKey key = BypassKey.builder()
                 .id(1L)
                 .keyCode(code)
