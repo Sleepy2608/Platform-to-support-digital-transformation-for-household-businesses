@@ -211,8 +211,9 @@ public class OwnerController {
     @PostMapping("/subscription/renew")
     public ResponseEntity<ApiResponse<OwnerProfileResponse>> renewSubscription(
             @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam(defaultValue = "1") int months) {
-        OwnerProfileResponse profile = ownerService.renewSubscription(userDetails.getUsername(), months);
+            @RequestParam(defaultValue = "1") int months,
+            @RequestParam(required = false) String bypassKey) {
+        OwnerProfileResponse profile = ownerService.renewSubscription(userDetails.getUsername(), months, bypassKey);
         return ResponseEntity.ok(ApiResponse.success(
                 "Gia hạn gói thành công đến " + profile.getSubscriptionExpiresAt(), profile));
     }

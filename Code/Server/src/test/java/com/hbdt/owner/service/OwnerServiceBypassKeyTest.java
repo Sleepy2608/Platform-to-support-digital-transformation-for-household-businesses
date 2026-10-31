@@ -206,5 +206,94 @@ class OwnerServiceBypassKeyTest {
                 () -> ownerService.selectPackage(username, "VIP", "MONTHLY", keyCode));
         assertTrue(ex.getMessage().contains("hết số lượt sử dụng"));
     }
+
+    @Test
+    @DisplayName("selectPackage khi số tiền > 0 và không có BypassKey ném BadRequestException báo thanh toán không thành công")
+    void testSelectPackageWithoutBypassKeyRejectsPayment() {
+        String username = "owner_test";
+        User user = createTestUser(username);
+        SubscriptionPlan plan = SubscriptionPlan.builder()
+                .planCode("VIP")
+                .monthlyPrice(new BigDecimal("399000"))
+                .annualPrice(new BigDecimal("3990000"))
+                .status("ACTIVE")
+                .build();
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(subscriptionPlanRepository.findByPlanCodeIgnoreCaseAndStatus("VIP", "ACTIVE")).thenReturn(Optional.of(plan));
+
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> ownerService.selectPackage(username, "VIP", "MONTHLY", null));
+        assertTrue(ex.getMessage().contains("Thanh toán không thành công"));
+    }
+
+    @Test
+    @DisplayName("renewSubscription khi số tiền > 0 và không có BypassKey ném BadRequestException báo thanh toán không thành công")
+    void testRenewSubscriptionWithoutBypassKeyRejectsPayment() {
+        String username = "owner_test";
+        User user = createTestUser(username);
+        SubscriptionPlan plan = SubscriptionPlan.builder()
+                .planCode("VIP")
+                .monthlyPrice(new BigDecimal("399000"))
+                .status("ACTIVE")
+                .build();
+        Subscription activeSub = Subscription.builder()
+                .id(88L)
+                .businessId(50L)
+                .plan(plan)
+                .status(SubscriptionStatus.ACTIVE)
+                .endDate(LocalDate.now().plusMonths(1))
+                .build();
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(subscriptionRepository.findTopByBusinessIdAndStatusOrderByCreatedAtDesc(50L, SubscriptionStatus.ACTIVE))
+                .thenReturn(Optional.of(activeSub));
+
+        BadRequestException ex = assertThrows(BadRequestException.class,
+                () -> ownerService.renewSubscription(username, 1, null));
+        assertTrue(ex.getMessage().contains("Thanh toán không thành công"));
+    }
+
+    @Test
+    @DisplayName("renewSubscription với BypassKey hợp lệ: trừ 1 lượt, gia hạn thêm tháng và miễn phí 0đ")
+    void testRenewSubscriptionWithValidBypassKey() {
+        String username = "owner_test";
+        String keyCode = "8k2N9f7X1m4Q5Z8p3R9t";
+        User user = createTestUser(username);
+        SubscriptionPlan plan = SubscriptionPlan.builder()
+                .planCode("VIP")
+                .monthlyPrice(new BigDecimal("399000"))
+                .status("ACTIVE")
+                .build();
+        LocalDate initialEnd = LocalDate.now().plusMonths(2);
+        Subscription activeSub = Subscription.builder()
+                .id(88L)
+                .businessId(50L)
+                .plan(plan)
+                .status(SubscriptionStatus.ACTIVE)
+                .endDate(initialEnd)
+                .build();
+
+        BypassKey key = BypassKey.builder()
+                .id(10L)
+                .keyCode(keyCode)
+                .maxUses(5)
+                .usedCount(1)
+                .status(BypassKeyStatus.ACTIVE)
+                .build();
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(subscriptionRepository.findTopByBusinessIdAndStatusOrderByCreatedAtDesc(50L, SubscriptionStatus.ACTIVE))
+                .thenReturn(Optional.of(activeSub));
+        when(bypassKeyRepository.findByKeyCodeForUpdate(keyCode)).thenReturn(Optional.of(key));
+
+        OwnerProfileResponse res = ownerService.renewSubscription(username, 3, keyCode);
+
+        assertNotNull(res);
+        assertEquals(2, key.getUsedCount());
+        assertEquals(initialEnd.plusMonths(3), activeSub.getEndDate());
+        verify(bypassKeyUsageRepository).save(any(BypassKeyUsage.class));
+        verify(paymentHistoryRepository).save(any(PaymentHistory.class));
+    }
 }
 

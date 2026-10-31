@@ -35,10 +35,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -255,11 +258,41 @@ public class OwnerService {
     // =========================================================
 
     public OwnerProfileResponse renewSubscription(String username, int months) {
+        return renewSubscription(username, months, null);
+    }
+
+    public OwnerProfileResponse renewSubscription(String username, int months, String bypassKey) {
         if (months < 1 || months > 24) {
             throw new BadRequestException("Số tháng gia hạn phải từ 1-24");
         }
         User user = findActiveUser(username);
         Subscription subscription = findActiveSubscription(user);
+        BigDecimal amount = subscription.getPlan().getMonthlyPrice().multiply(BigDecimal.valueOf(months));
+
+        BypassKey key = null;
+        if (bypassKey != null && !bypassKey.trim().isEmpty()) {
+            String cleanKey = bypassKey.trim();
+            key = bypassKeyRepository.findByKeyCodeForUpdate(cleanKey)
+                    .orElseThrow(() -> new BadRequestException("Mã Bypass Key không tồn tại trên hệ thống"));
+
+            if (key.getStatus() == BypassKeyStatus.DISABLED) {
+                throw new BadRequestException("Mã Bypass Key này hiện đang bị tạm khóa");
+            }
+            if (key.getStatus() == BypassKeyStatus.DEPLETED || (key.getMaxUses() != null && key.getUsedCount() >= key.getMaxUses())) {
+                throw new BadRequestException("Mã Bypass Key đã hết số lượt sử dụng tối đa (" + key.getMaxUses() + " lượt)");
+            }
+            if (key.getExpiresAt() != null && key.getExpiresAt().isBefore(LocalDateTime.now())) {
+                throw new BadRequestException("Mã Bypass Key đã hết hạn sử dụng");
+            }
+            if (key.getStatus() != BypassKeyStatus.ACTIVE) {
+                throw new BadRequestException("Mã Bypass Key không ở trạng thái khả dụng (" + key.getStatus().getDescription() + ")");
+            }
+        }
+
+        if (key == null && amount.signum() > 0) {
+            throw new BadRequestException("Thanh toán không thành công! Hệ thống chưa nhận được tiền thanh toán. Vui lòng hoàn tất chuyển khoản hoặc áp dụng mã Bypass Key.");
+        }
+
         LocalDate now = LocalDate.now();
         LocalDate baseDate = subscription.getEndDate() != null
                 && subscription.getEndDate().isAfter(now)
@@ -269,22 +302,44 @@ public class OwnerService {
         subscription.setEndDate(baseDate.plusMonths(months));
         subscriptionRepository.save(subscription);
 
-        java.math.BigDecimal amount = subscription.getPlan().getMonthlyPrice().multiply(java.math.BigDecimal.valueOf(months));
+        BigDecimal finalAmount = (key != null) ? BigDecimal.ZERO : amount;
+
+        if (key != null) {
+            key.setUsedCount(key.getUsedCount() + 1);
+            if (key.getUsedCount() >= key.getMaxUses()) {
+                key.setStatus(BypassKeyStatus.DEPLETED);
+            }
+            bypassKeyRepository.save(key);
+
+            BypassKeyUsage usage = BypassKeyUsage.builder()
+                    .bypassKey(key)
+                    .userId(user.getId())
+                    .username(user.getUsername())
+                    .businessId(user.getBusinessId())
+                    .packageType(subscription.getPlan().getPlanCode())
+                    .billingCycle("MONTHLY")
+                    .originalAmount(amount)
+                    .discountAmount(amount)
+                    .finalAmount(BigDecimal.ZERO)
+                    .usedAt(LocalDateTime.now())
+                    .build();
+            bypassKeyUsageRepository.save(usage);
+        }
 
         PaymentHistory paymentHistory = PaymentHistory.builder()
-                .transactionId(java.util.UUID.randomUUID().toString())
+                .transactionId(UUID.randomUUID().toString())
                 .subscriptionId(subscription.getId())
-                .amount(amount)
-                .paymentMethod("BANK_TRANSFER")
+                .amount(finalAmount)
+                .paymentMethod(key != null ? "BYPASS_KEY" : "BANK_TRANSFER")
                 .paidAt(LocalDateTime.now())
                 .status("COMPLETED")
                 .build();
         paymentHistoryRepository.save(paymentHistory);
 
-        String today = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
-        String invoiceCode = "INV-" + today + "-" + java.util.UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+        String today = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String invoiceCode = "INV-" + today + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
         String invoiceNo = "INV-" + today + "-" + String.format("%04d", (int)(Math.random() * 10000));
-        java.math.BigDecimal unitPrice = amount.divide(java.math.BigDecimal.valueOf(months), 2, java.math.RoundingMode.HALF_UP);
+        BigDecimal unitPrice = finalAmount.divide(BigDecimal.valueOf(months), 2, RoundingMode.HALF_UP);
 
         ServiceInvoice serviceInvoice = ServiceInvoice.builder()
                 .invoiceCode(invoiceCode)
@@ -295,8 +350,8 @@ public class OwnerService {
                 .plan(subscription.getPlan())
                 .duration(months)
                 .unitPrice(unitPrice)
-                .totalAmount(amount)
-                .amount(amount)
+                .totalAmount(finalAmount)
+                .amount(finalAmount)
                 .status("PAID")
                 .build();
         serviceInvoiceRepository.save(serviceInvoice);
@@ -311,7 +366,8 @@ public class OwnerService {
                 .build();
         subscriptionHistoryRepository.save(history);
 
-        logger.info("Subscription renewed: businessId={}, months={}, amount={}", user.getBusinessId(), months, amount);
+        logger.info("Subscription renewed: businessId={}, months={}, amount={}, key={}",
+                user.getBusinessId(), months, finalAmount, key != null ? key.getKeyCode() : "none");
         return toProfileResponse(user);
     }
 
@@ -532,9 +588,7 @@ public class OwnerService {
         } else if (amount.signum() == 0) {
             subscriptionService.activateSubscription(subscription.getId());
         } else {
-            PaymentHistory payment = subscriptionService.createSubscriptionPayment(
-                    subscription.getId(), amount, "BANK_TRANSFER");
-            subscriptionService.processPaymentCallback(payment.getTransactionId(), "COMPLETED");
+            throw new BadRequestException("Thanh toán không thành công! Chưa nhận được tiền thanh toán. Vui lòng hoàn tất chuyển khoản hoặc sử dụng mã ưu đãi Bypass Key hợp lệ.");
         }
 
         return toProfileResponse(user);
