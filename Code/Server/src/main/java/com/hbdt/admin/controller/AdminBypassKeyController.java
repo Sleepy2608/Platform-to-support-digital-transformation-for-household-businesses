@@ -32,12 +32,14 @@ public class AdminBypassKeyController {
 
     /**
      * GET /api/admin/bypass-keys/generate-code
-     * Tiện ích sinh trước một mã ngẫu nhiên 20 chữ số cho Admin xem trước trên UI modal.
+     * Tiện ích sinh trước một mã ngẫu nhiên 20 ký tự chữ và số cho Admin xem trước trên UI modal.
      */
     @GetMapping("/generate-code")
     public ResponseEntity<ApiResponse<Map<String, String>>> generateCode() {
         String code = bypassKeyAdminService.generateSecure20DigitCode();
-        return ResponseEntity.ok(ApiResponse.success("Sinh mã Bypass Key ngẫu nhiên thành công", Map.of("keyCode", code)));
+        return ResponseEntity.ok()
+                .cacheControl(org.springframework.http.CacheControl.noCache().noStore().mustRevalidate())
+                .body(ApiResponse.success("Sinh mã Bypass Key ngẫu nhiên thành công", Map.of("keyCode", code)));
     }
 
     /**

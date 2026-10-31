@@ -156,30 +156,64 @@ export default function AdminBypassKeysPage() {
     void loadKeys();
   }, [loadKeys]);
 
-  // Sinh mã 20 chữ số ngẫu nhiên cho modal tạo mới
+  // Hàm sinh mã 20 ký tự chữ và số ngẫu nhiên an toàn client-side (CSPRNG)
+  const generateRandomAlphanumericKey = (): string => {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    if (typeof window !== 'undefined' && window.crypto) {
+      const randomValues = new Uint32Array(20);
+      window.crypto.getRandomValues(randomValues);
+      let result = '';
+      for (let i = 0; i < 20; i++) {
+        result += chars[randomValues[i] % chars.length];
+      }
+      return result;
+    }
+    let fallback = '';
+    for (let i = 0; i < 20; i++) {
+      fallback += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return fallback;
+  };
+
+  // Sinh mã 20 ký tự chữ và số ngẫu nhiên cho modal tạo mới (Bỏ qua hoàn toàn cache)
   const fetchRandomCode = async () => {
     setGeneratingCode(true);
     try {
-      const res = await apiClient.get<{ keyCode: string }>('/api/admin/bypass-keys/generate-code');
-      if (res && res.keyCode) {
+      const res = await apiClient.get<{ keyCode: string }>(
+        `/api/admin/bypass-keys/generate-code?_t=${Date.now()}`,
+        { skipCache: true }
+      );
+      if (res && res.keyCode && res.keyCode !== createForm.keyCode) {
         setCreateForm((prev) => ({ ...prev, keyCode: res.keyCode }));
+      } else {
+        let newKey = generateRandomAlphanumericKey();
+        while (newKey === createForm.keyCode) {
+          newKey = generateRandomAlphanumericKey();
+        }
+        setCreateForm((prev) => ({ ...prev, keyCode: newKey }));
       }
-    } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Không thể sinh mã ngẫu nhiên', 'error');
+    } catch {
+      let newKey = generateRandomAlphanumericKey();
+      while (newKey === createForm.keyCode) {
+        newKey = generateRandomAlphanumericKey();
+      }
+      setCreateForm((prev) => ({ ...prev, keyCode: newKey }));
     } finally {
-      setGeneratingCode(false);
+      setTimeout(() => {
+        setGeneratingCode(false);
+      }, 200);
     }
   };
 
   const openCreateModal = () => {
+    const initialKey = generateRandomAlphanumericKey();
     setCreateForm({
-      keyCode: '',
+      keyCode: initialKey,
       maxUses: '1',
       note: '',
       expiresAt: '',
     });
     setCreateModalOpen(true);
-    void fetchRandomCode();
   };
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
@@ -635,8 +669,8 @@ export default function AdminBypassKeysPage() {
                     <button
                       type="button"
                       onClick={fetchRandomCode}
-                      disabled={generatingCode}
-                      className="inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 font-semibold cursor-pointer disabled:opacity-50"
+                      title="Đổi sang mã 20 ký tự khác"
+                      className="inline-flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 font-semibold cursor-pointer active:scale-95 transition"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${generatingCode ? 'animate-spin' : ''}`} />
                       <span>Đổi mã khác</span>
@@ -659,7 +693,7 @@ export default function AdminBypassKeysPage() {
                     />
                   </div>
                   <p className="text-[11px] text-zinc-500">
-                    Hệ thống tự động sinh 20 ký tự chữ và số ngẫu nhiên an toàn. Bạn cũng có thể tự chỉnh sửa nếu muốn.
+                    Hệ thống tự động sinh 20 ký tự ngẫu nhiên an toàn. Bạn cũng có thể tự chỉnh sửa nếu muốn.
                   </p>
                 </div>
 
