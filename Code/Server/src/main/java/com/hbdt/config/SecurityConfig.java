@@ -81,6 +81,8 @@ public class SecurityConfig {
                     .requestMatchers("/uploads/**").permitAll()
                     // Public API
                     .requestMatchers("/api/public/**").permitAll()
+                    // SePay Webhook & IPN endpoints
+                    .requestMatchers("/api/sepay/**").permitAll()
                     // Public reference data (Tỉnh/Huyện/Xã — không cần đăng nhập)
                     .requestMatchers("/api/reference/**").permitAll()
                     // Seed data – chỉ ADMIN được phép
