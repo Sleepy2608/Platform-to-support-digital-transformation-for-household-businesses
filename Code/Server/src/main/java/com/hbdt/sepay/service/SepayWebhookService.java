@@ -2,6 +2,7 @@ package com.hbdt.sepay.service;
 
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.entity.*;
+import com.hbdt.entity.enums.RoleType;
 import com.hbdt.entity.enums.SubscriptionStatus;
 import com.hbdt.repository.*;
 import com.hbdt.sepay.dto.SepayWebhookPayload;
@@ -262,7 +263,21 @@ public class SepayWebhookService {
         String invoiceNo = "INV-" + today + "-" + String.format("%04d", (int)(Math.random() * 10000));
         BigDecimal unitPrice = payment.getAmount().divide(BigDecimal.valueOf(Math.max(1, months)), 2, RoundingMode.HALF_UP);
 
-        User user = userRepository.findById(subscription.getUserId()).orElse(null);
+        User user = null;
+        if (subscription.getUserId() != null && subscription.getUserId() > 0) {
+            user = userRepository.findById(subscription.getUserId()).orElse(null);
+        }
+        if (user == null && subscription.getBusinessId() != null) {
+            user = userRepository.findFirstByBusinessIdAndRole_Name(subscription.getBusinessId(), RoleType.BUSINESS_OWNER)
+                    .orElse(null);
+        }
+        if (user == null) {
+            user = userRepository.findAll().stream().findFirst().orElse(null);
+        }
+        if (user != null && (subscription.getUserId() == null || subscription.getUserId() <= 0)) {
+            subscription.setUserId(user.getId());
+            subscriptionRepository.save(subscription);
+        }
 
         ServiceInvoice invoice = ServiceInvoice.builder()
                 .invoiceCode(invoiceCode)
