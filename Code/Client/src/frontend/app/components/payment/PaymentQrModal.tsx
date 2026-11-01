@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
@@ -72,6 +72,60 @@ export default function PaymentQrModal({
 
   // Số tiền thực tế sau khi áp dụng mã giảm giá 100%
   const effectiveAmount = appliedKey ? 0 : amount;
+
+  // Tự động lắng nghe giao dịch SePay qua polling
+  const [autoDetected, setAutoDetected] = useState(false);
+  const initialEndDateRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || effectiveAmount <= 0) return;
+
+    let timer: ReturnType<typeof setTimeout>;
+    let cancelled = false;
+
+    // Lấy hạn gói ban đầu để so sánh khi SePay cộng hạn mới
+    apiClient.get<{ data?: { endDate?: string } }>('/api/owner/subscriptions/current')
+      .then((res) => {
+        if (!cancelled && res?.data?.endDate) {
+          initialEndDateRef.current = res.data.endDate;
+        }
+      })
+      .catch(() => {});
+
+    const pollStatus = async () => {
+      try {
+        const res = await apiClient.get<{ data?: { status?: string; endDate?: string } }>('/api/owner/subscriptions/current');
+        if (cancelled) return;
+        const currentSub = res?.data;
+        if (currentSub && currentSub.status === 'ACTIVE') {
+          if (!initialEndDateRef.current || currentSub.endDate !== initialEndDateRef.current) {
+            setAutoDetected(true);
+            setTimeout(() => {
+              if (window.location.pathname === '/owner/account') {
+                window.location.hash = 'subscription';
+                window.location.reload();
+              } else {
+                window.location.href = '/owner/account#subscription';
+              }
+            }, 1200);
+            return;
+          }
+        }
+      } catch {
+        // Bỏ qua lỗi kết nối tạm thời
+      }
+      if (!cancelled) {
+        timer = setTimeout(pollStatus, 3000);
+      }
+    };
+
+    timer = setTimeout(pollStatus, 3000);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [isOpen, effectiveAmount]);
 
   const qrImageUrl = effectiveAmount > 0 && transferSyntax
     ? `https://img.vietqr.io/image/ICB-108871728162-compact2.png?amount=${effectiveAmount}&addInfo=${encodeURIComponent(transferSyntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`
@@ -299,6 +353,23 @@ export default function PaymentQrModal({
                           <p className="leading-relaxed">Vui lòng quét mã QR hoặc chuyển khoản theo thông tin dưới đây, sau đó bấm xác nhận thanh toán.</p>
                         </div>
                       </div>
+
+                      {/* SePay Listener Badge */}
+                      {effectiveAmount > 0 && !autoDetected && (
+                        <div className="flex items-center justify-center gap-2 py-2 px-3 bg-emerald-50 border border-emerald-200/80 rounded-xl text-xs font-medium text-emerald-800">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                          <span>Hệ thống đang tự động lắng nghe giao dịch SePay...</span>
+                        </div>
+                      )}
+                      {autoDetected && (
+                        <div className="flex items-center justify-center gap-2 py-2.5 px-3 bg-emerald-100 border border-emerald-300 rounded-xl text-xs font-semibold text-emerald-900 animate-bounce">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span>SePay xác nhận thanh toán thành công! Đang tự động làm mới...</span>
+                        </div>
+                      )}
 
                       {/* QR Box */}
                       <div className="bg-slate-900 text-white rounded-2xl p-5 text-center shadow-lg">

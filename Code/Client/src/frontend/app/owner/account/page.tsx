@@ -1071,7 +1071,9 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
   };
 
   const renewalAmount = monthlyPrice * months;
-  const transferSyntax = `${packageType || 'SUB'}-RENEW-${months}M`;
+  const transferSyntax = profile?.businessId
+    ? `HBDT RENEW ${profile.businessId} ${months}`
+    : `${packageType || 'SUB'}-RENEW-${months}M`;
 
   const packageLabel = packageType === 'VIP'
     ? 'Gói VIP (Pro)'

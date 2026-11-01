@@ -30,6 +30,7 @@ interface OwnerProfileResponse {
   packageType: string | null;
   subscriptionExpiresAt: string | null;
   businessName?: string;
+  businessId?: number | null;
   fullName?: string;
 }
 
@@ -103,6 +104,7 @@ function ChangePlanInner() {
   const [currentPackageType, setCurrentPackageType] = useState<string | null>(null);
   const [currentExpiresAt, setCurrentExpiresAt] = useState<string | null>(null);
   const [isSubscriptionActive, setIsSubscriptionActive] = useState(false);
+  const [businessId, setBusinessId] = useState<number | null>(null);
 
   // Payment Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -128,6 +130,9 @@ function ChangePlanInner() {
           const profile = profileData.value;
           setCurrentPackageType(profile.packageType);
           setCurrentExpiresAt(profile.subscriptionExpiresAt);
+          if (profile.businessId) {
+            setBusinessId(profile.businessId);
+          }
           const active = Boolean(
             profile.subscriptionExpiresAt &&
             new Date(profile.subscriptionExpiresAt).getTime() > Date.now()
@@ -240,7 +245,9 @@ function ChangePlanInner() {
     }
   };
 
-  const transferSyntax = `HBDT-${selectedPkgId || 'SUB'}-${cycle === 'YEARLY' ? '12M' : '1M'}`;
+  const transferSyntax = businessId
+    ? `HBDT RENEW ${businessId} ${cycle === 'YEARLY' ? '12' : '1'}`
+    : `HBDT-${selectedPkgId || 'SUB'}-${cycle === 'YEARLY' ? '12M' : '1M'}`;
 
   return (
     <div className="min-h-screen bg-slate-100/70 p-4 sm:p-8 lg:p-10 select-none" style={{ cursor: 'default' }}>
