@@ -392,7 +392,7 @@ export default function PaymentQrModal({
                                 : 'text-slate-400 hover:text-white'
                             }`}
                           >
-                            Mã QR gốc (qr-code.jpg)
+                            Mã QR gốc
                           </button>
                           <button
                             type="button"
@@ -409,7 +409,7 @@ export default function PaymentQrModal({
 
                         <p className="text-[11px] text-slate-400 mb-3">
                           {qrMode === 'static' ? (
-                            <span>Mã QR chính chủ VietinBank từ <code className="bg-slate-800 px-1.5 py-0.5 rounded text-amber-300">qr-code.jpg</code> (Quét hiển thị đúng tên <strong>NGUYEN LE HUY TAM</strong> 100%)</span>
+                            <span>Mã QR chính chủ VietinBank <strong>(NGUYEN LE HUY TAM)</strong></span>
                           ) : (
                             <span>Mã VietQR động tự động nhúng số tiền và cú pháp chuyển khoản</span>
                           )}
