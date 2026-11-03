@@ -60,7 +60,9 @@ export default function PaymentQrModal({
 }: PaymentQrModalProps) {
   const [copiedAccountNumber, setCopiedAccountNumber] = useState(false);
   const [copiedTransferSyntax, setCopiedTransferSyntax] = useState(false);
+  const [copiedAmount, setCopiedAmount] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [qrMode, setQrMode] = useState<'static' | 'vietqr'>('static');
 
   // Bypass Key state
   const [inputKey, setInputKey] = useState('');
@@ -127,24 +129,30 @@ export default function PaymentQrModal({
     };
   }, [isOpen, effectiveAmount]);
 
-  const qrImageUrl = effectiveAmount > 0 && transferSyntax
+  const staticQrUrl = '/images/qr-code.jpg';
+  const dynamicVietQrUrl = effectiveAmount > 0 && transferSyntax
     ? `https://img.vietqr.io/image/ICB-107882760609-compact2.png?amount=${effectiveAmount}&addInfo=${encodeURIComponent(transferSyntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`
     : '/images/qr-code.jpg';
 
-  const copyValue = (value: string, type: 'account' | 'syntax') => {
+  const currentQrUrl = qrMode === 'static' ? staticQrUrl : dynamicVietQrUrl;
+
+  const copyValue = (value: string, type: 'account' | 'syntax' | 'amount') => {
     navigator.clipboard.writeText(value);
     if (type === 'account') {
       setCopiedAccountNumber(true);
       setTimeout(() => setCopiedAccountNumber(false), 2000);
-    } else {
+    } else if (type === 'syntax') {
       setCopiedTransferSyntax(true);
       setTimeout(() => setCopiedTransferSyntax(false), 2000);
+    } else if (type === 'amount') {
+      setCopiedAmount(true);
+      setTimeout(() => setCopiedAmount(false), 2000);
     }
   };
 
   const handleDownloadQr = async () => {
     setDownloading(true);
-    await downloadQrImage(qrImageUrl, `qr-thanh-toan-${transferSyntax || 'goi-cuoc'}.png`);
+    await downloadQrImage(currentQrUrl, `qr-thanh-toan-${transferSyntax || 'goi-cuoc'}.png`);
     setTimeout(() => setDownloading(false), 1200);
   };
 
@@ -361,22 +369,56 @@ export default function PaymentQrModal({
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                           </span>
-                          <span>Hệ thống đang tự động lắng nghe giao dịch SePay...</span>
+                          <span>Hệ thống sẽ xác nhận tự động thanh toán...</span>
                         </div>
                       )}
                       {autoDetected && (
                         <div className="flex items-center justify-center gap-2 py-2.5 px-3 bg-emerald-100 border border-emerald-300 rounded-xl text-xs font-semibold text-emerald-900 animate-bounce">
                           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                          <span>SePay xác nhận thanh toán thành công! Đang tự động làm mới...</span>
+                          <span>Xác nhận thanh toán thành công! Đang tự động làm mới...</span>
                         </div>
                       )}
 
                       {/* QR Box */}
                       <div className="bg-slate-900 text-white rounded-2xl p-5 text-center shadow-lg">
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Quét mã QR để thanh toán</p>
+                        {/* Tab Switcher */}
+                        <div className="flex items-center justify-center gap-1 p-1 bg-slate-800 rounded-xl max-w-sm mx-auto mb-3.5 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => setQrMode('static')}
+                            className={`flex-1 py-1.5 px-3 rounded-lg font-bold transition-all cursor-pointer ${
+                              qrMode === 'static'
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            Mã QR gốc (qr-code.jpg)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setQrMode('vietqr')}
+                            className={`flex-1 py-1.5 px-3 rounded-lg font-bold transition-all cursor-pointer ${
+                              qrMode === 'vietqr'
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            VietQR tự điền tiền
+                          </button>
+                        </div>
+
+                        <p className="text-[11px] text-slate-400 mb-3">
+                          {qrMode === 'static' ? (
+                            <span>Mã QR chính chủ VietinBank từ <code className="bg-slate-800 px-1.5 py-0.5 rounded text-amber-300">qr-code.jpg</code> (Quét hiển thị đúng tên <strong>NGUYEN LE HUY TAM</strong> 100%)</span>
+                          ) : (
+                            <span>Mã VietQR động tự động nhúng số tiền và cú pháp chuyển khoản</span>
+                          )}
+                        </p>
+
                         <div className="bg-white p-2 rounded-2xl inline-block shadow-md border-4 border-slate-800">
                           <img
-                            src={qrImageUrl}
+                            key={currentQrUrl}
+                            src={currentQrUrl}
                             alt="Mã QR chuyển khoản"
                             className="w-64 h-64 object-contain rounded-xl"
                             onError={(e) => {
@@ -387,10 +429,19 @@ export default function PaymentQrModal({
                             }}
                           />
                         </div>
-                        <div className="mt-3 flex flex-col sm:flex-row items-center justify-center gap-3">
-                          <div>
-                            <span className="text-xs text-slate-400 font-medium">Số tiền cần chuyển: </span>
+
+                        <div className="mt-3.5 flex flex-col sm:flex-row items-center justify-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-400 font-medium">Số tiền:</span>
                             <span className="text-xl font-black text-amber-400">{amount.toLocaleString('vi-VN')}đ</span>
+                            <button
+                              type="button"
+                              onClick={() => copyValue(amount.toString(), 'amount')}
+                              className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                              title="Sao chép số tiền"
+                            >
+                              {copiedAmount ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
                           </div>
                           <button
                             type="button"
