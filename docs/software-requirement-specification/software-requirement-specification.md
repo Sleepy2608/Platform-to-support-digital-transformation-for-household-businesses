@@ -14,7 +14,7 @@
 
 **Môn học:** Lập trình Java
 
-**Cập nhật gần đây:** 03/11/2026
+**Cập nhật gần đây:** 04/11/2026
 
 ---
 
@@ -3377,3 +3377,4 @@ Bảng sau tổng hợp các điểm cuối REST API chính của hệ thống.
 | 1.1 | 30/07/2026 | Thêm link Jira để phân công việc dựa trên task Jira|
 | 1.2 | 15/09/2026 | Cập nhật §10.1 theo nhánh `feature/AI_Service`: chỉnh số endpoint `/api/ai/*`, `/api/accounting/*`, `/api/admin/*` và bổ sung nhóm `/api/revenue-ledger/*`; ghi chú trạng thái chưa triển khai của HBDT-09.2 (nhập bằng giọng nói) |
 | 1.3 | 03/11/2026 | Tích hợp Cổng thanh toán tự động SePay (VietQR động, Webhook, IPN), quản lý mã kích hoạt Bypass Key 20 ký tự, cập nhật endpoint thanh toán và đối soát tự động |
+| 1.4 | 04/11/2026 | Tối ưu hóa và hoàn thiện Cổng thanh toán SePay: chuẩn hóa cú pháp chuyển khoản onboarding, xác thực số tài khoản thụ hưởng, cơ chế phản hồi HTTP 200 chống retry lỗi và tối ưu hóa polling realtime không cache |

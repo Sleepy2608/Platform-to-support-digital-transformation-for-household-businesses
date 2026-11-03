@@ -7,8 +7,8 @@
 | Mã tài liệu | HBDT-SI-01 |
 | Tên tài liệu | Tài liệu hiện thực hệ thống (System Implementation Document) |
 | Dự án | Platform to Support Digital Transformation for Household Businesses |
-| Phiên bản | 1.1 |
-| Ngày ban hành | 03/11/2026 |
+| Phiên bản | 1.2 |
+| Ngày ban hành | 04/11/2026 |
 | Trạng thái | Bản bàn giao (Release) |
 | Đơn vị thực hiện | Nhóm phát triển HBDT |
 | Backend | Java 21, Spring Boot 3.3.0 |
@@ -25,6 +25,7 @@
 |---|---|---|---|
 | 1.0 | 15/09/2026 | Ban hành tài liệu mô tả hiện thực hệ thống theo mã nguồn bàn giao | Nhóm phát triển HBDT |
 | 1.1 | 03/11/2026 | Bổ sung hiện thực Cổng thanh toán tự động SePay, Webhook/IPN, VietQR động và hệ thống Bypass Key | Nhóm phát triển HBDT |
+| 1.2 | 04/11/2026 | Hoàn thiện hiện thực SePay Webhook: xác thực số tài khoản thụ hưởng, cơ chế phản hồi 200 OK chống lặp, tự tạo mới subscription cho hộ mới và tối ưu polling không cache | Nhóm phát triển HBDT |
 
 ## Mục lục
 

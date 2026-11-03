@@ -2,7 +2,7 @@
 
 > **Đề tài:** Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh (Platform to Support Digital Transformation for Household Businesses)  
 > **Môn học:** Lập trình Java  
-> **Ngày cập nhật:** 03/11/2026  
+> **Ngày cập nhật:** 04/11/2026  
 
 ---
 

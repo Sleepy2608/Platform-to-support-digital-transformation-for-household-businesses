@@ -5,8 +5,8 @@
 | **Tài liệu** | Hướng Dẫn Sử Dụng Hệ Thống – Vai Trò Chủ Hộ Kinh Doanh (Business Owner) |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Vai trò áp dụng** | Chủ hộ kinh doanh (`BUSINESS_OWNER` / Business Owner) |
-| **Phiên bản** | 1.4 |
-| **Cập nhật lần cuối** | 03/11/2026 |
+| **Phiên bản** | 1.5 |
+| **Cập nhật lần cuối** | 04/11/2026 |
 
 ---
 
@@ -157,15 +157,17 @@ Owner có thể nhờ trợ lý AI viết bản nhận xét cho báo cáo vận 
 3. Chọn gói mong muốn để nâng cấp hoặc gia hạn (chọn thời hạn 1–24 tháng).
 4. Thanh toán linh hoạt qua 2 hình thức:
    - **Cách 1 — Thanh toán chuyển khoản tự động (SePay VietQR):**
-     * Mở ứng dụng ngân hàng quét mã VietQR hiển thị trên màn hình (hoặc bấm tải mã QR về máy).
-     * Mã QR đã nhúng sẵn tài khoản nhận VietinBank `107882760609`, số tiền chính xác và cú pháp định danh `HBDT RENEW <businessId> <months>`.
-     * Khi tiền vào tài khoản, SePay Webhook tự động xác thực và gia hạn gói trong vài giây. Giao diện tự động phát hiện và chuyển sang trạng thái thành công mà không cần tải lại trang.
+     * Mở ứng dụng ngân hàng quét mã QR trên màn hình (hoặc bấm tải mã QR về máy). Modal hỗ trợ 2 chế độ: **Mã QR gốc** (chính chủ VietinBank `NGUYEN LE HUY TAM`) và **VietQR tự điền tiền** (tự động điền số tiền và nội dung).
+     * Thông tin tài khoản nhận: VietinBank `107882760609` (Chủ TK: NGUYEN LE HUY TAM).
+     * Cú pháp định danh chuyển khoản chuẩn hóa: `HBDT RENEW <businessId> <months>` (hoặc theo cú pháp gói cước trên màn hình).
+     * Khi tiền vào tài khoản, SePay Webhook tự động xác thực và gia hạn gói trong vài giây. Giao diện tự động phát hiện (polling đa tầng `{ skipCache: true }`) và chuyển sang trạng thái thành công mà không cần tải lại trang.
+     * Nếu mạng ngân hàng trễ, bạn có thể bấm nút **"Kiểm tra giao dịch / Xác nhận"** để hệ thống truy vấn kiểm tra biến động số dư tức thì, hoặc đợi trong tối đa 10 phút.
    - **Cách 2 — Áp dụng mã Bypass Key (Ưu đãi 100%):**
      * Nhập mã Bypass Key 20 ký tự do Admin cấp vào ô mã giảm giá ➔ Bấm **Áp dụng**.
      * Số tiền thanh toán chuyển về 0đ và gói cước được kích hoạt ngay lập tức.
 5. Sau khi thanh toán, hệ thống tự động sinh hóa đơn `ServiceInvoice` (PAID) và cập nhật quyền sử dụng các tính năng tương ứng.
 
-> Nếu chuyển khoản sai cú pháp, hệ thống vẫn lưu lại giao dịch trong lịch sử thanh toán với trạng thái `PENDING_REVIEW` để Manager/Admin đối soát thủ công.
+> Nếu chuyển khoản sai cú pháp hoặc sai số tài khoản, hệ thống sẽ từ chối tự động kích hoạt để bảo đảm an toàn và lưu lại vào nhật ký kiểm toán để Manager/Admin đối soát thủ công.
 
 ---
 

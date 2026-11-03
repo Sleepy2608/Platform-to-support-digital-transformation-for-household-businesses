@@ -146,7 +146,7 @@ Hệ thống cung cấp các gói dịch vụ linh hoạt phù hợp với từn
 > Nhiệm vụ được giao sẽ được dựa vào nhiệm vụ được giao trên [Issue](https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/issues) trên Github và cập nhật tiến độ ở [Jira](https://java-project-platform-for-household-business.atlassian.net/jira/software/projects/SCRUM/summary).<br>
 > Các issue trên Github sẽ được cập nhật theo tiến độ của Jira và sẽ được test trước khi merge vào nhánh Main.<br>
 > Mức độ hoàn thành dự án: 100%<br>
-> Ngày cập nhật lần cuối: 03/11/2026.
+> Ngày cập nhật lần cuối: 04/11/2026.
 
 ---
 
@@ -450,7 +450,12 @@ Hệ thống tích hợp cổng thanh toán SePay hỗ trợ tạo mã VietQR đ
     -H "Authorization: Apikey spsk_test_4hP4UGF9NSNY5Hjyt8mbVcT8P2wWEBNS" \
     -d "{\"gateway\":\"VietinBank\",\"accountNumber\":\"107882760609\",\"transferType\":\"in\",\"transferAmount\":399000,\"content\":\"HBDT RENEW 1 1\",\"referenceCode\":\"FT-DEMO-01\"}"
   ```
-  Hệ thống tự động kích hoạt gói `ACTIVE`, cộng thêm ngày hết hạn `endDate`, sinh hóa đơn `service_invoices` (PAID) và frontend tự động cập nhật thời gian thực qua polling (3s/lần).
+  Hệ thống tự động kích hoạt gói `ACTIVE`, cộng thêm ngày hết hạn `endDate`, sinh hóa đơn `service_invoices` (PAID) và frontend tự động cập nhật thời gian thực qua polling (`{ skipCache: true }` mỗi 3s/lần, giới hạn 10 phút).
+- **Tính năng bảo mật & độ tin cậy Webhook:**
+  * **Xác thực số tài khoản thụ hưởng:** Tự động đối chiếu `payload.accountNumber` với `SEPAY_ACCOUNT_NUMBER=107882760609`; bỏ qua và ghi log nếu số tài khoản nhận không khớp.
+  * **Chống lỗi Webhook Retry:** Webhook controller luôn phản hồi HTTP `200 OK` (kèm trạng thái trong body) để ngăn SePay gửi lại 7 lần gây quá tải.
+  * **Tự phục hồi dữ liệu gói:** Tự động tạo bản ghi Subscription mới cho `businessId` nếu hộ kinh doanh đăng ký lần đầu thanh toán qua SePay chưa có gói trong CSDL.
+  * **Đồng bộ cú pháp Onboarding & Quản lý:** Cú pháp định danh chuẩn `HBDT RENEW <businessId> <months>` được áp dụng thống nhất từ trang Onboarding đến trang Đổi gói cước.
 - **Hệ thống Bypass Key (Mã ưu đãi 100%):**
   Admin có thể tạo mã Bypass Key (20 ký tự chữ và số) tại `/admin/bypass-keys` để kích hoạt hoặc thử nghiệm gói dịch vụ mà không cần giao dịch ngân hàng.
 

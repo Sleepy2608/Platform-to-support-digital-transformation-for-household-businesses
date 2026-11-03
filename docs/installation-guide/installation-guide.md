@@ -5,9 +5,9 @@
 | **Tên tài liệu** | Hướng dẫn Cài đặt Hệ thống (Installation Guide) – Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Mã issue/ticket** | HBDT-95 |  
-| **Phiên bản** | 1.3 |
-| **Cập nhật lần cuối** | 03/11/2026 |
-| **Trạng thái** | Đồng bộ với cấu hình hiện tại của repo (bao gồm phân hệ AI Service dùng B.ai, cổng thanh toán tự động SePay, Cloudflare Tunnel) và luồng dev local trên Windows |
+| **Phiên bản** | 1.4 |
+| **Cập nhật lần cuối** | 04/11/2026 |
+| **Trạng thái** | Đồng bộ với cấu hình hiện tại của repo (phân hệ AI Service dùng B.ai, cổng thanh toán tự động SePay, xác thực STK thụ hưởng, Cloudflare Tunnel) và luồng dev local trên Windows |
 
 ---
 
@@ -240,6 +240,10 @@ Các script tự kiểm tra môi trường trước khi chạy và giữ cửa s
    - **Định dạng dữ liệu:** JSON.
    - **Phương thức xác thực:** Chọn **API Key**, copy Secret Key vào `Code/Server/.env` (`SEPAY_SECRET_KEY=spsk_...`).
 4. **Kiểm tra gửi thử:** Bấm **Gửi thử** trên Dashboard SePay; kết quả trả về `HTTP 200 (OK)` xác nhận Webhook đã kết nối thông suốt.
+5. **Lưu ý bảo mật & ổn định đường hầm:**
+   - **Quick Tunnel (`trycloudflare.com`):** URL tạm thời, thay đổi sau mỗi lần khởi động lại tunnel. Cần giữ tiến trình tunnel chạy liên tục khi kiểm thử.
+   - **Xác thực STK thụ hưởng:** Biến `SEPAY_ACCOUNT_NUMBER=107882760609` trong `.env` bảo vệ hệ thống chỉ nhận tiền vào đúng tài khoản thụ hưởng của nền tảng; các giao dịch vào tài khoản lạ sẽ bị bỏ qua và ghi log cảnh báo.
+   - **Cơ chế phản hồi an toàn:** Webhook endpoint luôn trả `200 OK` cho SePay để ngăn chặn cơ chế tự động gửi lại (retry) 7 lần khi có lỗi nội bộ.
 
 ---
 

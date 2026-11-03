@@ -8,9 +8,9 @@
 | **Tên dự án (VN)** | Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | **Loại tài liệu** | Architecture Design Document |
 | **Viết tắt** | HBDT
-| **Phiên bản tài liệu** | 2.2 |
+| **Phiên bản tài liệu** | 2.3 |
 | **Ngày tạo** | 26/07/2026 |
-| **Ngày chỉnh sửa lần cuối** | 03/11/2026 |
+| **Ngày chỉnh sửa lần cuối** | 04/11/2026 |
 | **Trạng thái** | Hoàn thành (Release) |
 
 ---

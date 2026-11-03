@@ -240,7 +240,7 @@ Payment Method (VietQR SePay hoặc Bypass Key)
 
 ### Thời gian thực hiện
 - Ngày bắt đầu: 12/08/2026
-- Ngày hoàn thành cập nhật: 03/11/2026
+- Ngày hoàn thành cập nhật: 04/11/2026
 
 ---
 

@@ -4,9 +4,9 @@
 
 - **Dự án:** Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh.
 - **Loại kiểm thử:** Kiểm thử hệ thống thủ công (manual system testing).
-- **Phạm vi:** 44 test case, từ TC01 đến TC44.
-- **Nguồn nội dung:** Workbook test case của nhóm, cập nhật ngày 03/11/2026.
-- **Kết quả ghi nhận trong workbook:** 44/44 test case có trạng thái **Đạt** (100%).
+- **Phạm vi:** 45 test case, từ TC01 đến TC45.
+- **Nguồn nội dung:** Workbook test case của nhóm, cập nhật ngày 04/11/2026.
+- **Kết quả ghi nhận trong workbook:** 45/45 test case có trạng thái **Đạt** (100%).
 - **File Excel và ảnh minh chứng:** [Mở bộ test case hệ thống](./hbdt-system-test-cases.xlsx).
 
 > Trong workbook, cột **Ảnh minh chứng** trên sheet `Test Cases` liên kết đến các sheet `TC1`–`TC44` để tra cứu kết quả thực hiện tương ứng.
@@ -23,8 +23,8 @@
 | Khách hàng, đơn hàng và thanh toán | TC26–TC31 | 6 |
 | Doanh thu và biểu đồ | TC32–TC36 | 5 |
 | Nhân viên, Admin và cô lập dữ liệu | TC37–TC39 | 3 |
-| Thanh toán tự động SePay & Bypass Key | TC40–TC44 | 5 |
-| **Tổng cộng** | **TC01–TC44** | **44** |
+| Thanh toán tự động SePay & Bypass Key | TC40–TC45 | 6 |
+| **Tổng cộng** | **TC01–TC45** | **45** |
 
 ## 3. Nội dung test case
 
@@ -116,29 +116,30 @@
 | **TC42** | Chống trùng lặp Webhook (Idempotency) | Kiểm tra hệ thống không gia hạn 2 lần khi nhận cùng transactionId. | Dữ liệu: Gửi lại webhook cùng `id` hoặc `referenceCode` đã xử lý.<br>Thao tác: POST `/api/sepay/webhook`. | Trả về `200 OK` với thông báo "Giao dịch đã được xử lý trước đó", không cộng hạn lần 2. | JUnit Test | **Đạt** |
 | **TC43** | Tự động sinh hóa đơn ServiceInvoice | Kiểm tra webhook tự động tạo hóa đơn dịch vụ tương ứng. | Thao tác: Sau khi TC41 chạy thành công, kiểm tra bảng `service_invoices`. | Xuất hiện bản ghi `ServiceInvoice` liên kết với subscription, trạng thái `PAID`, số tiền `399.000đ`. | DB / API | **Đạt** |
 | **TC44** | Áp dụng Bypass Key giảm 100% | Kiểm tra kích hoạt gói cước ngay lập tức bằng mã ưu đãi 20 ký tự. | Điều kiện trước: Admin đã tạo Bypass Key (20 ký tự).<br>Thao tác: Owner nhập key tại modal ➔ Bấm Áp dụng. | Xác thực hợp lệ, tiền về 0đ, gói được kích hoạt tức thì không cần chuyển khoản. | JUnit / UI | **Đạt** |
+| **TC45** | Xác thực STK thụ hưởng Webhook | Kiểm tra hệ thống từ chối/bỏ qua giao dịch khi STK nhận tiền không khớp với cấu hình hệ thống. | Dữ liệu: Payload chuyển khoản vào STK lạ `999999999999` (khác `107882760609`).<br>Thao tác: POST `/api/sepay/webhook`. | Trả về `200 OK` (không retry), log cảnh báo không đúng tài khoản, không kích hoạt gói. | JUnit Test | **Đạt** |
 
 ## 4. Hướng dẫn tra cứu
 
 1. Mở [file Excel test case](./hbdt-system-test-cases.xlsx) và chọn sheet `Test Cases` để xem danh sách tổng.
-2. Nhấn liên kết trong cột **Ảnh minh chứng** để chuyển đến sheet `TC1`–`TC39` tương ứng (TC40–TC44 xem tại tài liệu kiểm thử tự động SePay).
+2. Nhấn liên kết trong cột **Ảnh minh chứng** để chuyển đến sheet `TC1`–`TC39` tương ứng (TC40–TC45 xem tại tài liệu kiểm thử tự động SePay).
 3. Đối chiếu dữ liệu đầu vào, thao tác, kết quả mong đợi và minh chứng của từng test case.
 4. Trạng thái thực hiện được ghi nhận trực tiếp trên sheet `Test Cases`.
 
 ## 5. Nội dung cần lưu ý
 
-- **Phạm vi:** Tài liệu bao gồm 44 test case kiểm thử hệ thống, từ TC01 đến TC44.
-- **Kết quả:** Cả 44 test case đều có trạng thái **Đạt** theo kết quả đã ghi nhận.
-- **Thứ tự thực hiện:** Một số kịch bản sử dụng dữ liệu được tạo ở test trước, như `P_TC_001` và `DM_TC_01`; vì vậy nên tra cứu theo thứ tự TC01–TC44.
+- **Phạm vi:** Tài liệu bao gồm 45 test case kiểm thử hệ thống, từ TC01 đến TC45.
+- **Kết quả:** Cả 45 test case đều có trạng thái **Đạt** theo kết quả đã ghi nhận.
+- **Thứ tự thực hiện:** Một số kịch bản sử dụng dữ liệu được tạo ở test trước, như `P_TC_001` và `DM_TC_01`; vì vậy nên tra cứu theo thứ tự TC01–TC45.
 - **Cô lập dữ liệu:** Các chức năng theo vai trò Owner và Employee được kiểm tra trong phạm vi đúng `businessId`, bảo đảm không hiển thị dữ liệu của hộ kinh doanh khác.
 - **Dữ liệu kiểm thử:** Các tài khoản, mã sản phẩm, mã danh mục, khách hàng và gói thuê bao trong tài liệu là dữ liệu phục vụ kiểm thử.
-- **Ảnh minh chứng:** Minh chứng được tổ chức theo từng sheet `TC1`–`TC39` và log thực thi E2E đối với TC40–TC44.
+- **Ảnh minh chứng:** Minh chứng được tổ chức theo từng sheet `TC1`–`TC39` và log thực thi E2E đối với TC40–TC45.
 - **Định dạng dữ liệu:** Ngày sử dụng định dạng `dd/MM/yyyy`; số tiền sử dụng Việt Nam đồng; các mã nghiệp vụ được giữ nguyên theo dữ liệu kiểm thử.
 
 ## 6. Kết luận
 
-- **Tổng số test case:** 44.
-- **Đạt:** 44.
+- **Tổng số test case:** 45.
+- **Đạt:** 45.
 - **Không đạt:** 0.
 - **Tỷ lệ đạt:** 100%.
 
-Bộ test case đã kiểm tra các luồng chính của hệ thống gồm đăng nhập và phân quyền, sản phẩm, danh mục, tồn kho, cảnh báo tồn kho thấp, khách hàng, đơn hàng, thanh toán, doanh thu, biểu đồ, nhân viên, gói thuê bao Admin, cổng thanh toán tự động SePay (VietQR, Webhook, Idempotency, Hóa đơn dịch vụ) và mã ưu đãi Bypass Key. Kết quả ghi nhận cho thấy toàn bộ 44 test case đều đáp ứng kết quả mong đợi.
+Bộ test case đã kiểm tra các luồng chính của hệ thống gồm đăng nhập và phân quyền, sản phẩm, danh mục, tồn kho, cảnh báo tồn kho thấp, khách hàng, đơn hàng, thanh toán, doanh thu, biểu đồ, nhân viên, gói thuê bao Admin, cổng thanh toán tự động SePay (VietQR, Webhook, Idempotency, Xác thực STK, Hóa đơn dịch vụ) và mã ưu đãi Bypass Key. Kết quả ghi nhận cho thấy toàn bộ 45 test case đều đáp ứng kết quả mong đợi.

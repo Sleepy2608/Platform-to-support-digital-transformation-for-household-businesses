@@ -8,9 +8,9 @@
 | **Tên dự án (VN)** | Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | **Viết tắt** | HBDT |
 | **Loại tài liệu** | Detailed Design Document |
-| **Phiên bản** | 2.3 |
+| **Phiên bản** | 2.4 |
 | **Ngày tạo** | 12/08/2026 |
-| **Lần cuối cập nhật** | 03/11/2026 |
+| **Lần cuối cập nhật** | 04/11/2026 |
 | **Trạng thái** | Hoàn thành tích hợp Cổng thanh toán SePay, Webhook & Bypass Key |
 | **Tài liệu liên quan** | Các tài liệu trong thư mục docs (URD, SRS, Architecture Design Document, Database Design Document) |
 
@@ -384,8 +384,8 @@ Mỗi module nghiệp vụ tuân theo mô hình phân lớp chuẩn của Spring
 
 | Class | Loại | Vai trò |
 |---|---|---|
-| `SepayWebhookController` | REST Controller | Tiếp nhận webhook `/api/sepay/webhook` và IPN `/api/sepay/ipn`, xác thực header `Authorization: Apikey <SECRET>` |
-| `SepayWebhookService` | Service | Parse nội dung chuyển khoản `HBDT RENEW <businessId> <months>`, kiểm tra Idempotency, cộng hạn `subscriptions`, tạo `service_invoices` (PAID) |
+| `SepayWebhookController` | REST Controller | Tiếp nhận webhook `/api/sepay/webhook` và IPN `/api/sepay/ipn`, xác thực header `Authorization: Apikey <SECRET>`, luôn phản hồi HTTP 200 OK an toàn chống retry quá tải |
+| `SepayWebhookService` | Service | Parse cú pháp `HBDT RENEW <businessId> <months>` (fallback cú pháp gói), xác thực số tài khoản thụ hưởng `107882760609`, kiểm tra Idempotency, cộng hạn hoặc tự tạo mới `subscriptions`, tạo `service_invoices` (PAID) |
 
 **DTO:** `SepayWebhookPayload` (Request), `SepayWebhookResponse` (Response).
 
