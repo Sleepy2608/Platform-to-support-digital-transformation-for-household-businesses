@@ -2,7 +2,7 @@
 
 > **Đề tài:** Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh (Platform to Support Digital Transformation for Household Businesses)  
 > **Môn học:** Lập trình Java  
-> **Ngày cập nhật:** 21/09/2026  
+> **Ngày cập nhật:** 04/11/2026  
 
 ---
 
@@ -34,7 +34,8 @@
 - **Tính năng Backend & Frontend**:
   - Quản lý tài khoản Admin và cấu hình toàn hệ thống.
   - Quản lý người dùng (CRUD tài khoản, hồ sơ cá nhân).
-  - Quy trình thanh toán gói thuê bao (Payment Process, Subscription Pricing & Plans, Modal thanh toán QR).
+  - Tích hợp cổng thanh toán tự động SePay: Thiết kế kiến trúc Webhook / IPN, xác thực API Key, kiểm soát Idempotency chống kích hoạt trùng lặp, cơ chế Tunneling Cloudflare và hệ thống mã kích hoạt Bypass Key.
+  - Quy trình thanh toán gói thuê bao (Subscription Pricing & Plans, Modal thanh toán VietQR động).
   - Báo cáo doanh thu nền tảng (Revenue Ledger, Platform Analytics, Trend Analysis).
 - **Kiểm thử hiệu năng**: Performance Testing, tối ưu hóa truy vấn và bảo mật API.
 
@@ -97,7 +98,7 @@
 
 ### 2.6. Huỳnh Đình Chấn (Feature Developer / Fullstack Developer)
 - **Phát triển tính năng Backend & Frontend**:
-  - Quản lý quy trình thanh toán mua gói thuê bao dịch vụ (Purchase Package Payments).
+  - Quản lý quy trình thanh toán mua gói thuê bao dịch vụ: Hiện thực SePay Webhook listener, polling trạng thái thanh toán thời gian thực và quản lý kích hoạt mã giảm giá Bypass Key 100%.
   - Quản lý tài khoản Quản lý vận hành (Manager Account Management).
   - Phát triển tính năng thuê bao: Thiết lập gói cước (Pricing Plans), hệ thống thông báo thuê bao (Notifications).
   - Hiện thực phân quyền RBAC và kiểm soát bảo mật API.
@@ -119,7 +120,7 @@
 | **Inventory & Stock Management** | Trần Hồng Sơn, Trần Văn Ngọc Thắng, Trần Duy Tân | **100%** |
 | **Customer & Debt Ledger Management** | Trần Duy Tân, Trần Văn Ngọc Thắng | **100%** |
 | **Circular 88 Bookkeeping & 2026 Tax Engine** | Nguyễn Lê Huy Tâm, Trần Hồng Sơn, Trần Văn Ngọc Thắng | **100%** |
-| **Subscription Plans & QR Payment** | Nguyễn Lê Huy Tâm, Huỳnh Đình Chấn, Nguyễn Ngọc Gia Bảo | **100%** |
+| **Subscription Plans, SePay Payment & Bypass Key** | Nguyễn Lê Huy Tâm, Huỳnh Đình Chấn, Nguyễn Ngọc Gia Bảo | **100%** |
 | **Reporting, Analytics & System Announcement** | Nguyễn Lê Huy Tâm, Nguyễn Ngọc Gia Bảo, Huỳnh Đình Chấn | **100%** |
 | **Testing, Audit Log & QA/QC** | Trần Văn Ngọc Thắng, Nguyễn Lê Huy Tâm, Nguyễn Ngọc Gia Bảo | **100%** |
 

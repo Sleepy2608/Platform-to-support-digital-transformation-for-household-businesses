@@ -1,6 +1,6 @@
 {
   "table" : "service_invoices",
-  "version" : 11,
+  "version" : 12,
   "rows" : [ {
     "id" : 1,
     "amount" : 11976000.00,
@@ -121,5 +121,50 @@
     "unit_price" : 0.00,
     "plan_id" : 0,
     "user_id" : 0
+  }, {
+    "id" : 9,
+    "amount" : 399000.00,
+    "business_id" : 5,
+    "created_at" : "2026-10-31T18:35:36.698057",
+    "due_date" : null,
+    "invoice_no" : "INV-20261101-7885",
+    "status" : "PAID",
+    "subscription_id" : 5,
+    "duration" : 1,
+    "invoice_code" : "INV-20261101-5EE9",
+    "total_amount" : 399000.00,
+    "unit_price" : 399000.00,
+    "plan_id" : 6,
+    "user_id" : 4
+  }, {
+    "id" : 10,
+    "amount" : 399000.00,
+    "business_id" : 5,
+    "created_at" : "2026-10-31T18:39:51.639393",
+    "due_date" : null,
+    "invoice_no" : "INV-20261101-9332",
+    "status" : "PAID",
+    "subscription_id" : 5,
+    "duration" : 1,
+    "invoice_code" : "INV-20261101-231E",
+    "total_amount" : 399000.00,
+    "unit_price" : 399000.00,
+    "plan_id" : 6,
+    "user_id" : 4
+  }, {
+    "id" : 11,
+    "amount" : 399000.00,
+    "business_id" : 5,
+    "created_at" : "2026-10-31T18:39:59.586672",
+    "due_date" : null,
+    "invoice_no" : "INV-20261101-4989",
+    "status" : "PAID",
+    "subscription_id" : 5,
+    "duration" : 1,
+    "invoice_code" : "INV-20261101-2B73",
+    "total_amount" : 399000.00,
+    "unit_price" : 399000.00,
+    "plan_id" : 6,
+    "user_id" : 4
   } ]
 }

@@ -1014,15 +1014,29 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
     setShowRenewPaymentModal(true);
   };
 
-  const handleConfirmRenewalPayment = async () => {
+  const handleConfirmRenewalPayment = async (bypassKey?: string) => {
+    if (!bypassKey && renewalAmount > 0) {
+      setMsg({ type: 'error', text: 'Thanh toán không thành công! Hệ thống chưa nhận được tiền thanh toán. Vui lòng sử dụng mã Bypass Key.' });
+      return;
+    }
     setLoading(true); setMsg(null);
     try {
-      await apiClient.post<OwnerProfile>(`/api/owner/subscription/renew?months=${months}`);
+      const query = `/api/owner/subscription/renew?months=${months}`
+        + (bypassKey ? `&bypassKey=${encodeURIComponent(bypassKey)}` : '');
+      await apiClient.post<OwnerProfile>(query);
       setPaymentSuccess(true);
       onUpdated();
       loadHistories();
       fetchCurrentSubscription();
-      setTimeout(() => setShowRenewPaymentModal(false), 1800);
+      setTimeout(() => {
+        setShowRenewPaymentModal(false);
+        if (window.location.pathname === '/owner/account') {
+          window.location.hash = 'subscription';
+          window.location.reload();
+        } else {
+          window.location.href = '/owner/account#subscription';
+        }
+      }, 1500);
     } catch (err: unknown) {
       setMsg({ type: 'error', text: (err as Error).message });
     } finally {
@@ -1057,7 +1071,9 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
   };
 
   const renewalAmount = monthlyPrice * months;
-  const transferSyntax = `${packageType || 'SUB'}-RENEW-${months}M`;
+  const transferSyntax = profile?.businessId
+    ? `HBDT RENEW ${profile.businessId} ${months}`
+    : `${packageType || 'SUB'}-RENEW-${months}M`;
 
   const packageLabel = packageType === 'VIP'
     ? 'Gói VIP (Pro)'
@@ -1241,6 +1257,8 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
         successMessage={`Dịch vụ đã được gia hạn thêm ${months} tháng.`}
         loading={loading}
         error={msg?.type === 'error' ? msg.text : null}
+        packageType={currentSubscription?.planCode || 'VIP'}
+        billingCycle="MONTHLY"
         onClose={() => setShowRenewPaymentModal(false)}
         onConfirm={handleConfirmRenewalPayment}
       />

@@ -1,6 +1,6 @@
 {
   "table" : "system_configurations",
-  "version" : 5,
+  "version" : 6,
   "rows" : [ {
     "id" : 1,
     "config_key" : "inventory.low-stock.5.6",
@@ -31,5 +31,115 @@
     "is_public" : false,
     "updated_at" : "2026-08-30T06:45:12.893388",
     "updated_by" : 16
+  }, {
+    "id" : 4,
+    "config_key" : "inventory.low-stock.5.17",
+    "config_value" : "70",
+    "created_at" : "2026-09-14T23:19:12.179602",
+    "data_type" : "NUMBER",
+    "description" : "Ngưỡng tồn kho tối thiểu cho sản phẩm SP001",
+    "is_public" : false,
+    "updated_at" : "2026-09-14T23:19:12.204454",
+    "updated_by" : 4
+  }, {
+    "id" : 5,
+    "config_key" : "inventory.low-stock.5.15",
+    "config_value" : "0",
+    "created_at" : "2026-09-14T23:19:20.885541",
+    "data_type" : "NUMBER",
+    "description" : "Ngưỡng tồn kho tối thiểu cho sản phẩm SP_02",
+    "is_public" : false,
+    "updated_at" : "2026-09-14T23:19:20.901586",
+    "updated_by" : 4
+  }, {
+    "id" : 6,
+    "config_key" : "inventory.low-stock.5.14",
+    "config_value" : "2",
+    "created_at" : "2026-09-14T23:19:23.534192",
+    "data_type" : "NUMBER",
+    "description" : "Ngưỡng tồn kho tối thiểu cho sản phẩm SP_01",
+    "is_public" : false,
+    "updated_at" : "2026-09-14T23:19:23.542759",
+    "updated_by" : 4
+  }, {
+    "id" : 7,
+    "config_key" : "inventory.low-stock.5.18",
+    "config_value" : "50",
+    "created_at" : "2026-09-14T23:19:27.140883",
+    "data_type" : "NUMBER",
+    "description" : "Ngưỡng tồn kho tối thiểu cho sản phẩm SP002",
+    "is_public" : false,
+    "updated_at" : "2026-09-14T23:19:27.196846",
+    "updated_by" : 4
+  }, {
+    "id" : 8,
+    "config_key" : "inventory.low-stock.5.12",
+    "config_value" : "1",
+    "created_at" : "2026-09-14T23:19:39.252888",
+    "data_type" : "NUMBER",
+    "description" : "Ngưỡng tồn kho tối thiểu cho sản phẩm 124",
+    "is_public" : false,
+    "updated_at" : "2026-09-14T23:19:39.261424",
+    "updated_by" : 4
+  }, {
+    "id" : 9,
+    "config_key" : "inventory.low-stock.5.13",
+    "config_value" : "0",
+    "created_at" : "2026-09-14T23:19:41.726512",
+    "data_type" : "NUMBER",
+    "description" : "Ngưỡng tồn kho tối thiểu cho sản phẩm 124124124",
+    "is_public" : false,
+    "updated_at" : "2026-09-14T23:19:41.735768",
+    "updated_by" : 4
+  }, {
+    "id" : 10,
+    "config_key" : "inventory.low-stock.5.10",
+    "config_value" : "7",
+    "created_at" : "2026-09-14T23:19:46.89494",
+    "data_type" : "NUMBER",
+    "description" : "Ngưỡng tồn kho tối thiểu cho sản phẩm adasdadasd",
+    "is_public" : false,
+    "updated_at" : "2026-09-14T23:19:46.93387",
+    "updated_by" : 4
+  }, {
+    "id" : 11,
+    "config_key" : "inventory.low-stock.5.11",
+    "config_value" : "21",
+    "created_at" : "2026-09-14T23:19:50.798557",
+    "data_type" : "NUMBER",
+    "description" : "Ngưỡng tồn kho tối thiểu cho sản phẩm đâsdasdasd",
+    "is_public" : false,
+    "updated_at" : "2026-09-14T23:19:50.832132",
+    "updated_by" : 4
+  }, {
+    "id" : 12,
+    "config_key" : "inventory.low-stock.5.19",
+    "config_value" : "200",
+    "created_at" : "2026-09-14T23:19:54.577539",
+    "data_type" : "NUMBER",
+    "description" : "Ngưỡng tồn kho tối thiểu cho sản phẩm SP003",
+    "is_public" : false,
+    "updated_at" : "2026-09-14T23:19:54.586093",
+    "updated_by" : 4
+  }, {
+    "id" : 13,
+    "config_key" : "inventory.low-stock.5.8",
+    "config_value" : "6",
+    "created_at" : "2026-09-14T23:19:55.918519",
+    "data_type" : "NUMBER",
+    "description" : "Ngưỡng tồn kho tối thiểu cho sản phẩm gf",
+    "is_public" : false,
+    "updated_at" : "2026-09-14T23:31:55.883589",
+    "updated_by" : 4
+  }, {
+    "id" : 14,
+    "config_key" : "inventory.low-stock.5.9",
+    "config_value" : "5",
+    "created_at" : "2026-09-14T23:19:58.688881",
+    "data_type" : "NUMBER",
+    "description" : "Ngưỡng tồn kho tối thiểu cho sản phẩm ádasdadd",
+    "is_public" : false,
+    "updated_at" : "2026-09-14T23:31:56.1417",
+    "updated_by" : 4
   } ]
 }

@@ -84,19 +84,19 @@ async function fetchPackages(): Promise<PackageInfo[]> {
   }
 }
 
-async function fetchCurrentProfile(): Promise<{ packageType: string | null; subscriptionExpiresAt: string | null } | null> {
+async function fetchCurrentProfile(): Promise<{ packageType: string | null; subscriptionExpiresAt: string | null; businessId?: number | null } | null> {
   try {
-    const data = await apiClient.get<{ packageType: string | null; subscriptionExpiresAt: string | null }>('/api/owner/profile');
+    const data = await apiClient.get<{ packageType: string | null; subscriptionExpiresAt: string | null; businessId?: number | null }>('/api/owner/profile');
     return data ?? null;
   } catch {
     return null;
   }
 }
 
-async function selectPackageApi(packageType: PackageId, billingCycle: BillingCycle): Promise<void> {
-  await apiClient.post(
-    `/api/owner/subscription/select-package?packageType=${packageType}&billingCycle=${billingCycle}`
-  );
+async function selectPackageApi(packageType: PackageId, billingCycle: BillingCycle, bypassKey?: string): Promise<void> {
+  const query = `/api/owner/subscription/select-package?packageType=${packageType}&billingCycle=${billingCycle}`
+    + (bypassKey ? `&bypassKey=${encodeURIComponent(bypassKey)}` : '');
+  await apiClient.post(query);
 
   // Đánh dấu hoàn tất Onboarding khi chọn gói thành công
   if (typeof window !== 'undefined') {
@@ -126,6 +126,7 @@ function PackageSelectionContent() {
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
   // Current active subscription info
+  const [businessId, setBusinessId] = useState<number | null>(null);
   const [currentPackageType, setCurrentPackageType] = useState<string | null>(null);
   const [currentExpiresAt, setCurrentExpiresAt] = useState<string | null>(null);
   const [currentSubscriptionActive, setCurrentSubscriptionActive] = useState(false);
@@ -156,6 +157,9 @@ function PackageSelectionContent() {
     fetchCurrentProfile()
       .then((profile) => {
         if (profile) {
+          if (profile.businessId) {
+            setBusinessId(profile.businessId);
+          }
           setCurrentPackageType(profile.packageType);
           setCurrentExpiresAt(profile.subscriptionExpiresAt);
           setCurrentSubscriptionActive(Boolean(
@@ -211,7 +215,7 @@ function PackageSelectionContent() {
         await selectPackageApi(selected, cycle);
         setSuccessToast('Đăng ký gói dịch vụ miễn phí thành công!');
         setTimeout(() => {
-          router.push('/owner/account');
+          window.location.href = '/owner/account#subscription';
         }, 1500);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Có lỗi xảy ra, vui lòng thử lại.';
@@ -226,39 +230,37 @@ function PackageSelectionContent() {
     }
   };
 
-  // Xác nhận thanh toán (Tạm thời luôn thành công theo yêu cầu test)
-  const handleConfirmPaymentTest = async () => {
+  // Xác nhận thanh toán
+  const handleConfirmPaymentTest = async (bypassKey?: string) => {
     if (!selected) return;
+    if (!bypassKey && totalAmount > 0) {
+      setError('Thanh toán không thành công! Hệ thống chưa nhận được tiền thanh toán. Vui lòng sử dụng mã Bypass Key.');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
-      await selectPackageApi(selected, cycle);
+      await selectPackageApi(selected, cycle, bypassKey);
       setPaymentSuccess(true);
-      // Xác định trang đích sau khi thanh toán thành công
-      const redirectTarget =
-        fromParam === 'account' || fromParam === 'subscription'
-          ? '/owner/account/subscription'
-          : '/owner/account';
       setTimeout(() => {
         setShowPaymentModal(false);
-        router.push(redirectTarget);
-      }, 1800);
+        window.location.href = '/owner/account#subscription';
+      }, 1500);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Xác nhận thanh toán thất bại, vui lòng thử lại.';
-      if (fromParam === 'account' || fromParam === 'subscription') {
-        router.push(`/owner/account/subscription?subscriptionError=${encodeURIComponent(message)}`);
-        return;
-      }
       setError(message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const bankAccountNo = '108871728162';
+  const bankAccountNo = '107882760609';
   const bankAccountName = 'NGUYEN LE HUY TAM';
   const bankName = 'VietinBank';
-  const transferSyntax = `${selectedPkg?.id || 'SUB'}-${cycle}`;
+  const months = cycle === 'YEARLY' ? 12 : 1;
+  const transferSyntax = businessId
+    ? `HBDT RENEW ${businessId} ${months}`
+    : `HBDT RENEW 1 ${months}`;
 
   const copyToClipboard = (text: string, type: 'acc' | 'syntax') => {
     navigator.clipboard.writeText(text);
@@ -824,7 +826,7 @@ function PackageSelectionContent() {
                     <div className="pt-2">
                       <button
                         type="button"
-                        onClick={handleConfirmPaymentTest}
+                        onClick={() => handleConfirmPaymentTest()}
                         disabled={submitting}
                         className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-sm rounded-2xl shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                       >
@@ -862,6 +864,8 @@ function PackageSelectionContent() {
         successMessage={`Gói dịch vụ ${selectedPkg?.name || ''} đã được kích hoạt thành công cho tài khoản của bạn.`}
         loading={submitting}
         error={error}
+        packageType={selectedPkg?.id}
+        billingCycle={cycle}
         onClose={() => setShowPaymentModal(false)}
         onConfirm={handleConfirmPaymentTest}
       />

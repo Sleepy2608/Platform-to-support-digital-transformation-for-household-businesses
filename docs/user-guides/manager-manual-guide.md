@@ -5,8 +5,8 @@
 | **Tài liệu** | Hướng Dẫn Sử Dụng Hệ Thống – Vai Trò Quản Lý / Chuyên Viên (System Manager) |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Vai trò áp dụng** | Quản lý / Chuyên viên hỗ trợ (`MANAGER` / System Manager) |
-| **Phiên bản** | 1.2 |
-| **Cập nhật lần cuối** | 10/09/2026 |
+| **Phiên bản** | 1.3 |
+| **Cập nhật lần cuối** | 03/11/2026 |
 
 ---
 

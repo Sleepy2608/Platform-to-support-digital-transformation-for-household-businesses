@@ -5,8 +5,8 @@
 | **Tài liệu** | Hướng Dẫn Sử Dụng Hệ Thống – Vai Trò Chủ Hộ Kinh Doanh (Business Owner) |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Vai trò áp dụng** | Chủ hộ kinh doanh (`BUSINESS_OWNER` / Business Owner) |
-| **Phiên bản** | 1.3 |
-| **Cập nhật lần cuối** | 15/09/2026 |
+| **Phiên bản** | 1.5 |
+| **Cập nhật lần cuối** | 04/11/2026 |
 
 ---
 
@@ -151,14 +151,23 @@ Owner có thể nhờ trợ lý AI viết bản nhận xét cho báo cáo vận 
 
 ---
 
-### 3.6 Quản lý gói thuê bao & thanh toán
-1. Vào menu **Gói dịch vụ cửa hàng**.
-2. Xem gói hiện tại và ngày hết hạn.
-3. Chọn gói mong muốn để nâng cấp hoặc gia hạn.
-4. Xác nhận cách thanh toán qua VietQR hoặc phương thức khác.
-5. Sau khi thanh toán, hệ thống cập nhật trạng thái gói và quyền truy cập tương ứng.
+### 3.6 Quản lý gói thuê bao & thanh toán SePay
+1. Vào menu **Gói dịch vụ cửa hàng** (`/owner/account`).
+2. Xem gói hiện tại, thời hạn sử dụng và lịch sử hóa đơn dịch vụ.
+3. Chọn gói mong muốn để nâng cấp hoặc gia hạn (chọn thời hạn 1–24 tháng).
+4. Thanh toán linh hoạt qua 2 hình thức:
+   - **Cách 1 — Thanh toán chuyển khoản tự động (SePay VietQR):**
+     * Mở ứng dụng ngân hàng quét mã QR trên màn hình (hoặc bấm tải mã QR về máy). Modal hỗ trợ 2 chế độ: **Mã QR gốc** (chính chủ VietinBank `NGUYEN LE HUY TAM`) và **VietQR tự điền tiền** (tự động điền số tiền và nội dung).
+     * Thông tin tài khoản nhận: VietinBank `107882760609` (Chủ TK: NGUYEN LE HUY TAM).
+     * Cú pháp định danh chuyển khoản chuẩn hóa: `HBDT RENEW <businessId> <months>` (hoặc theo cú pháp gói cước trên màn hình).
+     * Khi tiền vào tài khoản, SePay Webhook tự động xác thực và gia hạn gói trong vài giây. Giao diện tự động phát hiện (polling đa tầng `{ skipCache: true }`) và chuyển sang trạng thái thành công mà không cần tải lại trang.
+     * Nếu mạng ngân hàng trễ, bạn có thể bấm nút **"Kiểm tra giao dịch / Xác nhận"** để hệ thống truy vấn kiểm tra biến động số dư tức thì, hoặc đợi trong tối đa 10 phút.
+   - **Cách 2 — Áp dụng mã Bypass Key (Ưu đãi 100%):**
+     * Nhập mã Bypass Key 20 ký tự do Admin cấp vào ô mã giảm giá ➔ Bấm **Áp dụng**.
+     * Số tiền thanh toán chuyển về 0đ và gói cước được kích hoạt ngay lập tức.
+5. Sau khi thanh toán, hệ thống tự động sinh hóa đơn `ServiceInvoice` (PAID) và cập nhật quyền sử dụng các tính năng tương ứng.
 
-> Manager có thể hỗ trợ xác nhận và kiểm tra trạng thái gói đăng ký của Owner trong các trường hợp thanh toán chờ xử lý hoặc gia hạn không rõ ràng.
+> Nếu chuyển khoản sai cú pháp hoặc sai số tài khoản, hệ thống sẽ từ chối tự động kích hoạt để bảo đảm an toàn và lưu lại vào nhật ký kiểm toán để Manager/Admin đối soát thủ công.
 
 ---
 
@@ -180,7 +189,7 @@ Owner có thể nhờ trợ lý AI viết bản nhận xét cho báo cáo vận 
 | Không thể đăng nhập | Token hết hạn hoặc session lỗi | Đăng nhập lại và kiểm tra JWT refresh flow |
 | Số lượng tồn kho không khớp | Stock import hoặc adjustment chưa đồng bộ | Kiểm tra inventory bookkeeping và order history |
 | Doanh thu không đúng như kỳ vọng | Chi phí nhập hàng chưa trừ hoặc dữ liệu cũ | Xem revenue ledger chi tiết và kiểm tra ngày / giao dịch |
-| Gói đã thanh toán nhưng chưa được kích hoạt | Chờ xác nhận từ Manager hoặc trạng thái chưa cập nhật | Kiểm tra trạng thái subscription và liên hệ Manager |
+| Gói đã thanh toán nhưng chưa được kích hoạt | Sai cú pháp chuyển khoản SePay hoặc mạng ngân hàng bị trễ | Kiểm tra nội dung chuyển khoản trong app ngân hàng; nếu sai cú pháp hệ thống vẫn lưu vào sổ đối soát `PENDING_REVIEW` để Manager/Admin hỗ trợ kích hoạt thủ công |
 | Hóa đơn không hiển thị đúng | Dữ liệu hóa đơn / lịch sử không đồng bộ | Mở order history hoặc invoice history để đối chiếu |
 | Trợ lý AI báo lỗi khi lập đơn | Gói dịch vụ chưa bật tính năng `AI_ASSISTANT`, hoặc AI service chưa cấu hình B.ai | Kiểm tra gói đang bật tính năng AI; nếu service trả `503 BAI_NOT_CONFIGURED` thì bổ sung `BAI_API_KEY` / `BAI_MODEL` trong `Code/AI/.env` |
 | Đơn nháp AI vẫn còn sau khi đã xác nhận đơn | Đơn hàng chưa tạo thành công (ví dụ sản phẩm không đủ tồn kho) | Kiểm tra lại giỏ hàng và tồn kho, xử lý lại đơn nháp hoặc bấm **Từ chối** kèm lý do |

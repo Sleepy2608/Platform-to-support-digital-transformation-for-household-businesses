@@ -15,8 +15,12 @@ ehthumbs.db
 # IDE
 ############################
 
-# Claude Code
+#graphify
+.graphify/
+
+# AI agents
 .claude/
+.agents/
 
 # VS Code
 .vscode/
@@ -208,6 +212,8 @@ docker-volumes/
 ############################
 # Certificates & Secrets
 ############################
+
+.plan/
 
 *.pem
 *.key

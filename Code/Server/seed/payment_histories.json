@@ -1,6 +1,6 @@
 {
   "table" : "payment_histories",
-  "version" : 11,
+  "version" : 12,
   "rows" : [ {
     "id" : 1,
     "amount" : 11976000.00,
@@ -65,5 +65,29 @@
     "status" : "COMPLETED",
     "subscription_id" : 16,
     "transaction_id" : "SUB-PAY-568d1883-8d8f-44f7-867c-a0a73fad36f0"
+  }, {
+    "id" : 9,
+    "amount" : 399000.00,
+    "paid_at" : "2026-10-31T18:35:36.610434",
+    "payment_method" : "BANK_TRANSFER",
+    "status" : "COMPLETED",
+    "subscription_id" : 5,
+    "transaction_id" : "eed546a5-6dbd-430f-b2e7-7de1b81f5e3f"
+  }, {
+    "id" : 10,
+    "amount" : 399000.00,
+    "paid_at" : "2026-10-31T18:39:51.586961",
+    "payment_method" : "BANK_TRANSFER",
+    "status" : "COMPLETED",
+    "subscription_id" : 5,
+    "transaction_id" : "847b6177-bf0c-449c-9527-51d43353a36b"
+  }, {
+    "id" : 11,
+    "amount" : 399000.00,
+    "paid_at" : "2026-10-31T18:39:59.582631",
+    "payment_method" : "BANK_TRANSFER",
+    "status" : "COMPLETED",
+    "subscription_id" : 5,
+    "transaction_id" : "7af54d2d-ea10-4f20-8418-5b781a5c2303"
   } ]
 }

@@ -30,6 +30,7 @@ interface OwnerProfileResponse {
   packageType: string | null;
   subscriptionExpiresAt: string | null;
   businessName?: string;
+  businessId?: number | null;
   fullName?: string;
 }
 
@@ -103,6 +104,7 @@ function ChangePlanInner() {
   const [currentPackageType, setCurrentPackageType] = useState<string | null>(null);
   const [currentExpiresAt, setCurrentExpiresAt] = useState<string | null>(null);
   const [isSubscriptionActive, setIsSubscriptionActive] = useState(false);
+  const [businessId, setBusinessId] = useState<number | null>(null);
 
   // Payment Modal State
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -128,6 +130,9 @@ function ChangePlanInner() {
           const profile = profileData.value;
           setCurrentPackageType(profile.packageType);
           setCurrentExpiresAt(profile.subscriptionExpiresAt);
+          if (profile.businessId) {
+            setBusinessId(profile.businessId);
+          }
           const active = Boolean(
             profile.subscriptionExpiresAt &&
             new Date(profile.subscriptionExpiresAt).getTime() > Date.now()
@@ -211,19 +216,28 @@ function ChangePlanInner() {
     }
   };
 
-  const handleConfirmPayment = async () => {
+  const handleConfirmPayment = async (bypassKey?: string) => {
     if (!selectedPkgId) return;
+    if (!bypassKey && unitPrice > 0) {
+      setError('Thanh toán không thành công! Hệ thống chưa nhận được tiền thanh toán. Vui lòng sử dụng mã Bypass Key.');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
-      await apiClient.post(
-        `/api/owner/subscription/select-package?packageType=${selectedPkgId}&billingCycle=${cycle}`
-      );
+      const query = `/api/owner/subscription/select-package?packageType=${selectedPkgId}&billingCycle=${cycle}`
+        + (bypassKey ? `&bypassKey=${encodeURIComponent(bypassKey)}` : '');
+      await apiClient.post(query);
       setPaymentSuccess(true);
       setTimeout(() => {
         setShowPaymentModal(false);
-        router.push('/owner/account#subscription');
-      }, 1800);
+        if (window.location.pathname === '/owner/account') {
+          window.location.hash = 'subscription';
+          window.location.reload();
+        } else {
+          window.location.href = '/owner/account#subscription';
+        }
+      }, 1500);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Xác nhận thanh toán thất bại.');
     } finally {
@@ -231,7 +245,9 @@ function ChangePlanInner() {
     }
   };
 
-  const transferSyntax = `HBDT-${selectedPkgId || 'SUB'}-${cycle === 'YEARLY' ? '12M' : '1M'}`;
+  const transferSyntax = businessId
+    ? `HBDT RENEW ${businessId} ${cycle === 'YEARLY' ? '12' : '1'}`
+    : `HBDT-${selectedPkgId || 'SUB'}-${cycle === 'YEARLY' ? '12M' : '1M'}`;
 
   return (
     <div className="min-h-screen bg-slate-100/70 p-4 sm:p-8 lg:p-10 select-none" style={{ cursor: 'default' }}>
@@ -533,6 +549,8 @@ function ChangePlanInner() {
           successMessage="Gói dịch vụ đã được cập nhật. Hệ thống đang chuyển hướng về trang tài khoản..."
           loading={submitting}
           error={error}
+          packageType={selectedPkg.id}
+          billingCycle={cycle}
           onClose={() => setShowPaymentModal(false)}
           onConfirm={handleConfirmPayment}
         />
