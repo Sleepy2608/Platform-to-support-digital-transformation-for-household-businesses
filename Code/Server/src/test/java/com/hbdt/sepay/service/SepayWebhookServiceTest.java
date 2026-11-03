@@ -41,6 +41,9 @@ class SepayWebhookServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private SubscriptionPlanRepository subscriptionPlanRepository;
+
     @InjectMocks
     private SepayWebhookService sepayWebhookService;
 
@@ -192,6 +195,26 @@ class SepayWebhookServiceTest {
         assertTrue(response.isSuccess());
         assertTrue(response.getMessage().contains("Bỏ qua giao dịch tiền ra"));
         verify(subscriptionRepository, never()).findById(anyLong());
+    }
+
+    @Test
+    @DisplayName("Bỏ qua giao dịch khi số tài khoản thụ hưởng không khớp với hệ thống")
+    void testIgnoreMismatchedAccountNumber() {
+        SepayWebhookPayload payload = SepayWebhookPayload.builder()
+                .id(92707L)
+                .gateway("VietinBank")
+                .accountNumber("999999999999") // Khác với 108871728162 trong setUp
+                .transferType("in")
+                .transferAmount(new BigDecimal("100000"))
+                .content("HBDT RENEW 50 1")
+                .build();
+
+        SepayWebhookResponse response = sepayWebhookService.processWebhook(payload, null);
+
+        assertNotNull(response);
+        assertTrue(response.isSuccess());
+        assertTrue(response.getMessage().contains("Bỏ qua giao dịch không đúng số tài khoản"));
+        verify(subscriptionRepository, never()).findTopByBusinessIdAndStatusOrderByCreatedAtDesc(anyLong(), any());
     }
 }
 

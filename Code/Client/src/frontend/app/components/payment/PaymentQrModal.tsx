@@ -29,6 +29,25 @@ interface ValidateBypassKeyResponse {
   remainingUses?: number;
 }
 
+interface CurrentSubscriptionData {
+  id?: number;
+  status?: string;
+  endDate?: string;
+  planCode?: string;
+}
+
+function extractSubscriptionData(res: unknown): CurrentSubscriptionData | null {
+  if (!res || typeof res !== 'object') return null;
+  const obj = res as Record<string, unknown>;
+  if ('status' in obj || 'endDate' in obj) {
+    return obj as CurrentSubscriptionData;
+  }
+  if (obj.data && typeof obj.data === 'object') {
+    return obj.data as CurrentSubscriptionData;
+  }
+  return null;
+}
+
 interface PaymentQrModalProps {
   isOpen: boolean;
   amount: number;
@@ -77,39 +96,58 @@ export default function PaymentQrModal({
 
   // Tự động lắng nghe giao dịch SePay qua polling
   const [autoDetected, setAutoDetected] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(false);
+  const [pollTimeoutReached, setPollTimeoutReached] = useState(false);
   const initialEndDateRef = useRef<string | null>(null);
+  const startTimeRef = useRef<number>(Date.now());
+
+  const triggerSuccessRedirect = () => {
+    setAutoDetected(true);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('onboardingCompleted', 'true');
+    }
+    setTimeout(() => {
+      if (window.location.pathname === '/owner/account') {
+        window.location.hash = 'subscription';
+        window.location.reload();
+      } else {
+        window.location.href = '/owner/account#subscription';
+      }
+    }, 1200);
+  };
 
   useEffect(() => {
     if (!isOpen || effectiveAmount <= 0) return;
 
     let timer: ReturnType<typeof setTimeout>;
     let cancelled = false;
+    startTimeRef.current = Date.now();
+    setPollTimeoutReached(false);
 
-    // Lấy hạn gói ban đầu để so sánh khi SePay cộng hạn mới
-    apiClient.get<{ data?: { endDate?: string } }>('/api/owner/subscriptions/current')
+    // Lấy hạn gói ban đầu để so sánh khi SePay cộng hạn mới (skipCache: true để luôn lấy dữ liệu tươi)
+    apiClient.get<CurrentSubscriptionData>('/api/owner/subscriptions/current', { skipCache: true })
       .then((res) => {
-        if (!cancelled && res?.data?.endDate) {
-          initialEndDateRef.current = res.data.endDate;
+        const sub = extractSubscriptionData(res);
+        if (!cancelled && sub?.endDate) {
+          initialEndDateRef.current = sub.endDate;
         }
       })
       .catch(() => {});
 
     const pollStatus = async () => {
+      // Dừng polling tự động sau 10 phút để tránh tốn tài nguyên
+      if (Date.now() - startTimeRef.current > 10 * 60 * 1000) {
+        setPollTimeoutReached(true);
+        return;
+      }
+
       try {
-        const res = await apiClient.get<{ data?: { status?: string; endDate?: string } }>('/api/owner/subscriptions/current');
+        const res = await apiClient.get<CurrentSubscriptionData>('/api/owner/subscriptions/current', { skipCache: true });
         if (cancelled) return;
-        const currentSub = res?.data;
+        const currentSub = extractSubscriptionData(res);
         if (currentSub && currentSub.status === 'ACTIVE') {
           if (!initialEndDateRef.current || currentSub.endDate !== initialEndDateRef.current) {
-            setAutoDetected(true);
-            setTimeout(() => {
-              if (window.location.pathname === '/owner/account') {
-                window.location.hash = 'subscription';
-                window.location.reload();
-              } else {
-                window.location.href = '/owner/account#subscription';
-              }
-            }, 1200);
+            triggerSuccessRedirect();
             return;
           }
         }
@@ -200,11 +238,27 @@ export default function PaymentQrModal({
     setInputKey('');
   };
 
-  const handleConfirmSubmit = () => {
+  const handleConfirmSubmit = async () => {
     if (effectiveAmount > 0) {
-      setPaymentFailedMsg(
-        `Thanh toán không thành công! Hệ thống chưa nhận được khoản thanh toán ${effectiveAmount.toLocaleString('vi-VN')}đ. Vui lòng chuyển khoản đúng nội dung hoặc áp dụng mã Bypass Key để được miễn phí 100%.`
-      );
+      setCheckingPayment(true);
+      setPaymentFailedMsg(null);
+      try {
+        const res = await apiClient.get<CurrentSubscriptionData>('/api/owner/subscriptions/current', { skipCache: true });
+        const currentSub = extractSubscriptionData(res);
+        if (currentSub && currentSub.status === 'ACTIVE') {
+          if (!initialEndDateRef.current || currentSub.endDate !== initialEndDateRef.current) {
+            triggerSuccessRedirect();
+            return;
+          }
+        }
+        setPaymentFailedMsg(
+          `Hệ thống chưa nhận được thông báo biến động số dư từ SePay cho khoản tiền ${effectiveAmount.toLocaleString('vi-VN')}đ. Ngân hàng có thể mất từ 5 đến 30 giây để xử lý chuyển khoản. Vui lòng bấm thử lại sau giây lát hoặc sử dụng mã ưu đãi Bypass Key.`
+        );
+      } catch {
+        setPaymentFailedMsg('Không thể kết nối đến máy chủ để kiểm tra trạng thái thanh toán. Vui lòng thử lại sau.');
+      } finally {
+        setCheckingPayment(false);
+      }
       return;
     }
     setPaymentFailedMsg(null);
@@ -488,6 +542,15 @@ export default function PaymentQrModal({
                     </>
                   )}
 
+                  {pollTimeoutReached && effectiveAmount > 0 && (
+                    <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2.5 text-amber-900 text-xs">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold">Đã hết 10 phút chờ tự động:</span> Nếu bạn đã chuyển khoản thành công, ngân hàng có thể mất thêm thời gian đối soát. Bạn có thể bấm nút bên dưới để kiểm tra lại ngay hoặc liên hệ quản trị viên.
+                      </div>
+                    </div>
+                  )}
+
                   {(paymentFailedMsg || error) && (
                     <motion.div
                       initial={{ opacity: 0, y: -6 }}
@@ -496,7 +559,7 @@ export default function PaymentQrModal({
                     >
                       <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
                       <div className="space-y-0.5">
-                        <h5 className="font-bold text-sm text-rose-900">Thanh toán không thành công</h5>
+                        <h5 className="font-bold text-sm text-rose-900">Thanh toán chưa hoàn tất</h5>
                         <p className="text-xs text-rose-700 leading-relaxed">
                           {paymentFailedMsg || error}
                         </p>
@@ -508,23 +571,25 @@ export default function PaymentQrModal({
                   <button
                     type="button"
                     onClick={handleConfirmSubmit}
-                    disabled={loading}
+                    disabled={loading || checkingPayment}
                     className={`w-full py-3.5 px-4 font-bold text-sm rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 text-white ${
                       appliedKey
                         ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/30 active:scale-[0.99]'
-                        : 'bg-emerald-600 hover:bg-emerald-700'
+                        : 'bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99]'
                     }`}
                   >
-                    {loading ? (
+                    {loading || checkingPayment ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <CheckCircle2 className="w-5 h-5" />
                     )}
                     {loading
                       ? 'Đang xử lý kích hoạt...'
-                      : appliedKey
-                        ? 'Xác nhận kích hoạt ngay (0đ)'
-                        : 'Xác nhận thanh toán'}
+                      : checkingPayment
+                        ? 'Đang kiểm tra biến động số dư...'
+                        : appliedKey
+                          ? 'Xác nhận kích hoạt ngay (0đ)'
+                          : 'Kiểm tra giao dịch / Xác nhận'}
                   </button>
                 </>
               )}

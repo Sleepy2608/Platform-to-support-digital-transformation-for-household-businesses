@@ -84,9 +84,9 @@ async function fetchPackages(): Promise<PackageInfo[]> {
   }
 }
 
-async function fetchCurrentProfile(): Promise<{ packageType: string | null; subscriptionExpiresAt: string | null } | null> {
+async function fetchCurrentProfile(): Promise<{ packageType: string | null; subscriptionExpiresAt: string | null; businessId?: number | null } | null> {
   try {
-    const data = await apiClient.get<{ packageType: string | null; subscriptionExpiresAt: string | null }>('/api/owner/profile');
+    const data = await apiClient.get<{ packageType: string | null; subscriptionExpiresAt: string | null; businessId?: number | null }>('/api/owner/profile');
     return data ?? null;
   } catch {
     return null;
@@ -126,6 +126,7 @@ function PackageSelectionContent() {
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
   // Current active subscription info
+  const [businessId, setBusinessId] = useState<number | null>(null);
   const [currentPackageType, setCurrentPackageType] = useState<string | null>(null);
   const [currentExpiresAt, setCurrentExpiresAt] = useState<string | null>(null);
   const [currentSubscriptionActive, setCurrentSubscriptionActive] = useState(false);
@@ -156,6 +157,9 @@ function PackageSelectionContent() {
     fetchCurrentProfile()
       .then((profile) => {
         if (profile) {
+          if (profile.businessId) {
+            setBusinessId(profile.businessId);
+          }
           setCurrentPackageType(profile.packageType);
           setCurrentExpiresAt(profile.subscriptionExpiresAt);
           setCurrentSubscriptionActive(Boolean(
@@ -253,7 +257,10 @@ function PackageSelectionContent() {
   const bankAccountNo = '107882760609';
   const bankAccountName = 'NGUYEN LE HUY TAM';
   const bankName = 'VietinBank';
-  const transferSyntax = `${selectedPkg?.id || 'SUB'}-${cycle}`;
+  const months = cycle === 'YEARLY' ? 12 : 1;
+  const transferSyntax = businessId
+    ? `HBDT RENEW ${businessId} ${months}`
+    : `HBDT RENEW 1 ${months}`;
 
   const copyToClipboard = (text: string, type: 'acc' | 'syntax') => {
     navigator.clipboard.writeText(text);

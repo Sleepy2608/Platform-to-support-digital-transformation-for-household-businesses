@@ -38,6 +38,7 @@ public class SepayWebhookService {
     private final ServiceInvoiceRepository serviceInvoiceRepository;
     private final SubscriptionHistoryRepository subscriptionHistoryRepository;
     private final UserRepository userRepository;
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
 
     @Value("${sepay.secret-key:spsk_test_4hP4UGF9NSNY5Hjyt8mbVcT8P2wWEBNS}")
     private String secretKey;
@@ -51,6 +52,7 @@ public class SepayWebhookService {
     private static final Pattern SUB_SHORT_PATTERN = Pattern.compile("(?i)SUB[\\s-_]+(\\d+)");
     private static final Pattern RENEW_BUSINESS_MONTHS_PATTERN = Pattern.compile("(?i)HBDT[\\s-_]+RENEW[\\s-_]+(\\d+)[\\s-_]+(\\d+)");
     private static final Pattern RENEW_BUSINESS_PATTERN = Pattern.compile("(?i)HBDT[\\s-_]+RENEW[\\s-_]+(\\d+)");
+    private static final Pattern PACKAGE_CYCLE_PATTERN = Pattern.compile("(?i)(?:HBDT[\\s-_]+)?(VIP|STANDARD)[\\s-_]+(MONTHLY|YEARLY)");
     private static final Pattern INVOICE_PATTERN = Pattern.compile("(?i)(INV-\\d{8}-[A-Za-z0-9]+)");
 
     /**
@@ -96,6 +98,15 @@ public class SepayWebhookService {
             return SepayWebhookResponse.ok("Bỏ qua giao dịch tiền ra");
         }
 
+        // Kiểm tra số tài khoản thụ hưởng nếu payload gửi kèm
+        String incomingAccount = payload.getAccountNumber();
+        if (incomingAccount != null && !incomingAccount.isBlank()
+                && expectedAccountNumber != null && !expectedAccountNumber.isBlank()
+                && !expectedAccountNumber.trim().equals(incomingAccount.trim())) {
+            logger.warn("SePay webhook số tài khoản không khớp: nhận {}, mong đợi {}", incomingAccount, expectedAccountNumber);
+            return SepayWebhookResponse.ok("Bỏ qua giao dịch không đúng số tài khoản thụ hưởng");
+        }
+
         // Tạo mã giao dịch duy nhất cho Idempotency
         String txnId = resolveTransactionId(payload);
 
@@ -121,6 +132,19 @@ public class SepayWebhookService {
                 if (mRenewB.find()) {
                     businessId = Long.parseLong(mRenewB.group(1));
                     renewMonths = 1;
+                } else {
+                    Matcher mPkg = PACKAGE_CYCLE_PATTERN.matcher(content);
+                    if (mPkg.find()) {
+                        renewMonths = "YEARLY".equalsIgnoreCase(mPkg.group(2)) ? 12 : 1;
+                        // Gán cho business gần nhất có đăng ký hoặc hộ kinh doanh đầu tiên
+                        businessId = subscriptionRepository.findAll().stream()
+                                .filter(s -> s.getBusinessId() != null)
+                                .max((a, b) -> a.getId().compareTo(b.getId()))
+                                .map(Subscription::getBusinessId)
+                                .orElse(1L);
+                        logger.info("Nhận diện cú pháp gói {} {} từ content '{}' -> Gán Business ID: {}",
+                                mPkg.group(1), mPkg.group(2), content, businessId);
+                    }
                 }
             }
         }
@@ -202,22 +226,46 @@ public class SepayWebhookService {
     }
 
     private SepayWebhookResponse processSubscriptionByBusinessId(Long businessId, int months, SepayWebhookPayload payload, String txnId) {
-        Subscription subscription = subscriptionRepository
-                .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(businessId, SubscriptionStatus.ACTIVE)
-                .or(() -> subscriptionRepository.findTopByBusinessIdOrderByCreatedAtDesc(businessId))
-                .orElseThrow(() -> new BadRequestException("Không tìm thấy subscription cho Business ID: " + businessId));
-
         LocalDate now = LocalDate.now();
-        LocalDate baseDate = subscription.getEndDate() != null && subscription.getEndDate().isAfter(now)
-                ? subscription.getEndDate()
-                : now;
+        Optional<Subscription> subOpt = subscriptionRepository
+                .findTopByBusinessIdAndStatusOrderByCreatedAtDesc(businessId, SubscriptionStatus.ACTIVE)
+                .or(() -> subscriptionRepository.findTopByBusinessIdOrderByCreatedAtDesc(businessId));
 
-        subscription.setEndDate(baseDate.plusMonths(months));
-        if (subscription.getStatus() != SubscriptionStatus.ACTIVE) {
-            subscription.setStatus(SubscriptionStatus.ACTIVE);
-            subscription.setStartDate(now);
+        Subscription subscription;
+        if (subOpt.isPresent()) {
+            subscription = subOpt.get();
+            LocalDate baseDate = subscription.getEndDate() != null && subscription.getEndDate().isAfter(now)
+                    ? subscription.getEndDate()
+                    : now;
+
+            subscription.setEndDate(baseDate.plusMonths(months));
+            if (subscription.getStatus() != SubscriptionStatus.ACTIVE) {
+                subscription.setStatus(SubscriptionStatus.ACTIVE);
+                subscription.setStartDate(now);
+            }
+            subscriptionRepository.save(subscription);
+        } else {
+            logger.info("Không tìm thấy subscription hiện có cho Business ID {}. Đang tự động tạo mới...", businessId);
+            User owner = userRepository.findFirstByBusinessIdAndRole_Name(businessId, RoleType.BUSINESS_OWNER)
+                    .orElseGet(() -> userRepository.findAll().stream()
+                            .filter(u -> businessId.equals(u.getBusinessId()))
+                            .findFirst()
+                            .orElse(null));
+            SubscriptionPlan plan = subscriptionPlanRepository.findByPlanCodeIgnoreCaseAndStatus("VIP", "ACTIVE")
+                    .or(() -> subscriptionPlanRepository.findByPlanCodeIgnoreCaseAndStatus("STANDARD", "ACTIVE"))
+                    .orElseGet(() -> subscriptionPlanRepository.findAll().stream().findFirst().orElse(null));
+            Long userId = owner != null ? owner.getId() : 1L;
+            subscription = Subscription.builder()
+                    .userId(userId)
+                    .businessId(businessId)
+                    .plan(plan)
+                    .billingCycle(months >= 12 ? "YEARLY" : "MONTHLY")
+                    .status(SubscriptionStatus.ACTIVE)
+                    .startDate(now)
+                    .endDate(now.plusMonths(months))
+                    .build();
+            subscriptionRepository.save(subscription);
         }
-        subscriptionRepository.save(subscription);
 
         // Ghi nhận PaymentHistory
         PaymentHistory payment = PaymentHistory.builder()
