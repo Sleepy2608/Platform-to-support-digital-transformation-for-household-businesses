@@ -23,6 +23,12 @@ if errorlevel 1 (
     goto :fail
 )
 
+if not defined JAVA_HOME (
+    if exist "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot" (
+        set "JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot"
+    )
+)
+
 cd /d "%BE_DIR%"
 
 if exist ".env" goto :env_ok
