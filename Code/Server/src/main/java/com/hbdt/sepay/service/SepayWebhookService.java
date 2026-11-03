@@ -42,7 +42,7 @@ public class SepayWebhookService {
     @Value("${sepay.secret-key:spsk_test_4hP4UGF9NSNY5Hjyt8mbVcT8P2wWEBNS}")
     private String secretKey;
 
-    @Value("${sepay.account-number:108871728162}")
+    @Value("${sepay.account-number:107882760609}")
     private String expectedAccountNumber;
 
     // Các mẫu regex bóc tách mã định danh trong content chuyển khoản

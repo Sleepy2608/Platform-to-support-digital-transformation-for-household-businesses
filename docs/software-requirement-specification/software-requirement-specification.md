@@ -1121,7 +1121,7 @@ Chủ hộ kinh doanh
 
 #### FR-P-01 Hiển thị thông tin thanh toán VietQR SePay động
 
-Khi Chủ hộ kinh doanh chọn gói có phí, hệ thống mở modal thanh toán (`PaymentQrModal`) và sinh mã VietQR động theo chuẩn Napas247, bao gồm STK VietinBank `108871728162` (Chủ TK: NGUYEN LE HUY TAM), số tiền theo gói/chu kỳ, và nội dung chuyển khoản tự động chuẩn hóa: `HBDT RENEW <businessId> <months>`. Modal có nút tiện ích sao chép số tài khoản và cú pháp. Gói miễn phí không hiển thị modal QR và được kích hoạt trực tiếp.
+Khi Chủ hộ kinh doanh chọn gói có phí, hệ thống mở modal thanh toán (`PaymentQrModal`) và sinh mã VietQR động theo chuẩn Napas247, bao gồm STK VietinBank `107882760609` (Chủ TK: NGUYEN LE HUY TAM), số tiền theo gói/chu kỳ, và nội dung chuyển khoản tự động chuẩn hóa: `HBDT RENEW <businessId> <months>`. Modal có nút tiện ích sao chép số tài khoản và cú pháp. Gói miễn phí không hiển thị modal QR và được kích hoạt trực tiếp.
 
 #### FR-P-02 Kích hoạt tự động qua SePay Webhook & IPN
 

@@ -431,7 +431,7 @@ Hệ thống tích hợp cổng thanh toán SePay hỗ trợ tạo mã VietQR đ
   ```properties
   SEPAY_MERCHANT_ID=SP-TEST-NLB7A395
   SEPAY_SECRET_KEY=spsk_test_4hP4UGF9NSNY5Hjyt8mbVcT8P2wWEBNS
-  SEPAY_ACCOUNT_NUMBER=108871728162
+  SEPAY_ACCOUNT_NUMBER=107882760609
   ```
 - **Kết nối ra Internet cho Webhook khi chạy local:**
   Để nhận webhook từ SePay Dashboard (`my.sepay.vn`) về máy tính cục bộ, sử dụng Cloudflare Tunnel:
@@ -448,7 +448,7 @@ Hệ thống tích hợp cổng thanh toán SePay hỗ trợ tạo mã VietQR đ
   curl -X POST http://localhost:8080/api/sepay/webhook \
     -H "Content-Type: application/json" \
     -H "Authorization: Apikey spsk_test_4hP4UGF9NSNY5Hjyt8mbVcT8P2wWEBNS" \
-    -d "{\"gateway\":\"VietinBank\",\"accountNumber\":\"108871728162\",\"transferType\":\"in\",\"transferAmount\":399000,\"content\":\"HBDT RENEW 1 1\",\"referenceCode\":\"FT-DEMO-01\"}"
+    -d "{\"gateway\":\"VietinBank\",\"accountNumber\":\"107882760609\",\"transferType\":\"in\",\"transferAmount\":399000,\"content\":\"HBDT RENEW 1 1\",\"referenceCode\":\"FT-DEMO-01\"}"
   ```
   Hệ thống tự động kích hoạt gói `ACTIVE`, cộng thêm ngày hết hạn `endDate`, sinh hóa đơn `service_invoices` (PAID) và frontend tự động cập nhật thời gian thực qua polling (3s/lần).
 - **Hệ thống Bypass Key (Mã ưu đãi 100%):**

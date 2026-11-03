@@ -302,7 +302,7 @@ export default function PaymentModal({ isOpen, onClose, orderId, onSuccess }: Pa
                 {paymentMethod === 'BANK_TRANSFER' && (() => {
                   const transferSyntax = `TT ${summary.orderCode || orderId}`;
                   const qrImageUrl = numericAmount > 0
-                    ? `https://img.vietqr.io/image/ICB-108871728162-compact2.png?amount=${numericAmount}&addInfo=${encodeURIComponent(transferSyntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`
+                    ? `https://img.vietqr.io/image/ICB-107882760609-compact2.png?amount=${numericAmount}&addInfo=${encodeURIComponent(transferSyntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`
                     : '/images/qr-code.jpg';
 
                   const copyText = (val: string, type: 'acc' | 'syn') => {
@@ -364,10 +364,10 @@ export default function PaymentModal({ isOpen, onClose, orderId, onSuccess }: Pa
                           <div className="flex justify-between items-center border-b border-slate-800 pb-1">
                             <span className="text-slate-400">Số tài khoản:</span>
                             <div className="flex items-center gap-1.5">
-                              <span className="font-mono font-bold text-slate-100">108871728162</span>
+                              <span className="font-mono font-bold text-slate-100">107882760609</span>
                               <button
                                 type="button"
-                                onClick={() => copyText('108871728162', 'acc')}
+                                onClick={() => copyText('107882760609', 'acc')}
                                 className="p-0.5 text-slate-400 hover:text-white"
                                 title="Sao chép STK"
                               >

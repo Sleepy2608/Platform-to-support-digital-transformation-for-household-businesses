@@ -250,7 +250,7 @@ function PackageSelectionContent() {
     }
   };
 
-  const bankAccountNo = '108871728162';
+  const bankAccountNo = '107882760609';
   const bankAccountName = 'NGUYEN LE HUY TAM';
   const bankName = 'VietinBank';
   const transferSyntax = `${selectedPkg?.id || 'SUB'}-${cycle}`;

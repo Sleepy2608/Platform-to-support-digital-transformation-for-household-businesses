@@ -158,7 +158,7 @@ Owner có thể nhờ trợ lý AI viết bản nhận xét cho báo cáo vận 
 4. Thanh toán linh hoạt qua 2 hình thức:
    - **Cách 1 — Thanh toán chuyển khoản tự động (SePay VietQR):**
      * Mở ứng dụng ngân hàng quét mã VietQR hiển thị trên màn hình (hoặc bấm tải mã QR về máy).
-     * Mã QR đã nhúng sẵn tài khoản nhận VietinBank `108871728162`, số tiền chính xác và cú pháp định danh `HBDT RENEW <businessId> <months>`.
+     * Mã QR đã nhúng sẵn tài khoản nhận VietinBank `107882760609`, số tiền chính xác và cú pháp định danh `HBDT RENEW <businessId> <months>`.
      * Khi tiền vào tài khoản, SePay Webhook tự động xác thực và gia hạn gói trong vài giây. Giao diện tự động phát hiện và chuyển sang trạng thái thành công mà không cần tải lại trang.
    - **Cách 2 — Áp dụng mã Bypass Key (Ưu đãi 100%):**
      * Nhập mã Bypass Key 20 ký tự do Admin cấp vào ô mã giảm giá ➔ Bấm **Áp dụng**.

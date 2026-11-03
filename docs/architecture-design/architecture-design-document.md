@@ -692,7 +692,7 @@ sequenceDiagram
     participant DB as MySQL Database
 
     Owner->>FE: Chọn gói dịch vụ (vd: Gói Chuyên nghiệp 1 tháng)
-    FE->>Owner: Hiển thị VietQR động (STK 108871728162, Cú pháp: HBDT RENEW {bizId} {months})
+    FE->>Owner: Hiển thị VietQR động (STK 107882760609, Cú pháp: HBDT RENEW {bizId} {months})
     FE->>BE: Bắt đầu Polling định kỳ kiểm tra /api/owner/subscriptions/current
     Owner->>Bank: Quét mã QR và chuyển khoản ngân hàng
     Bank-->>SePay: Biến động số dư ghi nhận (Có tiền vào)

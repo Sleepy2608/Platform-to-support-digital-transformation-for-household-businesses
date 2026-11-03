@@ -710,7 +710,7 @@ Email OTP sử dụng Spring Mail. Ở development có thể bật `OTP_DEV_MODE
 ### 13.2. Cổng thanh toán tự động SePay (VietQR & Webhook)
 
 Hệ thống tích hợp cổng thanh toán SePay phục vụ tự động hóa quy trình gia hạn và nâng cấp gói thuê bao:
-- **Tạo VietQR động**: Tự động sinh mã QR Napas247 chứa số tài khoản VietinBank `108871728162` và cú pháp chuẩn `HBDT RENEW <businessId> <months>`.
+- **Tạo VietQR động**: Tự động sinh mã QR Napas247 chứa số tài khoản VietinBank `107882760609` và cú pháp chuẩn `HBDT RENEW <businessId> <months>`.
 - **Webhook Listener**: Controller `SepayWebhookController` tại `/api/sepay/webhook` nhận gói tin HTTP POST từ SePay khi có biến động số dư chuyển khoản vào tài khoản.
 - **Bảo mật**: Xác thực header `Authorization: Apikey <SEPAY_SECRET_KEY>`.
 - **Chống kích hoạt trùng lặp (Idempotency)**: Lưu mã giao dịch ngân hàng vào `ServiceInvoice` (`referenceCode`), từ chối xử lý lặp nếu mã giao dịch đã tồn tại.

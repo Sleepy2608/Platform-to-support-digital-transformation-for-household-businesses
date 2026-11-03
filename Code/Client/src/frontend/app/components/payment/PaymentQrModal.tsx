@@ -128,7 +128,7 @@ export default function PaymentQrModal({
   }, [isOpen, effectiveAmount]);
 
   const qrImageUrl = effectiveAmount > 0 && transferSyntax
-    ? `https://img.vietqr.io/image/ICB-108871728162-compact2.png?amount=${effectiveAmount}&addInfo=${encodeURIComponent(transferSyntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`
+    ? `https://img.vietqr.io/image/ICB-107882760609-compact2.png?amount=${effectiveAmount}&addInfo=${encodeURIComponent(transferSyntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`
     : '/images/qr-code.jpg';
 
   const copyValue = (value: string, type: 'account' | 'syntax') => {
@@ -414,8 +414,8 @@ export default function PaymentQrModal({
                         <div className="flex justify-between items-center pb-2 border-b border-slate-200">
                           <span className="text-slate-500 font-medium">Số tài khoản:</span>
                           <div className="flex items-center gap-2">
-                            <span className="font-mono font-bold text-slate-900 text-sm">108871728162</span>
-                            <button type="button" onClick={() => copyValue('108871728162', 'account')} className="p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-200" title="Sao chép số tài khoản">
+                            <span className="font-mono font-bold text-slate-900 text-sm">107882760609</span>
+                            <button type="button" onClick={() => copyValue('107882760609', 'account')} className="p-1 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-200" title="Sao chép số tài khoản">
                               {copiedAccountNumber ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                             </button>
                           </div>
