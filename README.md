@@ -34,6 +34,7 @@
    - [5. Backend (cách chạy thủ công)](#5-backend-cách-chạy-thủ-công)
    - [6. Frontend (cách chạy thủ công)](#6-frontend-cách-chạy-thủ-công)
    - [7. AI Service (cần cho tính năng AI tạo đơn nháp)](#7-ai-service-cần-cho-tính-năng-ai-tạo-đơn-nháp)
+   - [8. Cấu hình & Kiểm thử Cổng thanh toán SePay](#8-cấu-hình--kiểm-thử-cổng-thanh-toán-sepay-tự-động-gia-hạn)
 
 ---
 
@@ -95,7 +96,7 @@
 | 8 | **Sản phẩm, Đơn vị tính & Giá bán** | Quản lý danh mục, ảnh sản phẩm, nhiều đơn vị tính với tỷ lệ quy đổi và quy tắc giá linh hoạt; nhập danh mục hàng loạt từ file Excel. |
 | 9 | **Báo cáo & Phân tích** | Doanh thu theo ngày/tuần/tháng, biểu đồ trực quan, lọc theo khoảng ngày, thống kê mặt hàng bán chạy – bán chậm và công nợ còn lại. |
 | 10 | **Quản lý Nhân viên & Phân quyền** | Tạo tài khoản nhân viên, đặt lại mật khẩu, khoá/mở tài khoản. Bốn cấp quyền rõ ràng và dữ liệu tách biệt tuyệt đối theo từng hộ kinh doanh. |
-| 11 | **Gói thuê bao linh hoạt** | Chọn gói Miễn phí, Cơ bản hoặc VIP, chủ động gia hạn 1–24 tháng; tính năng của hệ thống tự mở khoá tương ứng với gói đang dùng. |
+| 11 | **Gói thuê bao & Thanh toán SePay** | Chọn gói Miễn phí, Cơ bản hoặc VIP, gia hạn linh hoạt; tích hợp **Cổng thanh toán tự động SePay** (quét mã VietQR động, nhận diện webhook ngân hàng tức thời, tự động kích hoạt gói & sinh hóa đơn `ServiceInvoice`, real-time polling không cần tải lại trang) và mã ưu đãi **Bypass Key**. |
 | 12 | **Thông báo thời gian thực** | Chuông thông báo báo ngay khi AI tạo đơn nháp, khi đơn đổi trạng thái hoặc khi kho sắp hết hàng — không bỏ lỡ đơn nào. |
 
 > Danh sách tính năng đã hoàn thành chi tiết theo từng Epic xem tại [`docs/project-progress-and-feature/feature.md`](docs/project-progress-and-feature/feature.md).
@@ -157,6 +158,7 @@ Hệ thống cung cấp các gói dịch vụ linh hoạt phù hợp với từn
 | **Backend** | Java 21, Spring Boot 3.3, Spring Web, Spring Data JPA, Spring Security, JWT (JJWT) |
 | **Database** | MySQL 8 |
 | **AI Service** | Python 3.12, FastAPI, Uvicorn, Pydantic; tích hợp **B.ai** (Chat Completions) để trích xuất câu đặt hàng tiếng Việt |
+| **Payment Gateway** | **SePay** (Cổng thanh toán tự động VietQR, Webhook, IPN), **Cloudflare Tunnel** |
 | **Build & Công cụ** | Maven, npm, ESLint, Lombok |
 | **DevOps** | Docker, Docker Compose |
 
@@ -420,6 +422,37 @@ uvicorn main:app --reload --port 8000
 - Service hiện chỉ nhận **văn bản**, chưa hỗ trợ nhận diện giọng nói (STT).
 - Backend có thể tự khởi động service này khi `AI_SERVICE_AUTO_START=true`.
 - Tài liệu chi tiết: [docs/ai-design/ai-service-guide.md](docs/ai-design/ai-service-guide.md), [docs/installation-guide/installation-guide.md](docs/installation-guide/installation-guide.md).
+
+### 8. Cấu hình & Kiểm thử Cổng thanh toán SePay (Tự động gia hạn)
+
+Hệ thống tích hợp cổng thanh toán SePay hỗ trợ tạo mã VietQR động và nhận diện giao dịch chuyển khoản tự động qua Webhook / IPN:
+
+- **Biến môi trường trong `Code/Server/.env`:**
+  ```properties
+  SEPAY_MERCHANT_ID=SP-TEST-NLB7A395
+  SEPAY_SECRET_KEY=spsk_test_4hP4UGF9NSNY5Hjyt8mbVcT8P2wWEBNS
+  SEPAY_ACCOUNT_NUMBER=108871728162
+  ```
+- **Kết nối ra Internet cho Webhook khi chạy local:**
+  Để nhận webhook từ SePay Dashboard (`my.sepay.vn`) về máy tính cục bộ, sử dụng Cloudflare Tunnel:
+  ```powershell
+  cloudflared tunnel --url http://localhost:8080
+  ```
+- **Cấu hình trên SePay Dashboard (`my.sepay.vn`):**
+  * Điền Webhook URL: `https://<your-tunnel-domain>/api/sepay/webhook`
+  * Auth Type: `API Key` (Header: `Authorization: Apikey <SEPAY_SECRET_KEY>`)
+  * Kiểm tra tính khả dụng: `GET /api/sepay/webhook/health` (trả `200 OK`)
+- **Kiểm thử Webhook tự động gia hạn:**
+  Gửi payload chuyển khoản giả lập với cú pháp `HBDT RENEW <businessId> <months>`:
+  ```bash
+  curl -X POST http://localhost:8080/api/sepay/webhook \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Apikey spsk_test_4hP4UGF9NSNY5Hjyt8mbVcT8P2wWEBNS" \
+    -d "{\"gateway\":\"VietinBank\",\"accountNumber\":\"108871728162\",\"transferType\":\"in\",\"transferAmount\":399000,\"content\":\"HBDT RENEW 1 1\",\"referenceCode\":\"FT-DEMO-01\"}"
+  ```
+  Hệ thống tự động kích hoạt gói `ACTIVE`, cộng thêm ngày hết hạn `endDate`, sinh hóa đơn `service_invoices` (PAID) và frontend tự động cập nhật thời gian thực qua polling (3s/lần).
+- **Hệ thống Bypass Key (Mã ưu đãi 100%):**
+  Admin có thể tạo mã Bypass Key (20 ký tự chữ và số) tại `/admin/bypass-keys` để kích hoạt hoặc thử nghiệm gói dịch vụ mà không cần giao dịch ngân hàng.
 
 ---
 
