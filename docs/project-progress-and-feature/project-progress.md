@@ -199,36 +199,48 @@ Authentication
 ### Service Invoice
 
 - [x] **HBDT-36** — Service Invoice Generation
+- [x] **HBDT-130** — Auto Service Invoice Generation on Payment Success
+
+### SePay Automated Payment Gateway & Webhook
+
+- [x] **HBDT-131** — SePay Dynamic VietQR Generation & Payment Instructions
+- [x] **HBDT-132** — SePay Webhook & IPN Listener with API Key Authentication
+- [x] **HBDT-133** — Webhook Idempotency Check & Subscription Auto-Activation
+- [x] **HBDT-134** — Real-time Frontend Polling for Payment Confirmation
+- [x] **HBDT-135** — Cloudflare Tunnel Integration for Webhook Local/Prod Routing
+
+### Bypass Keys Management (Promotional / Testing)
+
+- [x] **HBDT-136** — Admin 20-character Bypass Key Generator & Usage Tracker
+- [x] **HBDT-137** — Owner Bypass Key Validation & 100% Instant Discount Activation
 
 ### Đánh giá
 
-Đã có gần như đầy đủ vòng đời:
+Đã hoàn thiện 100% vòng đời gói thuê bao với quy trình thanh toán tự động SePay VietQR và mã kích hoạt Bypass Key:
 
 ```text
-Plan
- ↓
-Selection
- ↓
-Activation
- ↓
-Payment
- ↓
-Subscription State
- ↓
-Expiration
- ↓
-Upgrade / Downgrade / Renewal
- ↓
-Invoice / History
- ↓
-Feature Entitlement
+Plan Selection
+      ↓
+Payment Method (VietQR SePay hoặc Bypass Key)
+      ↓
+[SePay VietQR] ──► Chuyển khoản ──► Webhook IPN ──► Idempotency Check
+      │                                                     │
+[Bypass Key]   ──► Giảm giá 100% ──► Kích hoạt ngay ────────┤
+                                                            ▼
+                                               Active Subscription State
+                                                            │
+                                               Sinh ServiceInvoice (PAID)
+                                                            │
+                                               Frontend Polling Realtime
+                                                            │
+                                               Feature Entitlement Unlocked
 ```
 
-**Trạng thái:** ✅ Đủ.
+**Trạng thái:** ✅ Hoàn thành 100%.
 
 ### Thời gian thực hiện
 - Ngày bắt đầu: 12/08/2026
-- Ngày hoàn thành: 27/08/2026
+- Ngày hoàn thành cập nhật: 03/11/2026
 
 ---
 

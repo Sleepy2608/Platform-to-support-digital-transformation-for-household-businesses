@@ -8,10 +8,10 @@
 | **Tên dự án (VN)** | Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | **Loại tài liệu** | Architecture Design Document |
 | **Viết tắt** | HBDT
-| **Phiên bản tài liệu** | 2.1 |
+| **Phiên bản tài liệu** | 2.2 |
 | **Ngày tạo** | 26/07/2026 |
-| **Ngày chỉnh sửa lần cuối** | 14/09/2026 |
-| **Trạng thái** | Bản nháp (Draft) |
+| **Ngày chỉnh sửa lần cuối** | 03/11/2026 |
+| **Trạng thái** | Hoàn thành (Release) |
 
 ---
 
@@ -663,28 +663,60 @@ Order & Checkout module xử lý như đơn thủ công (transaction đầy đ�
                                         └──────────────────────┘
 ```
 
-### 8.2. Payment API Contract & UI Flow
+### 8.2. Kiến trúc Cổng thanh toán tự động SePay & Luồng giao dịch
 
-Phiên bản hiện tại dùng QR chuyển khoản tĩnh cho luồng đăng ký subscription. Chưa có payment gateway độc lập, endpoint sinh QR hoặc webhook đối soát. Vì vậy, `GET /api/payments/qr/:orderId` và `POST /api/payments/confirm` chưa phải API được triển khai.
+Hệ thống tích hợp trực tiếp **Cổng thanh toán tự động SePay** (Open Banking Payment Hub) kết hợp tiêu chuẩn **VietQR động**, cho phép tự động kích hoạt gói dịch vụ, cộng hạn thuê bao và sinh hóa đơn dịch vụ (`ServiceInvoice`) ngay khi ngân hàng nhận được tiền mà không cần can thiệp thủ công. Ngoài ra, hệ thống hỗ trợ cơ chế **Bypass Key** cho môi trường thử nghiệm và các chương trình kích hoạt đặc biệt.
 
-#### API contract đang triển khai
+#### 8.2.1. API Contract Cổng thanh toán & Webhook
 
-| Method | Endpoint | Mục đích | Quyền / tham số |
+| Method | Endpoint | Mục đích | Quyền / Bảo mật |
 |---|---|---|---|
-| `GET` | `/api/owner/subscription/packages` | Lấy danh sách gói và giá theo tháng/năm | Owner đã xác thực |
-| `POST` | `/api/owner/subscription/select-package?packageType={packageType}&billingCycle={billingCycle}` | Chọn gói và kích hoạt subscription sau bước xác nhận trên UI | Owner đã xác thực; `packageType` là mã gói; `billingCycle` là `MONTHLY` hoặc `YEARLY` |
+| `POST` | `/api/sepay/webhook` | Tiếp nhận biến động số dư chuyển khoản từ SePay | `Authorization: Apikey <SEPAY_SECRET_KEY>` |
+| `POST` | `/api/sepay/ipn` | Dự phòng Instant Payment Notification từ SePay | `Authorization: Apikey <SEPAY_SECRET_KEY>` |
+| `GET` | `/api/sepay/webhook/health` | Health check endpoint kiểm tra kết nối Webhook | Public |
+| `POST` | `/api/owner/bypass-keys/validate` | Xác thực tính hợp lệ của mã Bypass Key | Owner đã xác thực |
+| `POST` | `/api/owner/bypass-keys/apply` | Áp dụng mã Bypass Key giảm giá 100% và kích hoạt gói ngay | Owner đã xác thực |
+| `GET` | `/api/owner/subscriptions/current` | Polling thời gian thực trạng thái gói dịch vụ | Owner đã xác thực |
 
-Frontend gọi API chọn gói trong cả hai trường hợp: gói miễn phí được kích hoạt trực tiếp; gói có phí gọi sau khi Owner bấm **Xác nhận thanh toán** trong modal. Nút này hiện là bước xác nhận phục vụ bản test, không thực hiện đối soát giao dịch ngân hàng tự động.
+#### 8.2.2. Sơ đồ luồng xử lý Webhook SePay (Sequence Diagram)
 
-#### UI flow
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Owner as Chủ hộ kinh doanh
+    participant FE as Frontend Next.js (PaymentQrModal)
+    participant Bank as Ngân hàng VietinBank / Khách hàng
+    participant SePay as SePay Gateway (Open Banking)
+    participant Tunnel as Cloudflare Tunnel (cloudflared)
+    participant BE as Backend Spring Boot (SepayWebhookService)
+    participant DB as MySQL Database
 
-1. Owner mở `/onboarding/package-selection`, tải danh sách gói và chọn gói cùng chu kỳ thanh toán.
-2. Với gói có phí, hệ thống mở modal **Thông Báo Thanh Toán Chuyển Khoản**.
-3. Modal hiển thị QR tĩnh tại `Code/Client/src/frontend/public/images/qr-code.jpg`, số tiền, VietinBank, số tài khoản, chủ tài khoản và cú pháp `{packageType}-{billingCycle}`; có nút sao chép số tài khoản và cú pháp.
-4. Owner chuyển khoản bên ngoài hệ thống rồi bấm **Xác nhận thanh toán**.
-5. Frontend gọi `POST /api/owner/subscription/select-package`. Khi thành công, modal hiển thị trạng thái thành công và chuyển Owner về trang tài khoản.
+    Owner->>FE: Chọn gói dịch vụ (vd: Gói Chuyên nghiệp 1 tháng)
+    FE->>Owner: Hiển thị VietQR động (STK 108871728162, Cú pháp: HBDT RENEW {bizId} {months})
+    FE->>BE: Bắt đầu Polling định kỳ kiểm tra /api/owner/subscriptions/current
+    Owner->>Bank: Quét mã QR và chuyển khoản ngân hàng
+    Bank-->>SePay: Biến động số dư ghi nhận (Có tiền vào)
+    SePay->>Tunnel: POST /api/sepay/webhook (Bearer Apikey spsk_...)
+    Tunnel->>BE: Chuyển tiếp an toàn tới cổng 8080 nội bộ
+    BE->>BE: Xác thực Secret API Key & Parse cú pháp "HBDT RENEW <bizId> <months>"
+    BE->>DB: Kiểm tra Idempotency (Tránh xử lý trùng giao dịch theo referenceCode)
+    alt Giao dịch hợp lệ & chưa từng xử lý
+        BE->>DB: Cập nhật hạn Subscription (cộng dồn thời hạn hoặc tạo mới)
+        BE->>DB: Tạo ServiceInvoice với trạng thái PAID
+        BE-->>SePay: HTTP 200 OK {"success": true}
+    else Giao dịch trùng lặp
+        BE-->>SePay: HTTP 200 OK {"message": "Transaction already processed"}
+    end
+    FE->>BE: Polling phát hiện Subscription chuyển ACTIVE & endDate mới
+    FE->>Owner: Tự động đóng modal, hiển thị thông báo thành công & cấp quyền tính năng
+```
 
-Luồng payment gateway và webhook có thể được bổ sung ở phiên bản sau; khi đó cần thêm mã giao dịch, kiểm tra chữ ký, idempotency và trạng thái đối soát trước khi tự động kích hoạt subscription.
+#### 8.2.3. Quy trình dự phòng với Bypass Key
+
+Khi cần thử nghiệm hoặc kích hoạt gói đặc biệt mà không qua giao dịch ngân hàng thật:
+1. Quản trị viên (`ADMIN`) tạo mã Bypass Key (chuỗi ngẫu nhiên 20 ký tự) tại `/admin/bypass-keys`, thiết lập số lượt dùng tối đa và thời hạn hiệu lực.
+2. Chủ hộ (`OWNER`) nhập mã tại Modal thanh toán gói cước.
+3. Hệ thống kiểm tra điều kiện mã: hợp lệ, còn lượt sử dụng và còn hạn → áp dụng giảm giá 100% (0đ), kích hoạt gói tức thì và ghi nhận lịch sử vào bảng `bypass_key_usages`.
 
 ### 8.3. Luồng nhận tin nhắn/cuộc gọi (Messaging/Voice Channel)
 
@@ -710,10 +742,11 @@ Luồng payment gateway và webhook có thể được bổ sung ở phiên bả
 
 | Hệ thống ngoài | Mục đích | Ghi chú bảo mật |
 |---|---|---|
-| Bank / QR tĩnh | Owner chuyển khoản subscription theo thông tin hiển thị trên modal | Chưa có đối soát tự động hoặc webhook trong phiên bản hiện tại |
-| Email/SMS/Push Provider | OTP đăng ký, cảnh báo tồn thấp, thông báo đơn | Rate limit gửi OTP |
-| Messaging/Voice Channel (Zalo OA, tổng đài) | Nguồn input cho AI Order Service | Xác thực webhook, ánh xạ số điện thoại/OA → businessId/tenant context |
-| AI/Speech Provider | STT + NLP model | Adapter hoá để thay nhà cung cấp; không lưu voice thô quá thời hạn cần thiết |
+| **SePay Payment Gateway** | Cổng thanh toán tự động VietQR, gửi Webhook / IPN khi có biến động số dư chuyển khoản subscription | Xác thực API Key `Authorization: Apikey <SECRET>`, kiểm tra Idempotency chống kích hoạt lặp |
+| **Cloudflare Tunnel (`cloudflared`)** | Tạo đường hầm HTTPS an toàn đưa Webhook từ Internet vào Backend cục bộ/staging | Không cần mở cổng router hay mở firewall nguy hiểm, tự động mã hóa TLS |
+| **Email/SMS/Push Provider** | OTP đăng ký tài khoản, cảnh báo tồn kho thấp, thông báo hết hạn thuê bao | Rate limit gửi OTP (Bucket4j in-memory) |
+| **Messaging/Voice Channel** (Zalo OA, tổng đài) | Nguồn input cho AI Order Service | Xác thực webhook, ánh xạ số điện thoại/OA → businessId/tenant context |
+| **AI/Speech Provider** (B.ai) | STT + trích xuất ý định đơn hàng NLP model | Giao tiếp bảo mật qua `X-API-Secret`, model Qwen/B.ai |
 
 ---
 

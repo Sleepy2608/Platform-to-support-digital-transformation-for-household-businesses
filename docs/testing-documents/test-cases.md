@@ -4,12 +4,12 @@
 
 - **Dự án:** Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh.
 - **Loại kiểm thử:** Kiểm thử hệ thống thủ công (manual system testing).
-- **Phạm vi:** 39 test case, từ TC01 đến TC39.
-- **Nguồn nội dung:** Workbook test case của nhóm, cập nhật ngày 15/09/2026.
-- **Kết quả ghi nhận trong workbook:** 39/39 test case có trạng thái **Đạt**.
+- **Phạm vi:** 44 test case, từ TC01 đến TC44.
+- **Nguồn nội dung:** Workbook test case của nhóm, cập nhật ngày 03/11/2026.
+- **Kết quả ghi nhận trong workbook:** 44/44 test case có trạng thái **Đạt** (100%).
 - **File Excel và ảnh minh chứng:** [Mở bộ test case hệ thống](./hbdt-system-test-cases.xlsx).
 
-> Trong workbook, cột **Ảnh minh chứng** trên sheet `Test Cases` liên kết đến các sheet `TC1`–`TC39` để tra cứu kết quả thực hiện tương ứng.
+> Trong workbook, cột **Ảnh minh chứng** trên sheet `Test Cases` liên kết đến các sheet `TC1`–`TC44` để tra cứu kết quả thực hiện tương ứng.
 
 ## 2. Tổng hợp phạm vi kiểm thử
 

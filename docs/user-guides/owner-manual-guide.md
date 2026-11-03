@@ -5,8 +5,8 @@
 | **Tài liệu** | Hướng Dẫn Sử Dụng Hệ Thống – Vai Trò Chủ Hộ Kinh Doanh (Business Owner) |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Vai trò áp dụng** | Chủ hộ kinh doanh (`BUSINESS_OWNER` / Business Owner) |
-| **Phiên bản** | 1.3 |
-| **Cập nhật lần cuối** | 15/09/2026 |
+| **Phiên bản** | 1.4 |
+| **Cập nhật lần cuối** | 03/11/2026 |
 
 ---
 

@@ -7,14 +7,15 @@
 | Mã tài liệu | HBDT-SI-01 |
 | Tên tài liệu | Tài liệu hiện thực hệ thống (System Implementation Document) |
 | Dự án | Platform to Support Digital Transformation for Household Businesses |
-| Phiên bản | 1.0 |
-| Ngày ban hành | 15/09/2026 |
-| Trạng thái | Bản bàn giao |
+| Phiên bản | 1.1 |
+| Ngày ban hành | 03/11/2026 |
+| Trạng thái | Bản bàn giao (Release) |
 | Đơn vị thực hiện | Nhóm phát triển HBDT |
 | Backend | Java 21, Spring Boot 3.3.0 |
 | Frontend | Next.js 16, React 19, TypeScript 5 |
 | Cơ sở dữ liệu | MySQL 8 |
 | Dịch vụ AI | Python, FastAPI |
+| Cổng thanh toán | SePay (VietQR, Webhook, IPN), Cloudflare Tunnel |
 
 ---
 
@@ -23,6 +24,7 @@
 | Phiên bản | Ngày | Nội dung thay đổi | Người thực hiện |
 |---|---|---|---|
 | 1.0 | 15/09/2026 | Ban hành tài liệu mô tả hiện thực hệ thống theo mã nguồn bàn giao | Nhóm phát triển HBDT |
+| 1.1 | 03/11/2026 | Bổ sung hiện thực Cổng thanh toán tự động SePay, Webhook/IPN, VietQR động và hệ thống Bypass Key | Nhóm phát triển HBDT |
 
 ## Mục lục
 
@@ -697,11 +699,29 @@ Seed giúp chuẩn bị môi trường demo, nhưng không thay thế migration 
 
 ## 13. Lưu trữ tệp và tích hợp bên ngoài
 
+### 13.1. Lưu trữ tệp & Media
+
 Ảnh đại diện, logo cửa hàng và ảnh sản phẩm được nhận dưới dạng multipart. Backend kiểm tra dung lượng, loại tệp và lưu vào thư mục upload. URL `/uploads/**` được ánh xạ đến thư mục lưu trữ bởi `WebConfig`.
 
 Database chỉ lưu thông tin tham chiếu tới tệp; không lưu toàn bộ ảnh dạng Base64. Khi triển khai production, `UPLOAD_DIR` phải trỏ tới persistent volume hoặc dịch vụ object storage để dữ liệu không mất khi container được tạo lại.
 
 Email OTP sử dụng Spring Mail. Ở development có thể bật `OTP_DEV_MODE` để in OTP ra log; production phải tắt chế độ này và cung cấp thông tin SMTP qua biến môi trường.
+
+### 13.2. Cổng thanh toán tự động SePay (VietQR & Webhook)
+
+Hệ thống tích hợp cổng thanh toán SePay phục vụ tự động hóa quy trình gia hạn và nâng cấp gói thuê bao:
+- **Tạo VietQR động**: Tự động sinh mã QR Napas247 chứa số tài khoản VietinBank `108871728162` và cú pháp chuẩn `HBDT RENEW <businessId> <months>`.
+- **Webhook Listener**: Controller `SepayWebhookController` tại `/api/sepay/webhook` nhận gói tin HTTP POST từ SePay khi có biến động số dư chuyển khoản vào tài khoản.
+- **Bảo mật**: Xác thực header `Authorization: Apikey <SEPAY_SECRET_KEY>`.
+- **Chống kích hoạt trùng lặp (Idempotency)**: Lưu mã giao dịch ngân hàng vào `ServiceInvoice` (`referenceCode`), từ chối xử lý lặp nếu mã giao dịch đã tồn tại.
+- **Tự động gia hạn**: `SepayWebhookService` cộng dồn ngày hết hạn vào `subscriptions` theo số tháng mua, đồng thời lưu hóa đơn dịch vụ trạng thái `PAID`.
+- **Tunneling**: Hỗ trợ Cloudflare Tunnel (`cloudflared tunnel --url http://localhost:8080`) chuyển tiếp webhook an toàn từ SePay Internet vào server dev.
+
+### 13.3. Hệ thống Bypass Key (Khuyến mãi & Kiểm thử)
+
+Hệ thống hỗ trợ Admin phát hành các mã kích hoạt 20 ký tự ngẫu nhiên (`BypassKey`):
+- Admin quản lý số lượt dùng tối đa, thời hạn hiệu lực và trạng thái mã.
+- Khi Owner nhập mã tại Modal thanh toán, hệ thống áp dụng chiết khấu 100% (giá 0đ), kích hoạt gói ngay lập tức và ghi vết `BypassKeyUsage`.
 
 ---
 

@@ -145,8 +145,8 @@ Hệ thống cung cấp các gói dịch vụ linh hoạt phù hợp với từn
 
 > Nhiệm vụ được giao sẽ được dựa vào nhiệm vụ được giao trên [Issue](https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/issues) trên Github và cập nhật tiến độ ở [Jira](https://java-project-platform-for-household-business.atlassian.net/jira/software/projects/SCRUM/summary).<br>
 > Các issue trên Github sẽ được cập nhật theo tiến độ của Jira và sẽ được test trước khi merge vào nhánh Main.<br>
-> Mức độ hoàn thành dự án: 98%<br>
-> Ngày cập nhật lần cuối: 15/09/2026.
+> Mức độ hoàn thành dự án: 100%<br>
+> Ngày cập nhật lần cuối: 03/11/2026.
 
 ---
 

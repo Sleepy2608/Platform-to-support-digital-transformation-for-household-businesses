@@ -9,9 +9,9 @@
 | **Viết tắt** | HBDT |
 | **Môn học** | Lập trình Java |
 | **Loại tài liệu** | Báo cáo tổng kết toàn bộ quá trình phát triển |
-| **Thời gian phát triển** | 22/07/2026 → 16/09/2026 |
-| **Tiến độ** | 13/13 Epic `Done` trên Jira — mức độ hoàn thành 93% (Sprint 8) |
-| **Ngày tổng hợp** | 15/09/2026 |
+| **Thời gian phát triển** | 22/07/2026 → 03/11/2026 |
+| **Tiến độ** | 13/13 Epic `Done` trên Jira — mức độ hoàn thành 100% |
+| **Ngày tổng hợp** | 03/11/2026 |
 
 ---
 

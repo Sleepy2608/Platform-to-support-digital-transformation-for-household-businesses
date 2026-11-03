@@ -6,7 +6,7 @@
 | **Mã issue/ticket** | HBDT-98 |  
 | **Môn học** | Lập trình Java / Đồ án phát triển phần mềm |
 | **Tài liệu** | Tổng quan Thư mục Hướng dẫn Sử dụng Hệ thống (User Manual Guides) |
-| **Phiên bản** | 1.2 — 10/09/2026 |
+| **Phiên bản** | 1.3 — 03/11/2026 |
 
 ---
 

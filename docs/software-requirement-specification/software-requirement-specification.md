@@ -14,7 +14,7 @@
 
 **Môn học:** Lập trình Java
 
-**Cập nhật gần đây:** 12/09/2026
+**Cập nhật gần đây:** 03/11/2026
 
 ---
 
@@ -1119,13 +1119,17 @@ Chủ hộ kinh doanh
 
 ### Luồng chính
 
-#### FR-P-01 Hiển thị thông tin thanh toán QR
+#### FR-P-01 Hiển thị thông tin thanh toán VietQR SePay động
 
-Khi Chủ hộ kinh doanh chọn gói có phí, hệ thống phải mở modal thanh toán chuyển khoản và hiển thị mã QR từ `Code/Client/src/frontend/public/images/qr-code.jpg`, số tiền theo gói/chu kỳ, ngân hàng, số tài khoản, chủ tài khoản và nội dung chuyển khoản. Gói miễn phí không hiển thị modal QR.
+Khi Chủ hộ kinh doanh chọn gói có phí, hệ thống mở modal thanh toán (`PaymentQrModal`) và sinh mã VietQR động theo chuẩn Napas247, bao gồm STK VietinBank `108871728162` (Chủ TK: NGUYEN LE HUY TAM), số tiền theo gói/chu kỳ, và nội dung chuyển khoản tự động chuẩn hóa: `HBDT RENEW <businessId> <months>`. Modal có nút tiện ích sao chép số tài khoản và cú pháp. Gói miễn phí không hiển thị modal QR và được kích hoạt trực tiếp.
 
-#### FR-P-02 Xác nhận kích hoạt gói sau thanh toán
+#### FR-P-02 Kích hoạt tự động qua SePay Webhook & IPN
 
-Sau khi chuyển khoản bên ngoài hệ thống, Chủ hộ kinh doanh có thể bấm **Xác nhận thanh toán**. Frontend gọi `POST /api/owner/subscription/select-package` với `packageType` và `billingCycle`; khi API thành công, hệ thống kích hoạt subscription và chuyển về trang tài khoản. Phiên bản hiện tại chưa có payment gateway, endpoint QR động hoặc webhook đối soát ngân hàng.
+Khi người dùng chuyển khoản thành công qua ứng dụng ngân hàng, cổng thanh toán SePay tự động phát Webhook HTTP POST tới Backend (`/api/sepay/webhook`). Backend xác thực API Key (`Authorization: Apikey <SECRET>`), giải mã nội dung giao dịch, kiểm tra Idempotency chống lặp, tự động gia hạn gói thuê bao (`subscriptions`), sinh hóa đơn dịch vụ (`service_invoices`) trạng thái `PAID`. Frontend thực hiện polling thời gian thực để cập nhật trạng thái UI và chuyển về Dashboard ngay khi giao dịch thành công.
+
+#### FR-P-03 Kích hoạt nhanh bằng Bypass Key (Khuyến mãi / Kiểm thử)
+
+Chủ hộ có thể nhập mã Bypass Key (chuỗi 20 ký tự ngẫu nhiên do Quản trị viên cấp) tại modal thanh toán. Sau khi bấm "Kiểm tra", hệ thống xác thực tính hợp lệ, áp dụng chiết khấu 100% (số tiền thanh toán trở về 0đ), kích hoạt gói ngay lập tức mà không cần chuyển khoản ngân hàng và ghi vết lịch sử sử dụng vào cơ sở dữ liệu.
 
 1. Chủ hộ kinh doanh chọn gói thuê bao.
 2. Yêu cầu thanh toán được tạo.
@@ -3372,3 +3376,4 @@ Bảng sau tổng hợp các điểm cuối REST API chính của hệ thống.
 |-----------|------|----------------|
 | 1.1 | 30/07/2026 | Thêm link Jira để phân công việc dựa trên task Jira|
 | 1.2 | 15/09/2026 | Cập nhật §10.1 theo nhánh `feature/AI_Service`: chỉnh số endpoint `/api/ai/*`, `/api/accounting/*`, `/api/admin/*` và bổ sung nhóm `/api/revenue-ledger/*`; ghi chú trạng thái chưa triển khai của HBDT-09.2 (nhập bằng giọng nói) |
+| 1.3 | 03/11/2026 | Tích hợp Cổng thanh toán tự động SePay (VietQR động, Webhook, IPN), quản lý mã kích hoạt Bypass Key 20 ký tự, cập nhật endpoint thanh toán và đối soát tự động |
