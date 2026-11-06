@@ -1,6 +1,6 @@
 {
   "table" : "sales_orders",
-  "version" : 12,
+  "version" : 13,
   "rows" : [ {
     "id" : 1,
     "business_id" : 5,

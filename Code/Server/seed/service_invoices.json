@@ -1,6 +1,6 @@
 {
   "table" : "service_invoices",
-  "version" : 12,
+  "version" : 13,
   "rows" : [ {
     "id" : 1,
     "amount" : 11976000.00,
@@ -166,5 +166,80 @@
     "unit_price" : 399000.00,
     "plan_id" : 6,
     "user_id" : 4
+  }, {
+    "id" : 12,
+    "amount" : 399000.00,
+    "business_id" : 1,
+    "created_at" : "2026-11-01T09:43:50.547416",
+    "due_date" : null,
+    "invoice_no" : "INV-20261101-0019",
+    "status" : "PAID",
+    "subscription_id" : 2,
+    "duration" : 1,
+    "invoice_code" : "INV-20261101-D980",
+    "total_amount" : 399000.00,
+    "unit_price" : 399000.00,
+    "plan_id" : 4,
+    "user_id" : 1
+  }, {
+    "id" : 13,
+    "amount" : 399000.00,
+    "business_id" : 1,
+    "created_at" : "2026-11-01T09:44:53.615177",
+    "due_date" : null,
+    "invoice_no" : "INV-20261101-7193",
+    "status" : "PAID",
+    "subscription_id" : 2,
+    "duration" : 1,
+    "invoice_code" : "INV-20261101-11C4",
+    "total_amount" : 399000.00,
+    "unit_price" : 399000.00,
+    "plan_id" : 4,
+    "user_id" : 1
+  }, {
+    "id" : 14,
+    "amount" : 399000.00,
+    "business_id" : 1,
+    "created_at" : "2026-11-01T09:49:39.650132",
+    "due_date" : null,
+    "invoice_no" : "INV-20261101-3630",
+    "status" : "PAID",
+    "subscription_id" : 2,
+    "duration" : 1,
+    "invoice_code" : "INV-20261101-2B71",
+    "total_amount" : 399000.00,
+    "unit_price" : 399000.00,
+    "plan_id" : 4,
+    "user_id" : 1
+  }, {
+    "id" : 15,
+    "amount" : 399000.00,
+    "business_id" : 1,
+    "created_at" : "2026-11-01T10:00:43.943878",
+    "due_date" : null,
+    "invoice_no" : "INV-20261101-9679",
+    "status" : "PAID",
+    "subscription_id" : 2,
+    "duration" : 1,
+    "invoice_code" : "INV-20261101-B93D",
+    "total_amount" : 399000.00,
+    "unit_price" : 399000.00,
+    "plan_id" : 4,
+    "user_id" : 1
+  }, {
+    "id" : 16,
+    "amount" : 399000.00,
+    "business_id" : 1,
+    "created_at" : "2026-11-03T05:59:22.860713",
+    "due_date" : null,
+    "invoice_no" : "INV-20261103-2427",
+    "status" : "PAID",
+    "subscription_id" : 2,
+    "duration" : 1,
+    "invoice_code" : "INV-20261103-C8FD",
+    "total_amount" : 399000.00,
+    "unit_price" : 399000.00,
+    "plan_id" : 4,
+    "user_id" : 1
   } ]
 }

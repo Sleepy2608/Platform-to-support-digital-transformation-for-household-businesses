@@ -1,6 +1,6 @@
 {
   "table" : "payment_histories",
-  "version" : 12,
+  "version" : 13,
   "rows" : [ {
     "id" : 1,
     "amount" : 11976000.00,
@@ -89,5 +89,109 @@
     "status" : "COMPLETED",
     "subscription_id" : 5,
     "transaction_id" : "7af54d2d-ea10-4f20-8418-5b781a5c2303"
+  }, {
+    "id" : 13,
+    "amount" : 399000.00,
+    "paid_at" : "2026-11-01T09:43:50.363722",
+    "payment_method" : "SEPAY_BANK_TRANSFER",
+    "status" : "COMPLETED",
+    "subscription_id" : 2,
+    "transaction_id" : "SEPAY-1793526230304"
+  }, {
+    "id" : 14,
+    "amount" : 399000.00,
+    "paid_at" : "2026-11-01T09:44:53.586829",
+    "payment_method" : "SEPAY_BANK_TRANSFER",
+    "status" : "COMPLETED",
+    "subscription_id" : 2,
+    "transaction_id" : "SEPAY-1793526293569"
+  }, {
+    "id" : 15,
+    "amount" : 399000.00,
+    "paid_at" : "2026-11-01T09:49:39.559694",
+    "payment_method" : "SEPAY_BANK_TRANSFER",
+    "status" : "COMPLETED",
+    "subscription_id" : 2,
+    "transaction_id" : "SEPAY-1793526579498"
+  }, {
+    "id" : 16,
+    "amount" : 399000.00,
+    "paid_at" : "2026-11-01T10:00:43.912382",
+    "payment_method" : "SEPAY_BANK_TRANSFER",
+    "status" : "COMPLETED",
+    "subscription_id" : 2,
+    "transaction_id" : "SEPAY-1793527237672"
+  }, {
+    "id" : 17,
+    "amount" : 10000.00,
+    "paid_at" : "2026-11-01T10:01:31.185084",
+    "payment_method" : "SEPAY_BANK_TRANSFER_UNMATCHED",
+    "status" : "PENDING_REVIEW",
+    "subscription_id" : 0,
+    "transaction_id" : "SEPAY-777123"
+  }, {
+    "id" : 18,
+    "amount" : 10000.00,
+    "paid_at" : "2026-11-01T10:01:49.848503",
+    "payment_method" : "SEPAY_BANK_TRANSFER_UNMATCHED",
+    "status" : "PENDING_REVIEW",
+    "subscription_id" : 0,
+    "transaction_id" : "SEPAY-777124"
+  }, {
+    "id" : 19,
+    "amount" : 10000.00,
+    "paid_at" : "2026-11-01T10:02:01.424806",
+    "payment_method" : "SEPAY_BANK_TRANSFER_UNMATCHED",
+    "status" : "PENDING_REVIEW",
+    "subscription_id" : 0,
+    "transaction_id" : "SEPAY-777125"
+  }, {
+    "id" : 20,
+    "amount" : 10000.00,
+    "paid_at" : "2026-11-01T10:52:52.375401",
+    "payment_method" : "SEPAY_BANK_TRANSFER_UNMATCHED",
+    "status" : "PENDING_REVIEW",
+    "subscription_id" : 0,
+    "transaction_id" : "SEPAY-888123"
+  }, {
+    "id" : 21,
+    "amount" : 10000.00,
+    "paid_at" : "2026-11-01T19:47:21.192919",
+    "payment_method" : "SEPAY_BANK_TRANSFER_UNMATCHED",
+    "status" : "PENDING_REVIEW",
+    "subscription_id" : 0,
+    "transaction_id" : "SEPAY-999123"
+  }, {
+    "id" : 22,
+    "amount" : 10000.00,
+    "paid_at" : "2026-11-02T19:40:05.084791",
+    "payment_method" : "SEPAY_BANK_TRANSFER_UNMATCHED",
+    "status" : "PENDING_REVIEW",
+    "subscription_id" : 0,
+    "transaction_id" : "SEPAY-998811"
+  }, {
+    "id" : 23,
+    "amount" : 10000.00,
+    "paid_at" : "2026-11-02T19:56:59.919124",
+    "payment_method" : "SEPAY_BANK_TRANSFER_UNMATCHED",
+    "status" : "PENDING_REVIEW",
+    "subscription_id" : 0,
+    "transaction_id" : "SEPAY-0"
+  }, {
+    "id" : 24,
+    "amount" : 10000.00,
+    "paid_at" : "2026-11-03T05:58:33.016919",
+    "payment_method" : "SEPAY_BANK_TRANSFER_UNMATCHED",
+    "status" : "PENDING_REVIEW",
+    "subscription_id" : 0,
+    "transaction_id" : "SEPAY-987654"
+  }, {
+    "id" : 25,
+    "amount" : 399000.00,
+    "paid_at" : "2026-11-03T05:59:22.335278",
+    "payment_method" : "SEPAY_BANK_TRANSFER",
+    "status" : "COMPLETED",
+    "subscription_id" : 2,
+    "transaction_id" : "SEPAY-987655"
   } ]
 }

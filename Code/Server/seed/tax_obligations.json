@@ -1,0 +1,41 @@
+{
+  "table" : "tax_obligations",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "business_id" : 13,
+    "created_at" : "2026-10-31T19:05:20.129646",
+    "created_by" : null,
+    "description" : "Thuế giá trị gia tăng - tổng hợp tự động từ giao dịch đã xác nhận",
+    "document_date" : null,
+    "document_number" : null,
+    "due_date" : null,
+    "obligation_code" : "VAT-2000-01-01-2026-11-01",
+    "period_from" : "2000-01-01",
+    "period_to" : "2026-11-01",
+    "status" : "DRAFT",
+    "tax_amount" : 0.00,
+    "tax_rate" : null,
+    "tax_type_id" : 1,
+    "taxable_revenue" : 0.00,
+    "updated_at" : "2026-10-31T19:05:20.129646"
+  }, {
+    "id" : 2,
+    "business_id" : 13,
+    "created_at" : "2026-10-31T19:05:20.152694",
+    "created_by" : null,
+    "description" : "Thuế thu nhập cá nhân - tổng hợp tự động từ giao dịch đã xác nhận",
+    "document_date" : null,
+    "document_number" : null,
+    "due_date" : null,
+    "obligation_code" : "PIT-2000-01-01-2026-11-01",
+    "period_from" : "2000-01-01",
+    "period_to" : "2026-11-01",
+    "status" : "DRAFT",
+    "tax_amount" : 0.00,
+    "tax_rate" : null,
+    "tax_type_id" : 3,
+    "taxable_revenue" : 0.00,
+    "updated_at" : "2026-10-31T19:05:20.152694"
+  } ]
+}

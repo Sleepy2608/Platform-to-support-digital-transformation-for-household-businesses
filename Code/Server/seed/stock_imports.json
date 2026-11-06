@@ -1,6 +1,6 @@
 {
   "table" : "stock_imports",
-  "version" : 2,
+  "version" : 3,
   "rows" : [ {
     "id" : 1,
     "business_id" : 5,

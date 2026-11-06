@@ -1,6 +1,6 @@
 {
   "table" : "accounting_transactions",
-  "version" : 1,
+  "version" : 2,
   "rows" : [ {
     "id" : 1,
     "business_id" : 5,

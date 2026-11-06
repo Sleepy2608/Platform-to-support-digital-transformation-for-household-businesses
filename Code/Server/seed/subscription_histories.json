@@ -1,6 +1,6 @@
 {
   "table" : "subscription_histories",
-  "version" : 12,
+  "version" : 13,
   "rows" : [ {
     "id" : 1,
     "action" : "UPGRADE",
@@ -113,5 +113,45 @@
     "new_plan" : "VIP",
     "old_plan" : "VIP",
     "subscription_id" : 5
+  }, {
+    "id" : 15,
+    "action" : "SEPAY_WEBHOOK_RENEW",
+    "changed_at" : "2026-11-01T09:43:50.561236",
+    "changed_by" : "SEPAY_SYSTEM",
+    "new_plan" : "STANDARD",
+    "old_plan" : "STANDARD",
+    "subscription_id" : 2
+  }, {
+    "id" : 16,
+    "action" : "SEPAY_WEBHOOK_RENEW",
+    "changed_at" : "2026-11-01T09:44:53.618049",
+    "changed_by" : "SEPAY_SYSTEM",
+    "new_plan" : "STANDARD",
+    "old_plan" : "STANDARD",
+    "subscription_id" : 2
+  }, {
+    "id" : 17,
+    "action" : "SEPAY_WEBHOOK_RENEW",
+    "changed_at" : "2026-11-01T09:49:39.653429",
+    "changed_by" : "SEPAY_SYSTEM",
+    "new_plan" : "STANDARD",
+    "old_plan" : "STANDARD",
+    "subscription_id" : 2
+  }, {
+    "id" : 18,
+    "action" : "SEPAY_WEBHOOK_RENEW",
+    "changed_at" : "2026-11-01T10:00:43.947309",
+    "changed_by" : "SEPAY_SYSTEM",
+    "new_plan" : "STANDARD",
+    "old_plan" : "STANDARD",
+    "subscription_id" : 2
+  }, {
+    "id" : 19,
+    "action" : "SEPAY_WEBHOOK_RENEW",
+    "changed_at" : "2026-11-03T05:59:22.924335",
+    "changed_by" : "SEPAY_SYSTEM",
+    "new_plan" : "STANDARD",
+    "old_plan" : "STANDARD",
+    "subscription_id" : 2
   } ]
 }

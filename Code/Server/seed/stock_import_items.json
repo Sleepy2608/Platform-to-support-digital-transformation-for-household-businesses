@@ -1,6 +1,6 @@
 {
   "table" : "stock_import_items",
-  "version" : 2,
+  "version" : 3,
   "rows" : [ {
     "id" : 1,
     "base_quantity" : 10.000,
