@@ -1,6 +1,6 @@
 {
   "table" : "subscription_plans",
-  "version" : 20,
+  "version" : 21,
   "rows" : [ {
     "id" : 1,
     "annual_price" : 0.00,
@@ -43,14 +43,14 @@
     "updated_at" : "2026-08-31T04:58:39.880209"
   }, {
     "id" : 5,
-    "annual_price" : 234000.00,
+    "annual_price" : 10000.00,
     "created_at" : "2026-08-11T05:30:00.300988",
-    "description" : null,
-    "monthly_price" : 1000.00,
+    "description" : "Test package",
+    "monthly_price" : 2000.00,
     "plan_code" : "TEST",
     "plan_name" : "Test",
     "status" : "INACTIVE",
-    "updated_at" : "2026-08-31T04:59:14.027788"
+    "updated_at" : "2026-11-06T20:07:05.477503"
   }, {
     "id" : 6,
     "annual_price" : 4500000.00,

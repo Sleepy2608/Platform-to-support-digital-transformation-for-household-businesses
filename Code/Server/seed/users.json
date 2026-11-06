@@ -1,6 +1,6 @@
 {
   "table" : "users",
-  "version" : 22,
+  "version" : 23,
   "rows" : [ {
     "id" : 1,
     "business_id" : null,
@@ -27,7 +27,7 @@
     "termination_date" : null
   }, {
     "id" : 2,
-    "business_id" : null,
+    "business_id" : 1,
     "created_at" : "2026-08-16T05:07:44.246198",
     "email" : "owner@hbdt.com",
     "full_name" : "Chủ Hộ Kinh Doanh Mẫu",
@@ -35,7 +35,7 @@
     "password_hash" : "$2a$10$ZjkadL8lJ9YkNvNAcJzVdO5mx4kqGoKbGY1DZ4BrD2FninPHpvnbG",
     "phone" : "0987654321",
     "status" : "ACTIVE",
-    "updated_at" : "2026-08-18T09:46:18.713792",
+    "updated_at" : "2026-11-01T09:48:53.086285",
     "username" : "owner",
     "role_id" : 2,
     "address" : null,

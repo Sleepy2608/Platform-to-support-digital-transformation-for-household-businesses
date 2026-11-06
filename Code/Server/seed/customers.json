@@ -1,6 +1,6 @@
 {
   "table" : "customers",
-  "version" : 12,
+  "version" : 13,
   "rows" : [ {
     "id" : 1,
     "address" : null,

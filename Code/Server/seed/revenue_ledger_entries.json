@@ -1,6 +1,6 @@
 {
   "table" : "revenue_ledger_entries",
-  "version" : 3,
+  "version" : 4,
   "rows" : [ {
     "id" : 1,
     "business_id" : 5,
