@@ -200,6 +200,7 @@ docker-volumes/
 # Runtime
 ############################
 
+scratch/
 *.pid
 *.seed
 
