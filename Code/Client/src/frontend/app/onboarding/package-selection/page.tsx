@@ -93,9 +93,9 @@ async function fetchCurrentProfile(): Promise<{ packageType: string | null; subs
   }
 }
 
-async function selectPackageApi(packageType: PackageId, billingCycle: BillingCycle, bypassKey?: string): Promise<void> {
+async function selectPackageApi(packageType: PackageId, billingCycle: BillingCycle, couponCode?: string): Promise<void> {
   const query = `/api/owner/subscription/select-package?packageType=${packageType}&billingCycle=${billingCycle}`
-    + (bypassKey ? `&bypassKey=${encodeURIComponent(bypassKey)}` : '');
+    + (couponCode ? `&couponCode=${encodeURIComponent(couponCode)}` : '');
   await apiClient.post(query);
 
   // Đánh dấu hoàn tất Onboarding khi chọn gói thành công
@@ -231,16 +231,16 @@ function PackageSelectionContent() {
   };
 
   // Xác nhận thanh toán
-  const handleConfirmPaymentTest = async (bypassKey?: string) => {
+  const handleConfirmPaymentTest = async (couponCode?: string) => {
     if (!selected) return;
-    if (!bypassKey && totalAmount > 0) {
-      setError('Thanh toán không thành công! Hệ thống chưa nhận được tiền thanh toán. Vui lòng sử dụng mã Bypass Key.');
+    if (!couponCode && totalAmount > 0) {
+      setError('Thanh toán không thành công! Hệ thống chưa nhận được tiền thanh toán. Vui lòng sử dụng mã giảm giá.');
       return;
     }
     setSubmitting(true);
     setError(null);
     try {
-      await selectPackageApi(selected, cycle, bypassKey);
+      await selectPackageApi(selected, cycle, couponCode);
       setPaymentSuccess(true);
       setTimeout(() => {
         setShowPaymentModal(false);

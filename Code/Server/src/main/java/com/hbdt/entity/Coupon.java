@@ -1,6 +1,6 @@
 package com.hbdt.entity;
 
-import com.hbdt.entity.enums.BypassKeyStatus;
+import com.hbdt.entity.enums.CouponStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,19 +8,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "bypass_keys", indexes = {
-        @Index(name = "idx_bypass_keys_code", columnList = "key_code", unique = true),
-        @Index(name = "idx_bypass_keys_status", columnList = "status")
+@Table(name = "coupons", indexes = {
+        @Index(name = "idx_coupons_code", columnList = "key_code", unique = true),
+        @Index(name = "idx_coupons_status", columnList = "status")
 })
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class BypassKey {
+public class Coupon {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,13 +40,12 @@ public class BypassKey {
     private Integer usedCount = 0;
 
     @Column(name = "discount_percent", nullable = false)
-    @Builder.Default
-    private Integer discountPercent = 100;
+    private Integer discountPercent;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
-    private BypassKeyStatus status = BypassKeyStatus.ACTIVE;
+    private CouponStatus status = CouponStatus.ACTIVE;
 
     @Column(name = "note", length = 255)
     private String note;
@@ -69,11 +70,8 @@ public class BypassKey {
         if (this.usedCount == null) {
             this.usedCount = 0;
         }
-        if (this.discountPercent == null) {
-            this.discountPercent = 100;
-        }
         if (this.status == null) {
-            this.status = BypassKeyStatus.ACTIVE;
+            this.status = CouponStatus.ACTIVE;
         }
     }
 
@@ -82,11 +80,19 @@ public class BypassKey {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public BigDecimal discountAmount(BigDecimal originalAmount) {
+        if (discountPercent == 100) {
+            return originalAmount;
+        }
+        return originalAmount.multiply(BigDecimal.valueOf(discountPercent)).movePointLeft(2)
+                .setScale(0, RoundingMode.DOWN);
+    }
+
     /**
      * Kiểm tra xem key có còn khả dụng hay không
      */
     public boolean isUsable() {
-        if (this.status != BypassKeyStatus.ACTIVE) {
+        if (this.status != CouponStatus.ACTIVE) {
             return false;
         }
         if (this.maxUses != null && this.usedCount != null && this.usedCount >= this.maxUses) {

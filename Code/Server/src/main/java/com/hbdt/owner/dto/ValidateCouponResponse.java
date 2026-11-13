@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ValidateBypassKeyResponse {
+public class ValidateCouponResponse {
 
     private boolean valid;
     private String keyCode;

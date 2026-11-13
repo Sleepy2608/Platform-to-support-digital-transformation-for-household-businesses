@@ -1,6 +1,6 @@
-package com.hbdt.admin.dto.bypasskey;
+package com.hbdt.admin.dto.coupon;
 
-import com.hbdt.entity.BypassKeyUsage;
+import com.hbdt.entity.CouponUsage;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,10 +15,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class BypassKeyUsageResponse {
+public class CouponUsageResponse {
 
     private Long id;
-    private Long bypassKeyId;
+    private Long couponId;
     private String keyCode;
     private Long userId;
     private String username;
@@ -30,15 +30,15 @@ public class BypassKeyUsageResponse {
     private BigDecimal finalAmount;
     private LocalDateTime usedAt;
 
-    public static BypassKeyUsageResponse fromEntity(BypassKeyUsage entity) {
+    public static CouponUsageResponse fromEntity(CouponUsage entity) {
         if (entity == null) {
             return null;
         }
 
-        return BypassKeyUsageResponse.builder()
+        return CouponUsageResponse.builder()
                 .id(entity.getId())
-                .bypassKeyId(entity.getBypassKey() != null ? entity.getBypassKey().getId() : null)
-                .keyCode(entity.getBypassKey() != null ? entity.getBypassKey().getKeyCode() : null)
+                .couponId(entity.getCoupon() != null ? entity.getCoupon().getId() : null)
+                .keyCode(entity.getCoupon() != null ? entity.getCoupon().getKeyCode() : null)
                 .userId(entity.getUserId())
                 .username(entity.getUsername())
                 .businessId(entity.getBusinessId())

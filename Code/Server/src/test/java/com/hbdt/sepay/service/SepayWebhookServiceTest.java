@@ -4,6 +4,7 @@ import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.entity.*;
 import com.hbdt.entity.enums.SubscriptionStatus;
 import com.hbdt.repository.*;
+import com.hbdt.owner.service.CouponCheckoutService;
 import com.hbdt.sepay.dto.SepayWebhookPayload;
 import com.hbdt.sepay.dto.SepayWebhookResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +45,9 @@ class SepayWebhookServiceTest {
     @Mock
     private SubscriptionPlanRepository subscriptionPlanRepository;
 
+    @Mock
+    private CouponCheckoutService couponCheckoutService;
+
     @InjectMocks
     private SepayWebhookService sepayWebhookService;
 
@@ -52,7 +56,29 @@ class SepayWebhookServiceTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(sepayWebhookService, "secretKey", TEST_SECRET);
+        ReflectionTestUtils.setField(sepayWebhookService, "couponWebhookSecret", TEST_SECRET);
         ReflectionTestUtils.setField(sepayWebhookService, "expectedAccountNumber", "108871728162");
+    }
+
+    @Test
+    void matchesCouponReferenceBeforeParsingLegacySubscriptionCodes() {
+        String reference = "HBDTCP0123456789ABCDEF";
+        BigDecimal amount = new BigDecimal("75000");
+        SepayWebhookPayload payload = SepayWebhookPayload.builder()
+                .id(500L).transferType("in").transferAmount(amount).code(reference).build();
+        when(couponCheckoutService.confirm(reference, amount, "SEPAY-500")).thenReturn(true);
+
+        assertTrue(sepayWebhookService.processWebhook(payload, "Apikey " + TEST_SECRET).isSuccess());
+        verifyNoInteractions(subscriptionRepository);
+    }
+
+    @Test
+    void rejectsUnsignedCouponWebhook() {
+        SepayWebhookPayload payload = SepayWebhookPayload.builder()
+                .content("HBDTCP0123456789ABCDEF").transferType("in").build();
+
+        assertThrows(BadRequestException.class, () -> sepayWebhookService.processWebhook(payload, null));
+        verifyNoInteractions(couponCheckoutService);
     }
 
     @Test

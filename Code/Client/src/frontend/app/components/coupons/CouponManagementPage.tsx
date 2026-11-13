@@ -24,15 +24,15 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { apiClient } from '@/app/lib/apiClient';
 
-type BypassKeyStatus = 'ACTIVE' | 'DISABLED' | 'DEPLETED' | 'EXPIRED';
+type CouponStatus = 'ACTIVE' | 'DISABLED' | 'DEPLETED' | 'EXPIRED';
 
-interface BypassKey {
+interface Coupon {
   id: number;
   keyCode: string;
   maxUses: number;
   usedCount: number;
   discountPercent: number;
-  status: BypassKeyStatus;
+  status: CouponStatus;
   statusDescription: string;
   note: string | null;
   expiresAt: string | null;
@@ -42,7 +42,7 @@ interface BypassKey {
   isUsable: boolean;
 }
 
-interface BypassKeySummary {
+interface CouponSummary {
   totalKeys: number;
   activeKeys: number;
   depletedKeys: number;
@@ -51,9 +51,9 @@ interface BypassKeySummary {
   totalUsages: number;
 }
 
-interface BypassKeyUsage {
+interface CouponUsage {
   id: number;
-  bypassKeyId: number;
+  couponId: number;
   keyCode: string;
   userId: number;
   username: string;
@@ -74,9 +74,9 @@ interface SpringPage<T> {
   size: number;
 }
 
-export default function AdminBypassKeysPage() {
-  const [keys, setKeys] = useState<BypassKey[]>([]);
-  const [summary, setSummary] = useState<BypassKeySummary | null>(null);
+export default function CouponManagementPage() {
+  const [keys, setKeys] = useState<Coupon[]>([]);
+  const [summary, setSummary] = useState<CouponSummary | null>(null);
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [page, setPage] = useState(0);
@@ -94,24 +94,26 @@ export default function AdminBypassKeysPage() {
   const [createForm, setCreateForm] = useState<{
     keyCode: string;
     maxUses: string;
+    discountPercent: string;
     note: string;
     expiresAt: string;
   }>({
     keyCode: '',
     maxUses: '1',
+    discountPercent: '',
     note: '',
     expiresAt: '',
   });
 
   // Usages Modal State
   const [usageModalOpen, setUsageModalOpen] = useState(false);
-  const [selectedKeyForUsage, setSelectedKeyForUsage] = useState<BypassKey | null>(null);
-  const [usages, setUsages] = useState<BypassKeyUsage[]>([]);
+  const [selectedKeyForUsage, setSelectedKeyForUsage] = useState<Coupon | null>(null);
+  const [usages, setUsages] = useState<CouponUsage[]>([]);
   const [loadingUsages, setLoadingUsages] = useState(false);
 
   // Delete Confirm Modal State
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [keyToDelete, setKeyToDelete] = useState<BypassKey | null>(null);
+  const [keyToDelete, setKeyToDelete] = useState<Coupon | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setNotice({ message, type });
@@ -120,7 +122,7 @@ export default function AdminBypassKeysPage() {
 
   const loadSummary = useCallback(async () => {
     try {
-      const data = await apiClient.get<BypassKeySummary>('/api/admin/bypass-keys/summary');
+      const data = await apiClient.get<CouponSummary>('/api/platform/coupons/summary');
       setSummary(data);
     } catch {
       // silently ignore summary fail
@@ -136,11 +138,11 @@ export default function AdminBypassKeysPage() {
       params.append('page', String(page));
       params.append('size', '10');
 
-      const data = await apiClient.get<SpringPage<BypassKey>>(`/api/admin/bypass-keys?${params.toString()}`);
+      const data = await apiClient.get<SpringPage<Coupon>>(`/api/platform/coupons?${params.toString()}`);
       setKeys(data.content || []);
       setTotalPages(data.totalPages || 0);
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Không thể tải danh sách Bypass Key', 'error');
+      showToast(err instanceof Error ? err.message : 'Không thể tải danh sách mã giảm giá', 'error');
     } finally {
       setLoading(false);
     }
@@ -198,7 +200,7 @@ export default function AdminBypassKeysPage() {
     setGeneratingCode(true);
     try {
       const res = await apiClient.get<{ keyCode: string }>(
-        `/api/admin/bypass-keys/generate-code?_t=${Date.now()}`,
+        `/api/platform/coupons/generate-code?_t=${Date.now()}`,
         { skipCache: true }
       );
       if (res && res.keyCode && res.keyCode !== createForm.keyCode) {
@@ -228,6 +230,7 @@ export default function AdminBypassKeysPage() {
     setCreateForm({
       keyCode: initialKey,
       maxUses: '1',
+      discountPercent: '',
       note: '',
       expiresAt: '',
     });
@@ -241,29 +244,30 @@ export default function AdminBypassKeysPage() {
 
     setActionLoading(true);
     try {
-      await apiClient.post('/api/admin/bypass-keys', {
+      await apiClient.post('/api/platform/coupons', {
         keyCode: createForm.keyCode.trim(),
         maxUses: finalMaxUses,
+        discountPercent: Number(createForm.discountPercent),
         note: createForm.note.trim() || null,
-        expiresAt: createForm.expiresAt ? new Date(createForm.expiresAt).toISOString() : null,
+        expiresAt: createForm.expiresAt ? createForm.expiresAt : null,
       });
 
       setCreateModalOpen(false);
-      showToast('Tạo Bypass Key mới thành công!');
+      showToast('Tạo mã giảm giá mới thành công!');
       void loadSummary();
       void loadKeys();
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Tạo Bypass Key thất bại', 'error');
+      showToast(err instanceof Error ? err.message : 'Tạo mã giảm giá thất bại', 'error');
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handleToggleStatus = async (key: BypassKey) => {
-    const newStatus: BypassKeyStatus = key.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+  const handleToggleStatus = async (key: Coupon) => {
+    const newStatus: CouponStatus = key.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
     setActionLoading(true);
     try {
-      await apiClient.put(`/api/admin/bypass-keys/${key.id}/status`, { status: newStatus });
+      await apiClient.put(`/api/platform/coupons/${key.id}/status`, { status: newStatus });
       showToast(`Đã ${newStatus === 'ACTIVE' ? 'kích hoạt' : 'tạm khóa'} key ${key.keyCode}`);
       void loadSummary();
       void loadKeys();
@@ -278,25 +282,25 @@ export default function AdminBypassKeysPage() {
     if (!keyToDelete) return;
     setActionLoading(true);
     try {
-      await apiClient.delete(`/api/admin/bypass-keys/${keyToDelete.id}`);
+      await apiClient.delete(`/api/platform/coupons/${keyToDelete.id}`);
       setDeleteModalOpen(false);
       setKeyToDelete(null);
-      showToast('Đã xóa Bypass Key thành công');
+      showToast('Đã xóa mã giảm giá thành công');
       void loadSummary();
       void loadKeys();
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Không thể xóa Bypass Key', 'error');
+      showToast(err instanceof Error ? err.message : 'Không thể xóa mã giảm giá', 'error');
     } finally {
       setActionLoading(false);
     }
   };
 
-  const openUsagesModal = async (key: BypassKey) => {
+  const openUsagesModal = async (key: Coupon) => {
     setSelectedKeyForUsage(key);
     setUsageModalOpen(true);
     setLoadingUsages(true);
     try {
-      const data = await apiClient.get<BypassKeyUsage[]>(`/api/admin/bypass-keys/${key.id}/usages`);
+      const data = await apiClient.get<CouponUsage[]>(`/api/platform/coupons/${key.id}/usages`);
       setUsages(data || []);
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Không thể tải lịch sử sử dụng', 'error');
@@ -326,7 +330,7 @@ export default function AdminBypassKeysPage() {
     }
   };
 
-  const getStatusBadge = (status: BypassKeyStatus) => {
+  const getStatusBadge = (status: CouponStatus) => {
     switch (status) {
       case 'ACTIVE':
         return (
@@ -388,10 +392,10 @@ export default function AdminBypassKeysPage() {
             <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-400">
               <KeyRound className="w-5 h-5" />
             </div>
-            <h1 className="text-2xl font-black tracking-tight text-white">Quản lý Bypass Key</h1>
+            <h1 className="text-2xl font-black tracking-tight text-white">Quản lý mã giảm giá</h1>
           </div>
           <p className="text-sm text-zinc-400 mt-1">
-            Khóa kích hoạt giảm giá 100% dành cho đối tác, khách hàng VIP và kiểm thử hệ thống.
+            Tạo mã giảm giá gói dịch vụ và theo dõi lịch sử sử dụng.
           </p>
         </div>
 
@@ -401,7 +405,7 @@ export default function AdminBypassKeysPage() {
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-zinc-950 hover:bg-zinc-200 active:scale-95 font-bold text-sm rounded-xl transition shadow-lg shadow-white/5 cursor-pointer shrink-0"
         >
           <Plus className="w-4 h-4" />
-          <span>Tạo Bypass Key mới</span>
+          <span>Tạo mã giảm giá mới</span>
         </button>
       </div>
 
@@ -486,28 +490,29 @@ export default function AdminBypassKeysPage() {
           <table className="w-full text-left text-sm text-zinc-300">
             <thead className="bg-zinc-900 border-b border-zinc-800 text-[11px] uppercase tracking-wider text-zinc-400 font-bold">
               <tr>
-                <th className="px-6 py-4">Mã Bypass Key</th>
+                <th className="px-6 py-4">Mã giảm giá</th>
                 <th className="px-6 py-4">Lượt dùng</th>
                 <th className="px-6 py-4">Ưu đãi</th>
                 <th className="px-6 py-4">Trạng thái</th>
                 <th className="px-6 py-4">Ghi chú & Thời hạn</th>
+                <th className="px-6 py-4">Ngày tạo</th>
                 <th className="px-6 py-4 text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/60">
               {loading && keys.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-zinc-500">
+                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-zinc-400" />
-                    <span>Đang tải danh sách Bypass Key...</span>
+                    <span>Đang tải danh sách mã giảm giá...</span>
                   </td>
                 </tr>
               ) : keys.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-zinc-500">
+                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-500">
                     <KeyRound className="w-8 h-8 mx-auto mb-2 text-zinc-600 opacity-60" />
-                    <p className="font-semibold text-zinc-400">Chưa có mã Bypass Key nào</p>
-                    <p className="text-xs text-zinc-600 mt-1">Bấm &quot;Tạo Bypass Key mới&quot; để phát hành mã đầu tiên.</p>
+                    <p className="font-semibold text-zinc-400">Chưa có mã giảm giá nào</p>
+                    <p className="text-xs text-zinc-600 mt-1">Bấm &quot;Tạo mã giảm giá mới&quot; để phát hành mã đầu tiên.</p>
                   </td>
                 </tr>
               ) : (
@@ -559,7 +564,7 @@ export default function AdminBypassKeysPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
                           <Tag className="w-3 h-3" />
-                          Giảm 100%
+                          Giảm {key.discountPercent}%
                         </span>
                       </td>
 
@@ -575,6 +580,11 @@ export default function AdminBypassKeysPage() {
                             {formatDateTime(key.expiresAt)}
                           </p>
                         </div>
+                      </td>
+
+                      <td className="px-6 py-4 whitespace-nowrap text-xs">
+                        <div>{formatDateTime(key.createdAt)}</div>
+                        <div className="text-zinc-500">{key.createdBy}</div>
                       </td>
 
                       {/* Actions */}
@@ -666,7 +676,7 @@ export default function AdminBypassKeysPage() {
                   <div className="p-2 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
                     <KeyRound className="w-5 h-5" />
                   </div>
-                  <h3 className="font-extrabold text-white text-base">Tạo Bypass Key mới</h3>
+                  <h3 className="font-extrabold text-white text-base">Tạo mã giảm giá mới</h3>
                 </div>
                 <button
                   type="button"
@@ -682,7 +692,7 @@ export default function AdminBypassKeysPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
-                      Mã Bypass Key (20 ký tự chữ và số)
+                      Mã giảm giá (20 ký tự chữ và số)
                     </label>
                     <button
                       type="button"
@@ -713,6 +723,23 @@ export default function AdminBypassKeysPage() {
                   <p className="text-[11px] text-zinc-500">
                     Hệ thống tự động sinh 20 ký tự ngẫu nhiên an toàn. Bạn cũng có thể tự chỉnh sửa nếu muốn.
                   </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="coupon-discount" className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                    Phần trăm giảm giá
+                  </label>
+                  <input
+                    id="coupon-discount"
+                    type="number"
+                    min={1}
+                    max={100}
+                    step={1}
+                    required
+                    value={createForm.discountPercent}
+                    onChange={(e) => setCreateForm({ ...createForm, discountPercent: e.target.value })}
+                    className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-white outline-none focus:border-amber-500 transition text-sm"
+                  />
                 </div>
 
                 {/* Max Uses */}
@@ -802,7 +829,7 @@ export default function AdminBypassKeysPage() {
                     className="px-5 py-2.5 bg-white hover:bg-zinc-200 active:scale-95 text-zinc-950 text-sm font-bold rounded-xl transition shadow-lg flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                   >
                     {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                    <span>{actionLoading ? 'Đang tạo...' : 'Tạo Bypass Key'}</span>
+                    <span>{actionLoading ? 'Đang tạo...' : 'Tạo mã giảm giá'}</span>
                   </button>
                 </div>
               </form>
@@ -825,7 +852,7 @@ export default function AdminBypassKeysPage() {
                 <div>
                   <h3 className="font-extrabold text-white text-base flex items-center gap-2">
                     <History className="w-5 h-5 text-amber-400" />
-                    Lịch sử sử dụng Bypass Key
+                    Lịch sử sử dụng mã giảm giá
                   </h3>
                   <p className="text-xs text-zinc-400 mt-0.5">
                     Mã khóa: <span className="font-mono text-white font-bold">{selectedKeyForUsage?.keyCode}</span>
@@ -873,7 +900,7 @@ export default function AdminBypassKeysPage() {
                             <span>•</span>
                             <span>{u.billingCycle === 'YEARLY' ? 'Theo năm' : 'Theo tháng'}</span>
                             <span>•</span>
-                            <span>Giảm: <strong className="text-emerald-400">100%</strong></span>
+                            <span>Đã giảm <strong className="text-emerald-400">{u.discountAmount.toLocaleString('vi-VN')}đ</strong></span>
                           </div>
                         </div>
 
@@ -904,7 +931,7 @@ export default function AdminBypassKeysPage() {
                 <AlertTriangle className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-bold text-white text-lg">Xác nhận xóa Bypass Key</h3>
+                <h3 className="font-bold text-white text-lg">Xác nhận xóa mã giảm giá</h3>
                 <p className="text-xs text-zinc-400 mt-1">
                   Bạn có chắc chắn muốn xóa mã khóa <span className="font-mono font-bold text-white">{keyToDelete.keyCode}</span>?
                   Lưu ý: Nếu key đã có lượt sử dụng thực tế, hệ thống sẽ ngăn chặn việc xóa để đảm bảo toàn vẹn dữ liệu kế toán.

@@ -11,17 +11,17 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "bypass_key_usages", indexes = {
-        @Index(name = "idx_bypass_usages_key", columnList = "bypass_key_id"),
-        @Index(name = "idx_bypass_usages_user", columnList = "user_id"),
-        @Index(name = "idx_bypass_usages_business", columnList = "business_id")
+@Table(name = "coupon_usages", indexes = {
+        @Index(name = "idx_coupon_usages_key", columnList = "coupon_id"),
+        @Index(name = "idx_coupon_usages_user", columnList = "user_id"),
+        @Index(name = "idx_coupon_usages_business", columnList = "business_id")
 })
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class BypassKeyUsage {
+public class CouponUsage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,8 +29,8 @@ public class BypassKeyUsage {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "bypass_key_id", nullable = false)
-    private BypassKey bypassKey;
+    @JoinColumn(name = "coupon_id", nullable = false)
+    private Coupon coupon;
 
     @Column(name = "user_id", nullable = false, columnDefinition = "BIGINT UNSIGNED")
     private Long userId;

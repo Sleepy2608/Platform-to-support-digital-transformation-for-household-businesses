@@ -437,12 +437,12 @@
     "id" : 37,
     "checksum" : "5469accaef4f4652c5edf41473f4813bbfbde45dd12fa67b64a3976e6877164b",
     "enabled" : true,
-    "file_path" : "seed/bypass_keys.json",
+    "file_path" : "seed/coupons.json",
     "last_seeded_checksum" : "2a4d98b11710b537e44306dfffbb50f61f7275c614a0aa3e6b55f056825e8483",
     "last_seeded_version" : 1,
     "row_count" : 1,
     "seed_order" : 370,
-    "table_name" : "bypass_keys",
+    "table_name" : "coupons",
     "updated_at" : "2026-11-06T20:07:12.850934",
     "version" : 2
   } ]

@@ -18,7 +18,7 @@ import {
 import { downloadQrImage } from '@/app/lib/qrDownload';
 import { apiClient } from '@/app/lib/apiClient';
 
-interface ValidateBypassKeyResponse {
+interface ValidateCouponResponse {
   valid: boolean;
   keyCode?: string;
   discountPercent?: number;
@@ -27,6 +27,12 @@ interface ValidateBypassKeyResponse {
   finalAmount?: number;
   message?: string;
   remainingUses?: number;
+}
+
+interface CouponCheckout {
+  reference: string;
+  finalAmount: number;
+  status: 'PENDING' | 'PAID' | 'EXPIRED';
 }
 
 interface CurrentSubscriptionData {
@@ -59,14 +65,15 @@ interface PaymentQrModalProps {
   error?: string | null;
   packageType?: string;
   billingCycle?: string;
+  renewalMonths?: number;
   onClose: () => void;
-  onConfirm: (bypassKey?: string) => void;
+  onConfirm: (coupon?: string) => void;
 }
 
 export default function PaymentQrModal({
   isOpen,
   amount,
-  transferSyntax,
+  transferSyntax: defaultTransferSyntax,
   title,
   successTitle,
   successMessage,
@@ -74,6 +81,7 @@ export default function PaymentQrModal({
   error,
   packageType,
   billingCycle,
+  renewalMonths,
   onClose,
   onConfirm,
 }: PaymentQrModalProps) {
@@ -83,16 +91,18 @@ export default function PaymentQrModal({
   const [downloading, setDownloading] = useState(false);
   const [qrMode, setQrMode] = useState<'static' | 'vietqr'>('static');
 
-  // Bypass Key state
+  // Coupon state
   const [inputKey, setInputKey] = useState('');
   const [validatingKey, setValidatingKey] = useState(false);
   const [appliedKey, setAppliedKey] = useState<string | null>(null);
-  const [bypassSuccessMsg, setBypassSuccessMsg] = useState<string | null>(null);
-  const [bypassError, setBypassError] = useState<string | null>(null);
+  const [couponQuote, setCouponQuote] = useState<ValidateCouponResponse | null>(null);
+  const [checkout, setCheckout] = useState<CouponCheckout | null>(null);
+  const [couponSuccessMsg, setCouponSuccessMsg] = useState<string | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
   const [paymentFailedMsg, setPaymentFailedMsg] = useState<string | null>(null);
 
-  // Số tiền thực tế sau khi áp dụng mã giảm giá 100%
-  const effectiveAmount = appliedKey ? 0 : amount;
+  const effectiveAmount = checkout?.finalAmount ?? couponQuote?.finalAmount ?? amount;
+  const transferSyntax = checkout?.reference ?? defaultTransferSyntax;
 
   // Tự động lắng nghe giao dịch SePay qua polling
   const [autoDetected, setAutoDetected] = useState(false);
@@ -122,14 +132,15 @@ export default function PaymentQrModal({
     let timer: ReturnType<typeof setTimeout>;
     let cancelled = false;
     startTimeRef.current = Date.now();
+    initialEndDateRef.current = null;
     setPollTimeoutReached(false);
 
     // Lấy hạn gói ban đầu để so sánh khi SePay cộng hạn mới (skipCache: true để luôn lấy dữ liệu tươi)
-    apiClient.get<CurrentSubscriptionData>('/api/owner/subscriptions/current', { skipCache: true })
+    if (!checkout) apiClient.get<CurrentSubscriptionData>('/api/owner/subscriptions/current', { skipCache: true })
       .then((res) => {
         const sub = extractSubscriptionData(res);
-        if (!cancelled && sub?.endDate) {
-          initialEndDateRef.current = sub.endDate;
+        if (!cancelled) {
+          initialEndDateRef.current = sub?.endDate ?? '';
         }
       })
       .catch(() => {});
@@ -142,11 +153,24 @@ export default function PaymentQrModal({
       }
 
       try {
-        const res = await apiClient.get<CurrentSubscriptionData>('/api/owner/subscriptions/current', { skipCache: true });
-        if (cancelled) return;
-        const currentSub = extractSubscriptionData(res);
-        if (currentSub && currentSub.status === 'ACTIVE') {
-          if (!initialEndDateRef.current || currentSub.endDate !== initialEndDateRef.current) {
+        if (checkout) {
+          const status = await apiClient.get<CouponCheckout>(
+            `/api/owner/coupons/checkouts/${checkout.reference}`, { skipCache: true }
+          );
+          if (cancelled) return;
+          if (status.status === 'PAID') {
+            triggerSuccessRedirect();
+            return;
+          }
+          if (status.status === 'EXPIRED') {
+            setPaymentFailedMsg('Phiên thanh toán đã hết hạn. Hãy áp dụng lại mã giảm giá để lấy mã chuyển khoản mới.');
+            return;
+          }
+        } else {
+          const res = await apiClient.get<CurrentSubscriptionData>('/api/owner/subscriptions/current', { skipCache: true });
+          if (cancelled) return;
+          const currentSub = extractSubscriptionData(res);
+          if (currentSub?.status === 'ACTIVE' && initialEndDateRef.current !== null && (currentSub.endDate ?? '') !== initialEndDateRef.current) {
             triggerSuccessRedirect();
             return;
           }
@@ -165,7 +189,7 @@ export default function PaymentQrModal({
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [isOpen, effectiveAmount]);
+  }, [isOpen, effectiveAmount, checkout]);
 
   const staticQrUrl = '/images/qr-code.jpg';
   const dynamicVietQrUrl = effectiveAmount > 0 && transferSyntax
@@ -194,46 +218,52 @@ export default function PaymentQrModal({
     setTimeout(() => setDownloading(false), 1200);
   };
 
-  // Áp dụng Bypass Key
-  const handleApplyBypassKey = async () => {
+  // Áp dụng Coupon
+  const handleApplyCoupon = async () => {
     const rawKey = inputKey.replace(/[^a-zA-Z0-9]/g, '').trim();
     if (!rawKey) {
-      setBypassError('Vui lòng nhập mã Bypass Key');
+      setCouponError('Vui lòng nhập mã giảm giá');
       return;
     }
     if (rawKey.length !== 20) {
-      setBypassError('Mã Bypass Key phải gồm đúng 20 ký tự chữ và số');
+      setCouponError('Mã giảm giá phải gồm đúng 20 ký tự chữ và số');
       return;
     }
 
     setValidatingKey(true);
-    setBypassError(null);
+    setCouponError(null);
 
     try {
-      const res = await apiClient.post<ValidateBypassKeyResponse>('/api/owner/bypass-keys/validate', {
-        keyCode: rawKey,
-        packageType: packageType || '',
-        billingCycle: billingCycle || '',
-      });
+      const request = { keyCode: rawKey, packageType, billingCycle: billingCycle ?? 'MONTHLY', renewalMonths };
+      const res = await apiClient.post<ValidateCouponResponse>('/api/owner/coupons/validate', request);
 
-      if (res && res.valid) {
+      if (res?.valid && res.finalAmount !== undefined) {
+        if (res.finalAmount > 0) {
+          const pending = await apiClient.post<CouponCheckout>('/api/owner/coupons/checkouts', request);
+          setCheckout(pending);
+          setQrMode('vietqr');
+        }
+        setCouponQuote(res);
         setAppliedKey(rawKey);
-        setBypassSuccessMsg(res.message || 'Áp dụng mã Bypass Key thành công!');
+        setCouponSuccessMsg(res.message || 'Áp dụng mã giảm giá thành công!');
         setPaymentFailedMsg(null);
       } else {
-        setBypassError(res?.message || 'Mã Bypass Key không hợp lệ.');
+        setCouponError(res?.message || 'Mã giảm giá không hợp lệ.');
       }
     } catch (err: unknown) {
-      setBypassError(err instanceof Error ? err.message : 'Không thể xác thực mã Bypass Key. Vui lòng thử lại.');
+      setCouponError(err instanceof Error ? err.message : 'Không thể xác thực mã giảm giá. Vui lòng thử lại.');
     } finally {
       setValidatingKey(false);
     }
   };
 
-  const handleRemoveBypassKey = () => {
+  const handleRemoveCoupon = () => {
     setAppliedKey(null);
-    setBypassSuccessMsg(null);
-    setBypassError(null);
+    setCheckout(null);
+    setCouponQuote(null);
+    setQrMode('static');
+    setCouponSuccessMsg(null);
+    setCouponError(null);
     setPaymentFailedMsg(null);
     setInputKey('');
   };
@@ -243,16 +273,29 @@ export default function PaymentQrModal({
       setCheckingPayment(true);
       setPaymentFailedMsg(null);
       try {
+        if (checkout) {
+          const status = await apiClient.get<CouponCheckout>(
+            `/api/owner/coupons/checkouts/${checkout.reference}`, { skipCache: true }
+          );
+          if (status.status === 'PAID') {
+            triggerSuccessRedirect();
+          } else {
+            setPaymentFailedMsg(status.status === 'EXPIRED'
+              ? 'Phiên thanh toán đã hết hạn. Hãy áp dụng lại mã giảm giá để lấy mã chuyển khoản mới.'
+              : 'Chưa nhận được khoản chuyển đúng số tiền. Vui lòng kiểm tra lại sau.');
+          }
+          return;
+        }
         const res = await apiClient.get<CurrentSubscriptionData>('/api/owner/subscriptions/current', { skipCache: true });
         const currentSub = extractSubscriptionData(res);
         if (currentSub && currentSub.status === 'ACTIVE') {
-          if (!initialEndDateRef.current || currentSub.endDate !== initialEndDateRef.current) {
+          if (initialEndDateRef.current !== null && (currentSub.endDate ?? '') !== initialEndDateRef.current) {
             triggerSuccessRedirect();
             return;
           }
         }
         setPaymentFailedMsg(
-          `Hệ thống chưa nhận được thông báo biến động số dư từ SePay cho khoản tiền ${effectiveAmount.toLocaleString('vi-VN')}đ. Ngân hàng có thể mất từ 5 đến 30 giây để xử lý chuyển khoản. Vui lòng bấm thử lại sau giây lát hoặc sử dụng mã ưu đãi Bypass Key.`
+          `Hệ thống chưa nhận được thông báo biến động số dư từ SePay cho khoản tiền ${effectiveAmount.toLocaleString('vi-VN')}đ. Ngân hàng có thể mất từ 5 đến 30 giây để xử lý chuyển khoản. Vui lòng bấm thử lại sau giây lát hoặc sử dụng mã giảm giá.`
         );
       } catch {
         setPaymentFailedMsg('Không thể kết nối đến máy chủ để kiểm tra trạng thái thanh toán. Vui lòng thử lại sau.');
@@ -266,7 +309,7 @@ export default function PaymentQrModal({
   };
 
   const handleModalClose = () => {
-    handleRemoveBypassKey();
+    handleRemoveCoupon();
     setPaymentFailedMsg(null);
     onClose();
   };
@@ -292,7 +335,7 @@ export default function PaymentQrModal({
                   <p className="text-xs text-slate-400">HBDT Digital Subscription Service</p>
                 </div>
               </div>
-              {!loading && !successTitle && (
+              {!loading && !validatingKey && !successTitle && (
                 <button
                   type="button"
                   onClick={handleModalClose}
@@ -317,7 +360,7 @@ export default function PaymentQrModal({
                 </div>
               ) : (
                 <>
-                  {/* Bypass Key Promo Input Box */}
+                  {/* Coupon Promo Input Box */}
                   <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-300/60 rounded-2xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
@@ -327,7 +370,7 @@ export default function PaymentQrModal({
                       {appliedKey && (
                         <button
                           type="button"
-                          onClick={handleRemoveBypassKey}
+                          onClick={handleRemoveCoupon}
                           className="text-[11px] text-rose-600 hover:text-rose-700 font-bold underline cursor-pointer"
                         >
                           Hủy áp dụng
@@ -344,14 +387,14 @@ export default function PaymentQrModal({
                             value={inputKey}
                             onChange={(e) => {
                               setInputKey(e.target.value);
-                              if (bypassError) setBypassError(null);
+                              if (couponError) setCouponError(null);
                             }}
                             placeholder="Nhập mã..."
                             className="flex-1 font-mono tracking-wider text-xs px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition placeholder:text-slate-400 placeholder:font-sans placeholder:tracking-normal"
                           />
                           <button
                             type="button"
-                            onClick={handleApplyBypassKey}
+                            onClick={handleApplyCoupon}
                             disabled={validatingKey || !inputKey.trim()}
                             className="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold text-xs rounded-xl transition shadow-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5 shrink-0"
                           >
@@ -363,10 +406,10 @@ export default function PaymentQrModal({
                             <span>{validatingKey ? 'Đang kiểm tra...' : 'Áp dụng'}</span>
                           </button>
                         </div>
-                        {bypassError && (
+                        {couponError && (
                           <div className="flex items-center gap-1.5 text-xs text-rose-600 font-medium">
                             <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                            <span>{bypassError}</span>
+                            <span>{couponError}</span>
                           </div>
                         )}
                       </div>
@@ -375,24 +418,25 @@ export default function PaymentQrModal({
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                         <div>
                           <p className="font-bold text-emerald-950">
-                            {bypassSuccessMsg || 'Đã áp dụng mã Bypass Key thành công!'}
+                            {couponSuccessMsg || 'Đã áp dụng mã giảm giá thành công!'}
                           </p>
                           <p className="text-[11px] text-emerald-700 mt-0.5">
-                            Mã: <span className="font-mono font-bold tracking-wider">{appliedKey}</span> — Giảm giá 100% (Số tiền phải trả: 0đ).
+                            Mã <span className="font-mono font-bold tracking-wider">{appliedKey}</span>
+                            {' · '}Giảm {couponQuote?.discountPercent}% · Cần trả {effectiveAmount.toLocaleString('vi-VN')}đ
                           </p>
                         </div>
                       </div>
                     )}
                   </div>
 
-                  {/* Khi áp dụng Bypass Key thành công: Ẩn QR ngân hàng & hiển thị thông báo miễn phí */}
-                  {appliedKey ? (
+
+                  {effectiveAmount === 0 ? (
                     <div className="bg-slate-900 text-white rounded-2xl p-6 text-center shadow-lg space-y-3">
                       <div className="w-12 h-12 bg-emerald-500/20 border border-emerald-400/30 rounded-2xl flex items-center justify-center mx-auto text-emerald-400">
                         <Sparkles className="w-6 h-6" />
                       </div>
                       <div>
-                        <h4 className="font-extrabold text-base text-white">Thanh toán miễn phí qua Bypass Key</h4>
+                        <h4 className="font-extrabold text-base text-white">Thanh toán miễn phí bằng mã giảm giá</h4>
                         <p className="text-xs text-slate-300 mt-1 max-w-sm mx-auto">
                           Bạn không cần quét mã chuyển khoản. Vui lòng bấm nút bên dưới để hoàn tất kích hoạt gói dịch vụ ngay lập tức.
                         </p>
@@ -571,7 +615,7 @@ export default function PaymentQrModal({
                   <button
                     type="button"
                     onClick={handleConfirmSubmit}
-                    disabled={loading || checkingPayment}
+                    disabled={loading || checkingPayment || validatingKey || autoDetected}
                     className={`w-full py-3.5 px-4 font-bold text-sm rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50 text-white ${
                       appliedKey
                         ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/30 active:scale-[0.99]'
@@ -587,7 +631,7 @@ export default function PaymentQrModal({
                       ? 'Đang xử lý kích hoạt...'
                       : checkingPayment
                         ? 'Đang kiểm tra biến động số dư...'
-                        : appliedKey
+                        : effectiveAmount === 0
                           ? 'Xác nhận kích hoạt ngay (0đ)'
                           : 'Kiểm tra giao dịch / Xác nhận'}
                   </button>

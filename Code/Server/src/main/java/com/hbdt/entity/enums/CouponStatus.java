@@ -1,6 +1,6 @@
 package com.hbdt.entity.enums;
 
-public enum BypassKeyStatus {
+public enum CouponStatus {
     ACTIVE("Đang hoạt động"),
     DISABLED("Tạm khóa"),
     DEPLETED("Hết lượt dùng"),
@@ -8,7 +8,7 @@ public enum BypassKeyStatus {
 
     private final String description;
 
-    BypassKeyStatus(String description) {
+    CouponStatus(String description) {
         this.description = description;
     }
 

@@ -1,4 +1,4 @@
-package com.hbdt.admin.dto.bypasskey;
+package com.hbdt.admin.dto.coupon;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class BypassKeySummaryResponse {
+public class CouponSummaryResponse {
 
     private long totalKeys;
     private long activeKeys;

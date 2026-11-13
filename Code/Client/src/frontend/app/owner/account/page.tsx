@@ -1014,15 +1014,15 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
     setShowRenewPaymentModal(true);
   };
 
-  const handleConfirmRenewalPayment = async (bypassKey?: string) => {
-    if (!bypassKey && renewalAmount > 0) {
-      setMsg({ type: 'error', text: 'Thanh toán không thành công! Hệ thống chưa nhận được tiền thanh toán. Vui lòng sử dụng mã Bypass Key.' });
+  const handleConfirmRenewalPayment = async (couponCode?: string) => {
+    if (!couponCode && renewalAmount > 0) {
+      setMsg({ type: 'error', text: 'Thanh toán không thành công! Hệ thống chưa nhận được tiền thanh toán. Vui lòng sử dụng mã giảm giá.' });
       return;
     }
     setLoading(true); setMsg(null);
     try {
       const query = `/api/owner/subscription/renew?months=${months}`
-        + (bypassKey ? `&bypassKey=${encodeURIComponent(bypassKey)}` : '');
+        + (couponCode ? `&couponCode=${encodeURIComponent(couponCode)}` : '');
       await apiClient.post<OwnerProfile>(query);
       setPaymentSuccess(true);
       onUpdated();
@@ -1259,6 +1259,7 @@ function SubscriptionTab({ profile, onUpdated }: { profile: OwnerProfile | null;
         error={msg?.type === 'error' ? msg.text : null}
         packageType={currentSubscription?.planCode || 'VIP'}
         billingCycle="MONTHLY"
+        renewalMonths={months}
         onClose={() => setShowRenewPaymentModal(false)}
         onConfirm={handleConfirmRenewalPayment}
       />
