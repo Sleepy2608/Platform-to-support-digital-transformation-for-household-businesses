@@ -2,8 +2,8 @@
 
 > **Lưu ý quan trọng cho AI & Nhà phát triển:**  
 > Tài liệu này được tổng hợp và đối soát chuẩn xác 100% với dữ liệu trích xuất từ **Graphify Knowledge Graph** (với 5.003 thực thể/nodes, 17.929 liên kết/edges và 195 cụm nghiệp vụ).  
-> **Ngày cập nhật kiến thức:** 07/11/2026 (Đã merge hoàn tất PR #150 `feat/sepay` vào nhánh `develop`, bổ sung giấy phép GNU AGPLv3, quy chuẩn Contributing và Master Docs Index).  
-> **Lần sau khi tiếp tục làm việc với dự án, CHỈ CẦN ĐỌC FILE NÀY** là có thể nắm trọn toàn bộ cấu trúc mã nguồn, luồng dữ liệu, nghiệp vụ kế toán, cơ chế subscription và tính năng thanh toán SePay mà không cần quét lại mã nguồn.
+> **Ngày cập nhật kiến thức:** 08/11/2026 (Đã đồng bộ toàn bộ tài liệu Tiêu chuẩn cộng đồng GitHub: LICENSE GNU AGPLv3, CONTRIBUTING.md, pull_request_template.md, SECURITY.md; hoàn tất bộ nhận diện thương hiệu Favicon và tách biệt giao diện Admin Portal).  
+> **Lần sau khi tiếp tục làm việc với dự án, CHỈ CẦN ĐỌC FILE NÀY** là có thể nắm trọn toàn bộ cấu trúc mã nguồn, luồng dữ liệu, nghiệp vụ kế toán, cơ chế subscription, chính sách bảo mật và tính năng thanh toán SePay mà không cần quét lại mã nguồn.
 
 ---
 
@@ -72,7 +72,9 @@
 - `run-ai.bat`: Khởi động Python AI Microservice (`uvicorn main:app`).
 - `docker-compose.yml`: Triển khai cơ sở dữ liệu MySQL và các dịch vụ hỗ trợ.
 - `LICENSE`: Giấy phép mã nguồn mở GNU AGPLv3 (bảo vệ quyền tác giả 6 thành viên, chống độc quyền đóng mã).
-- `CONTRIBUTING.md`: Sổ tay hướng dẫn đóng góp, quy ước commit (`[FEAT]`, `[FIX]`, `[UI]`, `docs:`) và Git workflow.
+- `CONTRIBUTING.md`: Sổ tay hướng dẫn đóng góp, quy ước commit (`[FEAT]`, `[FIX]`, `[UI]`, `type(scope)`) và Git workflow.
+- `SECURITY.md`: Chính sách bảo mật dự án, kênh báo cáo lỗ hổng có trách nhiệm, SLA vá lỗi và cấu trúc phòng thủ an ninh.
+- `.github/pull_request_template.md`: Mẫu mở Pull Request chuẩn hóa hai phong cách `[TYPE]` và `type(scope)`.
 - `README.md`: Tài liệu giới thiệu tổng thể dự án, kiến trúc và tính năng.
 
 ---
@@ -244,8 +246,10 @@ Mục tiêu đã định hình: **Khi người dùng quét mã QR thanh toán th
   - [frontend.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/.graphify/code/frontend.md)
   - [ai.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/.graphify/code/ai.md)
 - [docs/README.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/README.md): **Master Documentation Index** tổng hợp tra cứu toàn bộ 15 chuyên mục tài liệu dự án.
-- [CONTRIBUTING.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/CONTRIBUTING.md): Quy chuẩn đóng góp, quy ước commit (`[FEAT]`, `[FIX]`, `[UI]`, `docs:`) và quy trình kiểm thử trước khi mở PR.
+- [CONTRIBUTING.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/CONTRIBUTING.md): Quy chuẩn đóng góp, quy ước commit (`[FEAT]`, `[FIX]`, `[UI]`, `type(scope)`) và quy trình kiểm thử trước khi mở PR.
+- [SECURITY.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/SECURITY.md): Chính sách bảo mật dự án, kênh tiếp nhận lỗ hổng bí mật (Private Reporting), SLA khắc phục và 6 lớp phòng thủ an ninh.
 - [LICENSE](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/LICENSE): Giấy phép GNU Affero General Public License v3.0 (AGPLv3) với tuyên bố đồng sở hữu của 6 thành viên nhóm phát triển.
+- [.github/pull_request_template.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/.github/pull_request_template.md): Mẫu Pull Request chuẩn hóa tự động nạp checklist kiểm thử.
 - [AGENTS.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/.agents/AGENTS.md): **Quy chuẩn & Sổ tay kiểm thử tự động (QA/Test Agent Guide)** được cấu hình đồng bộ trực tiếp từ các lệnh và thông số trích xuất của Graphify.
 
 ---
