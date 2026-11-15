@@ -5,7 +5,6 @@ import Link from 'next/link';
 import {
   Store,
   ShieldCheck,
-  ChevronUp,
   FileText,
   Users,
   Scale,
@@ -70,16 +69,12 @@ const TEAM_MEMBERS: TeamMember[] = [
 export default function Footer() {
   const [activeDoc, setActiveDoc] = useState<LegalDocKey | null>(null);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
     <footer className="relative z-10 bg-zinc-950/95 border-t border-zinc-800 text-zinc-300 pt-12 pb-8 overflow-hidden backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-8 relative z-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-12 pb-10 border-b border-zinc-800/80">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10 pb-10 border-b border-zinc-800/80">
           
-          {/* MỤC 1: BRAND & BẢN QUYỀN HỆ THỐNG (4 COLS) */}
+          {/* CỘT 1 (BÊN TRÁI): BRAND & BẢN QUYỀN HỆ THỐNG (4 COLS) */}
           <div className="lg:col-span-4 flex flex-col justify-between">
             <div>
               <Link href="/" className="flex items-center gap-2.5 group w-fit mb-4">
@@ -117,7 +112,7 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* MỤC 2: QUY CHUẨN PHÁP LÝ (3 COLS) */}
+          {/* CỘT 2 (Ở GIỮA): QUY CHUẨN PHÁP LÝ (3 COLS) */}
           <div className="lg:col-span-3">
             <div className="flex items-center gap-2 mb-4">
               <Scale className="w-4 h-4 text-blue-400" />
@@ -172,7 +167,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* MỤC 3: THÔNG TIN NHÓM (5 COLS) */}
+          {/* CỘT 3 (NGOÀI CÙNG BÊN PHẢI): THÔNG TIN NHÓM PHÁT TRIỂN (5 COLS) */}
           <div className="lg:col-span-5">
             <div className="flex items-center gap-2 mb-4">
               <Users className="w-4 h-4 text-amber-400" />
@@ -224,23 +219,11 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* SUB-FOOTER: BẢN QUYỀN RÚT GỌN & NÚT VỀ ĐẦU TRANG */}
-        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
-          <div className="text-center sm:text-left">
-            <span>© 2026 HBDT.DIGITAL. Phát triển bởi Nhóm HBDT Platform. Bảo lưu mọi quyền theo giấy phép GNU AGPLv3.</span>
-          </div>
-
-          <button
-            type="button"
-            onClick={scrollToTop}
-            className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors cursor-pointer group"
-            aria-label="Về đầu trang"
-          >
-            <span>Về đầu trang</span>
-            <div className="p-1 rounded bg-zinc-900 border border-zinc-800 group-hover:bg-zinc-800 transition-colors">
-              <ChevronUp className="w-3.5 h-3.5" />
-            </div>
-          </button>
+        {/* SUB-FOOTER: BẢN QUYỀN CĂN GIỮA */}
+        <div className="pt-6 text-center text-xs text-zinc-500">
+          <p>
+            © 2026 HBDT.DIGITAL. Phát triển bởi Nhóm HBDT Platform. Bảo lưu mọi quyền theo giấy phép GNU AGPLv3.
+          </p>
         </div>
       </div>
 
