@@ -9,7 +9,6 @@ import {
   FileText,
   Users,
   Scale,
-  Mail,
   ExternalLink,
 } from 'lucide-react';
 import PolicyModal from './legal/PolicyModal';
@@ -18,17 +17,54 @@ import { LEGAL_DOCS, type LegalDocKey } from '@/app/lib/legal-content';
 interface TeamMember {
   name: string;
   mssv: string;
-  role: string;
-  github?: string;
+  role: 'Leader' | 'Co-Leader' | 'Member';
+  github: string;
+  avatar: string;
 }
 
 const TEAM_MEMBERS: TeamMember[] = [
-  { name: 'Nguyễn Lê Huy Tâm', mssv: '056206011188', role: 'Leader / Fullstack', github: 'https://github.com/Sleepy2608' },
-  { name: 'Trần Duy Tân', mssv: '083206003584', role: 'UI Designer / Frontend', github: 'https://github.com/dzytan' },
-  { name: 'Trần Văn Ngọc Thắng', mssv: '046206001641', role: 'Tester & Debugger', github: 'https://github.com/Thang414' },
-  { name: 'Nguyễn Ngọc Gia Bảo', mssv: '079206008279', role: 'Database Manager', github: 'https://github.com/Baon5824' },
-  { name: 'Trần Hồng Sơn', mssv: '060206012202', role: 'Feature Developer', github: 'https://github.com/sontran310306' },
-  { name: 'Huỳnh Đình Chấn', mssv: '077206002307', role: 'Feature Developer', github: 'https://github.com/Chan-2006' },
+  {
+    name: 'Nguyễn Lê Huy Tâm',
+    mssv: '056206011188',
+    role: 'Leader',
+    github: 'https://github.com/Sleepy2608',
+    avatar: 'https://github.com/Sleepy2608.png',
+  },
+  {
+    name: 'Trần Văn Ngọc Thắng',
+    mssv: '046206001641',
+    role: 'Co-Leader',
+    github: 'https://github.com/Thang414',
+    avatar: 'https://github.com/Thang414.png',
+  },
+  {
+    name: 'Trần Duy Tân',
+    mssv: '083206003584',
+    role: 'Member',
+    github: 'https://github.com/dzytan',
+    avatar: 'https://github.com/dzytan.png',
+  },
+  {
+    name: 'Nguyễn Ngọc Gia Bảo',
+    mssv: '079206008279',
+    role: 'Member',
+    github: 'https://github.com/Baon5824',
+    avatar: 'https://github.com/Baon5824.png',
+  },
+  {
+    name: 'Trần Hồng Sơn',
+    mssv: '060206012202',
+    role: 'Member',
+    github: 'https://github.com/trnhongson',
+    avatar: 'https://github.com/trnhongson.png',
+  },
+  {
+    name: 'Huỳnh Đình Chấn',
+    mssv: '077206002307',
+    role: 'Member',
+    github: 'https://github.com/Chan-2006',
+    avatar: 'https://github.com/Chan-2006.png',
+  },
 ];
 
 export default function Footer() {
@@ -138,50 +174,51 @@ export default function Footer() {
 
           {/* MỤC 3: THÔNG TIN NHÓM (5 COLS) */}
           <div className="lg:col-span-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-amber-400" />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Thông Tin Nhóm Phát Triển
-                </h3>
-              </div>
-              <a
-                href="mailto:huytamnguyenle2608@gmail.com"
-                className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
-                title="Email liên hệ Leader"
-              >
-                <Mail className="w-3 h-3 text-blue-400" />
-                <span>Liên hệ nhóm</span>
-              </a>
+            <div className="flex items-center gap-2 mb-4">
+              <Users className="w-4 h-4 text-amber-400" />
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                Thông Tin Nhóm Phát Triển
+              </h3>
             </div>
 
-            {/* Grid 6 thành viên nhóm */}
+            {/* Grid 6 thành viên nhóm (Row 1: Huy Tâm - Leader & Ngọc Thắng - Co-Leader) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {TEAM_MEMBERS.map((member) => (
-                <div
+                <a
                   key={member.mssv}
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 transition-all duration-200 group"
+                  href={member.github}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/60 transition-all duration-200 group cursor-pointer"
+                  title={`Xem GitHub của ${member.name}`}
                 >
-                  <div className="min-w-0 pr-2">
-                    <p className="text-xs font-semibold text-zinc-200 truncate group-hover:text-white transition-colors">
-                      {member.name}
-                    </p>
-                    <p className="text-[11px] text-zinc-400 truncate">
-                      {member.role}
-                    </p>
+                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                    {/* GitHub Avatar */}
+                    <img
+                      src={member.avatar}
+                      alt={member.name}
+                      className="w-8 h-8 rounded-full border border-zinc-700/80 object-cover shrink-0 bg-zinc-800"
+                      loading="lazy"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-zinc-200 truncate group-hover:text-white transition-colors">
+                        {member.name}
+                      </p>
+                      <p className="text-[11px] truncate">
+                        {member.role === 'Leader' && (
+                          <span className="font-semibold text-amber-400">Leader</span>
+                        )}
+                        {member.role === 'Co-Leader' && (
+                          <span className="font-semibold text-blue-400">Co-Leader</span>
+                        )}
+                        {member.role === 'Member' && (
+                          <span className="text-zinc-400">Member</span>
+                        )}
+                      </p>
+                    </div>
                   </div>
-                  {member.github && (
-                    <a
-                      href={member.github}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-zinc-500 hover:text-zinc-200 p-1 rounded-md hover:bg-zinc-800 transition-colors"
-                      aria-label={`GitHub của ${member.name}`}
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  )}
-                </div>
+                  <ExternalLink className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-200 shrink-0 transition-colors" />
+                </a>
               ))}
             </div>
           </div>
