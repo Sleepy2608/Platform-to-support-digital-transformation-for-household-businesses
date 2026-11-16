@@ -531,10 +531,10 @@ export default function PaymentQrModal({
                         <div className="mt-3.5 flex flex-col sm:flex-row items-center justify-center gap-3">
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-slate-400 font-medium">Số tiền:</span>
-                            <span className="text-xl font-black text-amber-400">{amount.toLocaleString('vi-VN')}đ</span>
+                            <span className="text-xl font-black text-amber-400">{effectiveAmount.toLocaleString('vi-VN')}đ</span>
                             <button
                               type="button"
-                              onClick={() => copyValue(amount.toString(), 'amount')}
+                              onClick={() => copyValue(effectiveAmount.toString(), 'amount')}
                               className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition"
                               title="Sao chép số tiền"
                             >
