@@ -94,7 +94,7 @@ export default function AdminLayout({
     { name: 'Thống kê nền tảng', href: '/admin/analytics', icon: BarChart3 },
     { name: 'Tài khoản Manager', href: '/admin/accounts', icon: Users },
     { name: 'Gói thuê bao', href: '/admin/subscription-plans', icon: BadgeDollarSign },
-    { name: 'Bypass Key', href: '/admin/bypass-keys', icon: KeyRound },
+    { name: 'Mã giảm giá', href: '/admin/coupons', icon: KeyRound },
     { name: 'Quản lý tính năng', href: '/admin/features', icon: Boxes },
     { name: 'Hỗ trợ', href: '/admin/feedback', icon: MessageSquare },
     { name: 'Thông báo hệ thống', href: '/admin/announcements', icon: Store },

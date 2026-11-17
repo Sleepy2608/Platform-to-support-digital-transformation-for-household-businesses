@@ -1,6 +1,6 @@
-package com.hbdt.admin.dto.bypasskey;
+package com.hbdt.admin.dto.coupon;
 
-import com.hbdt.entity.enums.BypassKeyStatus;
+import com.hbdt.entity.enums.CouponStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,9 +13,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class BypassKeyStatusUpdateRequest {
+public class CouponStatusUpdateRequest {
 
     @NotNull(message = "Trạng thái không được để trống")
-    private BypassKeyStatus status;
+    private CouponStatus status;
 }
 

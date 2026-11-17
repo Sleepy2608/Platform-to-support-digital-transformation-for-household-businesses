@@ -136,20 +136,11 @@ Quản lý danh mục và **phiên bản** biểu mẫu báo cáo kế toán the
 
 ---
 
-### 3.6 Quản lý Mã Kích Hoạt Bypass Key (`/admin/bypass-keys`)
+### 3.6 Quản lý mã giảm giá (`/admin/coupons`)
 
-Hệ thống cho phép Quản trị viên sinh các mã Bypass Key (chuỗi ngẫu nhiên 20 ký tự an toàn) để hỗ trợ kích hoạt gói dịch vụ tức thì (chiết khấu 100%) dành cho kiểm thử E2E hoặc các hộ kinh doanh được tài trợ.
-
-1. Vào menu **Quản lý Bypass Key** (`/admin/bypass-keys`).
-2. **Tạo mã mới**:
-   - Nhập **Tên chương trình / Lý do cấp mã** (ví dụ: `Hỗ trợ chuyển đổi số thí điểm`).
-   - Nhập **Số lượt sử dụng tối đa** (ví dụ: `1` cho mã dùng 1 lần, hoặc `10` cho mã nhóm).
-   - Thiết lập **Thời hạn hết hạn** của mã.
-   - Bấm **Tạo mã** → Hệ thống tự động sinh chuỗi 20 ký tự an toàn.
-3. **Quản lý và Theo dõi**:
-   - Theo dõi danh sách mã đã phát hành, số lượt đã sử dụng (`usedCount` / `maxUses`), trạng thái (`ACTIVE` / `EXPIRED` / `DISABLED`).
-   - Bấm **Khóa mã** nếu phát hiện mã bị rò rỉ ngoài ý muốn.
-   - Xem lịch sử sử dụng chi tiết: Hộ kinh doanh nào đã nhập mã vào thời gian nào.
+1. Vào menu **Mã giảm giá**. Manager có thể vào mục **Quản lý mã giảm giá** tại `/manager/coupons`.
+2. Chọn **Tạo mã giảm giá mới**, nhập mức giảm từ 1% đến 100%, giới hạn lượt dùng, ghi chú và thời hạn nếu có. Hệ thống hỗ trợ tự sinh mã 20 ký tự.
+3. Danh sách hiển thị ngày tạo, người tạo, trạng thái và lượt sử dụng. Có thể xem lịch sử, khóa mã hoặc xóa mã chưa được sử dụng và chưa có giao dịch đang chờ thanh toán.
 
 ---
 
@@ -160,7 +151,7 @@ Hệ thống cho phép Quản trị viên sinh các mã Bypass Key (chuỗi ng�
 | **Quản lý Tài khoản** | Tìm kiếm, Khóa, Mở khóa, Reset Pass | Toàn quyền trên mọi tài khoản `ADMIN`, `MANAGER`, `OWNER`, `EMPLOYEE` |
 | **Quản lý Hộ kinh doanh** | Xem chi tiết, Phê duyệt, Tạm dừng | Quản lý thông tin pháp lý và trạng thái hoạt động của Hộ kinh doanh |
 | **Quản lý Thuê bao** | Tạo gói, Sửa giá, Cấu hình tính năng | Định hình các gói cước Free / Basic / Pro trên nền tảng |
-| **Quản lý Bypass Key** | Sinh mã 20 ký tự, Giới hạn lượt, Khóa mã | Cấp quyền kích hoạt gói 100% không qua ngân hàng cho kiểm thử/tài trợ |
+| **Quản lý mã giảm giá** | Tạo mã, nhập phần trăm giảm, xem ngày tạo và lịch sử | Cấp mã giảm giá cho gói dịch vụ |
 | **Quản lý Biểu mẫu Kế toán** | Tạo biểu mẫu, Phát hành phiên bản, Đóng hiệu lực phiên bản cũ | Quản lý phiên bản biểu mẫu S1-HKD / S2-HKD / S4-HKD theo ngày hiệu lực |
 | **Nhật ký Audit Log** | Tra cứu, Xuất log hệ thống | Xem chi tiết các truy vết thao tác và lịch sử đăng nhập/thay đổi |
 | **Seek Data Master** | Snapshot, Restore dữ liệu seed | Mã hóa và đồng bộ dữ liệu mẫu danh mục hệ thống |

@@ -162,9 +162,9 @@ Owner có thể nhờ trợ lý AI viết bản nhận xét cho báo cáo vận 
      * Cú pháp định danh chuyển khoản chuẩn hóa: `HBDT RENEW <businessId> <months>` (hoặc theo cú pháp gói cước trên màn hình).
      * Khi tiền vào tài khoản, SePay Webhook tự động xác thực và gia hạn gói trong vài giây. Giao diện tự động phát hiện (polling đa tầng `{ skipCache: true }`) và chuyển sang trạng thái thành công mà không cần tải lại trang.
      * Nếu mạng ngân hàng trễ, bạn có thể bấm nút **"Kiểm tra giao dịch / Xác nhận"** để hệ thống truy vấn kiểm tra biến động số dư tức thì, hoặc đợi trong tối đa 10 phút.
-   - **Cách 2 — Áp dụng mã Bypass Key (Ưu đãi 100%):**
-     * Nhập mã Bypass Key 20 ký tự do Admin cấp vào ô mã giảm giá ➔ Bấm **Áp dụng**.
-     * Số tiền thanh toán chuyển về 0đ và gói cước được kích hoạt ngay lập tức.
+   - **Cách 2 — Áp dụng mã giảm giá:**
+     * Nhập mã 20 ký tự do Admin hoặc Manager cấp và bấm **Áp dụng**.
+     * Với mã giảm 100%, bấm xác nhận để kích hoạt. Với mã giảm một phần, chuyển đúng số tiền và nội dung hiển thị trên mã QR. Gói được kích hoạt hoặc gia hạn khi SePay xác nhận.
 5. Sau khi thanh toán, hệ thống tự động sinh hóa đơn `ServiceInvoice` (PAID) và cập nhật quyền sử dụng các tính năng tương ứng.
 
 > Nếu chuyển khoản sai cú pháp hoặc sai số tài khoản, hệ thống sẽ từ chối tự động kích hoạt để bảo đảm an toàn và lưu lại vào nhật ký kiểm toán để Manager/Admin đối soát thủ công.

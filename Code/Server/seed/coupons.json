@@ -1,5 +1,5 @@
 {
-  "table" : "bypass_keys",
+  "table" : "coupons",
   "version" : 2,
   "rows" : [ {
     "id" : 1,

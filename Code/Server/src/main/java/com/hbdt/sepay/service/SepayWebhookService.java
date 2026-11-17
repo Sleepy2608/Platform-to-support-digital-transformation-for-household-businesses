@@ -5,6 +5,7 @@ import com.hbdt.entity.*;
 import com.hbdt.entity.enums.RoleType;
 import com.hbdt.entity.enums.SubscriptionStatus;
 import com.hbdt.repository.*;
+import com.hbdt.owner.service.CouponCheckoutService;
 import com.hbdt.sepay.dto.SepayWebhookPayload;
 import com.hbdt.sepay.dto.SepayWebhookResponse;
 import lombok.RequiredArgsConstructor;
@@ -39,12 +40,18 @@ public class SepayWebhookService {
     private final SubscriptionHistoryRepository subscriptionHistoryRepository;
     private final UserRepository userRepository;
     private final SubscriptionPlanRepository subscriptionPlanRepository;
+    private final CouponCheckoutService couponCheckoutService;
 
     @Value("${sepay.secret-key:spsk_test_4hP4UGF9NSNY5Hjyt8mbVcT8P2wWEBNS}")
     private String secretKey;
 
+    @Value("${SEPAY_SECRET_KEY:}")
+    private String couponWebhookSecret;
+
     @Value("${sepay.account-number:107882760609}")
     private String expectedAccountNumber;
+
+    private static final Pattern COUPON_REFERENCE = Pattern.compile("(?i)\\bHBDTCP[A-F0-9]{16}\\b");
 
     // Các mẫu regex bóc tách mã định danh trong content chuyển khoản
     private static final Pattern SUB_TEST_PATTERN = Pattern.compile("(?i)HBDT[\\s-_]+SUB[\\s-_]+TEST[\\s-_]+(\\d+)");
@@ -59,10 +66,11 @@ public class SepayWebhookService {
      * Xác thực header Authorization từ SePay
      */
     public boolean isValidAuthorization(String authHeader) {
-        if (secretKey == null || secretKey.isBlank()) {
-            return true;
-        }
-        if (authHeader == null || authHeader.isBlank()) {
+        return secretKey == null || secretKey.isBlank() || matchesAuthorization(authHeader, secretKey);
+    }
+
+    private boolean matchesAuthorization(String authHeader, String expectedSecret) {
+        if (authHeader == null || authHeader.isBlank() || expectedSecret == null || expectedSecret.isBlank()) {
             return false;
         }
         String token = authHeader.trim();
@@ -71,7 +79,7 @@ public class SepayWebhookService {
         } else if (token.regionMatches(true, 0, "Bearer ", 0, 7)) {
             token = token.substring(7).trim();
         }
-        return secretKey.trim().equals(token);
+        return expectedSecret.trim().equals(token);
     }
 
     /**
@@ -82,9 +90,8 @@ public class SepayWebhookService {
             throw new BadRequestException("Payload webhook không được để trống");
         }
 
-        // Kiểm tra bảo mật nếu có header Authorization gửi kèm
         if (authHeader != null && !authHeader.isBlank() && !isValidAuthorization(authHeader)) {
-            logger.warn("SePay webhook unauthorized request with token: {}", authHeader);
+            logger.warn("SePay webhook unauthorized request");
             throw new BadRequestException("Xác thực SePay API Key không hợp lệ");
         }
 
@@ -117,6 +124,19 @@ public class SepayWebhookService {
         }
 
         String content = payload.getContent() != null ? payload.getContent() : "";
+        Matcher couponReference = COUPON_REFERENCE.matcher(content + " " + (payload.getCode() == null ? "" : payload.getCode()));
+        if (couponReference.find()) {
+            if (!matchesAuthorization(authHeader, couponWebhookSecret)) {
+                throw new BadRequestException("Xác thực SePay API Key không hợp lệ");
+            }
+            String reference = couponReference.group().toUpperCase(Locale.ROOT);
+            if (couponCheckoutService.confirm(reference, payload.getTransferAmount(), txnId)) {
+                return SepayWebhookResponse.ok("Thanh toán mã giảm giá thành công");
+            }
+            recordUnmatchedPayment(payload, txnId);
+            return SepayWebhookResponse.ok("Đã ghi nhận giao dịch mã giảm giá để đối soát thủ công");
+        }
+
         Long subId = extractSubscriptionId(content, payload.getCode());
         Long businessId = null;
         int renewMonths = 1;

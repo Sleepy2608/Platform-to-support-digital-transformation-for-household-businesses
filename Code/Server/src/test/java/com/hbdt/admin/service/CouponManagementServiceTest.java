@@ -1,16 +1,17 @@
 package com.hbdt.admin.service;
 
-import com.hbdt.admin.dto.bypasskey.BypassKeyCreateRequest;
-import com.hbdt.admin.dto.bypasskey.BypassKeyResponse;
-import com.hbdt.admin.dto.bypasskey.BypassKeySummaryResponse;
-import com.hbdt.admin.dto.bypasskey.BypassKeyUsageResponse;
+import com.hbdt.admin.dto.coupon.CouponCreateRequest;
+import com.hbdt.admin.dto.coupon.CouponResponse;
+import com.hbdt.admin.dto.coupon.CouponSummaryResponse;
+import com.hbdt.admin.dto.coupon.CouponUsageResponse;
 import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
-import com.hbdt.entity.BypassKey;
-import com.hbdt.entity.BypassKeyUsage;
-import com.hbdt.entity.enums.BypassKeyStatus;
-import com.hbdt.repository.BypassKeyRepository;
-import com.hbdt.repository.BypassKeyUsageRepository;
+import com.hbdt.entity.Coupon;
+import com.hbdt.entity.CouponUsage;
+import com.hbdt.entity.enums.CouponStatus;
+import com.hbdt.repository.CouponRepository;
+import com.hbdt.repository.CouponCheckoutRepository;
+import com.hbdt.repository.CouponUsageRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,27 +32,30 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class BypassKeyAdminServiceTest {
+class CouponManagementServiceTest {
 
     @Mock
-    private BypassKeyRepository bypassKeyRepository;
+    private CouponRepository couponRepository;
 
     @Mock
-    private BypassKeyUsageRepository bypassKeyUsageRepository;
+    private CouponUsageRepository couponUsageRepository;
 
-    private BypassKeyAdminService bypassKeyAdminService;
+    @Mock
+    private CouponCheckoutRepository checkoutRepository;
+
+    private CouponManagementService couponAdminService;
 
     @BeforeEach
     void setUp() {
-        bypassKeyAdminService = new BypassKeyAdminService(bypassKeyRepository, bypassKeyUsageRepository);
+        couponAdminService = new CouponManagementService(couponRepository, couponUsageRepository, checkoutRepository);
     }
 
     @Test
     @DisplayName("generateSecure20DigitCode sinh chuỗi 20 ký tự gồm đủ cả chữ số, chữ hoa và chữ thường")
     void testGenerateSecure20DigitCode() {
-        when(bypassKeyRepository.existsByKeyCode(any())).thenReturn(false);
+        when(couponRepository.existsByKeyCode(any())).thenReturn(false);
 
-        String code = bypassKeyAdminService.generateSecure20DigitCode();
+        String code = couponAdminService.generateSecure20DigitCode();
 
         assertNotNull(code);
         assertEquals(20, code.length());
@@ -64,30 +68,30 @@ class BypassKeyAdminServiceTest {
     @Test
     @DisplayName("createKey tự động sinh mã khi keyCode để trống")
     void testCreateKeyAutoGeneratesCode() {
-        when(bypassKeyRepository.existsByKeyCode(any())).thenReturn(false);
-        when(bypassKeyRepository.save(any(BypassKey.class))).thenAnswer(inv -> {
-            BypassKey key = inv.getArgument(0);
+        when(couponRepository.existsByKeyCode(any())).thenReturn(false);
+        when(couponRepository.save(any(Coupon.class))).thenAnswer(inv -> {
+            Coupon key = inv.getArgument(0);
             key.setId(1L);
             key.setCreatedAt(LocalDateTime.now());
             key.setUpdatedAt(LocalDateTime.now());
             return key;
         });
 
-        BypassKeyCreateRequest request = BypassKeyCreateRequest.builder()
+        CouponCreateRequest request = CouponCreateRequest.builder().discountPercent(25)
                 .keyCode("")
                 .maxUses(5)
                 .note("Cấp thử nghiệm")
                 .build();
 
-        BypassKeyResponse response = bypassKeyAdminService.createKey(request, "admin");
+        CouponResponse response = couponAdminService.createKey(request, "admin");
 
         assertNotNull(response);
         assertEquals(1L, response.getId());
         assertEquals(20, response.getKeyCode().length());
         assertEquals(5, response.getMaxUses());
         assertEquals(0, response.getUsedCount());
-        assertEquals(100, response.getDiscountPercent());
-        assertEquals(BypassKeyStatus.ACTIVE, response.getStatus());
+        assertEquals(25, response.getDiscountPercent());
+        assertEquals(CouponStatus.ACTIVE, response.getStatus());
         assertEquals("Cấp thử nghiệm", response.getNote());
         assertEquals("admin", response.getCreatedBy());
     }
@@ -96,19 +100,19 @@ class BypassKeyAdminServiceTest {
     @DisplayName("createKey chấp nhận mã 20 ký tự gồm cả chữ hoa, chữ thường và số do admin tự nhập")
     void testCreateKeyWithCustomValidCode() {
         String customCode = "8k2N9f7X1m4Q5Z8p3R9t";
-        when(bypassKeyRepository.existsByKeyCode(customCode)).thenReturn(false);
-        when(bypassKeyRepository.save(any(BypassKey.class))).thenAnswer(inv -> {
-            BypassKey key = inv.getArgument(0);
+        when(couponRepository.existsByKeyCode(customCode)).thenReturn(false);
+        when(couponRepository.save(any(Coupon.class))).thenAnswer(inv -> {
+            Coupon key = inv.getArgument(0);
             key.setId(2L);
             return key;
         });
 
-        BypassKeyCreateRequest request = BypassKeyCreateRequest.builder()
+        CouponCreateRequest request = CouponCreateRequest.builder().discountPercent(25)
                 .keyCode(customCode)
                 .maxUses(1)
                 .build();
 
-        BypassKeyResponse response = bypassKeyAdminService.createKey(request, "superadmin");
+        CouponResponse response = couponAdminService.createKey(request, "superadmin");
 
         assertEquals(customCode, response.getKeyCode());
         assertEquals(1, response.getMaxUses());
@@ -117,13 +121,13 @@ class BypassKeyAdminServiceTest {
     @Test
     @DisplayName("createKey từ chối nếu mã tự nhập không đủ hoặc quá 20 ký tự chữ và số")
     void testCreateKeyRejectsInvalidLengthCode() {
-        BypassKeyCreateRequest request = BypassKeyCreateRequest.builder()
+        CouponCreateRequest request = CouponCreateRequest.builder().discountPercent(25)
                 .keyCode("123456789")
                 .maxUses(1)
                 .build();
 
         BadRequestException ex = assertThrows(BadRequestException.class,
-                () -> bypassKeyAdminService.createKey(request, "admin"));
+                () -> couponAdminService.createKey(request, "admin"));
         assertTrue(ex.getMessage().contains("20 ký tự chữ và số"));
     }
 
@@ -131,15 +135,15 @@ class BypassKeyAdminServiceTest {
     @DisplayName("createKey từ chối nếu mã bị trùng lặp trong cơ sở dữ liệu")
     void testCreateKeyRejectsDuplicateCode() {
         String duplicateCode = "99999999999999999999";
-        when(bypassKeyRepository.existsByKeyCode(duplicateCode)).thenReturn(true);
+        when(couponRepository.existsByKeyCode(duplicateCode)).thenReturn(true);
 
-        BypassKeyCreateRequest request = BypassKeyCreateRequest.builder()
+        CouponCreateRequest request = CouponCreateRequest.builder().discountPercent(25)
                 .keyCode(duplicateCode)
                 .maxUses(2)
                 .build();
 
         BadRequestException ex = assertThrows(BadRequestException.class,
-                () -> bypassKeyAdminService.createKey(request, "admin"));
+                () -> couponAdminService.createKey(request, "admin"));
         assertTrue(ex.getMessage().contains("đã tồn tại"));
     }
 
@@ -147,24 +151,24 @@ class BypassKeyAdminServiceTest {
     @DisplayName("createKey tự động gán maxUses = 1 nếu giá trị đầu vào <= 0 hoặc null")
     void testCreateKeyDefaultsMaxUsesToOneWhenZeroOrNegative() {
         String customCode = "ABC123XYZ456DEF78901";
-        when(bypassKeyRepository.existsByKeyCode(customCode)).thenReturn(false);
-        when(bypassKeyRepository.save(any(BypassKey.class))).thenAnswer(inv -> {
-            BypassKey key = inv.getArgument(0);
+        when(couponRepository.existsByKeyCode(customCode)).thenReturn(false);
+        when(couponRepository.save(any(Coupon.class))).thenAnswer(inv -> {
+            Coupon key = inv.getArgument(0);
             key.setId(3L);
             return key;
         });
 
-        BypassKeyCreateRequest request = BypassKeyCreateRequest.builder()
+        CouponCreateRequest request = CouponCreateRequest.builder().discountPercent(25)
                 .keyCode(customCode)
                 .maxUses(0)
                 .build();
 
-        BypassKeyResponse response = bypassKeyAdminService.createKey(request, "admin");
+        CouponResponse response = couponAdminService.createKey(request, "admin");
         assertNotNull(response);
         assertEquals(1, response.getMaxUses());
 
         request.setMaxUses(-5);
-        BypassKeyResponse responseNeg = bypassKeyAdminService.createKey(request, "admin");
+        CouponResponse responseNeg = couponAdminService.createKey(request, "admin");
         assertNotNull(responseNeg);
         assertEquals(1, responseNeg.getMaxUses());
     }
@@ -172,32 +176,32 @@ class BypassKeyAdminServiceTest {
     @Test
     @DisplayName("createKey từ chối nếu thời hạn hết hạn ở quá khứ")
     void testCreateKeyRejectsPastExpiry() {
-        BypassKeyCreateRequest request = BypassKeyCreateRequest.builder()
+        CouponCreateRequest request = CouponCreateRequest.builder().discountPercent(25)
                 .keyCode("12345678901234567890")
                 .maxUses(1)
                 .expiresAt(LocalDateTime.now().minusDays(1))
                 .build();
 
         BadRequestException ex = assertThrows(BadRequestException.class,
-                () -> bypassKeyAdminService.createKey(request, "admin"));
+                () -> couponAdminService.createKey(request, "admin"));
         assertTrue(ex.getMessage().contains("tương lai"));
     }
 
     @Test
     @DisplayName("searchKeys phân trang và map dữ liệu chính xác")
     void testSearchKeys() {
-        BypassKey key = BypassKey.builder()
+        Coupon key = Coupon.builder()
                 .id(10L)
                 .keyCode("11112222333344445555")
                 .maxUses(3)
                 .usedCount(1)
-                .status(BypassKeyStatus.ACTIVE)
+                .status(CouponStatus.ACTIVE)
                 .build();
 
-        when(bypassKeyRepository.searchBypassKeys(eq("1111"), eq(BypassKeyStatus.ACTIVE), any(Pageable.class)))
+        when(couponRepository.searchCoupons(eq("1111"), eq(CouponStatus.ACTIVE), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(key)));
 
-        Page<BypassKeyResponse> result = bypassKeyAdminService.searchKeys("1111", BypassKeyStatus.ACTIVE, 0, 10);
+        Page<CouponResponse> result = couponAdminService.searchKeys("1111", CouponStatus.ACTIVE, 0, 10);
 
         assertEquals(1, result.getTotalElements());
         assertEquals("11112222333344445555", result.getContent().get(0).getKeyCode());
@@ -206,14 +210,14 @@ class BypassKeyAdminServiceTest {
     @Test
     @DisplayName("getSummary trả về đầy đủ các số liệu thống kê")
     void testGetSummary() {
-        when(bypassKeyRepository.count()).thenReturn(15L);
-        when(bypassKeyRepository.countByStatus(BypassKeyStatus.ACTIVE)).thenReturn(8L);
-        when(bypassKeyRepository.countByStatus(BypassKeyStatus.DEPLETED)).thenReturn(4L);
-        when(bypassKeyRepository.countByStatus(BypassKeyStatus.DISABLED)).thenReturn(2L);
-        when(bypassKeyRepository.countByStatus(BypassKeyStatus.EXPIRED)).thenReturn(1L);
-        when(bypassKeyRepository.sumTotalUsedCount()).thenReturn(25L);
+        when(couponRepository.count()).thenReturn(15L);
+        when(couponRepository.countByStatus(CouponStatus.ACTIVE)).thenReturn(8L);
+        when(couponRepository.countByStatus(CouponStatus.DEPLETED)).thenReturn(4L);
+        when(couponRepository.countByStatus(CouponStatus.DISABLED)).thenReturn(2L);
+        when(couponRepository.countByStatus(CouponStatus.EXPIRED)).thenReturn(1L);
+        when(couponRepository.sumTotalUsedCount()).thenReturn(25L);
 
-        BypassKeySummaryResponse summary = bypassKeyAdminService.getSummary();
+        CouponSummaryResponse summary = couponAdminService.getSummary();
 
         assertEquals(15L, summary.getTotalKeys());
         assertEquals(8L, summary.getActiveKeys());
@@ -226,43 +230,43 @@ class BypassKeyAdminServiceTest {
     @Test
     @DisplayName("updateStatus cập nhật trạng thái thành công")
     void testUpdateStatus() {
-        BypassKey key = BypassKey.builder().id(5L).status(BypassKeyStatus.ACTIVE).build();
-        when(bypassKeyRepository.findById(5L)).thenReturn(Optional.of(key));
-        when(bypassKeyRepository.save(any(BypassKey.class))).thenAnswer(inv -> inv.getArgument(0));
+        Coupon key = Coupon.builder().id(5L).status(CouponStatus.ACTIVE).build();
+        when(couponRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(key));
+        when(couponRepository.save(any(Coupon.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        BypassKeyResponse response = bypassKeyAdminService.updateStatus(5L, BypassKeyStatus.DISABLED);
+        CouponResponse response = couponAdminService.updateStatus(5L, CouponStatus.DISABLED);
 
-        assertEquals(BypassKeyStatus.DISABLED, response.getStatus());
+        assertEquals(CouponStatus.DISABLED, response.getStatus());
     }
 
     @Test
     @DisplayName("deleteKey xóa thành công khi key chưa có lượt sử dụng nào")
     void testDeleteKeySuccessWhenUnused() {
-        BypassKey key = BypassKey.builder().id(7L).usedCount(0).build();
-        when(bypassKeyRepository.findById(7L)).thenReturn(Optional.of(key));
-        when(bypassKeyUsageRepository.countByBypassKeyId(7L)).thenReturn(0L);
+        Coupon key = Coupon.builder().id(7L).usedCount(0).build();
+        when(couponRepository.findByIdForUpdate(7L)).thenReturn(Optional.of(key));
+        when(couponUsageRepository.countByCouponId(7L)).thenReturn(0L);
 
-        bypassKeyAdminService.deleteKey(7L);
+        couponAdminService.deleteKey(7L);
 
-        verify(bypassKeyRepository).delete(key);
+        verify(couponRepository).delete(key);
     }
 
     @Test
     @DisplayName("deleteKey ngăn chặn xóa khi key đã có lượt sử dụng thực tế")
     void testDeleteKeyFailsWhenAlreadyUsed() {
-        BypassKey key = BypassKey.builder().id(8L).usedCount(2).build();
-        when(bypassKeyRepository.findById(8L)).thenReturn(Optional.of(key));
+        Coupon key = Coupon.builder().id(8L).usedCount(2).build();
+        when(couponRepository.findByIdForUpdate(8L)).thenReturn(Optional.of(key));
 
-        BadRequestException ex = assertThrows(BadRequestException.class, () -> bypassKeyAdminService.deleteKey(8L));
+        BadRequestException ex = assertThrows(BadRequestException.class, () -> couponAdminService.deleteKey(8L));
         assertTrue(ex.getMessage().contains("Không thể xóa"));
-        verify(bypassKeyRepository, never()).delete(any());
+        verify(couponRepository, never()).delete(any());
     }
 
     @Test
     @DisplayName("getKeyUsages trả về danh sách lịch sử sử dụng")
     void testGetKeyUsages() {
-        when(bypassKeyRepository.existsById(9L)).thenReturn(true);
-        BypassKeyUsage usage = BypassKeyUsage.builder()
+        when(couponRepository.existsById(9L)).thenReturn(true);
+        CouponUsage usage = CouponUsage.builder()
                 .id(100L)
                 .userId(20L)
                 .username("owner1")
@@ -274,9 +278,9 @@ class BypassKeyAdminServiceTest {
                 .finalAmount(BigDecimal.ZERO)
                 .usedAt(LocalDateTime.now())
                 .build();
-        when(bypassKeyUsageRepository.findByBypassKeyIdOrderByUsedAtDesc(9L)).thenReturn(List.of(usage));
+        when(couponUsageRepository.findByCouponIdOrderByUsedAtDesc(9L)).thenReturn(List.of(usage));
 
-        List<BypassKeyUsageResponse> list = bypassKeyAdminService.getKeyUsages(9L);
+        List<CouponUsageResponse> list = couponAdminService.getKeyUsages(9L);
 
         assertEquals(1, list.size());
         assertEquals("owner1", list.get(0).getUsername());

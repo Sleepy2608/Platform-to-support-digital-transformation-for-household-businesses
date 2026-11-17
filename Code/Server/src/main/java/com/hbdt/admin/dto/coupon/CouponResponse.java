@@ -1,7 +1,7 @@
-package com.hbdt.admin.dto.bypasskey;
+package com.hbdt.admin.dto.coupon;
 
-import com.hbdt.entity.BypassKey;
-import com.hbdt.entity.enums.BypassKeyStatus;
+import com.hbdt.entity.Coupon;
+import com.hbdt.entity.enums.CouponStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,14 +15,14 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class BypassKeyResponse {
+public class CouponResponse {
 
     private Long id;
     private String keyCode;
     private Integer maxUses;
     private Integer usedCount;
     private Integer discountPercent;
-    private BypassKeyStatus status;
+    private CouponStatus status;
     private String statusDescription;
     private String note;
     private LocalDateTime expiresAt;
@@ -31,12 +31,12 @@ public class BypassKeyResponse {
     private LocalDateTime updatedAt;
     private boolean isUsable;
 
-    public static BypassKeyResponse fromEntity(BypassKey entity) {
+    public static CouponResponse fromEntity(Coupon entity) {
         if (entity == null) {
             return null;
         }
 
-        return BypassKeyResponse.builder()
+        return CouponResponse.builder()
                 .id(entity.getId())
                 .keyCode(entity.getKeyCode())
                 .maxUses(entity.getMaxUses())

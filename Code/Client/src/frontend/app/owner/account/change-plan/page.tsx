@@ -216,17 +216,17 @@ function ChangePlanInner() {
     }
   };
 
-  const handleConfirmPayment = async (bypassKey?: string) => {
+  const handleConfirmPayment = async (couponCode?: string) => {
     if (!selectedPkgId) return;
-    if (!bypassKey && unitPrice > 0) {
-      setError('Thanh toán không thành công! Hệ thống chưa nhận được tiền thanh toán. Vui lòng sử dụng mã Bypass Key.');
+    if (!couponCode && unitPrice > 0) {
+      setError('Thanh toán không thành công! Hệ thống chưa nhận được tiền thanh toán. Vui lòng sử dụng mã giảm giá.');
       return;
     }
     setSubmitting(true);
     setError(null);
     try {
       const query = `/api/owner/subscription/select-package?packageType=${selectedPkgId}&billingCycle=${cycle}`
-        + (bypassKey ? `&bypassKey=${encodeURIComponent(bypassKey)}` : '');
+        + (couponCode ? `&couponCode=${encodeURIComponent(couponCode)}` : '');
       await apiClient.post(query);
       setPaymentSuccess(true);
       setTimeout(() => {

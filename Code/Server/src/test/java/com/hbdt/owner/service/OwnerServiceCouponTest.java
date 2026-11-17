@@ -4,7 +4,7 @@ import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.common.service.OtpService;
 import com.hbdt.entity.*;
-import com.hbdt.entity.enums.BypassKeyStatus;
+import com.hbdt.entity.enums.CouponStatus;
 import com.hbdt.entity.enums.RoleType;
 import com.hbdt.entity.enums.SubscriptionStatus;
 import com.hbdt.entity.enums.UserStatus;
@@ -32,7 +32,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class OwnerServiceBypassKeyTest {
+class OwnerServiceCouponTest {
 
     @Mock
     private UserRepository userRepository;
@@ -55,9 +55,14 @@ class OwnerServiceBypassKeyTest {
     @Mock
     private ISubscriptionService subscriptionService;
     @Mock
-    private BypassKeyRepository bypassKeyRepository;
+    private CouponRepository couponRepository;
     @Mock
-    private BypassKeyUsageRepository bypassKeyUsageRepository;
+    private CouponUsageRepository couponUsageRepository;
+
+    @Mock
+    private CouponCheckoutRepository couponCheckoutRepository;
+    @Mock
+    private BusinessProfileRepository businessProfileRepository;
 
     private OwnerService ownerService;
 
@@ -74,14 +79,16 @@ class OwnerServiceBypassKeyTest {
                 serviceInvoiceRepository,
                 subscriptionHistoryRepository,
                 subscriptionService,
-                bypassKeyRepository,
-                bypassKeyUsageRepository
+                couponRepository,
+                couponUsageRepository,
+                couponCheckoutRepository,
+                businessProfileRepository
         );
     }
 
     @Test
-    @DisplayName("selectPackage với BypassKey hợp lệ: tiêu thụ 1 lượt, tạo usage, kích hoạt subscription 0đ")
-    void testSelectPackageWithValidBypassKey() {
+    @DisplayName("selectPackage với Coupon hợp lệ: tiêu thụ 1 lượt, tạo usage, kích hoạt subscription 0đ")
+    void testSelectPackageWithValidCoupon() {
         String username = "owner_test";
         String keyCode = "8k2N9f7X1m4Q5Z8p3R9t";
         String inputKeyCode = "8k2N9f7X1m4Q5Z8p3R9t";
@@ -102,13 +109,12 @@ class OwnerServiceBypassKeyTest {
                 .status("ACTIVE")
                 .build();
 
-        BypassKey key = BypassKey.builder()
+        Coupon key = Coupon.builder().discountPercent(100)
                 .id(1L)
                 .keyCode(keyCode)
                 .maxUses(2)
                 .usedCount(1)
-                .discountPercent(100)
-                .status(BypassKeyStatus.ACTIVE)
+                .status(CouponStatus.ACTIVE)
                 .build();
 
         Subscription createdSub = Subscription.builder()
@@ -126,23 +132,21 @@ class OwnerServiceBypassKeyTest {
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
         when(subscriptionPlanRepository.findByPlanCodeIgnoreCaseAndStatus("VIP", "ACTIVE")).thenReturn(Optional.of(plan));
-        when(bypassKeyRepository.findByKeyCodeForUpdate(keyCode)).thenReturn(Optional.of(key));
+        when(couponRepository.findByKeyCodeForUpdate(keyCode)).thenReturn(Optional.of(key));
+        when(businessProfileRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(new BusinessProfile()));
         when(subscriptionRepository.findAllByBusinessIdOrderByCreatedAtDesc(50L)).thenReturn(List.of());
         when(subscriptionService.createPendingPaymentSubscription(eq(user), eq(plan), eq("YEARLY"), any(LocalDate.class), any(LocalDate.class)))
                 .thenReturn(createdSub);
-        when(subscriptionService.createSubscriptionPayment(eq(999L), eq(BigDecimal.ZERO), eq("BYPASS_KEY")))
-                .thenReturn(payment);
 
         OwnerProfileResponse res = ownerService.selectPackage(username, "VIP", "YEARLY", inputKeyCode);
 
         assertNotNull(res);
         // Verify key usedCount incremented to 2 and status changed to DEPLETED
         assertEquals(2, key.getUsedCount());
-        assertEquals(BypassKeyStatus.DEPLETED, key.getStatus());
-        verify(bypassKeyRepository).save(key);
-        verify(bypassKeyUsageRepository).save(any(BypassKeyUsage.class));
+        assertEquals(CouponStatus.DEPLETED, key.getStatus());
+        verify(couponRepository).save(key);
+        verify(couponUsageRepository).save(any(CouponUsage.class));
         verify(subscriptionService).activateSubscription(999L);
-        verify(subscriptionService).processPaymentCallback("TX-BYPASS-123", "COMPLETED");
     }
 
     private User createTestUser(String username) {
@@ -156,7 +160,7 @@ class OwnerServiceBypassKeyTest {
     }
 
     @Test
-    @DisplayName("selectPackage với BypassKey không tồn tại ném BadRequestException")
+    @DisplayName("selectPackage với Coupon không tồn tại ném BadRequestException")
     void testSelectPackageWithNonExistentKey() {
         String username = "owner_test";
         User user = createTestUser(username);
@@ -164,7 +168,7 @@ class OwnerServiceBypassKeyTest {
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
         when(subscriptionPlanRepository.findByPlanCodeIgnoreCaseAndStatus("VIP", "ACTIVE")).thenReturn(Optional.of(plan));
-        when(bypassKeyRepository.findByKeyCodeForUpdate("00000000000000000000")).thenReturn(Optional.empty());
+        when(couponRepository.findByKeyCodeForUpdate("00000000000000000000")).thenReturn(Optional.empty());
 
         BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> ownerService.selectPackage(username, "VIP", "MONTHLY", "00000000000000000000"));
@@ -172,17 +176,17 @@ class OwnerServiceBypassKeyTest {
     }
 
     @Test
-    @DisplayName("selectPackage với BypassKey đã tạm khóa ném BadRequestException")
+    @DisplayName("selectPackage với Coupon đã tạm khóa ném BadRequestException")
     void testSelectPackageWithDisabledKey() {
         String username = "owner_test";
         String keyCode = "12345678901234567890";
         User user = createTestUser(username);
         SubscriptionPlan plan = SubscriptionPlan.builder().planCode("VIP").monthlyPrice(new BigDecimal("399000")).annualPrice(new BigDecimal("3990000")).status("ACTIVE").build();
-        BypassKey key = BypassKey.builder().keyCode(keyCode).status(BypassKeyStatus.DISABLED).maxUses(1).usedCount(0).build();
+        Coupon key = Coupon.builder().discountPercent(100).keyCode(keyCode).status(CouponStatus.DISABLED).maxUses(1).usedCount(0).build();
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
         when(subscriptionPlanRepository.findByPlanCodeIgnoreCaseAndStatus("VIP", "ACTIVE")).thenReturn(Optional.of(plan));
-        when(bypassKeyRepository.findByKeyCodeForUpdate(keyCode)).thenReturn(Optional.of(key));
+        when(couponRepository.findByKeyCodeForUpdate(keyCode)).thenReturn(Optional.of(key));
 
         BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> ownerService.selectPackage(username, "VIP", "MONTHLY", keyCode));
@@ -190,17 +194,17 @@ class OwnerServiceBypassKeyTest {
     }
 
     @Test
-    @DisplayName("selectPackage với BypassKey đã hết lượt ném BadRequestException")
+    @DisplayName("selectPackage với Coupon đã hết lượt ném BadRequestException")
     void testSelectPackageWithDepletedKey() {
         String username = "owner_test";
         String keyCode = "12345678901234567890";
         User user = createTestUser(username);
         SubscriptionPlan plan = SubscriptionPlan.builder().planCode("VIP").monthlyPrice(new BigDecimal("399000")).annualPrice(new BigDecimal("3990000")).status("ACTIVE").build();
-        BypassKey key = BypassKey.builder().keyCode(keyCode).status(BypassKeyStatus.DEPLETED).maxUses(2).usedCount(2).build();
+        Coupon key = Coupon.builder().discountPercent(100).keyCode(keyCode).status(CouponStatus.DEPLETED).maxUses(2).usedCount(2).build();
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
         when(subscriptionPlanRepository.findByPlanCodeIgnoreCaseAndStatus("VIP", "ACTIVE")).thenReturn(Optional.of(plan));
-        when(bypassKeyRepository.findByKeyCodeForUpdate(keyCode)).thenReturn(Optional.of(key));
+        when(couponRepository.findByKeyCodeForUpdate(keyCode)).thenReturn(Optional.of(key));
 
         BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> ownerService.selectPackage(username, "VIP", "MONTHLY", keyCode));
@@ -208,8 +212,8 @@ class OwnerServiceBypassKeyTest {
     }
 
     @Test
-    @DisplayName("selectPackage khi số tiền > 0 và không có BypassKey ném BadRequestException báo thanh toán không thành công")
-    void testSelectPackageWithoutBypassKeyRejectsPayment() {
+    @DisplayName("selectPackage khi số tiền > 0 và không có Coupon ném BadRequestException báo thanh toán không thành công")
+    void testSelectPackageWithoutCouponRejectsPayment() {
         String username = "owner_test";
         User user = createTestUser(username);
         SubscriptionPlan plan = SubscriptionPlan.builder()
@@ -222,14 +226,15 @@ class OwnerServiceBypassKeyTest {
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
         when(subscriptionPlanRepository.findByPlanCodeIgnoreCaseAndStatus("VIP", "ACTIVE")).thenReturn(Optional.of(plan));
 
+        when(businessProfileRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(new BusinessProfile()));
         BadRequestException ex = assertThrows(BadRequestException.class,
                 () -> ownerService.selectPackage(username, "VIP", "MONTHLY", null));
         assertTrue(ex.getMessage().contains("Thanh toán không thành công"));
     }
 
     @Test
-    @DisplayName("renewSubscription khi số tiền > 0 và không có BypassKey ném BadRequestException báo thanh toán không thành công")
-    void testRenewSubscriptionWithoutBypassKeyRejectsPayment() {
+    @DisplayName("renewSubscription khi số tiền > 0 và không có Coupon ném BadRequestException báo thanh toán không thành công")
+    void testRenewSubscriptionWithoutCouponRejectsPayment() {
         String username = "owner_test";
         User user = createTestUser(username);
         SubscriptionPlan plan = SubscriptionPlan.builder()
@@ -246,6 +251,7 @@ class OwnerServiceBypassKeyTest {
                 .build();
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(businessProfileRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(new BusinessProfile()));
         when(subscriptionRepository.findTopByBusinessIdAndStatusOrderByCreatedAtDesc(50L, SubscriptionStatus.ACTIVE))
                 .thenReturn(Optional.of(activeSub));
 
@@ -255,8 +261,8 @@ class OwnerServiceBypassKeyTest {
     }
 
     @Test
-    @DisplayName("renewSubscription với BypassKey hợp lệ: trừ 1 lượt, gia hạn thêm tháng và miễn phí 0đ")
-    void testRenewSubscriptionWithValidBypassKey() {
+    @DisplayName("renewSubscription với Coupon hợp lệ: trừ 1 lượt, gia hạn thêm tháng và miễn phí 0đ")
+    void testRenewSubscriptionWithValidCoupon() {
         String username = "owner_test";
         String keyCode = "8k2N9f7X1m4Q5Z8p3R9t";
         User user = createTestUser(username);
@@ -274,25 +280,26 @@ class OwnerServiceBypassKeyTest {
                 .endDate(initialEnd)
                 .build();
 
-        BypassKey key = BypassKey.builder()
+        Coupon key = Coupon.builder().discountPercent(100)
                 .id(10L)
                 .keyCode(keyCode)
                 .maxUses(5)
                 .usedCount(1)
-                .status(BypassKeyStatus.ACTIVE)
+                .status(CouponStatus.ACTIVE)
                 .build();
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        when(businessProfileRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(new BusinessProfile()));
         when(subscriptionRepository.findTopByBusinessIdAndStatusOrderByCreatedAtDesc(50L, SubscriptionStatus.ACTIVE))
                 .thenReturn(Optional.of(activeSub));
-        when(bypassKeyRepository.findByKeyCodeForUpdate(keyCode)).thenReturn(Optional.of(key));
+        when(couponRepository.findByKeyCodeForUpdate(keyCode)).thenReturn(Optional.of(key));
 
         OwnerProfileResponse res = ownerService.renewSubscription(username, 3, keyCode);
 
         assertNotNull(res);
         assertEquals(2, key.getUsedCount());
         assertEquals(initialEnd.plusMonths(3), activeSub.getEndDate());
-        verify(bypassKeyUsageRepository).save(any(BypassKeyUsage.class));
+        verify(couponUsageRepository).save(any(CouponUsage.class));
         verify(paymentHistoryRepository).save(any(PaymentHistory.class));
     }
 }
