@@ -46,6 +46,7 @@
 - `/manager/invoices`: Danh sách hóa đơn dịch vụ hệ thống.
 - `/manager/analytics`: Phân tích số liệu hộ kinh doanh.
 - `/manager/feedback`: Tiếp nhận góp ý của người dùng.
+- `/admin/login`: Cổng đăng nhập quản trị hệ thống (`app/admin/login/page.tsx`), phân biệt hoàn toàn với đăng nhập hộ kinh doanh bằng hình nền an ninh mạng số (`images/admin-bg.jpg`), biểu tượng `ShieldCheck` và nhãn định danh `[ADMIN PORTAL]`.
 - `/admin/accounts`: Quản lý tài khoản toàn hệ thống.
 - `/admin/subscription-plans`: Cấu hình danh mục gói dịch vụ SaaS (giá, tính năng).
 - `/admin/features`: Cấu hình danh mục tính năng (`FeatureGate`).
@@ -67,4 +68,16 @@
 - `components/fast-sales/FastSalesView.tsx`: Giao diện POS bán hàng nhanh.
 - `lib/apiClient.ts`: Client HTTP trung tâm quản lý tự động làm mới JWT token, đồng bộ tab (`BroadcastChannel`), cache GET (bỏ qua khi dùng `skipCache: true`) và xử lý lỗi 401/403.
 - `lib/useEntitlement.ts` & `FeatureGate.tsx`: Hook và wrapper kiểm tra quyền truy cập tính năng theo gói cước hiện tại.
+
+---
+
+## 3. Hệ thống Nhận diện Thương hiệu & Favicon (Next.js 16 App Router)
+
+- `app/icon.png`: Master 512x512 app icon nền trong suốt, khử viền mờ (anti-aliasing & de-fringed).
+- `app/favicon.ico` & `public/favicon.ico`: Tệp icon đa kích cỡ (16, 32, 48, 64) tương thích toàn diện desktop.
+- `app/apple-icon.png` & `public/apple-icon.png`: Icon kích thước 180x180 chuẩn Apple Touch Icon cho iOS/macOS.
+- `public/images/logo-icon.png`: Asset dùng chung cho Header, Sidebar và các cổng đăng nhập.
+- `public/images/admin-bg.jpg`: Hình nền chuyên biệt cho cổng Admin Login.
+- `app/layout.tsx`: Cấu hình SEO Metadata tự động nạp tiêu đề thương hiệu `HBDT.DIGITAL`, mô tả giải pháp và các route icon chuẩn W3C.
+- **Dọn dẹp mã nguồn:** Đã gỡ bỏ toàn bộ 5 tệp SVG boilerplate mặc định của Vercel (`file.svg`, `globe.svg`, `next.svg`, `vercel.svg`, `window.svg`).
 
