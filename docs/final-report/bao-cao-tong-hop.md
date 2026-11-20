@@ -522,8 +522,8 @@ Order & Checkout  xử lý như đơn thủ công (transaction đầy đủ: kho
 ### 8.1. Docker / Docker Compose
 
 - `Code/Server/Dockerfile` (backend Spring Boot), `Code/AI/Dockerfile` (AI FastAPI), `Code/Server/database/init.sql` (khởi tạo schema/user).
-- `docker-compose.yml` ở thư mục gốc mô tả 4 service: `mysql` (MySQL 8.0 + healthcheck), `backend` (phụ thuộc MySQL healthy), `ai-service`, `frontend`.
-- ⚠️ **Hạn chế đã biết**: file `docker-compose.yml` còn cấu hình sót lại từ giai đoạn đầu (tên container/DB `agritrade`, mount `./database/init.sql` trong khi đường dẫn thật là `Code/Server/database/init.sql`, mapping frontend `5173:80` trong khi dev dùng cổng `3000`, build context AI là `./ai-service` thay vì `./Code/AI`) → cần cập nhật trước khi dùng làm kênh triển khai chính thức.
+- `docker-compose.yml` ở thư mục gốc mô tả 4 service chuẩn hóa: `mysql` (`hbdt-mysql`, MySQL 8.0 + healthcheck), `backend` (`hbdt-backend`, Spring Boot 3.3), `ai-service` (`hbdt-ai-service`, FastAPI), và `frontend` (`hbdt-frontend`, Next.js 16).
+- Cấu hình đã được chuẩn hóa theo định danh `hbdt-*`, database `household_business_platform`, đúng đường dẫn mount `Code/Server/database/init.sql`, mapping cổng frontend `3000:3000` và network nội bộ `hbdt-network`.
 
 ### 8.2. Script chạy nhanh (khuyến nghị khi dev)
 
@@ -664,7 +664,7 @@ uvicorn main:app --reload --port 8000
 | **HBDT-104 — UML Diagram** | ❌ Còn ở trạng thái `To Do` (một phần đã có class/sequence diagram trong Detailed Design) |
 | **HBDT-128 — Release Package** | ❌ Chưa đóng gói bản phát hành |
 | **Redis cache** | ⚠️ Mới ở mức **thiết kế** (ADR-006, key pattern, TTL). `pom.xml` **không có** dependency Redis và không có cấu hình `redis.*` → chưa có caching layer thực tế |
-| **`docker-compose.yml`** | ⚠️ Còn cấu hình cũ (`agritrade`, sai đường dẫn mount, sai cổng frontend, sai context AI) → cần cập nhật trước khi dùng chính thức |
+| **`docker-compose.yml`** | ✅ Đã chuẩn hóa toàn diện theo tên dự án HBDT (`hbdt-*`, database `household_business_platform`, mount chuẩn, cổng Next.js 3000) |
 | **Sổ S3/S5/S6/S7-HKD & thuế điện tử** | ⛔ Ngoài phạm vi học thuật: chi phí, tiền lương, quỹ tiền mặt, tiền gửi ngân hàng, kê khai/nộp thuế điện tử, hoá đơn điện tử, đối soát ngân hàng, phân bổ 1 khoản thanh toán cho nhiều đơn, hoàn tiền phức tạp |
 | **Chấm công & tính lương, quản lý chi phí đầy đủ** | ⛔ Ngoài phạm vi |
 | **Bất nhất tài liệu** | ⚠️ Một số mục trong `detailed-design.md` vẫn ghi "đang ở giai đoạn kế hoạch" / "AI parser chưa triển khai" trong khi mã nguồn và `feature.md` đã hoàn thành → cần rà soát đồng bộ |

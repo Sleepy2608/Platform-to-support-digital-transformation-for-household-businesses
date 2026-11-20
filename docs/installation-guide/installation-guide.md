@@ -307,10 +307,11 @@ docker compose config
 docker compose up -d --build
 ```
 
-> [!WARNING]
-> Hai điểm **còn chưa khớp** trong `docker-compose.yml`, cần xử lý trước khi dựa hoàn toàn vào Docker:
-> 1. Volume của service `mysql` đang trỏ `./database/init.sql`, nhưng file thật nằm ở `./Code/Server/database/init.sql`.
-> 2. Service `frontend` expose `5173:80`, trong khi luồng dev local dùng port `3000`.
+> [!NOTE]
+> File `docker-compose.yml` đã được chuẩn hóa đồng bộ theo dự án HBDT:
+> 1. Tên container chuẩn hóa: `hbdt-mysql`, `hbdt-backend`, `hbdt-ai-service`, `hbdt-frontend`.
+> 2. Database `household_business_platform` với volume `hbdt_mysql_data` và mount script `./Code/Server/database/init.sql`.
+> 3. Cổng frontend Next.js map chuẩn `3000:3000`, backend `8080:8080`, AI service `8000:8000`.
 
 Khi cần debug, luồng chạy độc lập vẫn đáng tin cậy nhất:
 1. Backend ở `Code/Server`
