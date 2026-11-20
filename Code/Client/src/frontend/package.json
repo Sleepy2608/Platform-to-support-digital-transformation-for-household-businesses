@@ -7,10 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --no-warnings --test --experimental-strip-types tests/*.test.ts",
     "test:low-stock": "node --no-warnings --test --experimental-strip-types tests/lowStockViewModel.test.ts",
     "test:current-stock": "node --no-warnings --test --experimental-strip-types tests/currentStockViewModel.test.ts",
     "test:adjustment": "node --no-warnings --test --experimental-strip-types tests/inventoryAdjustmentViewModel.test.ts",
     "test:debt": "node --no-warnings --test --experimental-strip-types tests/debtBookkeepingViewModel.test.ts",
+    "test:bookkeeping": "node --no-warnings --test --experimental-strip-types tests/inventoryBookkeepingViewModel.test.ts",
+    "test:roles": "node --no-warnings --test --experimental-strip-types tests/roles.test.ts",
+    "test:invoice-format": "node --no-warnings --test --experimental-strip-types tests/invoiceFormat.test.ts",
     "test:inventory": "npm run test:low-stock && npm run test:current-stock && npm run test:adjustment"
   },
   "dependencies": {
