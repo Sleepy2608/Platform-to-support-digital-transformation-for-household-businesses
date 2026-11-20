@@ -15,6 +15,8 @@ jobs:
   backend-ci:
     name: Backend (Spring Boot 3.3 / Java 21)
     runs-on: ubuntu-latest
+    env:
+      MAVEN_OPTS: "-Djava.net.preferIPv4Stack=true -Dmaven.wagon.http.retryHandler.count=5"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,19 +30,21 @@ jobs:
 
       - name: Build and test Backend
         working-directory: Code/Server
-        run: mvn clean test
+        run: |
+          chmod +x mvnw
+          ./mvnw clean test -B --no-transfer-progress
 
   frontend-ci:
-    name: Frontend (Next.js 16 / TypeScript / Node 20)
+    name: Frontend (Next.js 16 / TypeScript / Node 22)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js 20
+      - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: Code/Client/src/frontend/package-lock.json
 
