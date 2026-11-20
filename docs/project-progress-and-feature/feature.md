@@ -81,6 +81,22 @@
 #### Service Invoice
 
 - [x] Service Invoice Generation
+- [x] Auto Invoice Generation on Webhook Success
+
+#### SePay Payment Gateway & Webhook
+
+- [x] SePay VietQR Dynamic QR Code Generation
+- [x] Automated SePay Webhook & IPN Listener
+- [x] Webhook Idempotency & Replay Protection
+- [x] Real-time Subscription Auto-Activation & Renewal
+- [x] Real-time Frontend Polling & Instant Feedback
+- [x] Cloudflare Tunnel Integration for Local & Production Webhook Delivery
+
+#### Bypass Key & Promotional Discounts
+
+- [x] Alphanumeric 20-character Bypass Key Generator & Validator
+- [x] Admin Bypass Key Management (CRUD, Usage Limits, Expiry)
+- [x] Owner Bypass Key Redemption & 100% Discount Modal Integration
 
 ### EPIC-05: Product Catalog & Pricing
 

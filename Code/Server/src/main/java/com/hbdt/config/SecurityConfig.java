@@ -81,6 +81,8 @@ public class SecurityConfig {
                     .requestMatchers("/uploads/**").permitAll()
                     // Public API
                     .requestMatchers("/api/public/**").permitAll()
+                    // SePay Webhook & IPN endpoints
+                    .requestMatchers("/api/sepay/**").permitAll()
                     // Public reference data (Tỉnh/Huyện/Xã — không cần đăng nhập)
                     .requestMatchers("/api/reference/**").permitAll()
                     // Seed data – chỉ ADMIN được phép
@@ -89,8 +91,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/admin/**").hasRole("ADMIN")
                     // Manager routes
                     .requestMatchers("/api/manager/**").hasRole("MANAGER")
-                    // Platform Analytics - chỉ ADMIN và MANAGER
-                    .requestMatchers("/api/platform/analytics/**").hasAnyRole("ADMIN", "MANAGER")
+                    // Platform analytics and coupons are available to Admin and Manager
+                    .requestMatchers("/api/platform/analytics/**", "/api/platform/coupons", "/api/platform/coupons/**").hasAnyRole("ADMIN", "MANAGER")
                     // Owner routes
                     .requestMatchers("/api/owner/**").hasAnyRole("BUSINESS_OWNER", "OWNER")
                     // Product import - chỉ chủ hộ kinh doanh

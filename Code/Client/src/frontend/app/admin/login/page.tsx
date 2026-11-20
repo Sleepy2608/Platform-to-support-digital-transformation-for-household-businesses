@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Store, ArrowLeft, LogIn, Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { ShieldCheck, ArrowLeft, LogIn, Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import ScrollReveal from '../../components/ScrollReveal';
 import { saveAuthData } from '../../lib/apiClient';
 import { getLoginRedirectPath, type AppRole } from '../../lib/roles';
@@ -91,9 +91,9 @@ export default function AdminLoginPage() {
   return (
     <main className="min-h-screen bg-zinc-950 text-white relative flex items-center justify-center p-4 overflow-hidden">
       <div
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-30 pointer-events-none scale-105"
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-45 pointer-events-none scale-105"
         style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2000&auto=format&fit=crop')`,
+          backgroundImage: `url('/images/admin-bg.jpg')`,
         }}
       />
 
@@ -108,11 +108,14 @@ export default function AdminLoginPage() {
         <ScrollReveal>
           <div className="bg-zinc-900/90 border border-zinc-700/80 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl">
             <div className="text-center mb-6">
-              <div className="inline-flex p-3 bg-white/10 rounded-2xl border border-zinc-600 mb-4 shadow-inner">
-                <Store className="w-8 h-8 text-white" />
+              <div className="inline-flex p-3 bg-blue-500/10 rounded-2xl border border-blue-500/30 mb-4 shadow-inner">
+                <ShieldCheck className="w-8 h-8 text-blue-400" />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">Đăng Nhập</h1>
-              <p className="text-zinc-400 text-sm mt-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">Đăng Nhập Quản Trị</h1>
+              <span className="inline-block mt-2 px-3 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold rounded-full uppercase tracking-wider">
+                Admin Portal
+              </span>
+              <p className="text-zinc-400 text-xs sm:text-sm mt-2">
                 Khu vực dành riêng cho quản trị viên hệ thống
               </p>
             </div>

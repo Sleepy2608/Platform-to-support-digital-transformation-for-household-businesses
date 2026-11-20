@@ -343,25 +343,35 @@ export const PRIVACY_POLICY: LegalDoc = {
   ],
 };
 
-// Văn bản: THÔNG BÁO VỀ THÔNG TƯ 88/2021/TT-BTC
+// Văn bản: THÔNG BÁO VỀ THÔNG TƯ 88/2021/TT-BTC & CHÍNH SÁCH THUẾ 2026
 export const CIRCULAR_88_NOTICE: LegalDoc = {
-  title: 'QUY ĐỊNH KẾ TOÁN THEO THÔNG TƯ 88/2021/TT-BTC',
-  version: '88/2021/TT-BTC',
+  title: 'QUY ĐỊNH KẾ TOÁN THÔNG TƯ 88/2021/TT-BTC & CHÍNH SÁCH THUẾ 2026',
+  version: '88/2021/TT-BTC (Cập nhật 2026)',
   intro:
-    'Thông tư số 88/2021/TT-BTC do Bộ Tài chính ban hành ngày 11/10/2021 (hiệu lực từ 01/01/2022) hướng dẫn chế độ kế toán cho các hộ kinh doanh, cá nhân kinh doanh nộp thuế theo phương pháp kê khai. Nền tảng hỗ trợ tự động hóa số liệu và sổ kế toán từ hoạt động bán hàng thực tế.',
+    'Thông tư số 88/2021/TT-BTC do Bộ Tài chính ban hành ngày 11/10/2021 (hiệu lực từ 01/01/2022) hướng dẫn chế độ kế toán cho các hộ kinh doanh, cá nhân kinh doanh. Nền tảng hỗ trợ tự động hóa số liệu và sổ kế toán cốt lõi (S1, S2, S4) từ hoạt động bán hàng và quản lý kho thực tế theo các quy định thuế mới nhất năm 2026.',
   sections: [
     {
       heading: '1. Phạm vi 03 loại sổ kế toán trọng tâm được tự động hóa',
       body:
-        'Hệ thống tập trung số hóa và chuẩn hóa 03 loại sổ kế toán bắt buộc phục vụ hoạt động sản xuất kinh doanh:',
+        'Hệ thống tập trung số hóa và chuẩn hóa 03 loại sổ kế toán bắt buộc phục vụ hoạt động sản xuất kinh doanh của hộ kinh doanh:',
       bullets: [
-        'S1-HKD: Sổ chi tiết doanh thu bán hàng hóa, dịch vụ theo từng nhóm ngành kinh doanh và tỷ lệ thuế tương ứng.',
+        'S1-HKD: Sổ chi tiết doanh thu bán hàng hóa, dịch vụ theo từng nhóm ngành nghề kinh doanh và tỷ lệ thuế tương ứng. Tự động bóc tách từ đơn bán hàng hoàn thành hoặc đơn AI nháp sau khi được duyệt.',
         'S2-HKD: Sổ chi tiết vật liệu, dụng cụ, sản phẩm, hàng hóa (tự động hóa nhập - xuất - tồn, phương pháp tính giá xuất kho Bình quân gia quyền / FIFO).',
-        'S4-HKD: Sổ theo dõi tình hình thực hiện nghĩa vụ thuế với Ngân sách Nhà nước (theo dõi phát sinh, đã nộp, còn nợ hoặc nộp thừa).',
+        'S4-HKD: Sổ theo dõi tình hình thực hiện nghĩa vụ thuế với Ngân sách Nhà nước (theo dõi phát sinh thuế GTGT, TNCN, số đã nộp, còn nợ hoặc nộp thừa theo kỳ).',
       ],
     },
     {
-      heading: '2. Tỷ lệ thuế GTGT & TNCN theo nhóm ngành nghề (Quyết định 3389/QĐ-BTC)',
+      heading: '2. Ngưỡng doanh thu và chính sách thuế áp dụng năm 2026',
+      body:
+        'Nền tảng hỗ trợ tính toán nghĩa vụ thuế theo các ngưỡng doanh thu quy định năm 2026:',
+      bullets: [
+        'Doanh thu từ 500 triệu đồng/năm trở xuống: Thuộc diện không chịu thuế GTGT và không phải nộp thuế TNCN.',
+        'Doanh thu từ trên 500 triệu đến 3 tỷ đồng/năm: Thuế GTGT tính theo tỷ lệ % trên doanh thu. Thuế TNCN áp dụng phương pháp tỷ lệ trên phần doanh thu vượt 500 triệu đồng hoặc phương pháp thu nhập tính thuế (15%).',
+        'Doanh thu từ trên 3 tỷ đồng/năm: Thuế TNCN áp dụng phương pháp thu nhập tính thuế (17% đối với doanh thu 3–50 tỷ, 20% đối với doanh thu trên 50 tỷ đồng).',
+      ],
+    },
+    {
+      heading: '3. Tỷ lệ thuế GTGT & TNCN theo 4 nhóm ngành nghề kinh doanh',
       body:
         'Hệ thống tự động căn cứ phân loại nhóm ngành nghề trên S1-HKD để trích xuất nghĩa vụ thuế ghi nhận vào S4-HKD:',
       bullets: [
@@ -372,19 +382,24 @@ export const CIRCULAR_88_NOTICE: LegalDoc = {
       ],
     },
     {
-      heading: '3. Kiểm soát dữ liệu và nguyên tắc xác nhận (Human-in-the-loop)',
+      heading: '4. Kiểm soát dữ liệu và nguyên tắc xác nhận (Human-in-the-loop)',
       body:
-        'Nền tảng đóng vai trò công cụ hỗ trợ tự động hóa, không thay thế quyền kiểm tra và phê duyệt cuối cùng của Chủ hộ kinh doanh hoặc cơ quan có thẩm quyền:',
+        'Nền tảng đóng vai trò công cụ hỗ trợ tự động hóa, không thay thế quyền kiểm tra và phê duyệt cuối cùng của Chủ hộ kinh doanh hoặc cơ quan thuế có thẩm quyền:',
       bullets: [
-        'Mọi đơn hàng nháp do trợ lý AI đề xuất và báo cáo thuế cần được người dùng kiểm tra, xác nhận trước khi hạch toán chính thức.',
+        'Mọi đơn hàng nháp do trợ lý AI đề xuất và báo cáo thuế cần được người dùng (Chủ hộ) kiểm tra, xác nhận trước khi hạch toán chính thức.',
         'Toàn bộ giao dịch, lịch sử điều chỉnh số liệu và phê duyệt báo cáo được ghi nhật ký hệ thống (Audit Logs) đảm bảo tính toàn vẹn và khả năng truy vết pháp lý.',
         'Chủ hộ kinh doanh chịu trách nhiệm trước pháp luật về tính hợp pháp, trung thực và chính xác của số liệu kế toán phát sinh.',
       ],
     },
     {
-      heading: '4. Giới hạn phạm vi triển khai của nền tảng',
+      heading: '5. Giới hạn phạm vi triển khai của nền tảng',
       body:
-        'Hệ thống tập trung tự động hóa luồng nghiệp vụ bán hàng, kho và nghĩa vụ thuế cốt lõi (S1, S2, S4). Các nội dung ngoài phạm vi (S3-chi phí chi tiết, S5-bảng lương/BHXH, S6-quỹ tiền mặt, S7-tiền gửi ngân hàng) không bắt buộc triển khai đồng bộ.',
+        'Hệ thống chuyên biệt hỗ trợ Hộ kinh doanh (HKD), không áp dụng thuế Thu nhập doanh nghiệp (TNDN/CIT dành cho doanh nghiệp). Hệ thống tập trung vào luồng S1, S2, S4 cốt lõi; các sổ kế toán mở rộng (S3-chi phí, S5-tiền lương/BHXH, S6-quỹ tiền mặt, S7-tiền gửi ngân hàng) không bắt buộc triển khai đồng bộ.',
+    },
+    {
+      heading: '6. Tài liệu văn bản pháp lý đính kèm',
+      body:
+        'Người dùng có thể tải về hoặc xem trực tuyến văn bản gốc Thông tư 88/2021/TT-BTC định dạng PDF được tích hợp sẵn trên hệ thống tại đường dẫn /docs/88-btc.pdf.',
     },
   ],
 };

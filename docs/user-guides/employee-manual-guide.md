@@ -5,8 +5,8 @@
 | **Tài liệu** | Hướng Dẫn Sử Dụng Hệ Thống – Vai Trò Nhân Viên Cửa Hàng (Employee) |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Vai trò áp dụng** | Nhân viên cửa hàng / Thu ngân (`EMPLOYEE` / Store Staff) |
-| **Phiên bản** | 1.2 |
-| **Cập nhật lần cuối** | 15/09/2026 |
+| **Phiên bản** | 1.3 |
+| **Cập nhật lần cuối** | 03/11/2026 |
 
 ---
 

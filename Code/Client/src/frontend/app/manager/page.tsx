@@ -139,6 +139,12 @@ export default function ManagerDashboard() {
               Thống kê nền tảng
             </Link>
             <Link
+              href="/manager/coupons"
+              className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 shadow-xs transition-colors hover:bg-slate-50"
+            >
+              Quản lý mã giảm giá
+            </Link>
+            <Link
               id="manager-invoice-history-link"
               href="/manager/invoices"
               className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-xs transition-colors hover:bg-slate-800"

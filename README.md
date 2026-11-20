@@ -1,13 +1,17 @@
-<p align="center">
-  <h1 align="center"> Platform to Support Digital Transformation for Household Businesses </h1>
-</p>
-
-<p align="center"><em>
-<b>Đề tài:</b> Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh <br>
-<b>Môn học:</b> Lập trình Java </em>
-<br>
-  <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"/>
-</p>
+<div align="center">
+  <h1>Platform to Support Digital Transformation for Household Businesses</h1>
+  <img src="Code/Client/src/frontend/public/images/hbdt-digital.png" alt="HBDT Digital Logo" width="110" />
+  <br><br>
+  <p><em>
+    <b>Đề tài:</b> Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh <br>
+    <b>Môn học:</b> Lập trình Java
+  </em></p>
+  <p>
+    <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"/>
+    <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot"/>
+    <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js"/>
+  </p>
+</div>
 
 ---
 
@@ -15,15 +19,14 @@
 
 1. [Giới thiệu hệ thống](#giới-thiệu-hệ-thống-system-introduction)
 2. [Các tính năng chính](#các-tính-năng-chính-key-features)
-3. [Danh sách thành viên nhóm](#danh-sách-thành-viên-nhóm-member)
-4. [Tiến độ triển khai dự án](#tiến-độ-triển-khai-dự-án-project-deployment-progress)
-   - [Các tính năng đã hoàn thành](#các-tính-năng-đã-hoàn-thành)
-   - [Các tính năng chưa hoàn thiện](#các-tính-năng-chưa-hoàn-thiện)
-5. [Công nghệ sử dụng](#công-nghệ-sử-dụng-tech-stack)
-6. [Quản lý database & schema](#quản-lý-database--schema-database--schema)
-7. [Cấu trúc thư mục](#cấu-trúc-thư-mục-project-structure)
-8. [Tài liệu hiện thực hệ thống](#tài-liệu-hiện-thực-hệ-thống)
-9. [Cách chạy](#cách-chạy-how-to-run)
+3. [Bảng giá các gói dịch vụ](#bảng-giá-các-gói-dịch-vụ-pricing-plans)
+4. [Danh sách thành viên nhóm](#danh-sách-thành-viên-nhóm-member)
+5. [Tiến độ triển khai dự án](#tiến-độ-triển-khai-dự-án-project-deployment-progress)
+6. [Công nghệ sử dụng](#công-nghệ-sử-dụng-tech-stack)
+7. [Quản lý database & schema](#quản-lý-database--schema-database--schema)
+8. [Cấu trúc thư mục](#cấu-trúc-thư-mục-project-structure)
+9. [Tài liệu hiện thực hệ thống & Tuân thủ pháp lý](#tài-liệu-hiện-thực-hệ-thống--tuân-thủ-pháp-lý)
+10. [Cách chạy](#cách-chạy-how-to-run)
    - [1. Yêu cầu](#1-yêu-cầu)
    - [2. Clone source code](#2-clone-source-code)
    - [3. Cấu hình `.env` cho server](#3-cấu-hình-env-cho-server)
@@ -31,10 +34,15 @@
    - [5. Backend (cách chạy thủ công)](#5-backend-cách-chạy-thủ-công)
    - [6. Frontend (cách chạy thủ công)](#6-frontend-cách-chạy-thủ-công)
    - [7. AI Service (cần cho tính năng AI tạo đơn nháp)](#7-ai-service-cần-cho-tính-năng-ai-tạo-đơn-nháp)
+   - [8. Cấu hình & Kiểm thử Cổng thanh toán SePay](#8-cấu-hình--kiểm-thử-cổng-thanh-toán-sepay-tự-động-gia-hạn)
 
 ---
 
 ## Giới thiệu hệ thống (System Introduction)
+
+<p align="center">
+  <img src="Code/Client/src/frontend/public/images/dashboard-portal.png" alt="HBDT Dashboard Portal" width="100%" />
+</p>
 
 **Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh (HBDT)** là hệ thống quản lý kinh doanh trên nền web, được thiết kế riêng cho các hộ kinh doanh truyền thống tại Việt Nam (vật liệu xây dựng, vật tư công trình, tạp hóa, bán lẻ...).
 
@@ -51,7 +59,7 @@
 Ứng dụng web (mobile + web) sử dụng được chỉ với một chiếc điện thoại thông minh:
 
 - **Trợ lý AI** hiểu yêu cầu ngôn ngữ tự nhiên tiếng Việt (văn bản) và tự động sinh **đơn hàng nháp** để nhân viên/chủ hộ kiểm tra và xác nhận.
-- **Ghi sổ kế toán tự động** cho mọi giao dịch bán hàng, nhập kho và công nợ; tự tổng hợp sổ/biểu mẫu theo **Thông tư 88/2021/TT-BTC**.
+- **Ghi sổ kế toán tự động & Tax Engine 2026** cho mọi giao dịch bán hàng, nhập kho và công nợ; tự tổng hợp sổ/biểu mẫu theo **Thông tư 88/2021/TT-BTC** (S1-HKD, S2-HKD, S4-HKD) và hỗ trợ tính toán nghĩa vụ thuế GTGT & TNCN theo **Chính sách thuế 2026** (ngưỡng 500 triệu, 3 tỷ, 50 tỷ; đa dạng phương pháp tính; quản lý phiên bản quy tắc thuế).
 - **Báo cáo & phân tích** doanh thu, mặt hàng bán chạy, tồn kho thấp và công nợ còn lại.
 - **Quản lý gói thuê bao** và phân quyền 4 cấp: Administrator → Manager → Owner → Employee.
 
@@ -59,18 +67,18 @@
 
 | Vai trò | Mô tả |
 | :--- | :--- |
-| **Administrator (ADMIN)** | Quản trị hệ thống: quản lý tài khoản Owner/Manager, bảng giá gói thuê bao, cấu hình hệ thống & AI, biểu mẫu báo cáo tài chính, thông báo toàn hệ thống, xử lý phản hồi, Platform Analytics |
+| **Administrator (ADMIN)** | Quản trị hệ thống: quản lý tài khoản Owner/Manager, bảng giá gói thuê bao, cấu hình hệ thống & AI, biểu mẫu báo cáo tài chính, danh mục quy tắc thuế và phiên bản chính sách (Tax Policy Versioning), thông báo toàn hệ thống, xử lý phản hồi, Platform Analytics |
 | **Manager (MANAGER)** | Quản lý vận hành nền tảng: duyệt hồ sơ hộ kinh doanh, hỗ trợ/đối soát gói thuê bao, theo dõi revenue ledger, stock import và bookkeeping, xử lý phản hồi |
-| **Owner (BUSINESS_OWNER)** | Chủ hộ kinh doanh: toàn quyền nghiệp vụ trong hộ của mình — sản phẩm, kho, khách hàng, công nợ, đơn hàng, nhân viên, doanh thu, sổ kế toán |
+| **Owner (BUSINESS_OWNER)** | Chủ hộ kinh doanh: toàn quyền nghiệp vụ trong hộ của mình — sản phẩm, kho, khách hàng, công nợ, đơn hàng, nhân viên, doanh thu, kiểm tra & phê duyệt sổ kế toán và nghĩa vụ thuế |
 | **Employee (EMPLOYEE)** | Nhân viên cửa hàng: tạo đơn tại quầy, in hoá đơn, ghi nợ, xác nhận/từ chối đơn nháp do AI tạo, nhận thông báo thời gian thực |
 | **Khách hàng** | Không có tài khoản trên hệ thống; tương tác gián tiếp qua Zalo/điện thoại hoặc được nhân viên thao tác đại diện |
 
 ### 4. Nguyên tắc thiết kế
 
-- **Human-in-the-loop**: AI chỉ tạo đơn nháp, luôn có nhân viên/chủ hộ kiểm tra và xác nhận trước khi ghi nhận chính thức.
+- **Human-in-the-loop**: AI chỉ tạo đơn nháp; Tax Engine đề xuất nghĩa vụ thuế dự kiến — luôn có nhân viên/chủ hộ (Owner) kiểm tra và phê duyệt trước khi ghi nhận chính thức.
 - **Fallback thủ công**: khi AI không khả dụng, hệ thống vẫn bán hàng và nhập đơn bình thường.
 - **Cách ly dữ liệu (multi-tenant)**: mỗi hộ kinh doanh là một tenant độc lập; `businessId` luôn suy ra từ token, không tin dữ liệu do client gửi lên.
-- **Tuân thủ**: tự động hoá 3 mẫu sổ **S1-HKD** (doanh thu), **S2-HKD** (kho hàng) và **S4-HKD** (nghĩa vụ thuế) theo Thông tư 88/2021/TT-BTC.
+- **Tuân thủ pháp lý (Compliance)**: tự động hoá 3 mẫu sổ **S1-HKD** (doanh thu), **S2-HKD** (kho hàng) và **S4-HKD** (nghĩa vụ thuế) theo Thông tư 88/2021/TT-BTC kết hợp chính sách thuế Hộ kinh doanh 2026 và đề án chuyển đổi số quản lý thuế theo Quyết định 3389/QĐ-BTC.
 
 ---
 
@@ -81,32 +89,53 @@
 | 1 | **Trợ lý AI Đặt hàng** | Nhập hoặc nhắn tin bằng tiếng Việt tự nhiên, AI đọc hiểu và tạo đơn hàng nháp. Nhân viên chỉ cần kiểm tra, sửa hoặc xác nhận — AI không khả dụng vẫn nhập đơn tay bình thường. |
 | 2 | **Bán hàng tại quầy (POS)** | Tạo đơn cực nhanh: tìm sản phẩm tức thời, chọn số lượng, gán khách hàng, xác nhận hoặc huỷ đơn. Giao diện Fast Sales tối ưu cho điện thoại. |
 | 3 | **Hoá đơn & In ấn** | In hoặc xuất hoá đơn bán hàng ra PDF theo mẫu có sẵn, lưu toàn bộ lịch sử đơn để tra cứu và gửi lại cho khách khi cần. |
-| 4 | **Kế toán Thông tư 88** | Tự động ghi sổ S1-HKD (doanh thu), S2-HKD (kho hàng) và S4-HKD (nghĩa vụ thuế); duyệt – sửa – từ chối báo cáo và xuất file Excel/PDF. |
+| 4 | **Kế toán Thông tư 88 & Tax Engine 2026** | Tự động ghi sổ S1-HKD (doanh thu), S2-HKD (kho hàng) và S4-HKD (nghĩa vụ thuế); tính toán thuế GTGT & TNCN theo ngưỡng 500tr/3 tỷ, hỗ trợ phiên bản quy tắc thuế (Tax Rule Versioning), quy trình duyệt – sửa – từ chối báo cáo của Owner và xuất file Excel/PDF. |
 | 5 | **Nhập – Xuất – Tồn kho** | Lập phiếu nhập kho, theo dõi tồn theo nhiều đơn vị tính, tự động trừ kho khi xác nhận đơn, hoàn kho khi huỷ đơn và cảnh báo hàng sắp hết. |
 | 6 | **Công nợ khách hàng** | Bán chịu và thu nợ theo từng đợt, mọi biến động nợ đều được ghi nhật ký, tự hoàn nợ khi huỷ đơn — không còn thất lạc sổ nợ. |
 | 7 | **Khách hàng & Lịch sử mua** | Lưu hồ sơ khách hàng, tra cứu toàn bộ lịch sử mua hàng và số dư công nợ hiện tại của từng khách chỉ trong vài giây. |
 | 8 | **Sản phẩm, Đơn vị tính & Giá bán** | Quản lý danh mục, ảnh sản phẩm, nhiều đơn vị tính với tỷ lệ quy đổi và quy tắc giá linh hoạt; nhập danh mục hàng loạt từ file Excel. |
 | 9 | **Báo cáo & Phân tích** | Doanh thu theo ngày/tuần/tháng, biểu đồ trực quan, lọc theo khoảng ngày, thống kê mặt hàng bán chạy – bán chậm và công nợ còn lại. |
 | 10 | **Quản lý Nhân viên & Phân quyền** | Tạo tài khoản nhân viên, đặt lại mật khẩu, khoá/mở tài khoản. Bốn cấp quyền rõ ràng và dữ liệu tách biệt tuyệt đối theo từng hộ kinh doanh. |
-| 11 | **Gói thuê bao linh hoạt** | Chọn gói Miễn phí, Cơ bản hoặc VIP, chủ động gia hạn 1–24 tháng; tính năng của hệ thống tự mở khoá tương ứng với gói đang dùng. |
+| 11 | **Gói thuê bao & Thanh toán SePay** | Chọn gói Miễn phí, Cơ bản hoặc VIP, gia hạn linh hoạt; tích hợp **Cổng thanh toán tự động SePay** (quét mã VietQR động, nhận diện webhook ngân hàng tức thời, tự động kích hoạt gói & sinh hóa đơn `ServiceInvoice`, real-time polling không cần tải lại trang) và mã ưu đãi **Bypass Key**. |
 | 12 | **Thông báo thời gian thực** | Chuông thông báo báo ngay khi AI tạo đơn nháp, khi đơn đổi trạng thái hoặc khi kho sắp hết hàng — không bỏ lỡ đơn nào. |
 
 > Danh sách tính năng đã hoàn thành chi tiết theo từng Epic xem tại [`docs/project-progress-and-feature/feature.md`](docs/project-progress-and-feature/feature.md).
+
+<p align="center">
+  <img src="Code/Client/src/frontend/public/images/features-summary.png" alt="Tổng quan tính năng hệ thống" width="100%" />
+</p>
+
+---
+
+## Bảng giá các gói dịch vụ (Pricing Plans)
+
+Hệ thống cung cấp các gói dịch vụ linh hoạt phù hợp với từng giai đoạn và quy mô hoạt động của hộ kinh doanh:
+
+| Gói dịch vụ | Giá theo tháng | Giá theo năm | Tính năng nổi bật |
+| :--- | :---: | :---: | :--- |
+| **Gói Miễn Phí (FREE)** | **0đ** / tháng | Miễn phí vĩnh viễn | Quản lý sản phẩm & danh mục, tạo đơn hàng bán lẻ, quản lý khách hàng cơ bản. |
+| **Gói Cơ Bản (BASIC)** | **199.000đ** / tháng | 2.200.000đ / năm | Đầy đủ tính năng gói FREE + Quản lý xuất nhập tồn kho, quản lý nhân viên & phân quyền, quản lý sổ nợ khách hàng, báo cáo doanh thu & quản lý thuế. |
+| **Gói VIP (VIP)** *(Đề xuất)* | **399.000đ** / tháng | 4.500.000đ / năm | Đầy đủ tính năng gói BASIC + **Trợ lý AI thông minh** (đọc hiểu đơn tiếng Việt tự nhiên, gợi ý đơn nháp), **Kế toán tự động & Tax Engine 2026** (ghi sổ S1, S2, S4 theo Thông tư 88), không giới hạn khách hàng. |
+
+<p align="center">
+  <img src="Code/Client/src/frontend/public/images/planning-prices.png" alt="Bảng giá các gói dịch vụ HBDT" width="100%" />
+</p>
 
 ---
 
 ## Danh sách thành viên nhóm (Member)
 
-| STT | Họ và Tên | MSSV | Vai trò | Nhiệm vụ được giao |
-| :---: | :--- | :---: | :---: | :--- |
-| 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Leader | Repository & Git Management, Docs (Installation/Run Guide, User Manual, Technical Documentation, SRS, Compliance), Authorization, Password Encoder and Security, Performance (Testing and Enhancing), Admin Account Management, User Account Management (Basic CRUD, Profile), Payment Process, Subscription Pricing & Plans, Revenue Reports (Revenue Ledger, Platform Analytics, Trend Analysis) |
-| 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer | Register/Login/Dashboard UI, OTP Code Verification, Owner Account Management, Searching Engine, Image Uploads (Avatar, Products), CRUD (Customer, Owner Employee, Product), Automatic Bookkeeping (Debt, Sales, Inventory) |
-| 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger | Database Management, Docs (Data Model, AI, Calculate taxes in Compliance), Audit Log, Measurement & Product Pricing Rules, Product Stock Management (Automatic Update/Calculating, Debt History/Searching), Service Invoice Management, Order Management (At-counter Order, Confirm/Cancel Order, Confirm Debt/Debt Payment), AI Service, Feedback Management |
-| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager | Database Management, Docs (ERD, Data Model, Diagram, User Requirements, Test Cases Management), CRUD (Category, Product, Subcription), Product Stock Management (Low Stock Alert), Operational Analytics for Owner/Employee (Report, Chart), System-wide Announcement |
-| 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Feature Developer | Employee Account Management, Product Stock Management (Stock Import), Feature Plans Management, Financial Template Management (Admin), Report (Review, Edit, Reject & Template Version) |
-| 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer | Manage purchase package payments, Manager Account Management, Subscription Features (Pricing Plans, Notifications), RBAC, Service Invoice Management, Platform Analytics for Admin/Manager, Fast Sales UI for mobile (Owner/Employee) |
+| STT | Họ và Tên | MSSV | Vai trò |
+| :---: | :--- | :---: | :---: |
+| 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Leader |
+| 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer |
+| 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger |
+| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager |
+| 5 | [Trần Hồng Sơn](https://github.com/trnhongson) | 060206012202 | Feature Developer |
+| 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer |
 
-> Mọi người đều được giao task có backend code bằng Java (Vai trò trên chỉ bao gồm các vai trò khác ngoài Backend Developer).
+> *Ghi chú:* Tất cả các thành viên đều tham gia phát triển mã nguồn Backend bằng Java.<br>
+> Chi tiết phân công nhiệm vụ và đóng góp cụ thể của từng thành viên xem tại [`docs/final-report/phan-cong-nhiem-vu-nhom.md`](docs/final-report/phan-cong-nhiem-vu-nhom.md).
 
 ---
 
@@ -116,8 +145,8 @@
 
 > Nhiệm vụ được giao sẽ được dựa vào nhiệm vụ được giao trên [Issue](https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/issues) trên Github và cập nhật tiến độ ở [Jira](https://java-project-platform-for-household-business.atlassian.net/jira/software/projects/SCRUM/summary).<br>
 > Các issue trên Github sẽ được cập nhật theo tiến độ của Jira và sẽ được test trước khi merge vào nhánh Main.<br>
-> Mức độ hoàn thành dự án: 98%<br>
-> Ngày cập nhật lần cuối: 15/09/2026.
+> Mức độ hoàn thành dự án: 100%<br>
+> Ngày cập nhật lần cuối: 04/11/2026.
 
 ---
 
@@ -129,6 +158,7 @@
 | **Backend** | Java 21, Spring Boot 3.3, Spring Web, Spring Data JPA, Spring Security, JWT (JJWT) |
 | **Database** | MySQL 8 |
 | **AI Service** | Python 3.12, FastAPI, Uvicorn, Pydantic; tích hợp **B.ai** (Chat Completions) để trích xuất câu đặt hàng tiếng Việt |
+| **Payment Gateway** | **SePay** (Cổng thanh toán tự động VietQR, Webhook, IPN), **Cloudflare Tunnel** |
 | **Build & Công cụ** | Maven, npm, ESLint, Lombok |
 | **DevOps** | Docker, Docker Compose |
 
@@ -232,7 +262,13 @@ Platform-to-support-digital-transformation-for-household-businesses/
 ├── docs/                                         # Tài liệu dự án
 │   ├── ai-design/                                # Thiết kế AI / pipeline
 │   ├── architecture-design/                      # Thiết kế kiến trúc hệ thống
-│   ├── compliance/                               # Thông tin luật, quy định, mapping
+│   ├── compliance/                               # Thông tin luật, chính sách thuế 2026 & biểu mẫu
+│   │   ├── circular-88-2021-BTC.md               # Quy định kế toán Thông tư 88 & Tax Engine
+│   │   ├── decision-3389-BTC.md                  # Tiêu chí phân loại HKD theo QĐ 3389/QĐ-BTC
+│   │   ├── tax-policy-2026.md                    # Chính sách thuế 2026 & kiến trúc Tax Engine
+│   │   ├── mapping-law-to-project.md             # Bản đồ ánh xạ pháp lý vào CSDL và tính năng
+│   │   ├── templates/                            # Biểu mẫu sổ kế toán S1, S2, S4
+│   │   └── references/                           # Danh mục văn bản pháp lý chính thống
 │   ├── detailed-design/                          # Thiết kế chi tiết, ERD, sơ đồ
 │   ├── final-report/                             # Báo cáo cuối cùng
 │   ├── installation-guide/                       # Hướng dẫn cài đặt
@@ -240,7 +276,7 @@ Platform-to-support-digital-transformation-for-household-businesses/
 │   ├── requirements/                             # Yêu cầu đề tài / phân tích yêu cầu
 │   ├── run-guide/                                # Hướng dẫn chạy trên IDE / VS Code
 │   ├── software-requirement-specification/       # SRS
-│   ├── system-implementation/                     # Tài liệu hiện thực hệ thống
+│   ├── system-implementation/                    # Tài liệu hiện thực hệ thống
 │   ├── testing-documents/                        # Tài liệu kiểm thử
 │   ├── user-guides/                              # Hướng dẫn sử dụng theo vai trò
 │   ├── user-requirements/                        # Yêu cầu người dùng
@@ -262,11 +298,16 @@ Platform-to-support-digital-transformation-for-household-businesses/
 
 ---
 
-## Tài liệu hiện thực hệ thống
+## Tài liệu hiện thực hệ thống & Tuân thủ pháp lý
 
-Tài liệu mô tả kiến trúc hiện thực, tổ chức mã nguồn, bảo mật, các luồng nghiệp vụ, cấu hình, kiểm thử và đóng gói:
+Tài liệu kỹ thuật mô tả kiến trúc hiện thực, tổ chức mã nguồn, bảo mật, các luồng nghiệp vụ, cấu hình, kiểm thử, đóng gói và căn cứ tuân thủ pháp lý:
 
 - [System Implementation Document](docs/system-implementation/system-implementation.md)
+- [Chính sách Thuế Hộ Kinh Doanh 2026 & Thiết kế Tax Engine](docs/compliance/tax-policy-2026.md)
+- [Quy định Kế toán Thông tư 88/2021/TT-BTC & Tự động hóa](docs/compliance/circular-88-2021-BTC.md)
+- [Quyết định 3389/QĐ-BTC: Phân loại HKD & Đề án Chuyển đổi quản lý thuế](docs/compliance/decision-3389-BTC.md)
+- [Bản đồ Ánh xạ: Pháp lý Kế toán & Thuế $\to$ Tính năng Đồ án](docs/compliance/mapping-law-to-project.md)
+- [Kho Tham chiếu Văn bản Quy phạm Pháp luật Chính thống](docs/compliance/references/README.md)
 
 ---
 
@@ -381,6 +422,42 @@ uvicorn main:app --reload --port 8000
 - Service hiện chỉ nhận **văn bản**, chưa hỗ trợ nhận diện giọng nói (STT).
 - Backend có thể tự khởi động service này khi `AI_SERVICE_AUTO_START=true`.
 - Tài liệu chi tiết: [docs/ai-design/ai-service-guide.md](docs/ai-design/ai-service-guide.md), [docs/installation-guide/installation-guide.md](docs/installation-guide/installation-guide.md).
+
+### 8. Cấu hình & Kiểm thử Cổng thanh toán SePay (Tự động gia hạn)
+
+Hệ thống tích hợp cổng thanh toán SePay hỗ trợ tạo mã VietQR động và nhận diện giao dịch chuyển khoản tự động qua Webhook / IPN:
+
+- **Biến môi trường trong `Code/Server/.env`:**
+  ```properties
+  SEPAY_MERCHANT_ID=SP-TEST-NLB7A395
+  SEPAY_SECRET_KEY=spsk_test_4hP4UGF9NSNY5Hjyt8mbVcT8P2wWEBNS
+  SEPAY_ACCOUNT_NUMBER=107882760609
+  ```
+- **Kết nối ra Internet cho Webhook khi chạy local:**
+  Để nhận webhook từ SePay Dashboard (`my.sepay.vn`) về máy tính cục bộ, sử dụng Cloudflare Tunnel:
+  ```powershell
+  cloudflared tunnel --url http://localhost:8080
+  ```
+- **Cấu hình trên SePay Dashboard (`my.sepay.vn`):**
+  * Điền Webhook URL: `https://<your-tunnel-domain>/api/sepay/webhook`
+  * Auth Type: `API Key` (Header: `Authorization: Apikey <SEPAY_SECRET_KEY>`)
+  * Kiểm tra tính khả dụng: `GET /api/sepay/webhook/health` (trả `200 OK`)
+- **Kiểm thử Webhook tự động gia hạn:**
+  Gửi payload chuyển khoản giả lập với cú pháp `HBDT RENEW <businessId> <months>`:
+  ```bash
+  curl -X POST http://localhost:8080/api/sepay/webhook \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Apikey spsk_test_4hP4UGF9NSNY5Hjyt8mbVcT8P2wWEBNS" \
+    -d "{\"gateway\":\"VietinBank\",\"accountNumber\":\"107882760609\",\"transferType\":\"in\",\"transferAmount\":399000,\"content\":\"HBDT RENEW 1 1\",\"referenceCode\":\"FT-DEMO-01\"}"
+  ```
+  Hệ thống tự động kích hoạt gói `ACTIVE`, cộng thêm ngày hết hạn `endDate`, sinh hóa đơn `service_invoices` (PAID) và frontend tự động cập nhật thời gian thực qua polling (`{ skipCache: true }` mỗi 3s/lần, giới hạn 10 phút).
+- **Tính năng bảo mật & độ tin cậy Webhook:**
+  * **Xác thực số tài khoản thụ hưởng:** Tự động đối chiếu `payload.accountNumber` với `SEPAY_ACCOUNT_NUMBER=107882760609`; bỏ qua và ghi log nếu số tài khoản nhận không khớp.
+  * **Chống lỗi Webhook Retry:** Webhook controller luôn phản hồi HTTP `200 OK` (kèm trạng thái trong body) để ngăn SePay gửi lại 7 lần gây quá tải.
+  * **Tự phục hồi dữ liệu gói:** Tự động tạo bản ghi Subscription mới cho `businessId` nếu hộ kinh doanh đăng ký lần đầu thanh toán qua SePay chưa có gói trong CSDL.
+  * **Đồng bộ cú pháp Onboarding & Quản lý:** Cú pháp định danh chuẩn `HBDT RENEW <businessId> <months>` được áp dụng thống nhất từ trang Onboarding đến trang Đổi gói cước.
+- **Hệ thống Bypass Key (Mã ưu đãi 100%):**
+  Admin có thể tạo mã Bypass Key (20 ký tự chữ và số) tại `/admin/bypass-keys` để kích hoạt hoặc thử nghiệm gói dịch vụ mà không cần giao dịch ngân hàng.
 
 ---
 

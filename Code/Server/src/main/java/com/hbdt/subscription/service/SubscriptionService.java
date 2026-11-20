@@ -213,18 +213,23 @@ public class SubscriptionService implements ISubscriptionService {
             int duration = invoiceDurationMonths(subscription);
             BigDecimal totalAmount = payment.getAmount();
             BigDecimal unitPrice = totalAmount.divide(BigDecimal.valueOf(duration), 2, RoundingMode.HALF_UP);
-            String invoiceNo = "INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
+            String today = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
+            String invoiceCode = "INV-" + today + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase(Locale.ROOT);
+            String invoiceNo = "INV-" + today + "-" + String.format("%04d", (int)(Math.random() * 10000));
 
             User invoiceUser = resolveInvoiceOwner(subscription, null);
 
             ServiceInvoice invoice = ServiceInvoice.builder()
-                    .invoiceCode(invoiceNo)
+                    .invoiceCode(invoiceCode)
+                    .invoiceNo(invoiceNo)
+                    .businessId(subscription.getBusinessId())
                     .user(invoiceUser)
                     .subscription(subscription)
                     .plan(subscription.getPlan())
                     .duration(duration)
                     .unitPrice(unitPrice)
                     .totalAmount(totalAmount)
+                    .amount(totalAmount)
                     .status("PAID")
                     .build();
             serviceInvoiceRepository.save(invoice);
@@ -483,14 +488,21 @@ public class SubscriptionService implements ISubscriptionService {
 
         User invoiceUser = resolveInvoiceOwner(subscription, owner);
 
+        String today = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE);
+        String invoiceCode = "INV-" + today + "-" + java.util.UUID.randomUUID().toString().substring(0, 4).toUpperCase(java.util.Locale.ROOT);
+        String invoiceNo = "INV-" + today + "-" + String.format("%04d", (int)(Math.random() * 10000));
+
         ServiceInvoice invoice = ServiceInvoice.builder()
-                .invoiceCode("INV-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase(java.util.Locale.ROOT))
+                .invoiceCode(invoiceCode)
+                .invoiceNo(invoiceNo)
+                .businessId(subscription.getBusinessId())
                 .user(invoiceUser)
                 .subscription(subscription)
                 .plan(plan)
                 .duration(duration)
                 .unitPrice(unitPrice)
                 .totalAmount(totalAmount)
+                .amount(totalAmount)
                 .status("PENDING")
                 .build();
 

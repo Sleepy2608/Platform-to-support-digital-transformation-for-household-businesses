@@ -1,0 +1,17 @@
+{
+  "table" : "tax_types",
+  "version" : 1,
+  "rows" : [ {
+    "id" : 1,
+    "description" : "Nghĩa vụ thuế tự động từ sổ S1-HKD",
+    "status" : "ACTIVE",
+    "tax_code" : "VAT",
+    "tax_name" : "Thuế giá trị gia tăng"
+  }, {
+    "id" : 3,
+    "description" : "Nghĩa vụ thuế tự động từ sổ S1-HKD",
+    "status" : "ACTIVE",
+    "tax_code" : "PIT",
+    "tax_name" : "Thuế thu nhập cá nhân"
+  } ]
+}

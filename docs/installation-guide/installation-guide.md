@@ -5,9 +5,9 @@
 | **Tên tài liệu** | Hướng dẫn Cài đặt Hệ thống (Installation Guide) – Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Mã issue/ticket** | HBDT-95 |  
-| **Phiên bản** | 1.2 |
-| **Cập nhật lần cuối** | 15/09/2026 |
-| **Trạng thái** | Đồng bộ với cấu hình hiện tại của repo (bao gồm phân hệ AI Service dùng B.ai) và luồng dev local trên Windows |
+| **Phiên bản** | 1.4 |
+| **Cập nhật lần cuối** | 04/11/2026 |
+| **Trạng thái** | Đồng bộ với cấu hình hiện tại của repo (phân hệ AI Service dùng B.ai, cổng thanh toán tự động SePay, xác thực STK thụ hưởng, Cloudflare Tunnel) và luồng dev local trên Windows |
 
 ---
 
@@ -223,6 +223,28 @@ Các script tự kiểm tra môi trường trước khi chạy và giữ cửa s
 > ```
 > Sau đó mở lại terminal / VS Code. Nếu thiếu biến này, `mvnw.cmd` sẽ báo `Error: JAVA_HOME not found in your environment`.
 
+### 2.9 Cấu hình Cổng thanh toán SePay & Webhook Tunnel (Local Development)
+
+Để nhận Webhook từ SePay trong môi trường local development (máy không có IP tĩnh):
+1. **Tải và cài đặt Cloudflare Tunnel (`cloudflared`):**
+   - Tải `cloudflared-windows-amd64.msi` hoặc file thực thi `.exe` từ trang chủ Cloudflare.
+2. **Khởi tạo đường hầm HTTPS kết nối tới Backend:**
+   ```powershell
+   cloudflared tunnel --url http://localhost:8080
+   ```
+   Lệnh sinh một URL công khai dạng `https://<subdomain>.trycloudflare.com`.
+3. **Cấu hình trên SePay Dashboard (https://my.sepay.vn):**
+   - Vào mục **Tích hợp WebHooks** → **Thêm webhook**.
+   - **URL nhận webhook:** `https://<subdomain>.trycloudflare.com/api/sepay/webhook`
+   - **Loại giao dịch:** Tiền vào (in).
+   - **Định dạng dữ liệu:** JSON.
+   - **Phương thức xác thực:** Chọn **API Key**, copy Secret Key vào `Code/Server/.env` (`SEPAY_SECRET_KEY=spsk_...`).
+4. **Kiểm tra gửi thử:** Bấm **Gửi thử** trên Dashboard SePay; kết quả trả về `HTTP 200 (OK)` xác nhận Webhook đã kết nối thông suốt.
+5. **Lưu ý bảo mật & ổn định đường hầm:**
+   - **Quick Tunnel (`trycloudflare.com`):** URL tạm thời, thay đổi sau mỗi lần khởi động lại tunnel. Cần giữ tiến trình tunnel chạy liên tục khi kiểm thử.
+   - **Xác thực STK thụ hưởng:** Biến `SEPAY_ACCOUNT_NUMBER=107882760609` trong `.env` bảo vệ hệ thống chỉ nhận tiền vào đúng tài khoản thụ hưởng của nền tảng; các giao dịch vào tài khoản lạ sẽ bị bỏ qua và ghi log cảnh báo.
+   - **Cơ chế phản hồi an toàn:** Webhook endpoint luôn trả `200 OK` cho SePay để ngăn chặn cơ chế tự động gửi lại (retry) 7 lần khi có lỗi nội bộ.
+
 ---
 
 ## 3. Cài đặt Production
@@ -253,6 +275,9 @@ Các script tự kiểm tra môi trường trước khi chạy và giữ cửa s
 | `AI_SERVICE_API_SECRET` | Chuỗi ngẫu nhiên ≥ 32 ký tự | Xác thực backend → AI service; phải trùng với `Code/AI/.env` |
 | `AI_SERVICE_TIMEOUT_SECONDS` | `35` | Timeout gọi AI service |
 | `AI_SERVICE_AUTO_START` | `false` ở production | Production nên chạy AI service như một service riêng, không để backend tự spawn |
+| `SEPAY_MERCHANT_ID` | String (vd: `SP-TEST-NLB7A395`) | Mã định danh tài khoản doanh nghiệp SePay |
+| `SEPAY_SECRET_KEY` | Secret Key (vd: `spsk_...`) | API Secret Key dùng xác thực webhook SePay gửi tới |
+| `SEPAY_ACCOUNT_NUMBER` | Số tài khoản ngân hàng | Số tài khoản nhận chuyển khoản VietinBank gắn với SePay |
 | `BAI_API_KEY` | B.ai API key | **Chỉ khai báo cho service `ai-service`**, không truyền vào backend |
 | `BAI_MODEL`, `BAI_BASE_URL`, `BAI_TIMEOUT_SECONDS` | Model ID / base URL / timeout | Chỉ khai báo cho service `ai-service` |
 

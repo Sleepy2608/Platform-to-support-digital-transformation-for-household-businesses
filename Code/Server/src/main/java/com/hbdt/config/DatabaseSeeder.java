@@ -191,12 +191,21 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .fullName("Chủ Hộ Kinh Doanh Mẫu")
                     .phone("0987654321")
                     .status(UserStatus.ACTIVE)
+                    .businessId(1L)
                     .subscriptionExpiresAt(java.time.LocalDateTime.now().plusMonths(12))
                     .role(ownerRole)
                     .build();
 
             userRepository.save(owner);
             logger.info("Seeded default owner user: owner / owner123");
+        } else {
+            userRepository.findByUsername("owner").ifPresent(owner -> {
+                if (owner.getBusinessId() == null) {
+                    owner.setBusinessId(1L);
+                    userRepository.save(owner);
+                    logger.info("Assigned businessId=1 to owner user");
+                }
+            });
         }
     }
 }

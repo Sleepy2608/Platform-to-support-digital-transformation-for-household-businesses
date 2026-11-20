@@ -9,9 +9,9 @@
 | **Viết tắt** | HBDT |
 | **Môn học** | Lập trình Java |
 | **Loại tài liệu** | Báo cáo tổng kết toàn bộ quá trình phát triển |
-| **Thời gian phát triển** | 22/07/2026 → 16/09/2026 |
-| **Tiến độ** | 13/13 Epic `Done` trên Jira — mức độ hoàn thành 93% (Sprint 8) |
-| **Ngày tổng hợp** | 15/09/2026 |
+| **Thời gian phát triển** | 22/07/2026 → 04/11/2026 |
+| **Tiến độ** | 13/13 Epic `Done` trên Jira — mức độ hoàn thành 100% |
+| **Ngày tổng hợp** | 04/11/2026 |
 
 ---
 
@@ -94,7 +94,7 @@ Hệ thống theo **kiến trúc phân tầng (Layered / Three-Tier)**, backend 
 ┌──────────────────────────────────────────────────────────────────────┐
 │  PRESENTATION TIER                                                   │
 │   Next.js 16 App Router (:3000)                                      │
-│   ├── Public Portal      (/, /login, /register, /onboarding)         │
+│   ├── Public Portal      (/, /login, /register, /onboarding/*)       │
 │   ├── Owner Portal       (/owner/**  — quản trị hộ kinh doanh)       │
 │   ├── Employee POS       (/employee/** — bán hàng tại quầy)          │
 │   ├── Manager Portal     (/manager/** — vận hành nền tảng)           │
@@ -193,7 +193,7 @@ Dự án phát triển qua **13 Epic** quản lý trên Jira, chia thành các g
 
 **Cách triển khai:**
 
-- **Luồng onboarding**: `Landing → /register → xác thực OTP email → /onboarding (hồ sơ kinh doanh) → chọn gói → kích hoạt`.
+- **Luồng onboarding**: `Landing → /register → xác thực OTP email → /onboarding/business-profile (hồ sơ kinh doanh) → /onboarding/package-selection (chọn gói) → kích hoạt`.
 - **API**: `POST /api/auth/register` (tạo user `PENDING` + sinh OTP), `POST /api/auth/verify-otp` (kích hoạt, gán role `BUSINESS_OWNER`, trả `AuthResponse`), `POST /api/owner/business-profile` (upsert hồ sơ), `GET /api/public/subscription-plans` (bảng giá công khai).
 - **OTP**: `OtpService` quản lý **in-memory** (không lưu DB), TTL cấu hình `app.otp.ttl-minutes` (mặc định 5 phút); chế độ dev `app.otp.dev-mode=true` in OTP ra console thay vì gửi email thật. Gửi mail qua `MailService`.
 - **Đồng thuận pháp lý**: bảng `terms_consents` lưu 6 cờ đồng thuận (điều khoản, quyền riêng tư, xử lý dữ liệu, **phạm vi học thuật Thông tư 88**, xác nhận thông tin chính xác, hiểu rủi ro sai lệch) kèm `ip_address`, `user_agent`, `accepted_at`.
@@ -227,7 +227,7 @@ Dự án phát triển qua **13 Epic** quản lý trên Jira, chia thành các g
 - **API Owner**: `GET /api/owner/subscription/packages`, `POST /api/owner/subscription/select-package?packageType=&billingCycle=`, `POST /api/owner/subscription/renew?months=1..24`.
 - **API Admin/Manager**: CRUD `/api/admin/subscription-plans`; bảng giá công khai tại `GET /api/public/subscription-plans` (chỉ gói active).
 - **Feature Entitlement**: `SubscriptionInterceptor` kiểm tra quyền truy cập theo gói ở mọi request nghiệp vụ; UI dùng `FeatureGate` + `EntitlementContext`/`useEntitlement` để ẩn/khoá tính năng và hiển thị `UpgradeModal`.
-- **Thanh toán**: luồng chọn gói có phí mở **QR/chuyển khoản** (`PaymentQrModal`, tải QR qua `qrDownload.ts`) và xác nhận kích hoạt gói; gói miễn phí kích hoạt trực tiếp. ⚠️ **Chưa tích hợp cổng thanh toán/webhook ngân hàng tự động** — đối soát do Manager/Admin thực hiện (xem §11.2).
+- **Thanh toán**: tích hợp **Cổng thanh toán tự động SePay** kết hợp VietQR động (`PaymentQrModal`, tạo QR chuẩn Napas/VietinBank kèm số tiền và cú pháp định danh `HBDT RENEW <businessId> <months>`, tải QR qua `qrDownload.ts`). Hệ thống lắng nghe biến động số dư ngân hàng thời gian thực qua **SePay Webhook & IPN** (`SepayWebhookController`, `SepayWebhookService`), hỗ trợ xác thực API Key, kiểm tra loại giao dịch (tiền vào `in`), chống trùng lặp (Idempotency) và tự động cộng hạn dùng `subscriptions` + sinh hóa đơn dịch vụ `service_invoices` (PAID). Frontend tự động polling mỗi 3 giây để phát hiện thanh toán thành công và mở khóa tính năng tức thì. Ngoài ra, hỗ trợ hệ thống **Bypass Key** (mã ưu đãi 20 ký tự alphanumeric do Admin tạo để giảm 100% khi thử nghiệm). Gói miễn phí kích hoạt trực tiếp.
 - **Service Invoice**: sinh hóa đơn dịch vụ cho gói thuê bao; Manager xem/tra cứu tại `/manager/invoices`.
 
 ### 4.4. Product Catalog & Pricing (EPIC-05)
@@ -494,9 +494,9 @@ Order & Checkout  xử lý như đơn thủ công (transaction đầy đủ: kho
 
 | Khu vực | Route tiêu biểu | Chức năng |
 |---|---|---|
-| **Public** | `/`, `/login`, `/register`, `/forgot-password`, `/verify-email`, `/onboarding` | Landing page, bảng giá, đăng ký/đăng nhập, xác thực OTP, thiết lập hồ sơ cửa hàng |
-| **Owner** | `/owner`, `/owner/account` (+ `/subscription`), `/owner/products` (+ `stock-import`), `/owner/inventory`, `/owner/inventory-alerts`, `/owner/customers` (+ purchase history), `/owner/employees`, `/owner/orders` (+ `/new`, `/history`), `/owner/revenue` (+ `/products`), `/owner/feedback` | Dashboard chủ hộ: sản phẩm, kho, khách hàng & công nợ, đơn hàng, doanh thu, nhân viên, gói thuê bao |
-| **Employee** | `/employee/account`, `/employee/orders` (+ `/new`, `/history`), `/employee/customers` (+ purchase history), `/employee/inventory`, `/employee/inventory-alerts`, `/employee/revenue` | **Fast Sales UI**: lập đơn tại quầy, giỏ hàng, ghi nợ, in hóa đơn, xem cảnh báo tồn |
+| **Public** | `/`, `/login`, `/register`, `/forgot-password`, `/verify-email`, `/onboarding/business-profile`, `/onboarding/package-selection` | Landing page, bảng giá, đăng ký/đăng nhập, xác thực OTP, thiết lập hồ sơ cửa hàng & chọn gói cước |
+| **Owner** | `/owner/account` (+ `/subscription`), `/owner/products` (+ `stock-import`), `/owner/inventory`, `/owner/inventory-alerts`, `/owner/customers` (+ purchase history), `/owner/employees` (+ `/[employeeId]`), `/owner/orders` (+ `/new`, `/history`), `/owner/fast-sales`, `/owner/revenue` (+ `/products`), `/owner/reports`, `/owner/feedback` | Dashboard chủ hộ: sản phẩm, kho, khách hàng & công nợ, đơn hàng, doanh thu, nhân viên, gói thuê bao |
+| **Employee** | `/employee/account`, `/employee/orders` (+ `/new`, `/history`), `/employee/fast-sales`, `/employee/customers` (+ purchase history), `/employee/inventory`, `/employee/inventory-alerts`, `/employee/revenue` | **Fast Sales UI**: lập đơn tại quầy, giỏ hàng, ghi nợ, in hóa đơn, xem cảnh báo tồn |
 | **Manager & Admin** | `/manager` (+ `/analytics`, `/feedback`, `/invoices`), `/admin/login`, `/admin` (+ `/accounts`, `/analytics`, `/announcements`, `/features`, `/feedback`, `/profile`, `/report-templates`, `/seed`, `/subscription-plans`, `/templates`) | Vận hành nền tảng & quản trị hệ thống |
 
 ### 7.3. Bảo vệ route & quản lý phiên
@@ -645,7 +645,7 @@ uvicorn main:app --reload --port 8000
 |---|---|
 | **Nền tảng & Onboarding** | Landing page, đăng ký chủ hộ, xác thực OTP email, onboarding hồ sơ kinh doanh (địa chỉ 3 cấp, mã số thuế, loại hình), đồng thuận điều khoản/chính sách + TT 88 |
 | **Xác thực & phân quyền** | JWT stateless (access 15', refresh 7 ngày), BCrypt, RBAC 4 tầng (Admin/Manager/Owner/Employee), Tenant Isolation, Audit Log, rate limit chống brute force/spam OTP, quản lý tài khoản Owner/Employee/Admin/Manager |
-| **Thuê bao & thanh toán** | CRUD gói thuê bao, vòng đời subscription, upgrade/downgrade/gia hạn, Feature Entitlement + FeatureGate, hóa đơn dịch vụ, bảng giá công khai, thanh toán bằng QR/chuyển khoản có xác nhận |
+| **Thuê bao & thanh toán** | CRUD gói thuê bao, vòng đời subscription, upgrade/downgrade/gia hạn, Feature Entitlement + FeatureGate, hóa đơn dịch vụ, bảng giá công khai, **cổng thanh toán tự động SePay (VietQR + Webhook/IPN)**, tự động gia hạn & sinh ServiceInvoice, real-time polling, hệ thống Bypass Key ưu đãi 100% |
 | **Sản phẩm & giá** | Danh mục, sản phẩm, ảnh (object key + signed URL), nhiều đơn vị tính + quy đổi, quy tắc giá, tìm kiếm tức thời, import template, nhóm hoạt động & tỷ lệ thuế |
 | **Kho** | Nhập kho, tồn kho hiện tại, trừ kho tự động khi xác nhận đơn, hoàn kho khi hủy, lịch sử & điều chỉnh, cảnh báo tồn thấp, ghi sổ kho tự động |
 | **Bán hàng & công nợ** | POS tại quầy, giỏ hàng–giá–gán khách hàng, ghi nợ khi checkout, thu nợ (nhiều đợt), đảo nợ khi hủy đơn, lịch sử & tổng hợp công nợ, hóa đơn PDF, lịch sử đơn, **Fast Sales UI** |
@@ -663,7 +663,6 @@ uvicorn main:app --reload --port 8000
 | **HBDT-60 — Voice-to-text** | ❌ Chưa hoàn thành. Hệ thống mới hỗ trợ **text input**; trường `audio_base64` đã có trong hợp đồng API nhưng STT chưa triển khai |
 | **HBDT-104 — UML Diagram** | ❌ Còn ở trạng thái `To Do` (một phần đã có class/sequence diagram trong Detailed Design) |
 | **HBDT-128 — Release Package** | ❌ Chưa đóng gói bản phát hành |
-| **Cổng thanh toán tự động** | ❌ Chưa tích hợp payment gateway/webhook ngân hàng; thanh toán gói thuê bao hiện theo luồng **QR/chuyển khoản + xác nhận thủ công** |
 | **Redis cache** | ⚠️ Mới ở mức **thiết kế** (ADR-006, key pattern, TTL). `pom.xml` **không có** dependency Redis và không có cấu hình `redis.*` → chưa có caching layer thực tế |
 | **`docker-compose.yml`** | ⚠️ Còn cấu hình cũ (`agritrade`, sai đường dẫn mount, sai cổng frontend, sai context AI) → cần cập nhật trước khi dùng chính thức |
 | **Sổ S3/S5/S6/S7-HKD & thuế điện tử** | ⛔ Ngoài phạm vi học thuật: chi phí, tiền lương, quỹ tiền mặt, tiền gửi ngân hàng, kê khai/nộp thuế điện tử, hoá đơn điện tử, đối soát ngân hàng, phân bổ 1 khoản thanh toán cho nhiều đơn, hoàn tiền phức tạp |

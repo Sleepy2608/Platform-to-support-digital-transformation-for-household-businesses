@@ -209,7 +209,7 @@ class AiServiceTest {
 
     private ProductResponse product(Long id, String name, int stock) {
         return new ProductResponse(id, "SP" + id, name, null, null, 3L, "Bao", BigDecimal.ONE,
-                1L, "Nhóm thuế", null, List.of(), null, "ACTIVE", BigDecimal.valueOf(stock), null, null);
+                3L, "Bao", 1L, "Nhóm thuế", null, List.of(), null, "ACTIVE", BigDecimal.valueOf(stock), null, null);
     }
 
     private PageResponse<ProductResponse> page(List<ProductResponse> values) {

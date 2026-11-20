@@ -178,10 +178,22 @@ export default function Circular88PolicyCard({ className = '' }: Circular88Polic
               <FileText className="w-5 h-5 text-slate-800" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900">Bảng Tỷ Lệ % Thuế GTGT & TNCN Tính Trên Doanh Thu</h3>
-              <p className="text-xs text-slate-500">Áp dụng theo Thông tư 88/2021/TT-BTC & Quyết định 3389/QĐ-BTC</p>
+              <h3 className="text-base font-bold text-slate-900">Bảng Tỷ Lệ % Thuế GTGT & TNCN Áp Dụng Cho Hộ Kinh Doanh (2026)</h3>
+              <p className="text-xs text-slate-500">Căn cứ Thông tư 88/2021/TT-BTC, Quyết định 3389/QĐ-BTC và Chính sách thuế 2026</p>
             </div>
           </div>
+        </div>
+
+        <div className="p-3.5 bg-blue-50/70 border border-blue-200/80 rounded-xl text-xs text-blue-900 space-y-1">
+          <p className="font-semibold flex items-center gap-1.5">
+            <Info className="w-4 h-4 text-blue-700 shrink-0" />
+            <span>Quy tắc áp dụng theo ngưỡng doanh thu năm 2026:</span>
+          </p>
+          <ul className="list-disc list-inside space-y-0.5 text-[11px] text-blue-800 pl-1">
+            <li><strong>Doanh thu ≤ 500 triệu đồng/năm:</strong> Thuộc diện không chịu thuế GTGT và không phải nộp thuế TNCN.</li>
+            <li><strong>Doanh thu từ trên 500 triệu đến 3 tỷ đồng/năm:</strong> GTGT tính trên doanh thu; TNCN áp dụng phương pháp tỷ lệ trên doanh thu vượt 500 triệu (bảng dưới) hoặc phương pháp thu nhập tính thuế (15%).</li>
+            <li><strong>Doanh thu trên 3 tỷ đồng/năm:</strong> TNCN áp dụng phương pháp thu nhập tính thuế (17% cho 3–50 tỷ, 20% cho trên 50 tỷ đồng).</li>
+          </ul>
         </div>
 
         <div className="overflow-x-auto">
@@ -191,7 +203,7 @@ export default function Circular88PolicyCard({ className = '' }: Circular88Polic
                 <th className="py-3 px-3 text-center w-12">STT</th>
                 <th className="py-3 px-4">Danh Mục Ngành Nghề Kinh Doanh</th>
                 <th className="py-3 px-3 text-center">Thuế GTGT</th>
-                <th className="py-3 px-3 text-center">Thuế TNCN</th>
+                <th className="py-3 px-3 text-center">Thuế TNCN (Doanh thu)</th>
                 <th className="py-3 px-4 text-center">Tổng Tỷ Lệ Trích Nộp</th>
               </tr>
             </thead>

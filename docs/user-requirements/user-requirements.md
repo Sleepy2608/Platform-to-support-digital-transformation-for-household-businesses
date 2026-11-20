@@ -13,11 +13,11 @@
 |---|---|
 | Tên tài liệu | Tài liệu đặc tả yêu cầu người dùng – Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | Tên tiếng Anh | User Requirements Document – Platform to Support Digital Transformation for Household Businesses |
-| Mã tài liệu | URD-HKD-v1.2.0 |  
-| Phiên bản | 1.3.0 |
+| Mã tài liệu | URD-HKD-v1.4.0 |  
+| Phiên bản | 1.4.0 |
 | Người lập | Nguyễn Ngọc Gia Bảo |
 | Ngày lập ban đầu | 25/07/2026 |
-| Ngày cập nhật | 23/08/2026 |
+| Ngày cập nhật | 21/09/2026 |
 | Trạng thái | Hoàn thiện để làm đầu vào cho SRS, thiết kế và kiểm thử |
 
 ### Lịch sử cập nhật
@@ -28,6 +28,7 @@
 | 1.1.0 | 30/07/2026 | Làm rõ phạm vi học thuật theo Thông tư 88: triển khai S1-HKD, S2-HKD và S4-HKD; bổ sung yêu cầu về phân loại doanh thu, giá trị nhập–xuất–tồn, nghĩa vụ thuế, nộp thuế và kiểm soát báo cáo | Nguyễn Ngọc Gia Bảo |
 | 1.2.0 | 18/08/2026 | Cập nhật phân quyền RBAC 4 tầng (Admin -> Manager -> Owner -> Employee); phân định rõ phạm vi trách nhiệm giữa Manager (vận hành) và Administrator (hệ thống) | Nguyễn Ngọc Gia Bảo |
 | 1.3.0 | 23/08/2026 | Thêm thanh toán gói thuê bao bằng QR và cho phép owner tải hình ảnh, thông tin, số lượng của sản phẩm lên hệ thống | Nguyễn Lê Huy Tâm |
+| 1.4.0 | 21/09/2026 | Cập nhật chính sách thuế 2026 (ngưỡng 500tr, phương pháp GTGT & TNCN, Tax Rule Versioning, phân tầng 3 nhóm thuế và quyền phê duyệt của Owner) | Nguyễn Lê Huy Tâm |
 
 ---
 
@@ -127,13 +128,18 @@ Ngoài các thao tác do người dùng thực hiện, tài liệu xác định 
 
 | Mã | Tài liệu tham khảo |
 |---|---|
-| TL-01 | Quyết định số 3389/QĐ-BTC năm 2025 của Bộ Tài chính, được dẫn chiếu trong bối cảnh đề tài |
-| TL-02 | Thông tư số 88/2021/TT-BTC của Bộ Tài chính, được dẫn chiếu trong yêu cầu về sổ kế toán |
-| TL-03 | Đề bài và phạm vi chức năng được giảng viên giao cho nhóm |
+| TL-01 | Quyết định số 3389/QĐ-BTC của Bộ Tài chính, hướng dẫn phân loại và chuyển đổi số hộ kinh doanh |
+| TL-02 | Thông tư số 88/2021/TT-BTC của Bộ Tài chính, hướng dẫn chế độ kế toán cho hộ, cá nhân kinh doanh |
+| TL-03 | Quy định và hướng dẫn chính sách thuế đối với hộ, cá nhân kinh doanh áp dụng từ năm 2026 |
+| TL-04 | Đề bài và phạm vi chức năng được giảng viên giao cho nhóm |
 
-Trong phạm vi học thuật được giảng viên xác nhận, hệ thống triển khai các mẫu **S1-HKD, S2-HKD và S4-HKD theo Thông tư số 88/2021/TT-BTC**.
-
-Nội dung này là phạm vi của đồ án, không phải tuyên bố rằng hệ thống đã triển khai đầy đủ mọi quy định pháp luật hoặc có thể thay thế việc kiểm tra chuyên môn của Owner, kế toán hoặc cơ quan có thẩm quyền.
+Trong phạm vi học thuật được giảng viên xác nhận, hệ thống triển khai các mẫu **S1-HKD, S2-HKD và S4-HKD theo Thông tư số 88/2021/TT-BTC** kết hợp với **Chính sách thuế Hộ kinh doanh 2026**:
+- Tự động ghi nhận dữ liệu kế toán được hỗ trợ theo quy định kế toán hộ kinh doanh.
+- Tự động tính toán nghĩa vụ thuế GTGT và TNCN được hỗ trợ căn cứ trên: ngưỡng doanh thu năm (ngưỡng 500 triệu đồng, 3 tỷ đồng, 50 tỷ đồng), nhóm ngành hoạt động kinh doanh, phương pháp tính thuế áp dụng và phiên bản quy tắc thuế có hiệu lực.
+- Hỗ trợ quản lý phiên bản quy tắc thuế (Tax Rule Versioning) để các giao dịch lịch sử luôn áp dụng đúng chính sách thuế tại thời điểm phát sinh.
+- Cho phép Owner xem xét, chỉnh sửa dữ liệu được phép, phê duyệt hoặc từ chối các sổ kế toán và báo cáo thuế trước khi sử dụng.
+- Thiết kế hỗ trợ mở rộng các loại thuế khác (thuế tiêu thụ đặc biệt, bảo vệ môi trường, tài nguyên, xuất nhập khẩu) trong khi tập trung triển khai thực tế vào GTGT và TNCN của hộ kinh doanh.
+- Hệ thống không thay thế vai trò kiểm tra, phê duyệt cuối cùng của Chủ hộ kinh doanh hoặc thẩm quyền của cơ quan quản lý thuế.
 
 ---
 
@@ -182,7 +188,7 @@ Hệ thống phải cho phép:
 - Dùng AI để giảm thao tác nhập liệu khi tạo đơn hàng.
 - Tự động tổng hợp doanh thu phục vụ S1-HKD.
 - Tự động tổng hợp số lượng, đơn giá và thành tiền nhập–xuất–tồn phục vụ S2-HKD.
-- Theo dõi nghĩa vụ thuế, số đã nộp và số còn phải nộp phục vụ S4-HKD.
+- Hỗ trợ tính toán và theo dõi nghĩa vụ thuế GTGT, TNCN, số đã nộp và số còn phải nộp phục vụ S4-HKD.
 - Cung cấp Dashboard doanh thu, sản phẩm bán chạy, cảnh báo tồn thấp và tổng công nợ.
 - Hỗ trợ quản lý tài khoản, thuê bao, cấu hình, biểu mẫu và hoạt động toàn nền tảng.
 
@@ -235,10 +241,10 @@ Hệ thống phải cho phép:
 
 - Tổng hợp doanh thu theo nhóm hoạt động tính thuế để lập S1-HKD.
 - Tổng hợp số lượng, đơn giá và thành tiền nhập–xuất–tồn để lập S2-HKD.
-- Ghi nhận nghĩa vụ thuế và từng lần nộp thuế để lập S4-HKD.
-- Tính số đã nộp và số còn phải nộp; chấp nhận số còn phải nộp âm để thể hiện nộp thừa.
-- Quản lý phiên bản biểu mẫu và thời gian hiệu lực.
-- Cho phép Owner kiểm tra, chỉnh sửa dữ liệu được phép chỉnh sửa, xác nhận hoặc từ chối báo cáo trước khi sử dụng.
+- Hỗ trợ tính toán nghĩa vụ thuế GTGT và TNCN tự động dựa trên ngưỡng doanh thu năm, nhóm ngành nghề, phương pháp tính thuế và phiên bản quy tắc thuế có hiệu lực để lập S4-HKD.
+- Ghi nhận từng lần nộp thuế thực tế theo Giấy nộp tiền vào NSNN; tính số đã nộp và số còn phải nộp (hoặc nộp thừa).
+- Quản lý phiên bản biểu mẫu, phiên bản quy tắc thuế và thời gian hiệu lực.
+- Cho phép Owner kiểm tra, chỉnh sửa dữ liệu được phép chỉnh sửa, xác nhận hoặc từ chối báo cáo trước khi sử dụng chính thức.
 
 ### 2.4.7. Quản trị nền tảng
 
@@ -246,7 +252,7 @@ Hệ thống phải cho phép:
 - Theo dõi số liệu hoạt động toàn nền tảng.
 - Xem và xử lý phản hồi.
 - Quản lý cấu hình hệ thống và AI.
-- Quản lý nhóm hoạt động và tỷ lệ tính thuế.
+- Quản lý nhóm hoạt động, danh mục loại thuế, quy tắc thuế và phiên bản hiệu lực.
 - Quản lý phiên bản biểu mẫu S1-HKD, S2-HKD và S4-HKD.
 - Phát thông báo đến người dùng.
 
@@ -261,13 +267,14 @@ Hệ thống phải cho phép:
 
 Phiên bản hiện tại không bao gồm:
 
+- Thuế Thu nhập Doanh nghiệp (CIT/TNDN) do không áp dụng cho hộ kinh doanh;
 - S3-HKD, S5-HKD, S6-HKD và S7-HKD;
-- hệ thống quản lý chi phí sản xuất, kinh doanh đầy đủ;
-- chấm công và tính lương;
+- hệ thống quản lý chi phí sản xuất, kinh doanh đầy đủ (chi phí ngoài giá vốn hàng bán được xử lý theo dữ liệu do Owner xác nhận/nhập bổ sung khi chọn phương pháp TNCN theo thu nhập);
+- chấm công và tính lương chuyên sâu;
 - quản lý quỹ tiền mặt hoàn chỉnh;
 - quản lý và đối soát tài khoản ngân hàng;
-- tự động kê khai hoặc nộp thuế đến cơ quan thuế;
-- tự động xác định chính xác mọi nghĩa vụ thuế mà không cần Owner kiểm tra;
+- tự động kê khai hoặc nộp thuế trực tiếp đến cơ quan thuế;
+- tự động xác định nghĩa vụ thuế mà không cần Owner kiểm tra, phê duyệt;
 - phân bổ một khoản thanh toán cho nhiều đơn hàng;
 - quy trình hoàn tiền phức tạp;
 - phân bổ một lần nộp thuế cho nhiều nghĩa vụ;
@@ -318,7 +325,7 @@ Owner có toàn bộ chức năng của Employee và các yêu cầu bổ sung s
 | FR-CH-05 | **Quản lý tài khoản Employee.** Owner tạo, đặt lại mật khẩu và vô hiệu hóa tài khoản Employee. | Thao tác thành công và được ghi Audit log. |
 | FR-CH-06 | **Xem và kiểm tra S1-HKD.** Owner xem doanh thu được phân loại theo nhóm hoạt động và tỷ lệ tính thuế tại thời điểm giao dịch. | Số liệu S1-HKD khớp với đơn hàng đã xác nhận trong kỳ. |
 | FR-CH-07 | **Xem và kiểm tra S2-HKD.** Owner xem số lượng, đơn giá và thành tiền nhập–xuất–tồn. | Số liệu S2-HKD khớp với phiếu nhập, giao dịch kho và số dư tồn. |
-| FR-CH-08 | **Quản lý nghĩa vụ thuế và S4-HKD.** Owner xem nghĩa vụ phát sinh, từng lần nộp, số đã nộp và số còn phải nộp hoặc nộp thừa. | Số đã nộp bằng tổng các lần nộp; số còn phải nộp được tính đúng và có thể âm khi nộp thừa. |
+| FR-CH-08 | **Quản lý nghĩa vụ thuế và S4-HKD.** Owner xem nghĩa vụ thuế GTGT và TNCN do Tax Engine tính toán theo ngưỡng doanh thu năm và phương pháp áp dụng, từng lần nộp, số đã nộp và số còn phải nộp hoặc nộp thừa. | Số đã nộp bằng tổng các lần nộp; số còn phải nộp được tính đúng theo ngưỡng/phương pháp; trường hợp nộp thừa được thể hiện rõ ràng. |
 | FR-CH-09 | **Kiểm tra và phê duyệt sổ/báo cáo.** Owner xem, chỉnh sửa dữ liệu được phép chỉnh sửa, xác nhận hoặc từ chối kết quả trước khi sử dụng. | Hệ thống lưu trạng thái, người kiểm tra, thời gian và lý do từ chối khi có. |
 | FR-CH-10 | **Đăng ký và thanh toán gói thuê bao bằng QR.** Owner chọn gói, chu kỳ thanh toán, xem thông tin QR/chuyển khoản và xác nhận yêu cầu kích hoạt. | Gói có phí mở đúng modal QR; gói miễn phí kích hoạt trực tiếp; lựa chọn hợp lệ được kích hoạt sau khi xác nhận. |
 
@@ -338,7 +345,7 @@ Owner có toàn bộ chức năng của Employee và các yêu cầu bổ sung s
 | FR-AD-01 | **Quản lý tài khoản Manager.** Admin thêm mới, cập nhật thông tin, kích hoạt hoặc vô hiệu hóa tài khoản Manager. | Danh sách Manager được cập nhật chính xác và đúng phân quyền. |
 | FR-AD-02 | **Quản lý gói thuê bao và bảng giá.** Admin định nghĩa gói thuê bao, cập nhật giá tiền theo tháng/năm, và các giới hạn tài nguyên của gói. | Gói thuê bao mới và giá tiền được cập nhật hiển thị chính xác trên toàn hệ thống. |
 | FR-AD-03 | **Quản lý cấu hình hệ thống và AI.** Admin cập nhật cấu hình chung của hệ thống, điều chỉnh tham số mô hình AI. | Cấu hình được áp dụng ngay lập tức và ghi nhận Audit log. |
-| FR-AD-04 | **Quản lý biểu mẫu kế toán và thuế.** Admin quản lý phiên bản biểu mẫu S1-HKD, S2-HKD, S4-HKD và cấu hình tỷ lệ thuế, nhóm hoạt động tính thuế. | Phiên bản biểu mẫu mới được thiết lập thời gian hiệu lực và lưu trữ lịch sử các phiên bản cũ. |
+| FR-AD-04 | **Quản lý biểu mẫu kế toán và chính sách thuế.** Admin quản lý phiên bản biểu mẫu S1-HKD, S2-HKD, S4-HKD; cấu hình danh mục loại thuế, quy tắc thuế, ngưỡng doanh thu và thời gian hiệu lực (Tax Policy Versioning). | Phiên bản biểu mẫu và quy tắc thuế mới được thiết lập thời gian hiệu lực và lưu trữ lịch sử các phiên bản cũ không làm thay đổi giao dịch quá khứ. |
 | FR-AD-05 | **Phát thông báo hệ thống.** Admin gửi thông báo toàn hệ thống hoặc theo nhóm vai trò cụ thể. | Người dùng nhận được thông báo đúng hạn và đúng đối tượng mục tiêu. |
 | FR-AD-06 | **Xem nhật ký hệ thống (Audit log).** Admin xem toàn bộ nhật ký truy vết các thao tác thay đổi cấu hình, vai trò, bảo mật trên nền tảng. | Nhật ký hiển thị đầy đủ thông tin thời gian, tác nhân, hành động và nội dung thay đổi. |
 
@@ -350,8 +357,8 @@ Owner có toàn bộ chức năng của Employee và các yêu cầu bổ sung s
 | FR-HT-02 | **Tự động ghi nhận dữ liệu nguồn.** Khi đơn hàng, phiếu nhập, giao dịch công nợ, nghĩa vụ thuế hoặc lần nộp thuế được xác nhận, hệ thống ghi nhận dữ liệu phục vụ sổ. | Dữ liệu sổ có thể truy vết về giao dịch nguồn đã xác nhận. |
 | FR-HT-03 | **Tự động tổng hợp S1-HKD.** Hệ thống tổng hợp doanh thu theo nhóm hoạt động tính thuế và tỷ lệ đã lưu tại thời điểm bán. | Số liệu bằng tổng dữ liệu của các đơn đã xác nhận trong kỳ; thay đổi cấu hình mới không làm thay đổi đơn cũ. |
 | FR-HT-04 | **Tự động tổng hợp S2-HKD.** Hệ thống tổng hợp đơn vị, đơn giá, số lượng và thành tiền nhập–xuất–tồn. | Số liệu khớp dữ liệu kho; giá trị chính thức được hoàn thiện khi chốt kỳ. |
-| FR-HT-05 | **Tự động tổng hợp S4-HKD.** Hệ thống tổng hợp số phải nộp, số đã nộp và số còn phải nộp theo từng loại nghĩa vụ. | Số đã nộp bằng tổng các giao dịch nộp thuế; hệ thống phản ánh được nộp thừa. |
-| FR-HT-06 | **Tính số thuế dự kiến.** Hệ thống có thể tính số thuế dự kiến từ doanh thu tính thuế và tỷ lệ được cấu hình. | Công thức sử dụng đúng dữ liệu và tỷ lệ; kết quả được đánh dấu cần Owner kiểm tra. |
+| FR-HT-05 | **Tự động tính toán & tổng hợp S4-HKD (Tax Engine).** Hệ thống áp dụng quy tắc ngưỡng doanh thu năm 2026 ($\le 500$tr miễn nộp; $500$tr–$3$tỷ chọn phương pháp doanh thu/thu nhập; $>3$tỷ theo thu nhập 17%/20%) và nhóm ngành để tính toán thuế GTGT & TNCN, tổng hợp số đã nộp và số còn phải nộp. | Số đã nộp bằng tổng các giao dịch nộp thuế; số còn phải nộp phản ánh đúng công thức và thể hiện được nộp thừa. |
+| FR-HT-06 | **Tính số thuế dự kiến & lưu vết phiên bản.** Hệ thống tính số thuế dự kiến theo đúng phiên bản quy tắc thuế có hiệu lực tại thời điểm phát sinh kỳ tính thuế. | Công thức sử dụng đúng quy tắc thuế và ngưỡng doanh thu; kết quả được đánh dấu cần Owner kiểm tra và phê duyệt. |
 | FR-HT-07 | **Quản lý phiên bản và lịch sử.** Hệ thống sử dụng đúng phiên bản biểu mẫu và cấu hình có hiệu lực tại thời điểm lập sổ/báo cáo. | Báo cáo cũ giữ nguyên phiên bản đã sử dụng; phiên bản mới chỉ áp dụng từ thời điểm có hiệu lực. |
 | FR-HT-08 | **Thông báo kết quả cần xử lý.** Hệ thống thông báo cho Owner khi có Draft Order, sổ hoặc báo cáo cần kiểm tra. | Owner nhận được thông báo phù hợp và mở được đối tượng cần xử lý. |
 
@@ -376,10 +383,10 @@ Owner có toàn bộ chức năng của Employee và các yêu cầu bổ sung s
 | NFR-KD-03 | **Thông báo thời gian thực.** Draft Order và đối tượng cần duyệt phải được thông báo mà không cần tải lại toàn bộ trang. | Thông báo xuất hiện trong phiên đăng nhập đang hoạt động. |
 | NFR-TT-01 | **Tính chính xác của S1-HKD.** Doanh thu phải khớp với đơn hàng đã xác nhận và nhóm hoạt động tại thời điểm bán. | Đối chiếu tổng doanh thu không phát sinh chênh lệch ngoài quy tắc làm tròn. |
 | NFR-TT-02 | **Tính chính xác của S2-HKD.** Số lượng và thành tiền nhập–xuất–tồn phải đối chiếu được với dữ liệu kho. | Tồn cuối kỳ khớp dữ liệu nguồn và phương pháp được lựa chọn. |
-| NFR-TT-03 | **Tính chính xác của S4-HKD.** Số đã nộp phải bằng tổng các lần nộp và số còn phải nộp được tính đúng. | Đối chiếu không có chênh lệch; trường hợp nộp thừa được phản ánh. |
-| NFR-TT-04 | **Quản lý phiên bản.** Biểu mẫu và nhóm hoạt động tính thuế phải có thời gian hiệu lực và không chồng phiên bản đang hoạt động. | Phiên bản mới áp dụng đúng thời điểm; dữ liệu cũ được bảo toàn. |
+| NFR-TT-03 | **Tính chính xác của S4-HKD.** Số đã nộp phải bằng tổng các lần nộp và số còn phải nộp được tính đúng theo ngưỡng doanh thu và phương pháp thuế áp dụng. | Đối chiếu không có chênh lệch; trường hợp nộp thừa được phản ánh. |
+| NFR-TT-04 | **Quản lý phiên bản.** Biểu mẫu và quy tắc tính thuế phải có thời gian hiệu lực và không chồng phiên bản đang hoạt động. | Phiên bản mới áp dụng đúng thời điểm; dữ liệu cũ được bảo toàn. |
 | NFR-TT-05 | **Kiểm soát kết quả.** Owner phải có thể xác nhận hoặc từ chối sổ/báo cáo; lý do từ chối phải được lưu. | Lịch sử duyệt thể hiện đầy đủ trạng thái, người và thời gian. |
-| NFR-TT-06 | **Giới hạn tuyên bố.** Kết quả thuế được mô tả là số liệu dự kiến dựa trên dữ liệu và cấu hình, cần Owner kiểm tra. | Giao diện và tài liệu không tuyên bố hệ thống thay thế hoàn toàn kiểm tra chuyên môn. |
+| NFR-TT-06 | **Giới hạn tuyên bố.** Kết quả thuế được mô tả là số liệu tính toán hỗ trợ dựa trên dữ liệu, ngưỡng doanh thu và cấu hình hiệu lực, cần Owner kiểm tra và phê duyệt. | Giao diện và tài liệu không tuyên bố hệ thống thay thế hoàn toàn kiểm tra chuyên môn hay cơ quan thuế. |
 
 ---
 
@@ -392,20 +399,20 @@ Owner có toàn bộ chức năng của Employee và các yêu cầu bổ sung s
 | NT-03 | Hệ thống tiếp nhận văn bản hoặc giọng nói, tạo Draft Order và gửi đến người dùng kiểm tra. |
 | NT-04 | S1-HKD tổng hợp đúng doanh thu từ đơn hàng đã xác nhận và giữ đúng nhóm, tỷ lệ tại thời điểm bán. |
 | NT-05 | S2-HKD thể hiện đúng đơn vị, đơn giá, số lượng và thành tiền nhập–xuất–tồn; số liệu khớp dữ liệu kho. |
-| NT-06 | S4-HKD thể hiện đúng nghĩa vụ, số đã nộp, số còn phải nộp hoặc nộp thừa theo từng loại thuế. |
+| NT-06 | S4-HKD thể hiện đúng nghĩa vụ thuế GTGT & TNCN theo ngưỡng doanh thu năm 2026, số đã nộp, số còn phải nộp hoặc nộp thừa theo từng loại thuế. |
 | NT-07 | Owner xem, kiểm tra, xác nhận hoặc từ chối sổ/báo cáo; lịch sử duyệt được lưu. |
 | NT-08 | Manager quản lý Owner, theo dõi chỉ số nền tảng, xử lý phản hồi và theo dõi thuê bao. Administrator quản lý Manager, định nghĩa gói thuê bao/bảng giá, cấu hình hệ thống, AI, biểu mẫu kế toán/thuế, thông báo hệ thống và xem nhật ký truy vết. |
 | NT-09 | Phân quyền và tách biệt dữ liệu bảo đảm người dùng chỉ truy cập đúng hộ kinh doanh và chức năng được cấp. |
 | NT-10 | Các thao tác cốt lõi đáp ứng thời gian phản hồi dưới 2.000 ms trong môi trường kiểm thử. |
 | NT-11 | Giao diện hiển thị tiếng Việt, bảo toàn Unicode và cung cấp thông báo thời gian thực. |
 | NT-12 | Khi AI không khả dụng, người dùng vẫn lập và xử lý đơn thủ công. |
-| NT-13 | Hệ thống không triển khai hoặc tuyên bố hỗ trợ S3-HKD, S5-HKD, S6-HKD và S7-HKD trong phiên bản hiện tại. |
-| NT-14 | Các kết quả thuế được trình bày là số liệu dự kiến dựa trên dữ liệu và cấu hình, cần Owner kiểm tra trước khi sử dụng. |
+| NT-13 | Hệ thống không triển khai hoặc tuyên bố hỗ trợ S3-HKD, S5-HKD, S6-HKD, S7-HKD và thuế TNDN (CIT) trong phiên bản hiện tại. |
+| NT-14 | Các kết quả thuế được trình bày là số liệu tính toán hỗ trợ dựa trên dữ liệu và cấu hình, cần Owner kiểm tra và phê duyệt trước khi sử dụng chính thức. |
 
 ---
 
 ## Kết luận
 
-Tài liệu xác định rõ phạm vi người dùng của Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh và làm rõ phạm vi học thuật gồm **S1-HKD, S2-HKD và S4-HKD**.
+Tài liệu xác định rõ phạm vi người dùng của Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh và làm rõ phạm vi học thuật gồm **S1-HKD, S2-HKD và S4-HKD** kết hợp **Chính sách thuế 2026**.
 
 Các yêu cầu được giới hạn ở mức người dùng và nghiệp vụ. Chi tiết kỹ thuật như cấu trúc bảng, khóa ngoại, trigger, API, Railway hoặc công nghệ cache được trình bày trong các tài liệu thiết kế và triển khai tương ứng.

@@ -421,7 +421,7 @@ export function OrderCartDrawer({
                           setDownloadingQr(true);
                           const amountForQr = paid > 0 ? paid : totalAmount;
                           const syntax = `DH ${orderCode.trim() || 'POS'}`;
-                          const url = `https://img.vietqr.io/image/ICB-108871728162-compact2.png?amount=${amountForQr}&addInfo=${encodeURIComponent(syntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`;
+                          const url = `https://img.vietqr.io/image/ICB-107882760609-compact2.png?amount=${amountForQr}&addInfo=${encodeURIComponent(syntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`;
                           await downloadQrImage(url, `qr-don-hang-${orderCode.trim() || 'pos'}.png`);
                           setTimeout(() => setDownloadingQr(false), 1200);
                         }}
@@ -437,7 +437,7 @@ export function OrderCartDrawer({
                   {showQr && (() => {
                     const amountForQr = paid > 0 ? paid : totalAmount;
                     const syntax = `DH ${orderCode.trim() || 'POS'}`;
-                    const qrUrl = `https://img.vietqr.io/image/ICB-108871728162-compact2.png?amount=${amountForQr}&addInfo=${encodeURIComponent(syntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`;
+                    const qrUrl = `https://img.vietqr.io/image/ICB-107882760609-compact2.png?amount=${amountForQr}&addInfo=${encodeURIComponent(syntax)}&accountName=NGUYEN%20LE%20HUY%20TAM`;
 
                     return (
                       <div className="rounded-2xl bg-slate-900 p-4 text-white shadow-lg space-y-3">
@@ -467,11 +467,11 @@ export function OrderCartDrawer({
                             <div className="flex justify-between items-center border-b border-slate-800 pb-1">
                               <span>Số TK:</span>
                               <div className="flex items-center gap-1">
-                                <strong className="font-mono text-white">108871728162</strong>
+                                <strong className="font-mono text-white">107882760609</strong>
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    navigator.clipboard.writeText('108871728162');
+                                    navigator.clipboard.writeText('107882760609');
                                     setCopiedAcc(true);
                                     setTimeout(() => setCopiedAcc(false), 2000);
                                   }}

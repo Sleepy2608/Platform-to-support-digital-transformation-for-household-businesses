@@ -7,9 +7,13 @@
 │     └──► Public Portal ──► Xác minh SĐT/Email ──► Chọn gói                  │
 │          ──► Chuyển sang bước thanh toán hoặc kích hoạt gói miễn phí        │
 │                                                                             │
-│  ② OWNER: Thanh toán subscription bằng QR                                   │
-│     └──► Gói có phí ──► Mở modal QR ──► Chuyển khoản theo thông tin hiển thị│
-│          ──► Bấm “Xác nhận thanh toán” ──► Gọi select-package ──► Kích hoạt │
+│  ② OWNER: Thanh toán subscription bằng VietQR SePay tự động hoặc Bypass Key │
+│     ├──► Gói có phí: Mở modal PaymentQrModal ──► Quét VietQR động SePay     │
+│     │    (cú pháp: `HBDT RENEW <businessId> <months>`, STK VietinBank)      │
+│     │    └──► Ngân hàng chuyển tiền ──► SePay Webhook bắn về Backend         │
+│     │         ──► Backend tự động gia hạn Subscription & sinh ServiceInvoice│
+│     │         ──► Frontend Polling tự động phát hiện thành công & reload UI │
+│     ├──► Hoặc nhập Bypass Key 20 ký tự ──► Giảm 100% ──► Kích hoạt tức thì  │
 │     └──► Gói miễn phí ──► Kích hoạt trực tiếp, không mở modal QR            │
 │                                                                             │
 │  ③ OWNER: Thiết lập dữ liệu ban đầu                                         │

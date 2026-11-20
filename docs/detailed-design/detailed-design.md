@@ -8,10 +8,10 @@
 | **Tên dự án (VN)** | Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | **Viết tắt** | HBDT |
 | **Loại tài liệu** | Detailed Design Document |
-| **Phiên bản** | 2.2 |
+| **Phiên bản** | 2.4 |
 | **Ngày tạo** | 12/08/2026 |
-| **Lần cuối cập nhật** | 12/09/2026 |
-| **Trạng thái** | Cập nhật theo trạng thái hiện tại của repo |
+| **Lần cuối cập nhật** | 04/11/2026 |
+| **Trạng thái** | Hoàn thành tích hợp Cổng thanh toán SePay, Webhook & Bypass Key |
 | **Tài liệu liên quan** | Các tài liệu trong thư mục docs (URD, SRS, Architecture Design Document, Database Design Document) |
 
 ---
@@ -368,7 +368,9 @@ Mỗi module nghiệp vụ tuân theo mô hình phân lớp chuẩn của Spring
 | `PageResponse<T>` | Response | Kết quả phân trang: `content`, `page`, `size`, `totalElements`, `totalPages` |
 | `ReferenceOption` | Response | Option tham chiếu: `value`, `label` |
 
-### 2.4.4. Module Subscription (`subscription`)
+### 2.4.4. Module Subscription, SePay & Bypass Key
+
+#### 2.4.4.1. Subscription Plans (`subscription`)
 
 | Class | Loại | Vai trò |
 |---|---|---|
@@ -377,6 +379,26 @@ Mỗi module nghiệp vụ tuân theo mô hình phân lớp chuẩn của Spring
 | `SubscriptionPlanService` | Service | CRUD gói, lấy gói active cho public |
 
 **DTO:** `SubscriptionPlanRequest` (Request), `SubscriptionPlanResponse` (Response).
+
+#### 2.4.4.2. Cổng thanh toán SePay Webhook (`sepay`)
+
+| Class | Loại | Vai trò |
+|---|---|---|
+| `SepayWebhookController` | REST Controller | Tiếp nhận webhook `/api/sepay/webhook` và IPN `/api/sepay/ipn`, xác thực header `Authorization: Apikey <SECRET>`, luôn phản hồi HTTP 200 OK an toàn chống retry quá tải |
+| `SepayWebhookService` | Service | Parse cú pháp `HBDT RENEW <businessId> <months>` (fallback cú pháp gói), xác thực số tài khoản thụ hưởng `107882760609`, kiểm tra Idempotency, cộng hạn hoặc tự tạo mới `subscriptions`, tạo `service_invoices` (PAID) |
+
+**DTO:** `SepayWebhookPayload` (Request), `SepayWebhookResponse` (Response).
+
+#### 2.4.4.3. Quản lý Bypass Key (`admin/bypasskey` & `owner/bypasskey`)
+
+| Class | Loại | Vai trò |
+|---|---|---|
+| `AdminBypassKeyController` | REST Controller | Quản trị viên sinh mã 20 ký tự, cấu hình hạn dùng và số lượt `/api/admin/bypass-keys` |
+| `BypassKeyAdminService` | Service | Nghiệp vụ sinh mã ngẫu nhiên an toàn, kiểm tra danh sách và khóa mã |
+| `OwnerBypassKeyController` | REST Controller | Chủ hộ kiểm tra và áp dụng mã kích hoạt `/api/owner/bypass-keys/*` |
+| `OwnerBypassKeyService` | Service | Kiểm tra hợp lệ, giảm giá 100%, kích hoạt tức thì gói thuê bao và ghi vết `BypassKeyUsage` |
+
+**DTO:** `BypassKeyCreateRequest`, `BypassKeyResponse`, `ValidateBypassKeyRequest`, `ValidateBypassKeyResponse`.
 
 ### 2.4.5. Module Admin (`admin`)
 
@@ -945,7 +967,7 @@ src/frontend/app/
 ├── register/         → /register
 ├── forgot-password/  → /forgot-password
 ├── verify-email/     → /verify-email
-├── onboarding/       → /onboarding           (thiết lập ban đầu chủ hộ)
+├── onboarding/       → /onboarding/business-profile, /onboarding/package-selection   (thiết lập ban đầu chủ hộ)
 ├── owner/            → /owner/*              (khu vực chủ hộ — có bảo vệ)
 │   ├── account/      → /owner/account        (quản lý tài khoản)
 │   └── products/     → /owner/products       (quản lý sản phẩm)
@@ -992,7 +1014,8 @@ src/frontend/app/
 | `/register` | Đăng ký chủ hộ + đồng thuận điều khoản |
 | `/forgot-password` | Gửi OTP đặt lại mật khẩu |
 | `/verify-email` | Xác thực email bằng OTP |
-| `/onboarding` | Thiết lập hồ sơ kinh doanh ban đầu |
+| `/onboarding/business-profile` | Thiết lập hồ sơ kinh doanh ban đầu |
+| `/onboarding/package-selection` | Chọn gói cước ban đầu |
 | `/owner/account` | Hồ sơ, đổi mật khẩu, email, SĐT, gói thuê bao |
 | `/owner/products` | Quản lý sản phẩm, danh mục |
 | `/admin/accounts` | Quản lý tài khoản Manager (Yêu cầu vai trò `ADMIN`) |
@@ -1023,8 +1046,10 @@ App (RootLayout)
     │   └── VerifyEmailPage (/verify-email)
     │       └── OtpInput
     │
-    ├── OnboardingPage (/onboarding)
+    ├── OnboardingPage (/onboarding/business-profile)
     │   └── BusinessProfileForm (hồ sơ kinh doanh + địa chỉ)
+    ├── PackageSelectionPage (/onboarding/package-selection)
+    │   └── Chọn gói cước ban đầu
     │
     ├── OwnerArea (được bảo vệ bởi proxy.ts + sessionGuard)
     │   └── OwnerLayout
@@ -1266,6 +1291,23 @@ Mọi lỗi đều trả về `ApiResponse` với `success=false`:
 |---|---|---|---|
 | GET | `/api/public/subscription-plans` | `List<SubscriptionPlanResponse>` | Chỉ gói active — bảng giá công khai |
 
+### 6.8.1. SePay Webhook & IPN — Cổng thanh toán tự động
+
+| Method | Path | Header | Request | Response | Ghi chú |
+|---|---|---|---|---|---|
+| POST | `/api/sepay/webhook` | `Authorization: Apikey <SECRET>` | `SepayWebhookPayload` | `SepayWebhookResponse` | Webhook biến động số dư VietinBank. Tự động cộng hạn `subscriptions`, tạo `service_invoices` (PAID) |
+| POST | `/api/sepay/ipn` | `Authorization: Apikey <SECRET>` | `SepayWebhookPayload` | `SepayWebhookResponse` | Endpoint dự phòng IPN |
+| GET | `/api/sepay/webhook/health` | — | — | `{"status":"UP"}` | Health check kiểm tra sẵn sàng tiếp nhận webhook |
+
+### 6.8.2. Bypass Keys — Admin & Owner
+
+| Method | Path | Quyền | Request | Response | Ghi chú |
+|---|---|---|---|---|---|
+| POST | `/api/admin/bypass-keys` | `ADMIN` | `BypassKeyCreateRequest` | `BypassKeyResponse` | Sinh mã kích hoạt 20 ký tự, thời hạn và số lượt dùng tối đa |
+| GET | `/api/admin/bypass-keys` | `ADMIN` | — | `List<BypassKeyResponse>` | Danh sách mã bypass đã phát hành |
+| POST | `/api/owner/bypass-keys/validate` | `BUSINESS_OWNER` | `ValidateBypassKeyRequest` | `ValidateBypassKeyResponse` | Kiểm tra tính hợp lệ của mã trước khi thanh toán |
+| POST | `/api/owner/bypass-keys/apply` | `BUSINESS_OWNER` | `ValidateBypassKeyRequest` | `ApiResponse<Void>` | Áp dụng mã: giảm 100%, kích hoạt gói ngay lập tức và ghi lịch sử `BypassKeyUsage` |
+
 ## 6.9. Reference — `/api/reference` (Public)
 
 | Method | Path | Params | Response |
@@ -1487,7 +1529,7 @@ Frontend tương ứng: `/admin/report-templates`.
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                  WORKFLOW: ĐĂNG KÝ & ONBOARDING CHỦ HỘ                       │
 │                                                                            │
-│  PUBLIC PORTAL → /register → /verify-email → /onboarding → /owner          │
+│  PUBLIC PORTAL → /register → /verify-email → /onboarding/* → /owner/*      │
 │                                                                            │
 │  ┌──────────┐    ┌──────────────┐    ┌───────────────┐    ┌──────────────┐  │
 │  │  Landing │───►│  Register    │───►│  Verify OTP   │───►│  Onboarding  │  │
@@ -2516,7 +2558,7 @@ Quy trình:
 | `app/proxy.ts` | Edge proxy `/owner/*` |
 | `app/components/` | AuthSync, Navbar, PricingPlans, ScrollReveal, legal, `AiOrderInput.tsx`, `OrderCartDrawer.tsx` |
 | `app/login`, `app/register`, `app/forgot-password`, `app/verify-email` | Luồng xác thực |
-| `app/onboarding` | Thiết lập ban đầu |
+| `app/onboarding/business-profile`, `app/onboarding/package-selection` | Thiết lập ban đầu & chọn gói cước |
 | `app/owner/account`, `app/owner/products`, `app/owner/orders/new`, `app/owner/revenue` | Khu vực chủ hộ (gồm nhập đơn bằng AI và sổ doanh thu) |
 | `app/employee/orders/new` | Nhập đơn bằng AI cho nhân viên |
 | `app/admin/accounts`, `app/admin/subscription-plans`, `app/admin/seed`, `app/admin/report-templates`, `app/admin/templates` | Khu vực quản trị (gồm quản lý biểu mẫu báo cáo kế toán) |

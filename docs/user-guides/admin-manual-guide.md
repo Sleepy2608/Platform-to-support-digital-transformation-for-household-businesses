@@ -5,8 +5,8 @@
 | **Tài liệu** | Hướng Dẫn Sử Dụng Hệ Thống – Vai Trò Quản Trị Viên (System Admin) |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Vai trò áp dụng** | Quản trị viên hệ thống (`ADMIN` / System Administrator) |
-| **Phiên bản** | 1.2 |
-| **Cập nhật lần cuối** | 15/09/2026 |
+| **Phiên bản** | 1.3 |
+| **Cập nhật lần cuối** | 03/11/2026 |
 
 ---
 
@@ -136,6 +136,14 @@ Quản lý danh mục và **phiên bản** biểu mẫu báo cáo kế toán the
 
 ---
 
+### 3.6 Quản lý mã giảm giá (`/admin/coupons`)
+
+1. Vào menu **Mã giảm giá**. Manager có thể vào mục **Quản lý mã giảm giá** tại `/manager/coupons`.
+2. Chọn **Tạo mã giảm giá mới**, nhập mức giảm từ 1% đến 100%, giới hạn lượt dùng, ghi chú và thời hạn nếu có. Hệ thống hỗ trợ tự sinh mã 20 ký tự.
+3. Danh sách hiển thị ngày tạo, người tạo, trạng thái và lượt sử dụng. Có thể xem lịch sử, khóa mã hoặc xóa mã chưa được sử dụng và chưa có giao dịch đang chờ thanh toán.
+
+---
+
 ## 4. Bảng tóm tắt Quyền hạn và Thao tác của Admin
 
 | Chức năng | Thao tác | Mô tả quyền hạn |
@@ -143,6 +151,7 @@ Quản lý danh mục và **phiên bản** biểu mẫu báo cáo kế toán the
 | **Quản lý Tài khoản** | Tìm kiếm, Khóa, Mở khóa, Reset Pass | Toàn quyền trên mọi tài khoản `ADMIN`, `MANAGER`, `OWNER`, `EMPLOYEE` |
 | **Quản lý Hộ kinh doanh** | Xem chi tiết, Phê duyệt, Tạm dừng | Quản lý thông tin pháp lý và trạng thái hoạt động của Hộ kinh doanh |
 | **Quản lý Thuê bao** | Tạo gói, Sửa giá, Cấu hình tính năng | Định hình các gói cước Free / Basic / Pro trên nền tảng |
+| **Quản lý mã giảm giá** | Tạo mã, nhập phần trăm giảm, xem ngày tạo và lịch sử | Cấp mã giảm giá cho gói dịch vụ |
 | **Quản lý Biểu mẫu Kế toán** | Tạo biểu mẫu, Phát hành phiên bản, Đóng hiệu lực phiên bản cũ | Quản lý phiên bản biểu mẫu S1-HKD / S2-HKD / S4-HKD theo ngày hiệu lực |
 | **Nhật ký Audit Log** | Tra cứu, Xuất log hệ thống | Xem chi tiết các truy vết thao tác và lịch sử đăng nhập/thay đổi |
 | **Seek Data Master** | Snapshot, Restore dữ liệu seed | Mã hóa và đồng bộ dữ liệu mẫu danh mục hệ thống |

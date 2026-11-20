@@ -4,12 +4,20 @@ import com.hbdt.common.exception.BadRequestException;
 import com.hbdt.common.exception.ResourceNotFoundException;
 import com.hbdt.common.service.ImageStorageService;
 import com.hbdt.common.service.OtpService;
+import com.hbdt.entity.Coupon;
+import com.hbdt.entity.CouponCheckout;
+import com.hbdt.entity.CouponUsage;
 import com.hbdt.entity.Subscription;
 import com.hbdt.entity.SubscriptionPlan;
 import com.hbdt.entity.User;
 import com.hbdt.entity.PaymentHistory;
 import com.hbdt.entity.ServiceInvoice;
 import com.hbdt.entity.SubscriptionHistory;
+import com.hbdt.entity.enums.CouponStatus;
+import com.hbdt.repository.BusinessProfileRepository;
+import com.hbdt.repository.CouponCheckoutRepository;
+import com.hbdt.repository.CouponRepository;
+import com.hbdt.repository.CouponUsageRepository;
 import com.hbdt.repository.PaymentHistoryRepository;
 import com.hbdt.repository.ServiceInvoiceRepository;
 import com.hbdt.repository.SubscriptionHistoryRepository;
@@ -29,10 +37,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,6 +66,10 @@ public class OwnerService {
     private final ServiceInvoiceRepository serviceInvoiceRepository;
     private final SubscriptionHistoryRepository subscriptionHistoryRepository;
     private final ISubscriptionService subscriptionService;
+    private final CouponRepository couponRepository;
+    private final CouponUsageRepository couponUsageRepository;
+    private final CouponCheckoutRepository couponCheckoutRepository;
+    private final BusinessProfileRepository businessProfileRepository;
 
     public OwnerService(UserRepository userRepository,
                         SubscriptionRepository subscriptionRepository,
@@ -64,7 +80,11 @@ public class OwnerService {
                         PaymentHistoryRepository paymentHistoryRepository,
                         ServiceInvoiceRepository serviceInvoiceRepository,
                         SubscriptionHistoryRepository subscriptionHistoryRepository,
-                        ISubscriptionService subscriptionService) {
+                        ISubscriptionService subscriptionService,
+                        CouponRepository couponRepository,
+                        CouponUsageRepository couponUsageRepository,
+                        CouponCheckoutRepository couponCheckoutRepository,
+                        BusinessProfileRepository businessProfileRepository) {
         this.userRepository = userRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.subscriptionPlanRepository = subscriptionPlanRepository;
@@ -75,6 +95,10 @@ public class OwnerService {
         this.serviceInvoiceRepository = serviceInvoiceRepository;
         this.subscriptionHistoryRepository = subscriptionHistoryRepository;
         this.subscriptionService = subscriptionService;
+        this.couponRepository = couponRepository;
+        this.couponUsageRepository = couponUsageRepository;
+        this.couponCheckoutRepository = couponCheckoutRepository;
+        this.businessProfileRepository = businessProfileRepository;
     }
 
     // =========================================================
@@ -243,11 +267,25 @@ public class OwnerService {
     // =========================================================
 
     public OwnerProfileResponse renewSubscription(String username, int months) {
+        return renewSubscription(username, months, null);
+    }
+
+    public OwnerProfileResponse renewSubscription(String username, int months, String coupon) {
         if (months < 1 || months > 24) {
             throw new BadRequestException("Số tháng gia hạn phải từ 1-24");
         }
         User user = findActiveUser(username);
+        Coupon key = lockCoupon(coupon);
+        lockBusiness(user);
         Subscription subscription = findActiveSubscription(user);
+        BigDecimal amount = subscription.getPlan().getMonthlyPrice().multiply(BigDecimal.valueOf(months));
+        BigDecimal finalAmount = amountAfterCoupon(amount, key);
+        requireNoBalance(finalAmount);
+        return completeRenewal(user, subscription, months, key, amount, finalAmount, null);
+    }
+
+    private OwnerProfileResponse completeRenewal(User user, Subscription subscription, int months, Coupon key,
+                                                 BigDecimal amount, BigDecimal finalAmount, String transactionId) {
         LocalDate now = LocalDate.now();
         LocalDate baseDate = subscription.getEndDate() != null
                 && subscription.getEndDate().isAfter(now)
@@ -257,29 +295,34 @@ public class OwnerService {
         subscription.setEndDate(baseDate.plusMonths(months));
         subscriptionRepository.save(subscription);
 
-        java.math.BigDecimal amount = subscription.getPlan().getMonthlyPrice().multiply(java.math.BigDecimal.valueOf(months));
+        recordCouponUsage(key, user, subscription.getPlan().getPlanCode(), "MONTHLY", amount, finalAmount);
 
         PaymentHistory paymentHistory = PaymentHistory.builder()
-                .transactionId(java.util.UUID.randomUUID().toString())
+                .transactionId(transactionId != null ? transactionId : UUID.randomUUID().toString())
                 .subscriptionId(subscription.getId())
-                .amount(amount)
-                .paymentMethod("BANK_TRANSFER")
+                .amount(finalAmount)
+                .paymentMethod(transactionId != null ? "SEPAY_BANK_TRANSFER" : key != null ? "COUPON" : "BANK_TRANSFER")
                 .paidAt(LocalDateTime.now())
                 .status("COMPLETED")
                 .build();
         paymentHistoryRepository.save(paymentHistory);
 
-        String invoiceNo = "INV-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        java.math.BigDecimal unitPrice = amount.divide(java.math.BigDecimal.valueOf(months), 2, java.math.RoundingMode.HALF_UP);
+        String today = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
+        String invoiceCode = "INV-" + today + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
+        String invoiceNo = "INV-" + today + "-" + String.format("%04d", (int)(Math.random() * 10000));
+        BigDecimal unitPrice = finalAmount.divide(BigDecimal.valueOf(months), 2, RoundingMode.HALF_UP);
 
         ServiceInvoice serviceInvoice = ServiceInvoice.builder()
-                .invoiceCode(invoiceNo)
+                .invoiceCode(invoiceCode)
+                .invoiceNo(invoiceNo)
+                .businessId(subscription.getBusinessId())
                 .user(user)
                 .subscription(subscription)
                 .plan(subscription.getPlan())
                 .duration(months)
-                .unitPrice(subscription.getPlan().getMonthlyPrice())
-                .totalAmount(amount)
+                .unitPrice(unitPrice)
+                .totalAmount(finalAmount)
+                .amount(finalAmount)
                 .status("PAID")
                 .build();
         serviceInvoiceRepository.save(serviceInvoice);
@@ -289,12 +332,12 @@ public class OwnerService {
                 .oldPlan(subscription.getPlan().getPlanCode())
                 .newPlan(subscription.getPlan().getPlanCode())
                 .action("RENEWAL")
-                .changedBy(username)
+                .changedBy(user.getUsername())
                 .changedAt(LocalDateTime.now())
                 .build();
         subscriptionHistoryRepository.save(history);
 
-        logger.info("Subscription renewed: businessId={}, months={}, amount={}", user.getBusinessId(), months, amount);
+        logger.info("Subscription renewed: businessId={}, months={}, amount={}", user.getBusinessId(), months, finalAmount);
         return toProfileResponse(user);
     }
 
@@ -419,6 +462,10 @@ public class OwnerService {
     }
 
     public OwnerProfileResponse selectPackage(String username, String packageType, String billingCycle) {
+        return selectPackage(username, packageType, billingCycle, null);
+    }
+
+    public OwnerProfileResponse selectPackage(String username, String packageType, String billingCycle, String coupon) {
         if (packageType == null || packageType.isBlank()) {
             throw new BadRequestException("Mã gói thuê bao không được để trống");
         }
@@ -431,27 +478,137 @@ public class OwnerService {
         }
 
         SubscriptionPlan plan = findActivePlan(packageType);
-        LocalDate today = LocalDate.now();
-        Subscription subscription = subscriptionService.createPendingPaymentSubscription(
-                user,
-                plan,
-                billingCycle,
-                today,
-                today.plusMonths("YEARLY".equals(billingCycle) ? 12 : 1)
-        );
+        Coupon key = lockCoupon(coupon);
+        lockBusiness(user);
+        BigDecimal amount = "YEARLY".equals(billingCycle) ? plan.getAnnualPrice() : plan.getMonthlyPrice();
+        BigDecimal finalAmount = amountAfterCoupon(amount, key);
+        requireNoBalance(finalAmount);
+        return completePackageSelection(user, plan, billingCycle, key, amount, finalAmount, null);
+    }
 
-        java.math.BigDecimal amount = "YEARLY".equals(billingCycle)
-                ? plan.getAnnualPrice()
-                : plan.getMonthlyPrice();
-        if (amount.signum() == 0) {
-            subscriptionService.activateSubscription(subscription.getId());
-        } else {
-            PaymentHistory payment = subscriptionService.createSubscriptionPayment(
-                    subscription.getId(), amount, "BANK_TRANSFER");
-            subscriptionService.processPaymentCallback(payment.getTransactionId(), "COMPLETED");
+    public void completeCouponCheckout(CouponCheckout checkout, Coupon coupon, String transactionId) {
+        User user = userRepository.findById(checkout.getUserId())
+                .filter(owner -> owner.getStatus() == UserStatus.ACTIVE
+                        && checkout.getBusinessId().equals(owner.getBusinessId()))
+                .orElseThrow(() -> new BadRequestException("Tài khoản của giao dịch không còn khả dụng"));
+        lockBusiness(user);
+        if (checkout.getRenewalMonths() != null) {
+            Subscription subscription = findActiveSubscription(user);
+            if (!subscription.getId().equals(checkout.getSubscriptionId())) {
+                throw new BadRequestException("Gói gia hạn đã thay đổi");
+            }
+            completeRenewal(user, subscription, checkout.getRenewalMonths(), coupon,
+                    checkout.getOriginalAmount(), checkout.getFinalAmount(), transactionId);
+            return;
+        }
+        SubscriptionPlan plan = findActivePlan(checkout.getPlanCode());
+        completePackageSelection(user, plan, checkout.getBillingCycle(), coupon,
+                checkout.getOriginalAmount(), checkout.getFinalAmount(), transactionId);
+    }
+
+    private OwnerProfileResponse completePackageSelection(User user, SubscriptionPlan plan, String billingCycle,
+                                                          Coupon key, BigDecimal amount, BigDecimal finalAmount,
+                                                          String transactionId) {
+        LocalDate today = LocalDate.now();
+        List<Subscription> existingSubs = subscriptionRepository.findAllByBusinessIdOrderByCreatedAtDesc(user.getBusinessId());
+        for (Subscription subscription : existingSubs) {
+            if (subscription.getStatus() == SubscriptionStatus.PENDING_PAYMENT || subscription.getStatus() == SubscriptionStatus.ACTIVE) {
+                subscription.setStatus(SubscriptionStatus.CANCELLED);
+                subscription.setCancellationReason("Hệ thống tự động hủy để kích hoạt gói mới: " + plan.getPlanCode());
+                subscription.setCancelledAt(LocalDateTime.now());
+                subscriptionRepository.save(subscription);
+            }
         }
 
+        Subscription subscription = subscriptionService.createPendingPaymentSubscription(
+                user, plan, billingCycle, today, today.plusMonths("YEARLY".equals(billingCycle) ? 12 : 1));
+        subscriptionService.activateSubscription(subscription.getId());
+        if (key != null) {
+            recordCouponUsage(key, user, plan.getPlanCode(), billingCycle, amount, finalAmount);
+            paymentHistoryRepository.save(PaymentHistory.builder()
+                    .transactionId(transactionId != null ? transactionId : UUID.randomUUID().toString())
+                    .subscriptionId(subscription.getId())
+                    .amount(finalAmount)
+                    .paymentMethod(transactionId != null ? "SEPAY_BANK_TRANSFER" : "COUPON")
+                    .paidAt(LocalDateTime.now())
+                    .status("COMPLETED")
+                    .build());
+        }
+
+        serviceInvoiceRepository.findBySubscriptionId(subscription.getId()).stream()
+                .filter(invoice -> "PENDING".equals(invoice.getStatus()))
+                .findFirst()
+                .ifPresent(invoice -> {
+                    invoice.setUnitPrice(finalAmount.divide(BigDecimal.valueOf(invoice.getDuration()), 2, RoundingMode.HALF_UP));
+                    invoice.setTotalAmount(finalAmount);
+                    invoice.setAmount(finalAmount);
+                    invoice.setStatus("PAID");
+                    serviceInvoiceRepository.save(invoice);
+                });
         return toProfileResponse(user);
+    }
+
+    private Coupon lockCoupon(String code) {
+        if (code == null || code.isBlank()) {
+            return null;
+        }
+        Coupon coupon = couponRepository.findByKeyCodeForUpdate(code.trim())
+                .orElseThrow(() -> new BadRequestException("Mã giảm giá không tồn tại trên hệ thống"));
+        if (coupon.getStatus() == CouponStatus.DISABLED) {
+            throw new BadRequestException("Mã giảm giá này hiện đang bị tạm khóa");
+        }
+        if (coupon.getStatus() == CouponStatus.DEPLETED || coupon.getUsedCount() >= coupon.getMaxUses()) {
+            throw new BadRequestException("Mã giảm giá đã hết số lượt sử dụng");
+        }
+        if (!coupon.isUsable()) {
+            throw new BadRequestException("Mã giảm giá đã hết hạn hoặc không khả dụng");
+        }
+        if (couponCheckoutRepository.findReservations(coupon.getId(), LocalDateTime.now()).size()
+                >= coupon.getMaxUses() - coupon.getUsedCount()) {
+            throw new BadRequestException("Các lượt còn lại của mã giảm giá đang chờ thanh toán");
+        }
+        return coupon;
+    }
+
+    private void lockBusiness(User user) {
+        if (user.getBusinessId() == null) {
+            throw new BadRequestException("Tài khoản chưa có hồ sơ hộ kinh doanh");
+        }
+        businessProfileRepository.findByIdForUpdate(user.getBusinessId())
+                .orElseThrow(() -> new BadRequestException("Không tìm thấy hồ sơ hộ kinh doanh"));
+    }
+
+    private BigDecimal amountAfterCoupon(BigDecimal amount, Coupon coupon) {
+        return coupon == null ? amount : amount.subtract(coupon.discountAmount(amount));
+    }
+
+    private void requireNoBalance(BigDecimal amount) {
+        if (amount.signum() > 0) {
+            throw new BadRequestException("Thanh toán không thành công! Vui lòng hoàn tất chuyển khoản trước khi kích hoạt gói.");
+        }
+    }
+
+    private void recordCouponUsage(Coupon coupon, User user, String plan, String billingCycle,
+                                   BigDecimal amount, BigDecimal finalAmount) {
+        if (coupon == null) {
+            return;
+        }
+        coupon.setUsedCount(coupon.getUsedCount() + 1);
+        if (coupon.getUsedCount() >= coupon.getMaxUses()) {
+            coupon.setStatus(CouponStatus.DEPLETED);
+        }
+        couponRepository.save(coupon);
+        couponUsageRepository.save(CouponUsage.builder()
+                .coupon(coupon)
+                .userId(user.getId())
+                .username(user.getUsername())
+                .businessId(user.getBusinessId())
+                .packageType(plan)
+                .billingCycle(billingCycle)
+                .originalAmount(amount)
+                .discountAmount(amount.subtract(finalAmount))
+                .finalAmount(finalAmount)
+                .build());
     }
 
     // =========================================================

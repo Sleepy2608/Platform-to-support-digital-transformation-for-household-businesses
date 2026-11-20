@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { X, FileText, Check } from 'lucide-react';
+import { X, FileText, Check, Download, ExternalLink } from 'lucide-react';
 import type { LegalDoc, LegalDocKey, LegalSection } from '@/app/lib/legal-content';
 
 interface PolicyModalProps {
@@ -94,7 +94,7 @@ export default function PolicyModal({
       {/* Modal */}
       <div className="relative w-full max-w-2xl max-h-[88vh] flex flex-col bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 px-6 py-4 border-b border-zinc-700 bg-zinc-900/95 sticky top-0">
+        <div className="flex items-start justify-between gap-4 px-6 py-4 border-b border-zinc-700 bg-zinc-900/95 sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-white/10 rounded-xl border border-zinc-600 flex-shrink-0">
               <FileText className="w-5 h-5 text-white" />
@@ -120,6 +120,34 @@ export default function PolicyModal({
 
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
+          {docKey === 'circular88' && (
+            <div className="mb-5 p-3.5 bg-blue-950/50 border border-blue-800/60 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="text-xs text-blue-200">
+                <span className="font-semibold text-white block">Tài liệu văn bản gốc Thông tư 88/2021/TT-BTC</span>
+                <span>Tải hoặc đọc trực tiếp định dạng PDF của Bộ Tài chính</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href="/docs/88-btc.pdf"
+                  download="Thong-tu-88-2021-TT-BTC.pdf"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-semibold rounded-lg shadow transition-all cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Tải PDF</span>
+                </a>
+                <a
+                  href="/docs/88-btc.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white/10 hover:bg-white/20 active:scale-95 text-zinc-200 hover:text-white text-xs font-medium rounded-lg border border-white/10 transition-all cursor-pointer"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Xem</span>
+                </a>
+              </div>
+            </div>
+          )}
+
           {doc.intro && (
             <p className="text-sm text-zinc-300 leading-relaxed mb-6 border-l-2 border-l-white/30 pl-3">
               {doc.intro}

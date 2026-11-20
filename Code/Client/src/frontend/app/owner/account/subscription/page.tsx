@@ -525,11 +525,11 @@ export default function SubscriptionManagementPage() {
       setCancelError(null);
       setShowCancelModal(true);
     } else if (action === 'renew' || action === 'resubscribe') {
-      // Lưu gói hiện tại trước khi chuyển đến package-selection
+      // Lưu gói hiện tại trước khi chuyển đến change-plan
       if (subscription && typeof window !== 'undefined') {
         localStorage.setItem('oldSubscriptionData', JSON.stringify(subscription));
       }
-      router.push('/onboarding/package-selection?from=account');
+      router.push('/owner/account/change-plan');
     }
   };
 
@@ -829,7 +829,7 @@ export default function SubscriptionManagementPage() {
                     if (typeof window !== 'undefined') {
                       localStorage.setItem('oldSubscriptionData', JSON.stringify(subscription));
                     }
-                    router.push('/onboarding/package-selection?from=account');
+                    router.push('/owner/account/change-plan');
                   }}
                   className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
@@ -858,7 +858,7 @@ export default function SubscriptionManagementPage() {
               if (typeof window !== 'undefined') {
                 localStorage.setItem('oldSubscriptionData', JSON.stringify(subscription));
               }
-              router.push('/onboarding/package-selection?from=account');
+              router.push('/owner/account/change-plan');
             }}
             className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer"
           >

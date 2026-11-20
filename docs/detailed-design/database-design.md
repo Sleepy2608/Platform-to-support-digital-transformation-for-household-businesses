@@ -10,9 +10,10 @@
 | Character Set | `utf8mb4` |
 | Collation | `utf8mb4_0900_ai_ci` |
 | Mô hình dữ liệu | Cơ sở dữ liệu quan hệ, multi-tenant dùng chung schema |
-| Quy mô | **38 bảng** theo cách đếm ở mục 5 (bản 3.0 là 36 bảng; bổ sung `ai_order_drafts` và `accounting_report_reviews`), 68 khóa ngoại, 10 trigger — cần chạy lại mục 17 để chốt số liệu cuối |
+| Quy mô | **41 bảng** theo cách đếm ở mục 5 (bản 3.0 là 36 bảng; bổ sung `ai_order_drafts`, `accounting_report_reviews`, `service_invoices`, `bypass_keys` và `bypass_key_usages`), 70 khóa ngoại, 10 trigger |
 | Cơ chế tạo schema | Spring Data JPA `ddl-auto=update` (không dùng migration SQL) |
-| Phiên bản tài liệu | 3.1 |
+| Phiên bản tài liệu | 3.2 |
+| Ngày cập nhật | 03/11/2026 |
 
 ---
 
@@ -192,7 +193,7 @@ Cơ sở dữ liệu gồm **36 bảng nghiệp vụ** (chia thành 5 phân hệ
 
 > **Ghi chú về dữ liệu không phải bảng**: `province`, `district`, `ward` và `otp_codes` **không phải bảng**. Địa giới hành chính được tải từ API `provinces.open-api.vn` lúc khởi động và lưu in-memory (`GeoReferenceStore`); OTP do `OtpService` quản lý in-memory. Cột `businesses.address` lưu địa chỉ dưới dạng **JSON compact** (chứa `businessType`, `provinceCode`, `districtCode`, `wardCode`, `detailAddress`, `representativeEmail`, `storeName`) — không có bảng địa chỉ riêng.
 
-### 5.1. Business Core – 5 bảng
+### 5.1. Business Core & Subscription – 8 bảng
 
 | Bảng | Chức năng |
 |---|---|
@@ -201,6 +202,9 @@ Cơ sở dữ liệu gồm **36 bảng nghiệp vụ** (chia thành 5 phân hệ
 | `roles` | Vai trò và nền tảng triển khai RBAC |
 | `subscription_plans` | Danh mục gói thuê bao |
 | `subscriptions` | Lịch sử đăng ký gói của từng hộ kinh doanh |
+| `service_invoices` | Hóa đơn dịch vụ thuê bao (lưu số tiền, trạng thái `PAID`, mã giao dịch SePay `referenceCode`, ngày thanh toán) |
+| `bypass_keys` | Danh mục mã kích hoạt bypass 20 ký tự do Admin quản lý (giảm giá 100%, số lượt dùng tối đa, hạn dùng) |
+| `bypass_key_usages` | Lịch sử sử dụng mã bypass của từng hộ kinh doanh |
 
 #### 5.1.1. Logo và ảnh bìa của hộ kinh doanh
 
