@@ -131,7 +131,7 @@ Hệ thống cung cấp các gói dịch vụ linh hoạt phù hợp với từn
 | 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer |
 | 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger |
 | 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager |
-| 5 | [Trần Hồng Sơn](https://github.com/sontran310306) | 060206012202 | Feature Developer |
+| 5 | [Trần Hồng Sơn](https://github.com/trnhongson) | 060206012202 | Feature Developer |
 | 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer |
 
 > *Ghi chú:* Tất cả các thành viên đều tham gia phát triển mã nguồn Backend bằng Java.<br>
