@@ -1,0 +1,89 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-ci:
+    name: Backend (Spring Boot 3.3 / Java 21)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build and test Backend
+        working-directory: Code/Server
+        run: mvn clean test
+
+  frontend-ci:
+    name: Frontend (Next.js 16 / TypeScript / Node 20)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Code/Client/src/frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: Code/Client/src/frontend
+        run: npm ci
+
+      - name: Run unit tests
+        working-directory: Code/Client/src/frontend
+        run: |
+          npm run test:inventory
+          npm run test:debt
+
+      - name: Build Next.js application
+        working-directory: Code/Client/src/frontend
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+        run: npm run build
+
+  ai-service-ci:
+    name: AI Service (FastAPI / Python 3.12)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: Code/AI/requirements.txt
+
+      - name: Install dependencies
+        working-directory: Code/AI
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Syntax and bytecode compilation check
+        working-directory: Code/AI
+        run: python -m compileall .
+
+      - name: Run AI unit tests
+        working-directory: Code/AI
+        run: python -m unittest discover -s tests -p "test_*.py"
