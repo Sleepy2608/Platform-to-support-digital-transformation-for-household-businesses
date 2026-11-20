@@ -830,7 +830,7 @@ spring.jpa.hibernate.ddl-auto=update
 Các file SQL chỉ thực hiện việc tạo database, không tạo bảng/trigger/khóa ngoại:
 
 - `Code/Server/database/create-user.sql` → tạo database `household_business_platform` và đổi mật khẩu root;
-- `Code/Server/database/init.sql` → tạo database `agritrade` (bản cũ).
+- `Code/Server/database/init.sql` → khởi tạo database `household_business_platform` chuẩn HBDT Platform.
 
 Không sử dụng Flyway/Liquibase hay thư mục migration SQL.
 

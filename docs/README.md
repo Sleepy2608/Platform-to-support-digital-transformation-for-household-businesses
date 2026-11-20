@@ -140,6 +140,11 @@ docs/
    - Microservice Python FastAPI hỗ trợ nhận diện và trích xuất đơn hàng từ văn bản/ảnh/tin nhắn qua giao thức bảo mật `X-API-Secret`.
 4. **Hệ thống Tri thức Graphify (GraphRAG):**
    - Lưu trữ tại thư mục [`.graphify/`](../.graphify/README.md) gồm **5.003 nodes** và **17.929 edges**, cung cấp bản đồ kiến trúc toàn diện hỗ trợ AI và lập trình viên tra cứu mã nguồn tức thì.
+5. **CI/CD Tự động hóa & Tiêu chuẩn Cộng đồng:**
+   - Pipeline GitHub Actions kiểm thử tự động 3 phân hệ: Backend (Java 21 / Spring Boot 3.3), Frontend (Node 22 / Next.js 16), và AI Service (Python 3.12 / FastAPI).
+   - Đạt 100% GitHub Community Standards với `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `SECURITY.md` và hệ thống Issue Templates.
+6. **Chuẩn hóa Triển khai Toàn diện qua Docker Compose:**
+   - Hệ thống container đồng bộ định danh `hbdt-*` (`hbdt-mysql`, `hbdt-backend`, `hbdt-ai-service`, `hbdt-frontend`), cấu hình database `household_business_platform`, volume dữ liệu độc lập và mạng nội bộ `hbdt-network`.
 
 ---
 *Tài liệu được quản lý tập trung và đồng bộ hóa với toàn bộ mã nguồn của dự án HBDT Platform.*

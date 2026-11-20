@@ -198,8 +198,8 @@ npm run dev
 - Trang Đăng nhập Chủ hộ / Nhân viên / Quản lý: `http://localhost:3000/login`
 - Trang Đăng nhập Quản trị viên hệ thống: `http://localhost:3000/admin/login`
 
-> [!IMPORTANT]
-> Port frontend theo luồng dev hiện tại là `3000`, không phải port `5173` như cấu hình Docker Compose đang expose. File [docker-compose.yml](docker-compose.yml) ở repo **đã được cập nhật** cho cấu trúc hiện tại (service `ai-service` dùng context `./Code/AI`, backend dùng `./Code/Server`), xem mục 3.3 để biết hai điểm còn chưa khớp.
+> [!NOTE]
+> Cổng frontend thống nhất là `3000` cho cả môi trường phát triển cục bộ và triển khai Docker Compose. File [docker-compose.yml](docker-compose.yml) ở repo đã được chuẩn hóa đồng bộ toàn diện với dự án HBDT.
 
 ### 2.8 Chạy nhanh bằng script có sẵn (tùy chọn)
 Ngoài các cách chạy thủ công ở mục 2.4, 2.6 và 2.7, repo có sẵn **4 file `.bat` ở thư mục gốc**. Chỉ cần **double-click**, không phải gõ lệnh:
@@ -287,7 +287,7 @@ File [docker-compose.yml](docker-compose.yml) hiện **đã được cập nhậ
 - `mysql` — MySQL 8.0, volume `mysql_data`.
 - `backend` — context `./Code/Server`, nhận `AI_SERVICE_URL=http://ai-service:8000` và `AI_SERVICE_API_SECRET`.
 - `ai-service` — context `./Code/AI`, nhận `BAI_API_KEY`, `BAI_MODEL`, `BAI_BASE_URL`, `BAI_TIMEOUT_SECONDS`, `AI_SERVICE_API_SECRET`; chỉ publish ra `127.0.0.1:8000`.
-- `frontend` — context `./Code/Client/src/frontend`, expose `5173:80`.
+- `frontend` — context `./Code/Client/src/frontend`, expose cổng `3000:3000`.
 
 **Bước 1 — Tạo file `.env` tại thư mục gốc** để truyền biến cho Compose:
 
@@ -307,10 +307,11 @@ docker compose config
 docker compose up -d --build
 ```
 
-> [!WARNING]
-> Hai điểm **còn chưa khớp** trong `docker-compose.yml`, cần xử lý trước khi dựa hoàn toàn vào Docker:
-> 1. Volume của service `mysql` đang trỏ `./database/init.sql`, nhưng file thật nằm ở `./Code/Server/database/init.sql`.
-> 2. Service `frontend` expose `5173:80`, trong khi luồng dev local dùng port `3000`.
+> [!NOTE]
+> File `docker-compose.yml` đã được chuẩn hóa hoàn thiện:
+> 1. Tên container định danh `hbdt-*` (`hbdt-mysql`, `hbdt-backend`, `hbdt-ai-service`, `hbdt-frontend`).
+> 2. Database `household_business_platform` với volume `hbdt_mysql_data` và mount script `./Code/Server/database/init.sql`.
+> 3. Cổng frontend Next.js map chuẩn `3000:3000`, backend `8080:8080`, AI service `8000:8000` trên bridge network `hbdt-network`.
 
 Khi cần debug, luồng chạy độc lập vẫn đáng tin cậy nhất:
 1. Backend ở `Code/Server`
