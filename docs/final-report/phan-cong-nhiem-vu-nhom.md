@@ -10,12 +10,12 @@
 
 | STT | Họ và Tên | MSSV | Vai Trò Chính | GitHub |
 | :---: | :--- | :---: | :---: | :---: |
-| 1 | **Nguyễn Lê Huy Tâm** | 056206011188 | **Team Leader / Lead Architect** | [@Sleepy2608](https://github.com/Sleepy2608) |
-| 2 | **Trần Duy Tân** | 083206003584 | **UI Designer / Fullstack Developer** | [@dzytan](https://github.com/dzytan) |
-| 3 | **Trần Văn Ngọc Thắng** | 046206001641 | **Tester & Debugger / Backend Developer** | [@Thang414](https://github.com/Thang414) |
-| 4 | **Nguyễn Ngọc Gia Bảo** | 079206008279 | **Database Manager / Fullstack Developer** | [@Baon5824](https://github.com/Baon5824) |
-| 5 | **Trần Hồng Sơn** | 060206012202 | **Feature Developer / Backend Developer** | [@sontran310306](https://github.com/sontran310306) |
-| 6 | **Huỳnh Đình Chấn** | 077206002307 | **Feature Developer / Fullstack Developer** | [@Chan-2006](https://github.com/Chan-2006) |
+| 1 | **Nguyễn Lê Huy Tâm** | 056206011188 | **Project Leader / Lead Architect** | [@Sleepy2608](https://github.com/Sleepy2608) |
+| 2 | **Trần Văn Ngọc Thắng** | 046206001641 | **Co-Leader, Tester & Debugger / Backend Developer** | [@Thang414](https://github.com/Thang414) |
+| 3 | **Trần Duy Tân** | 083206003584 | **UI Designer & Feature Developer / Fullstack Developer** | [@dzytan](https://github.com/dzytan) |
+| 4 | **Nguyễn Ngọc Gia Bảo** | 079206008279 | **Database Manager & Feature Developer / Fullstack Developer** | [@Baon5824](https://github.com/Baon5824) |
+| 5 | **Trần Hồng Sơn** | 060206012202 | **Feature Developer / Backend Developer** | [@trnhongson](https://github.com/trnhongson) |
+| 6 | **Huỳnh Đình Chấn** | 077206002307 | **Tester & Feature Developer / Fullstack Developer** | [@Chan-2006](https://github.com/Chan-2006) |
 
 > *Ghi chú:* Tất cả các thành viên đều tham gia trực tiếp vào việc xây dựng và phát triển mã nguồn Backend bằng Java (Spring Boot 3.3 / Java 21) kết hợp các phân hệ Frontend và nghiệp vụ chuyên trách.
 
@@ -23,7 +23,7 @@
 
 ## 2. Bảng Chi Tiết Phân Công Nhiệm Vụ Từng Thành Viên
 
-### 2.1. Nguyễn Lê Huy Tâm (Leader / Lead Architect)
+### 2.1. Nguyễn Lê Huy Tâm (Project Leader / Lead Architect)
 - **Quản trị dự án & Mã nguồn**: Repository & Git Management, phân chia task, review PR và quản lý tiến độ trên Jira / GitHub Issues.
 - **Kiến trúc & Bảo mật**: Thiết kế kiến trúc tổng thể hệ thống, phân quyền RBAC 4 tầng, Password Encoder (BCrypt), JWT Authentication & Security Filter Chain.
 - **Tài liệu dự án**:
@@ -41,20 +41,7 @@
 
 ---
 
-### 2.2. Trần Duy Tân (UI Designer / Fullstack Developer)
-- **Thiết kế Giao diện & Trải nghiệm (UI/UX)**:
-  - Thiết kế hệ thống UI cho toàn bộ nền tảng (Next.js 16, Tailwind CSS 4, Framer Motion, Lucide Icons).
-  - Giao diện Đăng ký, Đăng nhập, Xác thực mã OTP và Dashboard quản trị.
-- **Tính năng & Nghiệp vụ**:
-  - Quản lý tài khoản Chủ hộ kinh doanh (Owner Account Management).
-  - Công cụ tìm kiếm sản phẩm và lọc dữ liệu thời gian thực (Searching Engine).
-  - Xử lý tải lên và tối ưu hóa hình ảnh (Avatar người dùng, ảnh sản phẩm).
-  - CRUD các thực thể chính: Khách hàng (Customer), Nhân viên (Employee), Sản phẩm (Product).
-  - Tự động hóa ghi sổ kế toán: Sổ công nợ, Doanh thu bán hàng và Tồn kho (Automatic Bookkeeping: Debt, Sales, Inventory).
-
----
-
-### 2.3. Trần Văn Ngọc Thắng (Tester & Debugger / Backend Developer)
+### 2.2. Trần Văn Ngọc Thắng (Co-Leader, Tester & Debugger / Backend Developer)
 - **Kiểm thử & Đảm bảo chất lượng (QA/QC)**:
   - Thiết kế kịch bản kiểm thử, thực hiện kiểm thử tự động và thủ công, tìm và sửa lỗi hệ thống (Bug Fixing & Debugging).
 - **Quản lý dữ liệu & Tuân thủ**:
@@ -71,7 +58,20 @@
 
 ---
 
-### 2.4. Nguyễn Ngọc Gia Bảo (Database Manager / Fullstack Developer)
+### 2.3. Trần Duy Tân (UI Designer & Feature Developer / Fullstack Developer)
+- **Thiết kế Giao diện & Trải nghiệm (UI/UX)**:
+  - Thiết kế hệ thống UI cho toàn bộ nền tảng (Next.js 16, Tailwind CSS 4, Framer Motion, Lucide Icons).
+  - Giao diện Đăng ký, Đăng nhập, Xác thực mã OTP và Dashboard quản trị.
+- **Tính năng & Nghiệp vụ**:
+  - Quản lý tài khoản Chủ hộ kinh doanh (Owner Account Management).
+  - Công cụ tìm kiếm sản phẩm và lọc dữ liệu thời gian thực (Searching Engine).
+  - Xử lý tải lên và tối ưu hóa hình ảnh (Avatar người dùng, ảnh sản phẩm).
+  - CRUD các thực thể chính: Khách hàng (Customer), Nhân viên (Employee), Sản phẩm (Product).
+  - Tự động hóa ghi sổ kế toán: Sổ công nợ, Doanh thu bán hàng và Tồn kho (Automatic Bookkeeping: Debt, Sales, Inventory).
+
+---
+
+### 2.4. Nguyễn Ngọc Gia Bảo (Database Manager & Feature Developer / Fullstack Developer)
 - **Quản trị Cơ sở dữ liệu (Database Administration)**:
   - Thiết kế sơ đồ quan hệ thực thể (ERD), Data Model, lược đồ CSDL MySQL 8.
   - Quản lý dữ liệu mẫu (Seed Data) cấp hệ thống và kiểm soát toàn vẹn dữ liệu.
@@ -96,7 +96,7 @@
 
 ---
 
-### 2.6. Huỳnh Đình Chấn (Feature Developer / Fullstack Developer)
+### 2.6. Huỳnh Đình Chấn (Tester & Feature Developer / Fullstack Developer)
 - **Phát triển tính năng Backend & Frontend**:
   - Quản lý quy trình thanh toán mua gói thuê bao dịch vụ: Hiện thực SePay Webhook listener, polling trạng thái thanh toán thời gian thực và quản lý kích hoạt mã giảm giá Bypass Key 100%.
   - Quản lý tài khoản Quản lý vận hành (Manager Account Management).
@@ -105,6 +105,7 @@
   - Quản lý hóa đơn dịch vụ (Service Invoice Management).
   - Dashboard phân tích nền tảng dành cho Admin và Manager (Platform Analytics).
   - Phát triển giao diện Bán hàng nhanh tối ưu cho thiết bị di động (Fast Sales UI for Mobile).
+  - Phối hợp thực hiện kiểm thử hệ thống (System Testing) và kiểm thử giao diện.
 
 ---
 
