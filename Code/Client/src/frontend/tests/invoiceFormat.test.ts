@@ -71,3 +71,4 @@ describe('formatBusinessAddress', () => {
     assert.equal(formatBusinessAddress(null), '');
   });
 });
+

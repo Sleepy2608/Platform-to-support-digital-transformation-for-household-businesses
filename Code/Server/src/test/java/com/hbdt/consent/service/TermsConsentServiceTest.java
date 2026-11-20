@@ -135,3 +135,4 @@ class TermsConsentServiceTest {
         verifyNoInteractions(consentRepository);
     }
 }
+

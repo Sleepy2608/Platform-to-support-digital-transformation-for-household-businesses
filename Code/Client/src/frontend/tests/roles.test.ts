@@ -91,3 +91,4 @@ describe('canAccessPortal', () => {
     assert.equal(canAccessPortal('employee', ['BUSINESS_OWNER']), false);
   });
 });
+
