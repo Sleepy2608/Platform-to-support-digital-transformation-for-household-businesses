@@ -1772,7 +1772,7 @@ Frontend tương ứng: `/admin/report-templates`.
 │  - Phương pháp tính giá xuất kho: cấu hình theo hộ kinh doanh            │
 │    (businesses.inventory_method)                                          │
 │                                                                            │
-│  Ghi chú: module đang ở giai đoạn kế hoạch (entity đã có trong database)  │
+│  Ghi chú: module đã hoàn thành hiện thực toàn diện (Backend & Frontend)    │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1800,7 +1800,7 @@ Frontend tương ứng: `/admin/report-templates`.
 │  CHƯA TRẢ → CÒN NỢ → ĐÃ TRẢ HẾT                                          │
 │  (theo debt_transactions + trạng thái đơn hàng)                           │
 │                                                                            │
-│  Ghi chú: module đang ở giai đoạn kế hoạch (entity đã có trong database)  │
+│  Ghi chú: module đã hoàn thành hiện thực toàn diện (Backend & Frontend)    │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 

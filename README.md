@@ -138,12 +138,12 @@ Hệ thống cung cấp các gói dịch vụ linh hoạt phù hợp với từn
 
 | STT | Họ và Tên | MSSV | Vai trò |
 | :---: | :--- | :---: | :---: |
-| 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Leader |
-| 2 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer |
-| 3 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Tester & Debugger |
-| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager |
+| 1 | [Nguyễn Lê Huy Tâm](https://github.com/Sleepy2608) | 056206011188 | Project Leader |
+| 2 | [Trần Văn Ngọc Thắng](https://github.com/Thang414) | 046206001641 | Co-Leader, Tester & Debugger |
+| 3 | [Trần Duy Tân](https://github.com/dzytan) | 083206003584 | UI Designer & Feature Developer |
+| 4 | [Nguyễn Ngọc Gia Bảo](https://github.com/Baon5824) | 079206008279 | Database Manager & Feature Developer |
 | 5 | [Trần Hồng Sơn](https://github.com/trnhongson) | 060206012202 | Feature Developer |
-| 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Feature Developer |
+| 6 | [Huỳnh Đình Chấn](https://github.com/Chan-2006) | 077206002307 | Tester & Feature Developer |
 
 > *Ghi chú:* Tất cả các thành viên đều tham gia phát triển mã nguồn Backend bằng Java.<br>
 > Chi tiết phân công nhiệm vụ và đóng góp cụ thể của từng thành viên xem tại [`docs/final-report/phan-cong-nhiem-vu-nhom.md`](docs/final-report/phan-cong-nhiem-vu-nhom.md).

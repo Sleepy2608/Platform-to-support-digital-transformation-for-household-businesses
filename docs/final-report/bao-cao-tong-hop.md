@@ -667,7 +667,7 @@ uvicorn main:app --reload --port 8000
 | **`docker-compose.yml`** | ✅ Đã chuẩn hóa toàn diện theo tên dự án HBDT (`hbdt-*`, database `household_business_platform`, mount chuẩn, cổng Next.js 3000) |
 | **Sổ S3/S5/S6/S7-HKD & thuế điện tử** | ⛔ Ngoài phạm vi học thuật: chi phí, tiền lương, quỹ tiền mặt, tiền gửi ngân hàng, kê khai/nộp thuế điện tử, hoá đơn điện tử, đối soát ngân hàng, phân bổ 1 khoản thanh toán cho nhiều đơn, hoàn tiền phức tạp |
 | **Chấm công & tính lương, quản lý chi phí đầy đủ** | ⛔ Ngoài phạm vi |
-| **Bất nhất tài liệu** | ⚠️ Một số mục trong `detailed-design.md` vẫn ghi "đang ở giai đoạn kế hoạch" / "AI parser chưa triển khai" trong khi mã nguồn và `feature.md` đã hoàn thành → cần rà soát đồng bộ |
+| **Đồng bộ tài liệu** | ✅ Đã rà soát đồng bộ: các phân hệ Tồn kho, Khách hàng & Công nợ, AI Order, Sổ sách TT88 đều đã hiện thực 100% |
 | **Độ chính xác số liệu dashboard** | ⚠️ Cần tiếp tục kiểm chứng tính nhất quán theo chuỗi `Order → Payment → Debt → Inventory → Bookkeeping → Dashboard`, đặc biệt phân biệt rõ **doanh thu** và **tiền thực thu** khi khách mua chịu/trả nợ |
 
 ### 11.3. Đánh giá chất lượng code
