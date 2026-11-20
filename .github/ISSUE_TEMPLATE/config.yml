@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Tài liệu hướng dẫn dự án (Documentation)
+    url: https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/blob/main/README.md
+    about: Tra cứu kiến trúc hệ thống, hướng dẫn khởi chạy và danh mục tính năng
+  - name: 🤝 Quy định đóng góp mã nguồn (Contributing Guidelines)
+    url: https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/blob/main/CONTRIBUTING.md
+    about: Tìm hiểu quy ước đặt tên commit, nhánh phát triển và quy trình mở PR
+  - name: 🛡️ Báo cáo lỗ hổng an ninh (Security Policy)
+    url: https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/security/advisories/new
+    about: Gửi báo cáo bảo mật riêng tư thay vì tạo Issue công khai
