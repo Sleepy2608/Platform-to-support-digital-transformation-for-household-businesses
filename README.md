@@ -7,6 +7,17 @@
     <b>Môn học:</b> Lập trình Java
   </em></p>
   <p>
+    <a href="https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/actions/workflows/ci.yml">
+      <img src="https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/actions/workflows/ci.yml/badge.svg" alt="CI Pipeline" />
+    </a>
+    <a href="https://github.com/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses/releases">
+      <img src="https://img.shields.io/github/v/release/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses?color=blue&label=release" alt="GitHub Release" />
+    </a>
+    <a href="LICENSE">
+      <img src="https://img.shields.io/badge/License-GNU%20AGPLv3-blue.svg" alt="License: AGPL v3" />
+    </a>
+  </p>
+  <p>
     <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"/>
     <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot"/>
     <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js"/>

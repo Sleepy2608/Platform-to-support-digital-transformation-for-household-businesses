@@ -1,66 +1,93 @@
 services:
   mysql:
     image: mysql:8.0
-    container_name: agritrade-mysql
+    container_name: hbdt-mysql
     restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: agritrade
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-household_business_platform}
     ports:
-      - "3306:3306"
+      - "${DB_PORT:-3306}:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - hbdt_mysql_data:/var/lib/mysql
+      - ./Code/Server/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
-      interval: 5s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD:-root}"]
+      interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 30s
+    networks:
+      - hbdt-network
 
   backend:
     build:
       context: ./Code/Server
-    container_name: agritrade-backend
+    container_name: hbdt-backend
     restart: unless-stopped
     depends_on:
       mysql:
         condition: service_healthy
+      ai-service:
+        condition: service_started
     environment:
-      SPRING_PROFILES_ACTIVE: dev
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      SERVER_PORT: 8080
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_NAME: agritrade
-      DB_USERNAME: root
-      DB_PASSWORD: root
-      JWT_SECRET: dev-only-secret-change-in-production
+      DB_NAME: ${DB_NAME:-household_business_platform}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-hbdt-platform-256-bits-long-minimum-change-in-production}
       AI_SERVICE_URL: http://ai-service:8000
       AI_SERVICE_API_SECRET: ${AI_SERVICE_API_SECRET:-}
+      AI_SERVICE_TIMEOUT_SECONDS: ${AI_SERVICE_TIMEOUT_SECONDS:-35}
+      SEPAY_MERCHANT_ID: ${SEPAY_MERCHANT_ID:-SP-TEST-NLB7A395}
+      SEPAY_SECRET_KEY: ${SEPAY_SECRET_KEY:-spsk_test_4hP4UGF9NSNY5Hjyt8mbVcT8P2wWEBNS}
+      SEPAY_ACCOUNT_NUMBER: ${SEPAY_ACCOUNT_NUMBER:-107882760609}
     ports:
-      - "8080:8080"
+      - "${BACKEND_PORT:-8080}:8080"
+    networks:
+      - hbdt-network
 
   ai-service:
     build:
       context: ./Code/AI
-    container_name: agritrade-ai-service
+    container_name: hbdt-ai-service
     restart: unless-stopped
     environment:
       BAI_API_KEY: ${BAI_API_KEY:-}
-      BAI_MODEL: ${BAI_MODEL:-}
+      BAI_MODEL: ${BAI_MODEL:-qwen3.8-flash}
       BAI_BASE_URL: ${BAI_BASE_URL:-https://api.b.ai/v1}
-      BAI_TIMEOUT_SECONDS: ${BAI_TIMEOUT_SECONDS:-25}
+      BAI_TIMEOUT_SECONDS: ${BAI_TIMEOUT_SECONDS:-35}
       AI_SERVICE_API_SECRET: ${AI_SERVICE_API_SECRET:-}
     ports:
-      - "127.0.0.1:8000:8000"
+      - "${AI_PORT:-8000}:8000"
+    networks:
+      - hbdt-network
 
   frontend:
     build:
       context: ./Code/Client/src/frontend
-    container_name: agritrade-frontend
+    container_name: hbdt-frontend
     restart: unless-stopped
     depends_on:
       - backend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080}
     ports:
-      - "5173:80"
+      - "${FRONTEND_PORT:-3000}:3000"
+    networks:
+      - hbdt-network
 
 volumes:
-  mysql_data:
+  hbdt_mysql_data:
+    name: hbdt_mysql_data
+
+networks:
+  hbdt-network:
+    name: hbdt-network
+    driver: bridge
