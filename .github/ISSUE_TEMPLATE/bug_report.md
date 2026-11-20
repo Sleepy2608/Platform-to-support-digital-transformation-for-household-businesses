@@ -1,37 +1,38 @@
 ---
-name: "🐛 Báo Cáo Lỗi (Bug Report)"
-about: "Thông báo lỗi kỹ thuật, sự cố giao diện hoặc sai sót tính toán nghiệp vụ"
+name: Báo lỗi (Bug Report)
+about: Báo cáo lỗi kỹ thuật hoặc sự cố nghiệp vụ phát sinh trong hệ thống
 title: "[BUG] "
 labels: ["bug"]
 assignees: []
 ---
 
-### 1. Mô tả sự cố (Bug Description)
-<!-- Mô tả ngắn gọn, rõ ràng về lỗi bạn đang gặp phải -->
+### Mô tả lỗi
+<!-- Tóm tắt ngắn gọn hiện tượng và ngữ cảnh phát sinh lỗi -->
 
-### 2. Các bước tái hiện (Steps to Reproduce)
-1. Đăng nhập tài khoản với vai trò: (Chủ hộ / Quản lý / Nhân viên / Admin)
-2. Truy cập vào trang: `...`
-3. Thao tác thực hiện: `...`
-4. Quan sát lỗi phát sinh: `...`
+### Các bước tái hiện
+1. Đăng nhập với vai trò: [Chủ hộ / Quản lý / Nhân viên / Admin]
+2. Truy cập trang `...`
+3. Thao tác: `...`
+4. Lỗi xuất hiện: `...`
 
-### 3. Hành vi kỳ vọng vs Hành vi thực tế (Expected vs Actual)
-* **Kỳ vọng:** Hệ thống nên phản hồi như thế nào?
-* **Thực tế:** Hệ thống hiển thị gì hoặc báo lỗi ra sao?
+### Kết quả mong muốn
+<!-- Hệ thống nên xử lý như thế nào theo đúng nghiệp vụ? -->
 
-### 4. Phân hệ bị ảnh hưởng (Affected Module)
-- [ ] Bán hàng nhanh (POS tại quầy)
-- [ ] Quản lý Kho & Nhập hàng
-- [ ] Kế toán Thông tư 88 (Sổ S1, S2, S4)
-- [ ] Trợ lý AI đọc đơn tự động
-- [ ] Cổng thanh toán SePay / VietQR
-- [ ] Quản lý Nhân viên & Khách hàng
-- [ ] Cổng Quản trị hệ thống (Admin)
+### Kết quả thực tế
+<!-- Hệ thống trả về lỗi gì, hiển thị sai số liệu, hay bị vỡ giao diện? -->
 
-### 5. Môi trường phát sinh (Environment)
-* **Trình duyệt & Phiên bản:** (Chrome / Edge / Safari / Firefox)
-* **Thiết bị:** (Desktop / Laptop / Mobile / Tablet)
-* **Hệ điều hành:** (Windows 11 / macOS / Ubuntu)
+### Phân hệ liên quan
+- [ ] Bán hàng (POS / Đơn hàng)
+- [ ] Kho hàng & Nhập kho
+- [ ] Sổ sách Thông tư 88 (S1, S2, S4)
+- [ ] Trợ lý AI tạo đơn
+- [ ] Cổng thanh toán (SePay / VietQR)
+- [ ] Quản lý người dùng & Khách hàng
+- [ ] Khác
 
-### 6. Ảnh chụp màn hình hoặc Log (Screenshots / Logs)
-<!-- Kéo thả ảnh chụp màn hình hoặc dán log console/server vào đây nếu có -->
+### Log & Ảnh chụp màn hình
+<!-- Dán console log, response API, stack trace hoặc ảnh chụp màn hình (nếu có) -->
+
+### Môi trường kiểm thử
+- Thiết bị & Hệ điều hành: [ví dụ: Desktop Windows 11, iPhone iOS 18]
+- Trình duyệt: [ví dụ: Chrome 130, Safari 18]
