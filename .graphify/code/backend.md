@@ -17,6 +17,7 @@
 | `common` | DTO dùng chung (`ApiResponse`, `PageResponse`), Exception xử lý tập trung (`GlobalExceptionHandler`, `BadRequestException`, `ResourceNotFoundException`), Security Filter (`JwtAuthenticationFilter`, `AuditLoggingFilter`), dịch vụ địa lý (`GeoReferenceStore`, `AddressFormatterService`), lưu trữ ảnh (`ImageStorageService`). |
 | `config` | Cấu hình bảo mật (`SecurityConfig`), CORS (`CorsConfig`), Seed dữ liệu tự động (`DatabaseSeeder`, `FeatureEntitlementSeeder`, `CatalogReferenceDataSeeder`, `GeoDataInitializer`). |
 | `consent` | Quản lý việc đồng ý điều khoản dịch vụ và chính sách dữ liệu (`ConsentController`, `TermsConsentService`). |
+| `coupon` | Quản lý mã giảm giá Coupon (`CouponController`, `CouponService`, `CouponRepository`), xác thực mã ưu đãi, kiểm tra lượt sử dụng và hạn dùng. |
 | `customer` | Quản lý danh bạ khách hàng, hạn mức nợ, lịch sử mua sắm (`CustomerController`, `CustomerService`). |
 | `debt` | Quản lý ghi nhận và thanh toán công nợ (`DebtController`, `DebtBookkeepingService`). |
 | `employee` | Hồ sơ nhân viên, phân ca (`EmployeeProfileController`, `EmployeeProfileService`). |
@@ -49,6 +50,7 @@
 5. **`ResourceNotFoundException`** (137 edges): Xử lý ngoại lệ không tìm thấy tài nguyên trong DB.
 6. **`BusinessContextService`** (97 edges): Xác định ngữ cảnh `businessId` hiện tại của người dùng đang đăng nhập để cô lập dữ liệu (Multi-tenancy).
 7. **`Subscription`** & **`SubscriptionService`** (71 edges): Quản trị gói cước, ngày hết hạn và kích hoạt khi thanh toán.
+8. **`Coupon`** & **`CouponManagementService`**: Thực thể và dịch vụ quản trị ưu đãi giảm giá SaaS, tích hợp với quy trình thanh toán hóa đơn `ServiceInvoice`.
 
 ---
 
@@ -71,4 +73,17 @@
     - Fallback nhận diện gói: `(VIP|STANDARD)[-_ ](MONTHLY|YEARLY)` tránh mất tiền của khách hàng.
   * **Tự tạo mới Subscription:** Nếu hộ kinh doanh đăng ký lần đầu thanh toán qua SePay chưa có bản ghi Subscription trong CSDL, hệ thống tự động gán chủ sở hữu và khởi tạo gói `ACTIVE`.
   * **Hóa đơn & Nhật ký:** Tự động sinh `ServiceInvoice` trạng thái `PAID` và ghi nhật ký `SubscriptionHistory`.
+
+---
+
+## 4. Tiêu Chuẩn Build & Kiểm Thử CI/CD (Testing & Build Profile)
+
+- **Runtime & SDK:** Java 21 LTS (phân phối Eclipse Temurin 21).
+- **Công cụ Build:** Maven Wrapper (`./mvnw`) chuẩn hóa với cờ thực thi `chmod +x mvnw`.
+- **Cấu hình Mạng & Repository:**
+  * JVM flag: `-Djava.net.preferIPv4Stack=true` (ngăn ngừa timeout trên runner mạng IPv6).
+  * Retry policy: `-Dmaven.wagon.http.retryHandler.count=5` đảm bảo tải phụ thuộc mượt mà từ Maven Central.
+- **Maven Surefire Plugin:** Cấu hình `<argLine>` gom trên một dòng duy nhất, tương thích tuyệt đối giữa hệ điều hành Windows (CRLF) và Linux Ubuntu runner (LF).
+- **Hệ thống Test:** JUnit 5, Spring Boot Test với cấu hình kiểm thử đơn vị và tích hợp tách biệt.
+
 
