@@ -3,6 +3,7 @@ import ScrollReveal from './components/ScrollReveal';
 import PricingPlans from './components/PricingPlans';
 import HomePrimaryCta from './components/HomePrimaryCta';
 import Footer from './components/Footer';
+import BackToTop from './components/BackToTop';
 import {
   Bot,
   ShoppingCart,
@@ -185,6 +186,9 @@ export default function Home() {
 
         {/* Footer */}
         <Footer />
+
+        {/* Nút Cuộn Về Đầu Trang Nổi (Toàn Trang Dashboard) */}
+        <BackToTop variant="dark" />
       </div>
     </main>
   );
