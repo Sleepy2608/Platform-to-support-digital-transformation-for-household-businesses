@@ -5,7 +5,7 @@
  * Lưu ý: chỉ định dạng hiển thị, KHÔNG thay đổi dữ liệu gốc lấy từ API.
  */
 
-import { BusinessProfileResponse } from '@/app/lib/business-profile';
+import type { BusinessProfileResponse } from './business-profile.ts';
 
 // Ký tự bắt đầu một từ: bắt đầu chuỗi hoặc sau khoảng trắng / gạch nối / dấu gạch chéo.
 const WORD_START = /(^|[\s\-/])([a-zA-ZÀ-ỹ])/g;
