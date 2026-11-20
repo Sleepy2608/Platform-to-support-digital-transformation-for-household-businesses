@@ -2,8 +2,8 @@
 
 > **Lưu ý quan trọng cho AI & Nhà phát triển:**  
 > Tài liệu này được tổng hợp và đối soát chuẩn xác 100% với dữ liệu trích xuất từ **Graphify Knowledge Graph** (với 5.003 thực thể/nodes, 17.929 liên kết/edges và 195 cụm nghiệp vụ).  
-> **Ngày cập nhật kiến thức:** 08/11/2026 (Đã đồng bộ toàn bộ tài liệu Tiêu chuẩn cộng đồng GitHub: LICENSE GNU AGPLv3, CONTRIBUTING.md, pull_request_template.md, SECURITY.md; hoàn tất bộ nhận diện thương hiệu Favicon và tách biệt giao diện Admin Portal).  
-> **Lần sau khi tiếp tục làm việc với dự án, CHỈ CẦN ĐỌC FILE NÀY** là có thể nắm trọn toàn bộ cấu trúc mã nguồn, luồng dữ liệu, nghiệp vụ kế toán, cơ chế subscription, chính sách bảo mật và tính năng thanh toán SePay mà không cần quét lại mã nguồn.
+> **Ngày cập nhật kiến thức:** 20/11/2026 (Đã đồng bộ toàn bộ pipeline CI/CD GitHub Actions, chuẩn hóa Docker Compose HBDT, Tiêu chuẩn cộng đồng 100% gồm CODE_OF_CONDUCT & Issue Templates, hệ thống mã giảm giá Coupon, bộ nhận diện thương hiệu Favicon và Brand Footer Dark-Tech).  
+> **Lần sau khi tiếp tục làm việc với dự án, CHỈ CẦN ĐỌC FILE NÀY** là có thể nắm trọn toàn bộ cấu trúc mã nguồn, luồng dữ liệu, nghiệp vụ kế toán, cơ chế subscription, chính sách bảo mật, thanh toán SePay và quy trình CI/CD kiểm thử tự động mà không cần quét lại mã nguồn.
 
 ---
 
@@ -43,23 +43,23 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                   FRONTEND (Next.js 15)                     │
+│                   FRONTEND (Next.js 16)                     │
 │  - Port: 3000                                               │
-│  - React 19, TypeScript, Tailwind CSS, Framer Motion        │
+│  - React 19, TypeScript, Tailwind CSS v4, Framer Motion     │
 │  - Đường dẫn: Code/Client/src/frontend                      │
 └──────────────────────────────┬──────────────────────────────┘
                                │ HTTP REST (JWT Bearer Token)
                                ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                 BACKEND (Spring Boot 3.x)                   │
+│                 BACKEND (Spring Boot 3.3)                   │
 │  - Port: 8080                                               │
-│  - Java 17+, Spring Data JPA, Spring Security, MySQL        │
+│  - Java 21, Maven 3.9+, Spring Data JPA, MySQL 8            │
 │  - Đường dẫn: Code/Server (package com.hbdt)                │
 └──────────────┬──────────────────────────────┬───────────────┘
                │                              │ Internal API Secret
                ▼                              ▼
 ┌─────────────────────────────┐  ┌────────────────────────────┐
-│      DATABASE (MySQL)       │  │   AI SERVICE (Python/FastAPI)
+│      DATABASE (MySQL 8)     │  │   AI SERVICE (Python/FastAPI)
 │  - Port: 3306               │  │  - Port: 8000              │
 │  - Bảng User, Subscription, │  │  - OCR, Dự báo nhu cầu     │
 │    Order, Product, Ledger   │  │  - Đường dẫn: Code/AI      │
@@ -67,10 +67,13 @@
 ```
 
 ### Các tập lệnh & tệp cấu hình cốt lõi tại thư mục gốc:
-- `run-backend.bat`: Khởi động Spring Boot Server (`mvn spring-boot:run`).
+- `run-backend.bat`: Khởi động Spring Boot Server (`mvn spring-boot:run` hoặc `./mvnw`).
 - `run-frontend.bat`: Khởi động Next.js Dev Server (`npm run dev`).
 - `run-ai.bat`: Khởi động Python AI Microservice (`uvicorn main:app`).
-- `docker-compose.yml`: Triển khai cơ sở dữ liệu MySQL và các dịch vụ hỗ trợ.
+- `docker-compose.yml`: Triển khai toàn diện hạ tầng container hóa (`hbdt-mysql`, `hbdt-backend`, `hbdt-ai-service`, `hbdt-frontend`) với cơ sở dữ liệu `household_business_platform` và frontend port 3000.
+- `.github/workflows/ci.yml`: Pipeline CI/CD tự động kiểm thử 3 dịch vụ Backend (Java 21/Maven), Frontend (Node 22/Next.js 16/TypeScript), AI Service (Python 3.12/FastAPI).
+- `CODE_OF_CONDUCT.md`: Bộ quy tắc ứng xử cộng đồng đạt chuẩn 100% Community Standards (Contributor Covenant v2.1).
+- `.github/ISSUE_TEMPLATE/`: Bộ mẫu báo cáo lỗi (`bug_report.md`), đề xuất tính năng (`feature_request.md`) và cấu hình thảo luận (`config.yml`).
 - `LICENSE`: Giấy phép mã nguồn mở GNU AGPLv3 (bảo vệ quyền tác giả 6 thành viên, chống độc quyền đóng mã).
 - `CONTRIBUTING.md`: Sổ tay hướng dẫn đóng góp, quy ước commit (`[FEAT]`, `[FIX]`, `[UI]`, `type(scope)`) và Git workflow.
 - `SECURITY.md`: Chính sách bảo mật dự án, kênh báo cáo lỗ hổng có trách nhiệm, SLA vá lỗi và cấu trúc phòng thủ an ninh.
@@ -102,6 +105,7 @@ Code/Server/src/main/java/com/hbdt/
 ├── common/             # DTO dùng chung (ApiResponse), Exception, Security Filters
 ├── config/             # SecurityConfig, CorsConfig, DatabaseSeeder, FeatureSeeder
 ├── consent/            # Lưu trữ chấp thuận điều khoản và chính sách bảo mật
+├── coupon/             # Quản lý mã giảm giá Coupon (CouponController, CouponService)
 ├── customer/           # Quản lý khách hàng, hạn mức nợ, lịch sử mua hàng
 ├── debt/               # Quản lý công nợ và trả nợ từng phần (DebtController)
 ├── employee/           # Hồ sơ nhân viên, phân ca làm việc
@@ -150,11 +154,12 @@ Code/Client/src/frontend/app/
 │   ├── orders/             # Lập đơn và in hóa đơn
 │   ├── inventory/          # Tra cứu tồn kho tại cửa hàng
 │   └── customers/          # Tìm kiếm thông tin khách hàng
-├── manager/                # Khu vực Quản lý: duyệt báo cáo, xem hóa đơn dịch vụ
-├── admin/                  # Khu vực Quản trị tối cao: Quản lý gói cước SaaS, user, mẫu biểu
+├── manager/                # Khu vực Quản lý: duyệt báo cáo, xem hóa đơn dịch vụ, quản lý mã ưu đãi (/manager/coupons)
+├── admin/                  # Khu vực Quản trị: Quản lý gói cước SaaS, user, mẫu biểu, mã giảm giá (/admin/coupons)
 ├── components/
-│   ├── payment/            # PaymentQrModal.tsx (Hiển thị VietQR), CustomerDebtCard.tsx
+│   ├── payment/            # PaymentQrModal.tsx (Hiển thị VietQR & Coupon), CustomerDebtCard.tsx
 │   ├── fast-sales/         # FastSalesView.tsx, Cart, FastSalesOrderSummary.tsx
+│   ├── layout/             # Footer.tsx (Brand Footer Dark-Tech 3 cột, PolicyModal, live status), BackToTop.tsx
 │   └── legal/              # PolicyModal.tsx, Circular88PolicyCard.tsx
 └── lib/                    # apiClient.ts (Axios + JWT), useEntitlement.ts, viewmodels
 ```
@@ -246,6 +251,9 @@ Mục tiêu đã định hình: **Khi người dùng quét mã QR thanh toán th
   - [frontend.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/.graphify/code/frontend.md)
   - [ai.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/.graphify/code/ai.md)
 - [docs/README.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/README.md): **Master Documentation Index** tổng hợp tra cứu toàn bộ 15 chuyên mục tài liệu dự án.
+- [.github/workflows/ci.yml](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/.github/workflows/ci.yml): **Automated CI/CD Pipeline** kiểm thử tự động toàn diện 3 phân hệ (Spring Boot, Next.js, FastAPI).
+- [CODE_OF_CONDUCT.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/CODE_OF_CONDUCT.md): **Quy tắc ứng xử cộng đồng** (Contributor Covenant v2.1) đạt 100% GitHub Community Standards.
+- [.github/ISSUE_TEMPLATE/](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/.github/ISSUE_TEMPLATE): **Hệ thống Issue Templates** chuẩn hóa báo cáo lỗi (Bug report) và đề xuất tính năng (Feature request).
 - [CONTRIBUTING.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/CONTRIBUTING.md): Quy chuẩn đóng góp, quy ước commit (`[FEAT]`, `[FIX]`, `[UI]`, `type(scope)`) và quy trình kiểm thử trước khi mở PR.
 - [SECURITY.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/SECURITY.md): Chính sách bảo mật dự án, kênh tiếp nhận lỗ hổng bí mật (Private Reporting), SLA khắc phục và 6 lớp phòng thủ an ninh.
 - [LICENSE](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/LICENSE): Giấy phép GNU Affero General Public License v3.0 (AGPLv3) với tuyên bố đồng sở hữu của 6 thành viên nhóm phát triển.

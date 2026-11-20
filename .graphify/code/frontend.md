@@ -44,11 +44,13 @@
 
 ### 1.4. Phân hệ Quản lý & Quản trị (Manager & Admin)
 - `/manager/invoices`: Danh sách hóa đơn dịch vụ hệ thống.
+- `/manager/coupons`: Quản lý danh sách và tra cứu mã ưu đãi dịch vụ của hộ kinh doanh.
 - `/manager/analytics`: Phân tích số liệu hộ kinh doanh.
 - `/manager/feedback`: Tiếp nhận góp ý của người dùng.
 - `/admin/login`: Cổng đăng nhập quản trị hệ thống (`app/admin/login/page.tsx`), phân biệt hoàn toàn với đăng nhập hộ kinh doanh bằng hình nền an ninh mạng số (`images/admin-bg.jpg`), biểu tượng `ShieldCheck` và nhãn định danh `[ADMIN PORTAL]`.
 - `/admin/accounts`: Quản lý tài khoản toàn hệ thống.
 - `/admin/subscription-plans`: Cấu hình danh mục gói dịch vụ SaaS (giá, tính năng).
+- `/admin/coupons`: Quản trị toàn diện chương trình mã giảm giá (tạo mã, cấu hình % giảm giá, số lượt dùng tối đa, thời hạn hiệu lực) thay thế bypass key cũ.
 - `/admin/features`: Cấu hình danh mục tính năng (`FeatureGate`).
 - `/admin/report-templates`: Thiết kế và kích hoạt mẫu báo cáo thuế theo quy định nhà nước.
 - `/admin/analytics`: Phân tích tăng trưởng và hiệu năng toàn sàn.
@@ -63,9 +65,14 @@
   * **Polling đa tầng:** Tự động lắng nghe biến động số dư qua `GET /api/owner/subscriptions/current` với cờ `{ skipCache: true }` mỗi 3 giây, giải mã dữ liệu an toàn (`res` / `res.data`).
   * **Nút chủ động kiểm tra:** Nút "Kiểm tra giao dịch / Xác nhận" gửi request kiểm tra biến động số dư tức thì.
   * **Timeout & Tự phục hồi:** Giới hạn 10 phút kèm hướng dẫn đối soát; tự động lưu cờ `onboardingCompleted` khi thanh toán thành công trong luồng đăng ký.
-  * **Bypass Key:** Khung áp dụng mã giảm giá 100% 20 ký tự kích hoạt tức thì.
+  * **Hệ thống Coupon:** Hỗ trợ nhập và xác thực mã ưu đãi giảm giá (kết nối trực tiếp `/api/coupons/apply`).
 - `components/payment/CustomerDebtCard.tsx`: Thẻ hiển thị công nợ khách hàng và lịch sử thanh toán.
 - `components/fast-sales/FastSalesView.tsx`: Giao diện POS bán hàng nhanh.
+- `components/Footer.tsx`: Brand Footer Dark-Tech chuẩn hóa layout 3 cột:
+  * **Cột 1 (Thương hiệu & Công nghệ):** Logo HBDT, sứ mệnh chuyển đổi số, live status indicator nhấp nháy xanh "Hệ thống vận hành 100%".
+  * **Cột 2 (Điều hướng nhanh & Pháp lý):** Liên kết nhanh đến các phân hệ, nút mở `PolicyModal` xem Điều khoản & Chính sách bảo mật.
+  * **Cột 3 (Đội ngũ phát triển):** Avatar tròn 6 thành viên nhóm sáng lập kèm tooltip thông tin họ tên & MSSV.
+- `components/BackToTop.tsx`: Nút bấm floating hỗ trợ cuộn nhanh về đầu trang với hiệu ứng chuyển động mượt mà.
 - `lib/apiClient.ts`: Client HTTP trung tâm quản lý tự động làm mới JWT token, đồng bộ tab (`BroadcastChannel`), cache GET (bỏ qua khi dùng `skipCache: true`) và xử lý lỗi 401/403.
 - `lib/useEntitlement.ts` & `FeatureGate.tsx`: Hook và wrapper kiểm tra quyền truy cập tính năng theo gói cước hiện tại.
 
