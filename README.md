@@ -22,6 +22,9 @@
     <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot"/>
     <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js"/>
   </p>
+  <p>
+    <b>🇻🇳 Tiếng Việt</b> &nbsp;|&nbsp; <a href="README.en.md">🇬🇧 English</a>
+  </p>
 </div>
 
 ---
