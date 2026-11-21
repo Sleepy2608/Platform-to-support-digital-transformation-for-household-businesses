@@ -251,6 +251,7 @@ Mục tiêu đã định hình: **Khi người dùng quét mã QR thanh toán th
   - [frontend.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/.graphify/code/frontend.md)
   - [ai.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/.graphify/code/ai.md)
 - [docs/README.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/docs/README.md): **Master Documentation Index** tổng hợp tra cứu toàn bộ 15 chuyên mục tài liệu dự án.
+- [README.en.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/README.en.md): **English Project Documentation** biên soạn chuẩn hóa kiến trúc mở phục vụ tuyển dụng quốc tế (Pluggable Payment & Configurable Compliance Engine).
 - [.github/workflows/ci.yml](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/.github/workflows/ci.yml): **Automated CI/CD Pipeline** kiểm thử tự động toàn diện 3 phân hệ (Spring Boot, Next.js, FastAPI).
 - [CODE_OF_CONDUCT.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/CODE_OF_CONDUCT.md): **Quy tắc ứng xử cộng đồng** (Contributor Covenant v2.1) đạt 100% GitHub Community Standards.
 - [.github/ISSUE_TEMPLATE/](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/.github/ISSUE_TEMPLATE): **Hệ thống Issue Templates** chuẩn hóa báo cáo lỗi (Bug report) và đề xuất tính năng (Feature request).
