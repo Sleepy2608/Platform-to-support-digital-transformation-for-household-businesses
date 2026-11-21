@@ -14,7 +14,7 @@
       <img src="https://img.shields.io/github/v/release/Sleepy2608/Platform-to-support-digital-transformation-for-household-businesses?color=blue&label=release" alt="GitHub Release" />
     </a>
     <a href="LICENSE">
-      <img src="https://img.shields.io/badge/License-GNU%20AGPLv3-blue.svg" alt="License: AGPL v3" />
+      <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" />
     </a>
   </p>
   <p>
