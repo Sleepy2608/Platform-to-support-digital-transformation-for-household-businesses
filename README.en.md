@@ -278,6 +278,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 ```
+- **Heuristic Regex Fallback Engine**: Equipped with offline Vietnamese POS order extraction (`AI_ENABLE_HEURISTIC_FALLBACK=true`). When live LLM API keys are unconfigured or unavailable, it smoothly parses items, quantities, packaging units, customer names, and payment terms for reliable demos and local evaluations.
 
 ### Interactive API Testing & Postman Collection
 

@@ -13,6 +13,7 @@ class Settings:
     base_url: str = "https://api.b.ai/v1"
     api_secret: str = field(default="", repr=False)
     timeout_seconds: float = 25.0
+    enable_heuristic_fallback: bool = True
 
     def missing_bai_settings(self) -> list[str]:
         return [name for name, value in (("BAI_API_KEY", self.api_key),
@@ -31,4 +32,5 @@ def get_settings() -> Settings:
         base_url=os.getenv("BAI_BASE_URL", "https://api.b.ai/v1").strip().rstrip("/"),
         api_secret=os.getenv("AI_SERVICE_API_SECRET", "").strip(),
         timeout_seconds=timeout,
+        enable_heuristic_fallback=os.getenv("AI_ENABLE_HEURISTIC_FALLBACK", "true").strip().lower() in ("1", "true", "yes"),
     )

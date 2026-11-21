@@ -17,7 +17,7 @@
 | **Frontend Error Boundary** | Đã có Not-Found, Error & Loading | ✅ **Đã hoàn thành:** Bổ sung `app/not-found.tsx`, `app/error.tsx`, `app/loading.tsx` chuẩn Dark-Tech & App Router Suspense. | 🟢 **Hoàn thành (Done)** |
 | **Frontend Environment** | Có file mẫu cho Developer | ✅ **Đã hoàn thành:** Tạo `Code/Client/src/frontend/.env.example` với đầy đủ mô tả biến môi trường. | 🟢 **Hoàn thành (Done)** |
 | **PWA & Mobile POS** | Web chạy trên trình duyệt | Chưa có Web App Manifest (`manifest.ts`) để cài đặt như ứng dụng POS quầy. | 🟢 **Trung bình (Điểm cộng)** |
-| **AI Service Resilience** | Yêu cầu API Key live | Báo lỗi 503 khi thiếu key; thiếu fallback parser regex offline để demo. | 🟡 **Cao (Demo friendly)** |
+| **AI Service Resilience** | Đã có Heuristic Regex Fallback | ✅ **Đã hoàn thành:** Bổ sung `src/services/heuristic_parser.py` và tích hợp tự động fallback khi thiếu BAI API key hoặc offline. | 🟢 **Hoàn thành (Done)** |
 | **Changelog & Release** | Có GitHub Release tag | Chưa có `CHANGELOG.md` chuẩn Keep a Changelog v1.1.0. | 🟢 **Trung bình (Chuyên nghiệp)** |
 
 ---

@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException
 from src.config import Settings, get_settings
 from src.models import BookkeepingDraft, BookkeepingDraftRequest, ExtractedOrder, ParseOrderRequest
 from src.services.bai_client import BaiClient, BaiError
+from src.services.heuristic_parser import parse_order_heuristic
 
 
 def require_service_secret(
@@ -34,6 +35,8 @@ async def parse_order(
     try:
         return await BaiClient(settings).parse_order(request.text)
     except BaiError as error:
+        if settings.enable_heuristic_fallback:
+            return parse_order_heuristic(request.text)
         raise HTTPException(error.status_code, detail={
             "code": error.code, "message": error.message
         }) from None
