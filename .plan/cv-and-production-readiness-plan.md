@@ -16,9 +16,9 @@
 | **Tài liệu Postman** | Đã xuất bộ sưu tập v2.1 | ✅ **Đã hoàn thành:** `docs/api/hbdt-api.postman_collection.json` & Environment `docs/api/hbdt-local.postman_environment.json`. | 🟢 **Hoàn thành (Done)** |
 | **Frontend Error Boundary** | Đã có Not-Found, Error & Loading | ✅ **Đã hoàn thành:** Bổ sung `app/not-found.tsx`, `app/error.tsx`, `app/loading.tsx` chuẩn Dark-Tech & App Router Suspense. | 🟢 **Hoàn thành (Done)** |
 | **Frontend Environment** | Có file mẫu cho Developer | ✅ **Đã hoàn thành:** Tạo `Code/Client/src/frontend/.env.example` với đầy đủ mô tả biến môi trường. | 🟢 **Hoàn thành (Done)** |
-| **PWA & Mobile POS** | Web chạy trên trình duyệt | Chưa có Web App Manifest (`manifest.ts`) để cài đặt như ứng dụng POS quầy. | 🟢 **Trung bình (Điểm cộng)** |
+| **PWA & Mobile POS** | Đã có Web App Manifest | ✅ **Đã hoàn thành:** Tạo `app/manifest.ts` cho phép cài đặt POS như Native App trên Desktop/Tablet. | 🟢 **Hoàn thành (Done)** |
 | **AI Service Resilience** | Đã có Heuristic Regex Fallback | ✅ **Đã hoàn thành:** Bổ sung `src/services/heuristic_parser.py` và tích hợp tự động fallback khi thiếu BAI API key hoặc offline. | 🟢 **Hoàn thành (Done)** |
-| **Changelog & Release** | Có GitHub Release tag | Chưa có `CHANGELOG.md` chuẩn Keep a Changelog v1.1.0. | 🟢 **Trung bình (Chuyên nghiệp)** |
+| **Changelog & Release** | Đã có CHANGELOG.md chuẩn | ✅ **Đã hoàn thành:** Tạo `CHANGELOG.md` chuẩn Keep a Changelog v1.1.0 & SemVer `v1.0.0-RELEASE`. | 🟢 **Hoàn thành (Done)** |
 
 ---
 

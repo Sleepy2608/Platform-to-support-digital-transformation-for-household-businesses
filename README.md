@@ -16,6 +16,9 @@
     <a href="LICENSE">
       <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" />
     </a>
+    <a href="CHANGELOG.md">
+      <img src="https://img.shields.io/badge/Changelog-v1.0.0-green.svg" alt="Changelog: v1.0.0" />
+    </a>
   </p>
   <p>
     <img src="https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java"/>
