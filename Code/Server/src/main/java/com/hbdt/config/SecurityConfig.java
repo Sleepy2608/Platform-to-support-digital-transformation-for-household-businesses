@@ -79,6 +79,17 @@ public class SecurityConfig {
                     ).permitAll()
                     // Public static files (uploaded avatars, store images)
                     .requestMatchers("/uploads/**").permitAll()
+                    // Swagger / OpenAPI documentation
+                    .requestMatchers(
+                            "/swagger-ui.html",
+                            "/swagger-ui/**",
+                            "/v3/api-docs",
+                            "/v3/api-docs/**",
+                            "/swagger-resources/**",
+                            "/webjars/**"
+                    ).permitAll()
+                    // Actuator Health and Info
+                    .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                     // Public API
                     .requestMatchers("/api/public/**").permitAll()
                     // SePay Webhook & IPN endpoints

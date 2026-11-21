@@ -473,6 +473,22 @@ Hệ thống tích hợp cổng thanh toán SePay hỗ trợ tạo mã VietQR đ
 - **Hệ thống Bypass Key (Mã ưu đãi 100%):**
   Admin có thể tạo mã Bypass Key (20 ký tự chữ và số) tại `/admin/bypass-keys` để kích hoạt hoặc thử nghiệm gói dịch vụ mà không cần giao dịch ngân hàng.
 
+### 9. Thử nghiệm API với Swagger UI & Postman Collection
+
+Backend tích hợp sẵn tài liệu tương tác chuẩn **OpenAPI 3.0** và **Spring Boot Actuator**:
+
+- **Swagger UI Interactive Documentation:**
+  * Truy cập trực tiếp tại: `http://localhost:8080/swagger-ui.html`
+  * JSON OpenAPI v3: `http://localhost:8080/v3/api-docs`
+  * Hỗ trợ nút **Authorize** nhập mã JWT Bearer token để test trực tiếp hơn 100+ endpoints (chia nhóm: Public & Auth, Chủ hộ Owner, Nhân viên Employee, Quản lý Manager, Quản trị Admin, Kế toán TT88).
+- **Trạng thái Sức khỏe Hệ thống (Actuator Healthcheck):**
+  * Sức khỏe hệ thống & CSDL MySQL: `GET http://localhost:8080/actuator/health` (trả về trạng thái `{"status":"UP"}`).
+  * Thông tin runtime môi trường: `GET http://localhost:8080/actuator/info`.
+- **Bộ sưu tập Postman Collection:**
+  * Import file Collection: [`docs/api/hbdt-api.postman_collection.json`](docs/api/hbdt-api.postman_collection.json)
+  * Import file Environment: [`docs/api/hbdt-local.postman_environment.json`](docs/api/hbdt-local.postman_environment.json)
+  * Thiết lập sẵn các mẫu request: Đăng nhập tự động lưu `{{token}}`, Bán hàng POS, Nhập kho, Xuất sổ thuế S1/S2/S4, Giả lập SePay Webhook.
+
 ---
 
 <p align="center">

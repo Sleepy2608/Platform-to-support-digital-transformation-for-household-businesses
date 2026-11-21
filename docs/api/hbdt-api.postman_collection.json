@@ -1,0 +1,305 @@
+{
+  "info": {
+    "_postman_id": "hbdt-platform-api-v1",
+    "name": "HBDT Platform API (Postman Collection)",
+    "description": "Bộ sưu tập API hoàn chỉnh cho Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh Doanh (HBDT Platform).\n\nBao gồm đầy đủ các luồng: Xác thực, Bán hàng POS, Quản lý kho, Sổ sách kế toán Thông tư 88/2021/TT-BTC, Gói dịch vụ SaaS, và Cổng thanh toán SePay Webhook.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Authentication & Onboarding",
+      "item": [
+        {
+          "name": "Login (Owner / Employee / Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.accessToken) {",
+                  "    pm.environment.set('token', jsonData.data.accessToken);",
+                  "    console.log('JWT Token set successfully');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{ownerUsername}}\",\n  \"password\": \"{{ownerPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Register New Owner",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"new_owner_demo\",\n  \"password\": \"Password@123\",\n  \"fullName\": \"Trần Văn A\",\n  \"email\": \"owner@example.com\",\n  \"phone\": \"0901234567\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh-token"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Fast Sales (POS) & Orders",
+      "item": [
+        {
+          "name": "Get Product Catalog for POS",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/owner/products?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owner", "products"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Sales Order (POS Fast Sale)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": null,\n  \"items\": [\n    {\n      \"productId\": 1,\n      \"unitId\": 1,\n      \"quantity\": 2,\n      \"unitPrice\": 15000\n    }\n  ],\n  \"paymentMethod\": \"CASH\",\n  \"paidAmount\": 30000,\n  \"note\": \"Bán hàng nhanh tại quầy\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owner/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owner", "orders"]
+            }
+          }
+        },
+        {
+          "name": "Get Orders History",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/owner/orders/history?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owner", "orders", "history"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Inventory & Low Stock Alerts",
+      "item": [
+        {
+          "name": "Get Current Stock Balance",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/owner/inventory/current",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owner", "inventory", "current"]
+            }
+          }
+        },
+        {
+          "name": "Get Low Stock Alerts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/owner/inventory/alerts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owner", "inventory", "alerts"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Statutory Accounting Ledgers (Circular 88)",
+      "item": [
+        {
+          "name": "Get S1 Revenue Ledger (Sổ Doanh Thu S1-HKD)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/accounting/s1-revenue-ledger?startDate=2026-01-01&endDate=2026-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounting", "s1-revenue-ledger"],
+              "query": [
+                { "key": "startDate", "value": "2026-01-01" },
+                { "key": "endDate", "value": "2026-12-31" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get S2 Inventory Ledger (Sổ Kho S2-HKD)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/accounting/s2-inventory-ledger?startDate=2026-01-01&endDate=2026-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounting", "s2-inventory-ledger"],
+              "query": [
+                { "key": "startDate", "value": "2026-01-01" },
+                { "key": "endDate", "value": "2026-12-31" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get S4 Tax Obligation (Sổ Thuế S4-HKD)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/accounting/s4-tax-obligation?year=2026",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounting", "s4-tax-obligation"],
+              "query": [
+                { "key": "year", "value": "2026" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Subscriptions & Payments",
+      "item": [
+        {
+          "name": "Get SaaS Pricing Plans",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/owner/subscriptions/plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owner", "subscriptions", "plans"]
+            }
+          }
+        },
+        {
+          "name": "Get Current Subscription Status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/owner/subscriptions/current",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owner", "subscriptions", "current"]
+            }
+          }
+        },
+        {
+          "name": "Simulate SePay Webhook (Auto-renew 1 month)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Apikey {{sepayApiKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gateway\": \"VietinBank\",\n  \"accountNumber\": \"107882760609\",\n  \"transferType\": \"in\",\n  \"transferAmount\": 199000,\n  \"content\": \"HBDT RENEW 1 1\",\n  \"referenceCode\": \"FT-SIMULATED-001\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sepay/webhook",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sepay", "webhook"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Observability & OpenAPI",
+      "item": [
+        {
+          "name": "Actuator Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "health"]
+            }
+          }
+        },
+        {
+          "name": "Actuator Runtime Info",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/actuator/info",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "info"]
+            }
+          }
+        },
+        {
+          "name": "OpenAPI v3 JSON Spec",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/v3/api-docs",
+              "host": ["{{baseUrl}}"],
+              "path": ["v3", "api-docs"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

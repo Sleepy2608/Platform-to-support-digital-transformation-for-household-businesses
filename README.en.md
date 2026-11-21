@@ -278,6 +278,21 @@ pip install -r requirements.txt
 uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
+### Interactive API Testing & Postman Collection
+
+The backend is fully documented with **OpenAPI 3.0** and equipped with **Spring Boot Actuator** observability:
+
+* **Interactive Swagger UI:** Visit `http://localhost:8080/swagger-ui.html` (JSON specification at `http://localhost:8080/v3/api-docs`).
+  * Features global JWT Bearer Token authorization via the **Authorize** button.
+  * Cleanly organized into 6 API groups (Public/Auth, Business Owner POS & Inventory, Employee POS, System Manager, Platform Admin, and Circular 88 Statutory Accounting).
+* **Cloud-Native Healthcheck (Actuator):**
+  * Health status: `GET http://localhost:8080/actuator/health` (reports `{"status":"UP"}` with database connection details).
+  * Runtime metadata: `GET http://localhost:8080/actuator/info`.
+* **Postman Collection & Environment:**
+  * Import collection: [`docs/api/hbdt-api.postman_collection.json`](docs/api/hbdt-api.postman_collection.json)
+  * Import environment: [`docs/api/hbdt-local.postman_environment.json`](docs/api/hbdt-local.postman_environment.json)
+  * Features auto-capturing JWT token on login, POS checkout payloads, stock import, Circular 88 ledger exports, and simulated SePay webhooks.
+
 ---
 
 ## Automated Testing & CI/CD Pipeline

@@ -15,7 +15,7 @@
 | `announcement` | Quản lý thông báo toàn hệ thống của Admin đến Owner/Employee (`AnnouncementController`). |
 | `auth` | Xác thực người dùng, JWT Provider, refresh token, gửi OTP qua mail (`AuthController`, `AuthService`, `JwtTokenProvider`). |
 | `common` | DTO dùng chung (`ApiResponse`, `PageResponse`), Exception xử lý tập trung (`GlobalExceptionHandler`, `BadRequestException`, `ResourceNotFoundException`), Security Filter (`JwtAuthenticationFilter`, `AuditLoggingFilter`), dịch vụ địa lý (`GeoReferenceStore`, `AddressFormatterService`), lưu trữ ảnh (`ImageStorageService`). |
-| `config` | Cấu hình bảo mật (`SecurityConfig`), CORS (`CorsConfig`), Seed dữ liệu tự động (`DatabaseSeeder`, `FeatureEntitlementSeeder`, `CatalogReferenceDataSeeder`, `GeoDataInitializer`). |
+| `config` | Cấu hình bảo mật (`SecurityConfig`), OpenAPI 3 / Swagger UI (`OpenApiConfig`), CORS (`CorsConfig`), Seed dữ liệu tự động (`DatabaseSeeder`, `FeatureEntitlementSeeder`, `CatalogReferenceDataSeeder`, `GeoDataInitializer`). |
 | `consent` | Quản lý việc đồng ý điều khoản dịch vụ và chính sách dữ liệu (`ConsentController`, `TermsConsentService`). |
 | `coupon` | Quản lý mã giảm giá Coupon (`CouponController`, `CouponService`, `CouponRepository`), xác thực mã ưu đãi, kiểm tra lượt sử dụng và hạn dùng. |
 | `customer` | Quản lý danh bạ khách hàng, hạn mức nợ, lịch sử mua sắm (`CustomerController`, `CustomerService`). |
