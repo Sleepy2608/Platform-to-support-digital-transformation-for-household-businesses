@@ -434,6 +434,7 @@ uvicorn main:app --reload --port 8000
 
 - Kiểm tra service đang sống: `curl http://localhost:8000/health`
 - Kiểm tra đã cấu hình B.ai: `curl http://localhost:8000/api/v1/ai/ready` (trả `503 BAI_NOT_CONFIGURED` nghĩa là thiếu `BAI_API_KEY` hoặc `BAI_MODEL`)
+- **Cơ chế Heuristic Fallback (Demo & Offline Resilience)**: Hệ thống tích hợp sẵn bộ phân tích heuristic tiếng Việt (`AI_ENABLE_HEURISTIC_FALLBACK=true`). Khi chưa cấu hình API key hoặc nhà cung cấp LLM ngoại tuyến/hết hạn mức, dịch vụ AI vẫn tự động trích xuất thông tin đơn hàng (sản phẩm, số lượng, quy cách, khách hàng, ghi nợ/tiền mặt) giúp quá trình demo POS diễn ra 100% trơn tru.
 - Service hiện chỉ nhận **văn bản**, chưa hỗ trợ nhận diện giọng nói (STT).
 - Backend có thể tự khởi động service này khi `AI_SERVICE_AUTO_START=true`.
 - Tài liệu chi tiết: [docs/ai-design/ai-service-guide.md](docs/ai-design/ai-service-guide.md), [docs/installation-guide/installation-guide.md](docs/installation-guide/installation-guide.md).
