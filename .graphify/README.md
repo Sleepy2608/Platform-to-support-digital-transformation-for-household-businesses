@@ -74,7 +74,7 @@
 - `.github/workflows/ci.yml`: Pipeline CI/CD tự động kiểm thử 3 dịch vụ Backend (Java 21/Maven), Frontend (Node 22/Next.js 16/TypeScript), AI Service (Python 3.12/FastAPI).
 - `CODE_OF_CONDUCT.md`: Bộ quy tắc ứng xử cộng đồng đạt chuẩn 100% Community Standards (Contributor Covenant v2.1).
 - `.github/ISSUE_TEMPLATE/`: Bộ mẫu báo cáo lỗi (`bug_report.md`), đề xuất tính năng (`feature_request.md`) và cấu hình thảo luận (`config.yml`).
-- `LICENSE`: Giấy phép mã nguồn mở GNU AGPLv3 (bảo vệ quyền tác giả 6 thành viên, chống độc quyền đóng mã).
+- `LICENSE`: Giấy phép mã nguồn mở MIT (bảo vệ quyền tác giả 6 thành viên, tạo điều kiện chia sẻ và đóng góp mã nguồn mở tự do).
 - `CONTRIBUTING.md`: Sổ tay hướng dẫn đóng góp, quy ước commit (`[FEAT]`, `[FIX]`, `[UI]`, `type(scope)`) và Git workflow.
 - `SECURITY.md`: Chính sách bảo mật dự án, kênh báo cáo lỗ hổng có trách nhiệm, SLA vá lỗi và cấu trúc phòng thủ an ninh.
 - `.github/pull_request_template.md`: Mẫu mở Pull Request chuẩn hóa hai phong cách `[TYPE]` và `type(scope)`.
@@ -256,7 +256,7 @@ Mục tiêu đã định hình: **Khi người dùng quét mã QR thanh toán th
 - [.github/ISSUE_TEMPLATE/](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/.github/ISSUE_TEMPLATE): **Hệ thống Issue Templates** chuẩn hóa báo cáo lỗi (Bug report) và đề xuất tính năng (Feature request).
 - [CONTRIBUTING.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/CONTRIBUTING.md): Quy chuẩn đóng góp, quy ước commit (`[FEAT]`, `[FIX]`, `[UI]`, `type(scope)`) và quy trình kiểm thử trước khi mở PR.
 - [SECURITY.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/SECURITY.md): Chính sách bảo mật dự án, kênh tiếp nhận lỗ hổng bí mật (Private Reporting), SLA khắc phục và 6 lớp phòng thủ an ninh.
-- [LICENSE](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/LICENSE): Giấy phép GNU Affero General Public License v3.0 (AGPLv3) với tuyên bố đồng sở hữu của 6 thành viên nhóm phát triển.
+- [LICENSE](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/LICENSE): Giấy phép mã nguồn mở MIT (MIT License) với tuyên bố đồng sở hữu của 6 thành viên nhóm phát triển.
 - [.github/pull_request_template.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/.github/pull_request_template.md): Mẫu Pull Request chuẩn hóa tự động nạp checklist kiểm thử.
 - [AGENTS.md](file:///d:/Platform-to-support-digital-transformation-for-household-businesses/.agents/AGENTS.md): **Quy chuẩn & Sổ tay kiểm thử tự động (QA/Test Agent Guide)** được cấu hình đồng bộ trực tiếp từ các lệnh và thông số trích xuất của Graphify.
 

@@ -91,7 +91,7 @@ export default function Footer() {
                   © 2026 HBDT.DIGITAL. Phát triển bởi Nhóm HBDT Platform.
                 </p>
                 <p className="text-zinc-400 text-xs">
-                  Bảo lưu mọi quyền theo giấy phép <span className="text-zinc-200 font-medium">GNU AGPLv3</span>.
+                  Bảo lưu mọi quyền theo giấy phép <span className="text-zinc-200 font-medium">MIT License</span>.
                 </p>
               </div>
 
@@ -161,7 +161,7 @@ export default function Footer() {
               <li>
                 <div className="flex items-center gap-2 text-zinc-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
-                  <span>Giấy phép mã nguồn mở GNU AGPLv3</span>
+                  <span>Giấy phép mã nguồn mở MIT</span>
                 </div>
               </li>
             </ul>
@@ -222,7 +222,7 @@ export default function Footer() {
         {/* SUB-FOOTER: BẢN QUYỀN CĂN GIỮA */}
         <div className="pt-6 text-center text-xs text-zinc-500">
           <p>
-            © 2026 HBDT.DIGITAL. Phát triển bởi Nhóm HBDT Platform. Bảo lưu mọi quyền theo giấy phép GNU AGPLv3.
+            © 2026 HBDT.DIGITAL. Phát triển bởi Nhóm HBDT Platform. Giấy phép mã nguồn mở MIT.
           </p>
         </div>
       </div>
