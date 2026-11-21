@@ -262,6 +262,7 @@ cd Code/Server
 #### 3. Start Frontend (Next.js 16 / React 19)
 ```bash
 cd Code/Client/src/frontend
+cp .env.example .env.local  # Optional: configure backend / AI URL
 npm install
 npm run dev
 ```

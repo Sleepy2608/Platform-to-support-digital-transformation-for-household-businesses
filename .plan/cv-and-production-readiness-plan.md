@@ -14,8 +14,8 @@
 | **Backend API Docs** | 50+ Controllers, 100+ Endpoints | ✅ **Đã hoàn thành:** Tích hợp `springdoc-openapi` Swagger UI (`/swagger-ui.html`, `/v3/api-docs`) phân nhóm 6 cụm API. | 🟢 **Hoàn thành (Done)** |
 | **Backend Observability** | Log file thông thường | ✅ **Đã hoàn thành:** Tích hợp Spring Boot Actuator (`/actuator/health`, `/actuator/info`). | 🟢 **Hoàn thành (Done)** |
 | **Tài liệu Postman** | Đã xuất bộ sưu tập v2.1 | ✅ **Đã hoàn thành:** `docs/api/hbdt-api.postman_collection.json` & Environment `docs/api/hbdt-local.postman_environment.json`. | 🟢 **Hoàn thành (Done)** |
-| **Frontend Error Boundary** | Trang 404/500 mặc định của Next.js | Thiếu `not-found.tsx`, `error.tsx`, `loading.tsx` theo nhận diện thương hiệu. | 🔴 **Rất cao (Must-have)** |
-| **Frontend Environment** | Đã có `.env.local` cá nhân | Thiếu file `.env.example` hướng dẫn cấu hình biến môi trường client. | 🟡 **Cao (DevX standard)** |
+| **Frontend Error Boundary** | Đã có Not-Found, Error & Loading | ✅ **Đã hoàn thành:** Bổ sung `app/not-found.tsx`, `app/error.tsx`, `app/loading.tsx` chuẩn Dark-Tech & App Router Suspense. | 🟢 **Hoàn thành (Done)** |
+| **Frontend Environment** | Có file mẫu cho Developer | ✅ **Đã hoàn thành:** Tạo `Code/Client/src/frontend/.env.example` với đầy đủ mô tả biến môi trường. | 🟢 **Hoàn thành (Done)** |
 | **PWA & Mobile POS** | Web chạy trên trình duyệt | Chưa có Web App Manifest (`manifest.ts`) để cài đặt như ứng dụng POS quầy. | 🟢 **Trung bình (Điểm cộng)** |
 | **AI Service Resilience** | Yêu cầu API Key live | Báo lỗi 503 khi thiếu key; thiếu fallback parser regex offline để demo. | 🟡 **Cao (Demo friendly)** |
 | **Changelog & Release** | Có GitHub Release tag | Chưa có `CHANGELOG.md` chuẩn Keep a Changelog v1.1.0. | 🟢 **Trung bình (Chuyên nghiệp)** |

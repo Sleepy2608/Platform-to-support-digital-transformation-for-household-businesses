@@ -404,8 +404,9 @@ Script sẽ tự kiểm tra môi trường, tự chạy `npm install` nếu chư
 cd ..Code\Client\src\frontend
 ```
 
-- Tải thư viện npm
+- Cấu hình môi trường (tùy chọn) & tải thư viện npm
 ```text
+cp .env.example .env.local    # Tùy chỉnh API URL nếu cần (mặc định đã trỏ sẵn localhost:8080)
 npm install
 ```
 
