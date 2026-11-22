@@ -1,9 +1,9 @@
 # 📚 TỔNG HỢP TOÀN BỘ TÀI LIỆU DỰ ÁN HBDT (MASTER DOCUMENTATION INDEX)
 
 > **Dự án:** Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (Platform to Support Digital Transformation for Household Businesses - HBDT)  
-> **Phiên bản tài liệu:** 2.5 (Hoàn thiện toàn diện)  
-> **Ngày cập nhật:** 04/11/2026  
-> **Trạng thái:** 13/13 Epic hoàn thành (100% `Done`), 45/45 Test Cases thông qua (`Passed`).
+> **Phiên bản tài liệu:** 2.6 (Chuẩn hóa Production & OpenAPI 3.0)  
+> **Ngày cập nhật:** 22/11/2026  
+> **Trạng thái:** 13/13 Epic hoàn thành (100% `Done`), 45/45 Test Cases thông qua (`Passed`), 3/3 CI/CD Jobs xanh lá (`Success`).
 
 ---
 
@@ -15,6 +15,7 @@ Thư mục `docs/` lưu trữ toàn bộ hệ thống tài liệu kỹ thuật, 
 docs/
 ├── 📋 Yêu cầu & Nghiệp vụ      : requirements/, user-requirements/, software-requirement-specification/
 ├── 🏛️ Kiến trúc & Thiết kế      : architecture-design/, detailed-design/, workflows/
+├── 📡 API & Thử nghiệm          : api/ (Swagger UI, OpenAPI 3.0, Postman Collection)
 ├── ⚖️ Pháp lý & Kế toán TT88    : compliance/
 ├── 🤖 Trợ lý thông minh AI       : ai-design/
 ├── 🛠️ Cài đặt & Vận hành        : installation-guide/, run-guide/
@@ -31,7 +32,7 @@ docs/
 | Đối tượng | Tài liệu khuyến nghị đọc trước | Mục tiêu |
 | :--- | :--- | :--- |
 | **Giảng viên / Hội đồng đánh giá** | 1. [Báo cáo tổng hợp](final-report/bao-cao-tong-hop.md)<br>2. [Phân công nhiệm vụ nhóm](final-report/phan-cong-nhiem-vu-nhom.md)<br>3. [Đặc tả SRS](software-requirement-specification/software-requirement-specification.md) | Nắm trọn bối cảnh, kết quả đạt được, tính tuân thủ pháp lý và đóng góp của từng thành viên. |
-| **Lập trình viên / AI Developer** | 1. [Thiết kế kiến trúc ADD](architecture-design/architecture-design-document.md)<br>2. [Thiết kế chi tiết & DB](detailed-design/detailed-design.md)<br>3. [Quy chuẩn cài đặt](installation-guide/installation-guide.md)<br>4. [Graphify Knowledge Base](../.graphify/README.md) | Hiểu cấu trúc mã nguồn, luồng API, mô hình DB 40+ thực thể và phân hệ AI/SePay. |
+| **Lập trình viên / AI Developer** | 1. [Thiết kế kiến trúc ADD](architecture-design/architecture-design-document.md)<br>2. [Hướng dẫn tra cứu API & Postman](api/README.md)<br>3. [Thiết kế chi tiết & DB](detailed-design/detailed-design.md)<br>4. [Quy chuẩn cài đặt](installation-guide/installation-guide.md)<br>5. [Graphify Knowledge Base](../.graphify/README.md) | Hiểu cấu trúc mã nguồn, luồng API Swagger/Postman, mô hình DB 40+ thực thể và phân hệ AI/SePay. |
 | **Chuyên viên Kế toán / Thuế** | 1. [Ánh xạ Luật vào phần mềm](compliance/mapping-law-to-project.md)<br>2. [Thông tư 88/2021/TT-BTC](compliance/circular-88-2021-BTC.md)<br>3. [Chính sách thuế 2026](compliance/tax-policy-2026.md) | Thẩm định tính chính xác của sổ S1, S2, S4 và cơ chế tính thuế GTGT/TNCN tự động. |
 | **Người dùng / Chủ hộ kinh doanh** | 1. [Cẩm nang Chủ hộ kinh doanh](user-guides/owner-manual-guide.md)<br>2. [Hướng dẫn Nhân viên bán hàng](user-guides/employee-manual-guide.md) | Làm quen với giao diện bán hàng nhanh (POS), quản lý kho, đổi gói và thanh toán SePay. |
 
@@ -62,7 +63,17 @@ docs/
 
 ---
 
-### 3.3. Pháp lý Kế toán & Tuân thủ Thông tư 88/2021/TT-BTC
+### 3.3. Đặc tả & Thử nghiệm API Tương tác (OpenAPI 3.0 & Postman)
+
+| Thư mục / Tài liệu | Phiên bản | Nội dung cốt lõi |
+| :--- | :---: | :--- |
+| [api/README.md](api/README.md) | **v1.0** | **Hướng dẫn Tra cứu & Kiểm thử API**: Cổng Swagger UI tương tác (`/swagger-ui.html`), đặc tả OpenAPI 3.0 (`/v3/api-docs`), phân nhóm 6 cụm API và quy trình xác thực JWT Bearer. |
+| [api/hbdt-api.postman_collection.json](api/hbdt-api.postman_collection.json) | v2.1 | Bộ sưu tập Postman v2.1 đầy đủ request cho Auth, POS Bán hàng, Kho hàng, Sổ kế toán TT88, SePay Webhook và AI trích xuất đơn. |
+| [api/hbdt-local.postman_environment.json](api/hbdt-local.postman_environment.json) | v2.1 | Môi trường Postman Local Dev tích hợp script tự động lưu `accessToken` sau khi đăng nhập. |
+
+---
+
+### 3.4. Pháp lý Kế toán & Tuân thủ Thông tư 88/2021/TT-BTC
 
 | Thư mục / Tài liệu | Phiên bản | Nội dung cốt lõi |
 | :--- | :---: | :--- |
@@ -75,7 +86,7 @@ docs/
 
 ---
 
-### 3.4. Phân hệ Trợ lý Thông minh (AI Smart Assistant)
+### 3.5. Phân hệ Trợ lý Thông minh (AI Smart Assistant)
 
 | Thư mục / Tài liệu | Phiên bản | Nội dung cốt lõi |
 | :--- | :---: | :--- |
@@ -86,7 +97,7 @@ docs/
 
 ---
 
-### 3.5. Cài đặt, Cấu hình Môi trường & Khởi chạy
+### 3.6. Cài đặt, Cấu hình Môi trường & Khởi chạy
 
 | Thư mục / Tài liệu | Phiên bản | Nội dung cốt lõi |
 | :--- | :---: | :--- |
@@ -96,7 +107,7 @@ docs/
 
 ---
 
-### 3.6. Hiện thực hóa Hệ thống, Kiểm thử & Đảm bảo Chất lượng
+### 3.7. Hiện thực hóa Hệ thống, Kiểm thử & Đảm bảo Chất lượng
 
 | Thư mục / Tài liệu | Phiên bản | Nội dung cốt lõi |
 | :--- | :---: | :--- |
@@ -106,7 +117,7 @@ docs/
 
 ---
 
-### 3.7. Cẩm nang Hướng dẫn Sử dụng (User Manual Guides)
+### 3.8. Cẩm nang Hướng dẫn Sử dụng (User Manual Guides)
 
 | Thư mục / Tài liệu | Phiên bản | Nội dung cốt lõi |
 | :--- | :---: | :--- |
@@ -118,7 +129,7 @@ docs/
 
 ---
 
-### 3.8. Báo cáo Tiến độ, Danh mục Tính năng & Báo cáo Tổng kết
+### 3.9. Báo cáo Tiến độ, Danh mục Tính năng & Báo cáo Tổng kết
 
 | Thư mục / Tài liệu | Phiên bản | Nội dung cốt lõi |
 | :--- | :---: | :--- |
@@ -131,19 +142,28 @@ docs/
 
 ## 4. Các Điểm Nổi bật & Cập nhật Quan trọng Nhất (Tháng 11/2026)
 
-1. **Cổng thanh toán tự động SePay:**
+1. **Đặc tả API Tương tác & Quan sát Hệ thống (OpenAPI 3.0 & Actuator):**
+   - Tích hợp `springdoc-openapi` tại `/swagger-ui.html` và `/v3/api-docs` phân chia 6 cụm API có hỗ trợ JWT Bearer Authorize.
+   - Kích hoạt Spring Boot Actuator (`/actuator/health`, `/actuator/info`) phục vụ giám sát container và DevOps.
+   - Xuất bản bộ sưu tập Postman Collection v2.1 và môi trường tại `docs/api/` tự động trích xuất token.
+2. **Cổng thanh toán tự động SePay & VietQR Động:**
    - Hoàn thiện luồng tự động 100%: Quét mã VietQR ➔ SePay gửi Webhook ➔ Backend kích hoạt gói `ACTIVE` và gia hạn ngày sử dụng tức thì ➔ Frontend Polling tự động đóng modal thành công.
    - Cơ chế chịu lỗi cao: Luôn trả về HTTP `200 OK` cho SePay để tránh gửi lại 7 lần (retry storm), kiểm tra số tài khoản thụ hưởng (`107882760609`), chống trùng lặp giao dịch (Idempotency) và tự động tạo mới `Subscription` nếu hộ kinh doanh đăng ký lần đầu.
-2. **Tuân thủ Chế độ Kế toán Thông tư 88/2021/TT-BTC:**
-   - Tự động sinh sổ Doanh thu (S1), Sổ chi phí (S2), Sổ kho (S4) chuẩn định dạng Excel của Bộ Tài chính từ dữ liệu bán hàng thực tế.
-3. **Trợ lý thông minh AI:**
+3. **Tuân thủ Chế độ Kế toán Thông tư 88/2021/TT-BTC & Tax Engine 2026:**
+   - Tự động sinh Sổ Doanh thu (S1-HKD), Sổ Kho (S2-HKD) và Sổ Nghĩa vụ thuế (S4-HKD) chuẩn định dạng Excel/PDF của Bộ Tài chính từ dữ liệu bán hàng thực tế.
+   - Động cơ chính sách thuế 2026 tự động tính thuế GTGT & TNCN theo ngưỡng 500tr / 3 tỷ với phiên bản quy tắc thuế (Tax Rule Versioning).
+4. **Trợ lý thông minh AI & Heuristic Fallback Ngoại tuyến:**
    - Microservice Python FastAPI hỗ trợ nhận diện và trích xuất đơn hàng từ văn bản/ảnh/tin nhắn qua giao thức bảo mật `X-API-Secret`.
-4. **Hệ thống Tri thức Graphify (GraphRAG):**
+   - Trang bị bộ phân tích Heuristic Regex Fallback nội bộ (`AI_ENABLE_HEURISTIC_FALLBACK=true`): Tự động trích xuất đơn hàng tiếng Việt khi chưa có API key hoặc offline, đảm bảo demo 100% không bị ngắt quãng.
+5. **Khả năng Phục hồi Giao diện (Frontend Resiliency) & PWA:**
+   - Bổ sung Global Error Boundary (`app/error.tsx`), Custom 404 (`app/not-found.tsx`) và Suspense Skeleton (`app/loading.tsx`) theo phong cách Dark-Tech.
+   - Trang bị Web App Manifest (`app/manifest.ts`) cho phép cài đặt POS như Native App trên Desktop/Tablet.
+6. **Hệ thống Tri thức Graphify (GraphRAG):**
    - Lưu trữ tại thư mục [`.graphify/`](../.graphify/README.md) gồm **5.003 nodes** và **17.929 edges**, cung cấp bản đồ kiến trúc toàn diện hỗ trợ AI và lập trình viên tra cứu mã nguồn tức thì.
-5. **CI/CD Tự động hóa & Tiêu chuẩn Cộng đồng:**
+7. **CI/CD Tự động hóa, Chuẩn hóa Giấy phép MIT & Tiêu chuẩn Cộng đồng:**
    - Pipeline GitHub Actions kiểm thử tự động 3 phân hệ: Backend (Java 21 / Spring Boot 3.3), Frontend (Node 22 / Next.js 16), và AI Service (Python 3.12 / FastAPI).
-   - Đạt 100% GitHub Community Standards với `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `SECURITY.md` và hệ thống Issue Templates.
-6. **Chuẩn hóa Triển khai Toàn diện qua Docker Compose:**
+   - Chuyển đổi giấy phép toàn bộ dự án sang **MIT License** (`LICENSE`), ban hành `CHANGELOG.md` chuẩn Keep a Changelog v1.1.0 và phát hành bản phát hành chính thức `v1.0.0`.
+8. **Chuẩn hóa Triển khai Toàn diện qua Docker Compose:**
    - Hệ thống container đồng bộ định danh `hbdt-*` (`hbdt-mysql`, `hbdt-backend`, `hbdt-ai-service`, `hbdt-frontend`), cấu hình database `household_business_platform`, volume dữ liệu độc lập và mạng nội bộ `hbdt-network`.
 
 ---
