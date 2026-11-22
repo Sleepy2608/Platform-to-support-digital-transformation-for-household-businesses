@@ -5,9 +5,9 @@
 | **Tên tài liệu** | Hướng dẫn Cài đặt Hệ thống (Installation Guide) – Nền tảng hỗ trợ chuyển đổi số cho hộ kinh doanh |
 | **Dự án** | Nền tảng Hỗ trợ Chuyển đổi Số cho Hộ Kinh doanh (HBDT Platform) |
 | **Mã issue/ticket** | HBDT-95 |  
-| **Phiên bản** | 1.4 |
-| **Cập nhật lần cuối** | 04/11/2026 |
-| **Trạng thái** | Đồng bộ với cấu hình hiện tại của repo (phân hệ AI Service dùng B.ai, cổng thanh toán tự động SePay, xác thực STK thụ hưởng, Cloudflare Tunnel) và luồng dev local trên Windows |
+| **Phiên bản** | 1.5 |
+| **Cập nhật lần cuối** | 22/11/2026 |
+| **Trạng thái** | Đồng bộ toàn diện phiên bản v1.0.0 Production-Ready (OpenAPI 3.0 / Swagger UI, Actuator Healthcheck, Postman v2.1, AI Heuristic Regex Fallback, Next.js Resiliency & PWA Manifest, Giấy phép MIT) và luồng dev local trên Windows |
 
 ---
 
@@ -126,7 +126,9 @@ cd Code/Server
 **Dấu hiệu khởi chạy thành công:**
 - Xuất hiện log: `Started HbdtApplication in X.XXX seconds`.
 - Backend phục vụ tại: `http://localhost:8080/`.
-- Kiểm tra trạng thái sức khỏe: `http://localhost:8080/actuator/health` → trả về `{"status":"UP"}`.
+- Tài liệu API tương tác Swagger UI: `http://localhost:8080/swagger-ui.html` (hoặc `http://localhost:8080/swagger-ui/index.html`).
+- Đặc tả OpenAPI 3.0 Raw JSON: `http://localhost:8080/v3/api-docs`.
+- Kiểm tra trạng thái sức khỏe (Actuator): `http://localhost:8080/actuator/health` → trả về `{"status":"UP"}`.
 
 > [!NOTE]
 > **Tự động đồng bộ Reference Data & Địa giới hành chính:**
@@ -157,10 +159,12 @@ BAI_BASE_URL=https://api.b.ai/v1
 BAI_TIMEOUT_SECONDS=25
 # Phải trùng với AI_SERVICE_API_SECRET trong Code/Server/.env
 AI_SERVICE_API_SECRET=<chuoi_bi_mat_tu_sinh>
+# Bật bộ phân tích Regex Heuristic dự phòng ngoại tuyến khi hết quota hoặc chưa cấu hình B.ai (mặc định: true)
+AI_ENABLE_HEURISTIC_FALLBACK=true
 ```
 
 > [!IMPORTANT]
-> Nếu thiếu `BAI_API_KEY` / `BAI_MODEL`, service vẫn khởi động nhưng `/api/v1/ai/ready` trả `503 BAI_NOT_CONFIGURED` và tính năng AI sẽ báo lỗi cấu hình. **Không** đặt `BAI_API_KEY` trong `Code/Server/.env`.
+> Nếu thiếu `BAI_API_KEY` / `BAI_MODEL`, service vẫn khởi động nhưng `/api/v1/ai/ready` trả `503 BAI_NOT_CONFIGURED`. Tuy nhiên, nếu bật `AI_ENABLE_HEURISTIC_FALLBACK=true` (mặc định), endpoint `/api/v1/ai/parse-order` vẫn tự động trích xuất các câu đặt hàng tiếng Việt thông dụng nhờ bộ phân tích Heuristic nội bộ, giúp việc chạy thử và demo không bao giờ bị gián đoạn. **Không** đặt `BAI_API_KEY` trong `Code/Server/.env`.
 
 **Bước 2 — Khởi chạy service:**
 
@@ -191,10 +195,14 @@ uvicorn main:app --reload --port 8000
 Mở một cửa sổ Terminal mới:
 ```bat
 cd Code/Client/src/frontend
+# Tạo biến môi trường local từ file mẫu nếu chưa có
+copy .env.example .env.local
 npm install
 npm run dev
 ```
+*(Trên Linux/macOS: `cp .env.example .env.local`)*
 - Giao diện người dùng: `http://localhost:3000/`
+- Cài đặt Progressive Web App (PWA): Có thể cài đặt trực tiếp từ thanh địa chỉ trình duyệt nhờ Web App Manifest (`/manifest.webmanifest`).
 - Trang Đăng nhập Chủ hộ / Nhân viên / Quản lý: `http://localhost:3000/login`
 - Trang Đăng nhập Quản trị viên hệ thống: `http://localhost:3000/admin/login`
 
@@ -343,15 +351,19 @@ Sau khi hoàn tất cài đặt, tiến hành kiểm thử nhanh để đảm b�
 
 | # | Hạng mục kiểm tra | Thao tác thực hiện | Kết quả kỳ vọng |
 |---|---|---|---|
-| 1 | Trạng thái Backend | Gọi `curl http://localhost:8080/actuator/health` | Trả về JSON `{"status":"UP"}` |
-| 2 | Giao diện Frontend | Mở trình duyệt truy cập `http://localhost:3000/` | Trang chủ hiển thị đầy đủ hiệu ứng & giao diện |
-| 3 | Đăng nhập Hộ kinh doanh | Mở `http://localhost:3000/login`, nhập `owner` / `owner123` | Đăng nhập thành công, chuyển tiếp vào Owner Dashboard |
-| 4 | Đăng nhập Quản trị viên | Mở `http://localhost:3000/admin/login`, nhập `admin` / `admin` | Đăng nhập thành công, vào giao diện Quản trị hệ thống |
-| 5 | Seed Master Data | Kiểm tra danh mục sản phẩm, biểu mẫu TT88 | Bảng dữ liệu có đầy đủ danh mục và danh sách tỉnh thành |
-| 6 | Kiểm tra kết nối AI Service | Gọi `curl http://localhost:8000/health` | Trả về `{"status":"ok","service":"ai-service"}` |
-| 7 | Kiểm thử tự động Backend | Chạy lệnh `mvn test` trong `Code/Server` | Toàn bộ các bộ kiểm thử tự động (Unit Tests) đều PASS |
-| 8 | Kiểm thử Frontend | Chạy `npm run test:low-stock` trong `Code/Client/src/frontend` | Kịch bản cảnh báo tồn kho thấp vượt qua kiểm thử thành công |
-| 9 | AI Service (nếu dùng `run-ai.bat`) | Gọi `curl http://127.0.0.1:8000/health` | Trả về `{"status":"ok","service":"ai-service"}` |
+| 1 | Trạng thái Backend (Actuator) | Gọi `curl http://localhost:8080/actuator/health` | Trả về JSON `{"status":"UP"}` |
+| 2 | Swagger UI & OpenAPI 3.0 | Mở `http://localhost:8080/swagger-ui.html` | Trang Swagger UI mở thành công, hiển thị 6 cụm API và nút Authorize |
+| 3 | Giao diện Frontend | Mở trình duyệt truy cập `http://localhost:3000/` | Trang chủ hiển thị đầy đủ hiệu ứng & giao diện |
+| 4 | PWA Web App Manifest | Mở `http://localhost:3000/manifest.webmanifest` | Trả về JSON Web App Manifest hợp lệ với name và icons chuẩn PWA |
+| 5 | Giao diện 404 Resiliency | Mở `http://localhost:3000/duong-dan-khong-ton-tai` | Hiển thị giao diện Không tìm thấy trang (Custom 404) với nút quay về trang chủ |
+| 6 | Đăng nhập Hộ kinh doanh | Mở `http://localhost:3000/login`, nhập `owner` / `owner123` | Đăng nhập thành công, chuyển tiếp vào Owner Dashboard |
+| 7 | Đăng nhập Quản trị viên | Mở `http://localhost:3000/admin/login`, nhập `admin` / `admin` | Đăng nhập thành công, vào giao diện Quản trị hệ thống |
+| 8 | Seed Master Data | Kiểm tra danh mục sản phẩm, biểu mẫu TT88 | Bảng dữ liệu có đầy đủ danh mục và danh sách tỉnh thành |
+| 9 | Kiểm tra kết nối AI Service | Gọi `curl http://localhost:8000/health` | Trả về `{"status":"ok","service":"ai-service"}` |
+| 10 | AI Heuristic Regex Fallback | Gọi POST `/api/v1/ai/parse-order` kèm header bí mật | Trích xuất thành công danh sách món hàng ngay cả khi offline B.ai |
+| 11 | Kiểm thử tự động Backend | Chạy lệnh `mvn test` trong `Code/Server` | Toàn bộ các bộ kiểm thử tự động (Unit Tests) đều PASS |
+| 12 | Kiểm thử Frontend | Chạy `npm run test:low-stock` trong `Code/Client/src/frontend` | Kịch bản cảnh báo tồn kho thấp vượt qua kiểm thử thành công |
+| 13 | AI Service (nếu dùng `run-ai.bat`) | Gọi `curl http://127.0.0.1:8000/health` | Trả về `{"status":"ok","service":"ai-service"}` |
 
 > Ghi chú: AI Service **không có route gốc `/`**. Để kiểm tra service đang sống, gọi `/health` (hoặc `/api/v1/ai/ready` nếu phiên bản đang chạy có endpoint này). Endpoint `/api/v1/ai/parse-order` yêu cầu header `X-API-Secret`.
 
